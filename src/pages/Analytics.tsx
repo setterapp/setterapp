@@ -219,8 +219,8 @@ function Analytics() {
       {/* Métricas principales */}
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--spacing-md)' }}>
         <div className="card">
-          <div className="flex items-center justify-between" style={{ marginBottom: 'var(--spacing-md)' }}>
-            <div className="flex items-center" style={{ gap: 'var(--spacing-md)' }}>
+          <div className="flex items-center justify-between" style={{ alignItems: 'center' }}>
+            <div className="flex items-center" style={{ gap: 'var(--spacing-md)', flex: 1 }}>
               <div style={{
                 width: '48px',
                 height: '48px',
@@ -228,12 +228,13 @@ function Analytics() {
                 background: 'rgba(137, 180, 250, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                flexShrink: 0
               }}>
                 <MessageSquare size={24} color="var(--color-primary)" />
               </div>
-              <div>
-                <h3 className="card-title" style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+              <div style={{ flex: 1 }}>
+                <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
                   Conversaciones
                 </h3>
                 <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-text)' }}>
@@ -248,20 +249,19 @@ function Analytics() {
                 gap: '4px',
                 color: metrics.conversationGrowth > 0 ? 'var(--color-success)' : 'var(--color-danger)',
                 fontSize: 'var(--font-size-sm)',
-                fontWeight: 600
+                fontWeight: 600,
+                flexShrink: 0,
+                marginLeft: 'var(--spacing-md)'
               }}>
                 {metrics.conversationGrowth > 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
                 {Math.abs(metrics.conversationGrowth)}%
               </div>
             )}
           </div>
-          <p className="text-secondary text-sm">
-            {metrics.activeConversations} activas
-          </p>
         </div>
 
         <div className="card">
-          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-md)' }}>
+          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
               <div style={{
                 width: '48px',
                 height: '48px',
@@ -269,12 +269,13 @@ function Analytics() {
                 background: 'rgba(166, 227, 161, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                flexShrink: 0
               }}>
                 <Zap size={24} color="var(--color-success)" />
               </div>
-            <div>
-              <h3 className="card-title" style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            <div style={{ flex: 1 }}>
+              <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
                 Tasa de Respuesta
               </h3>
               <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-success)' }}>
@@ -282,13 +283,10 @@ function Analytics() {
               </p>
             </div>
           </div>
-          <p className="text-secondary text-sm">
-            {metrics.conversationsWithAgent} con agente asignado
-          </p>
         </div>
 
         <div className="card">
-          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-md)' }}>
+          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
               <div style={{
                 width: '48px',
                 height: '48px',
@@ -296,12 +294,13 @@ function Analytics() {
                 background: 'rgba(249, 226, 175, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                flexShrink: 0
               }}>
                 <Inbox size={24} color="var(--color-warning)" />
               </div>
-            <div>
-              <h3 className="card-title" style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            <div style={{ flex: 1 }}>
+              <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
                 Mensajes
               </h3>
               <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-warning)' }}>
@@ -309,13 +308,10 @@ function Analytics() {
               </p>
             </div>
           </div>
-          <p className="text-secondary text-sm">
-            Mensajes no leídos
-          </p>
         </div>
 
         <div className="card">
-          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-md)' }}>
+          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
               <div style={{
                 width: '48px',
                 height: '48px',
@@ -323,12 +319,13 @@ function Analytics() {
                 background: 'rgba(137, 180, 250, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                flexShrink: 0
               }}>
                 <Brain size={24} color="var(--color-primary)" />
               </div>
-            <div>
-              <h3 className="card-title" style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            <div style={{ flex: 1 }}>
+              <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
                 Agentes Activos
               </h3>
               <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-text)' }}>
@@ -336,9 +333,6 @@ function Analytics() {
               </p>
             </div>
           </div>
-          <p className="text-secondary text-sm">
-            {agents.length} agentes totales
-          </p>
         </div>
       </div>
 
