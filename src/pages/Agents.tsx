@@ -174,8 +174,8 @@ function Agents() {
                 fontWeight: 600,
               }}
             >
-              <span>Información Básica</span>
-              {expandedSections.has('basic') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              <span style={{ color: 'var(--color-text)' }}>Información Básica</span>
+              {expandedSections.has('basic') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
             </button>
             {expandedSections.has('basic') && (
               <div style={{ paddingLeft: 'var(--spacing-md)' }}>
@@ -240,8 +240,8 @@ function Agents() {
                 fontWeight: 600,
               }}
             >
-              <span>Identidad del Asistente</span>
-              {expandedSections.has('identity') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              <span style={{ color: 'var(--color-text)' }}>Identidad del Asistente</span>
+              {expandedSections.has('identity') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
             </button>
             {expandedSections.has('identity') && (
               <div style={{ paddingLeft: 'var(--spacing-md)' }}>
@@ -305,8 +305,8 @@ function Agents() {
                 fontWeight: 600,
               }}
             >
-              <span>Información del Negocio</span>
-              {expandedSections.has('business') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              <span style={{ color: 'var(--color-text)' }}>Información del Negocio</span>
+              {expandedSections.has('business') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
             </button>
             {expandedSections.has('business') && (
               <div style={{ paddingLeft: 'var(--spacing-md)' }}>
@@ -381,8 +381,8 @@ function Agents() {
                 fontWeight: 600,
               }}
             >
-              <span>Comportamiento y Horarios</span>
-              {expandedSections.has('behavior') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              <span style={{ color: 'var(--color-text)' }}>Comportamiento y Horarios</span>
+              {expandedSections.has('behavior') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
             </button>
             {expandedSections.has('behavior') && (
               <div style={{ paddingLeft: 'var(--spacing-md)' }}>
@@ -454,8 +454,8 @@ function Agents() {
                 fontWeight: 600,
               }}
             >
-              <span>Calificación de Leads</span>
-              {expandedSections.has('qualification') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              <span style={{ color: 'var(--color-text)' }}>Calificación de Leads</span>
+              {expandedSections.has('qualification') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
             </button>
             {expandedSections.has('qualification') && (
               <div style={{ paddingLeft: 'var(--spacing-md)' }}>
@@ -466,7 +466,7 @@ function Agents() {
                       checked={formData.config.enableQualification || false}
                       onChange={(e) => updateConfig('enableQualification', e.target.checked)}
                     />
-                    <span>Habilitar calificación de leads</span>
+                    <span style={{ color: 'var(--color-text)' }}>Habilitar calificación de leads</span>
                   </label>
                 </div>
                 {formData.config.enableQualification && (
@@ -530,8 +530,8 @@ function Agents() {
                 fontWeight: 600,
               }}
             >
-              <span>Personalización Avanzada</span>
-              {expandedSections.has('customization') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              <span style={{ color: 'var(--color-text)' }}>Personalización Avanzada</span>
+              {expandedSections.has('customization') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
             </button>
             {expandedSections.has('customization') && (
               <div style={{ paddingLeft: 'var(--spacing-md)' }}>

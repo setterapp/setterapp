@@ -225,8 +225,7 @@ function Analytics() {
                 width: '48px',
                 height: '48px',
                 borderRadius: 'var(--border-radius)',
-                background: 'var(--color-primary)',
-                opacity: 0.1,
+                background: 'rgba(137, 180, 250, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -267,8 +266,7 @@ function Analytics() {
                 width: '48px',
                 height: '48px',
                 borderRadius: 'var(--border-radius)',
-                background: 'var(--color-success)',
-                opacity: 0.1,
+                background: 'rgba(166, 227, 161, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -295,8 +293,7 @@ function Analytics() {
                 width: '48px',
                 height: '48px',
                 borderRadius: 'var(--border-radius)',
-                background: 'var(--color-warning)',
-                opacity: 0.1,
+                background: 'rgba(249, 226, 175, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -323,8 +320,7 @@ function Analytics() {
                 width: '48px',
                 height: '48px',
                 borderRadius: 'var(--border-radius)',
-                background: 'var(--color-primary)',
-                opacity: 0.1,
+                background: 'rgba(137, 180, 250, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
