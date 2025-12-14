@@ -219,8 +219,11 @@ function Analytics() {
       {/* Métricas principales */}
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--spacing-md)' }}>
         <div className="card">
+          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            Conversaciones
+          </h3>
           <div className="flex items-center justify-between" style={{ alignItems: 'center' }}>
-            <div className="flex items-center" style={{ gap: 'var(--spacing-md)', flex: 1 }}>
+            <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
               <div style={{
                 width: '48px',
                 height: '48px',
@@ -233,14 +236,9 @@ function Analytics() {
               }}>
                 <MessageSquare size={24} color="var(--color-primary)" />
               </div>
-              <div style={{ flex: 1 }}>
-                <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                  Conversaciones
-                </h3>
-                <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-text)' }}>
-                  {metrics.totalConversations}
-                </p>
-              </div>
+              <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-text)' }}>
+                {metrics.totalConversations}
+              </p>
             </div>
             {metrics.conversationGrowth !== 0 && (
               <div style={{
@@ -250,8 +248,7 @@ function Analytics() {
                 color: metrics.conversationGrowth > 0 ? 'var(--color-success)' : 'var(--color-danger)',
                 fontSize: 'var(--font-size-sm)',
                 fontWeight: 600,
-                flexShrink: 0,
-                marginLeft: 'var(--spacing-md)'
+                flexShrink: 0
               }}>
                 {metrics.conversationGrowth > 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
                 {Math.abs(metrics.conversationGrowth)}%
@@ -261,77 +258,71 @@ function Analytics() {
         </div>
 
         <div className="card">
+          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            Tasa de Respuesta
+          </h3>
           <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: 'var(--border-radius)',
-                background: 'rgba(166, 227, 161, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <Zap size={24} color="var(--color-success)" />
-              </div>
-            <div style={{ flex: 1 }}>
-              <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                Tasa de Respuesta
-              </h3>
-              <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-success)' }}>
-                {metrics.responseRate}%
-              </p>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: 'var(--border-radius)',
+              background: 'rgba(166, 227, 161, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <Zap size={24} color="var(--color-success)" />
             </div>
+            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-success)' }}>
+              {metrics.responseRate}%
+            </p>
           </div>
         </div>
 
         <div className="card">
+          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            Mensajes
+          </h3>
           <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: 'var(--border-radius)',
-                background: 'rgba(249, 226, 175, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <Inbox size={24} color="var(--color-warning)" />
-              </div>
-            <div style={{ flex: 1 }}>
-              <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                Mensajes
-              </h3>
-              <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-warning)' }}>
-                {metrics.totalMessages}
-              </p>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: 'var(--border-radius)',
+              background: 'rgba(249, 226, 175, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <Inbox size={24} color="var(--color-warning)" />
             </div>
+            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-warning)' }}>
+              {metrics.totalMessages}
+            </p>
           </div>
         </div>
 
         <div className="card">
+          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            Agentes Activos
+          </h3>
           <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: 'var(--border-radius)',
-                background: 'rgba(137, 180, 250, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <Brain size={24} color="var(--color-primary)" />
-              </div>
-            <div style={{ flex: 1 }}>
-              <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                Agentes Activos
-              </h3>
-              <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-text)' }}>
-                {metrics.activeAgents}
-              </p>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: 'var(--border-radius)',
+              background: 'rgba(137, 180, 250, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <Brain size={24} color="var(--color-primary)" />
             </div>
+            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-text)' }}>
+              {metrics.activeAgents}
+            </p>
           </div>
         </div>
       </div>
