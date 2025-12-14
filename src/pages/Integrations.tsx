@@ -247,10 +247,10 @@ function Integrations() {
                     }}
                   >
                     {integration.type === 'whatsapp' && (
-                      <WhatsAppIcon size={24} color="#25D366" />
+                      <WhatsAppIcon size={24} color="#a6e3a1" />
                     )}
                     {integration.type === 'instagram' && (
-                      <InstagramIcon size={24} color="#E4405F" />
+                      <InstagramIcon size={24} color="#f38ba8" />
                     )}
                   </div>
                   <div style={{ flex: 1 }}>

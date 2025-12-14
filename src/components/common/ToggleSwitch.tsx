@@ -48,10 +48,10 @@ export default function ToggleSwitch({ checked, onChange, disabled = false }: To
             width: '22px',
             left: checked ? '26px' : '3px',
             bottom: '3px',
-            backgroundColor: 'white',
+            backgroundColor: 'var(--color-bg)',
             borderRadius: '50%',
             transition: 'var(--transition)',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.4)',
           }}
         />
       </span>

@@ -1,33 +1,33 @@
 /* Minimalist Design System - Notion Style */
 
 :root {
-  /* Colors - Minimal Palette */
-  --color-primary: #2383E2;
-  --color-primary-hover: #1a6bc7;
-  --color-secondary: #6B7280;
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
+  /* Colors - Catppuccin Mocha Palette */
+  --color-primary: #89b4fa;
+  --color-primary-hover: #74c7ec;
+  --color-secondary: #9399b2;
+  --color-success: #a6e3a1;
+  --color-warning: #f9e2af;
+  --color-danger: #f38ba8;
 
-  /* Neutrals */
-  --color-bg: #FFFFFF;
-  --color-bg-secondary: #F9FAFB;
-  --color-bg-tertiary: #F3F4F6;
-  --color-border: #E5E7EB;
-  --color-border-light: #F3F4F6;
+  /* Neutrals - Dark Theme */
+  --color-bg: #1e1e2e;
+  --color-bg-secondary: #181825;
+  --color-bg-tertiary: #11111b;
+  --color-border: #313244;
+  --color-border-light: #45475a;
 
   /* Text */
-  --color-text: #111827;
-  --color-text-secondary: #6B7280;
-  --color-text-tertiary: #9CA3AF;
+  --color-text: #cdd6f4;
+  --color-text-secondary: #bac2de;
+  --color-text-tertiary: #a6adc8;
 
   /* Layout */
   --border-radius: 8px;
   --border-radius-sm: 6px;
   --border-radius-lg: 12px;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -119,8 +119,8 @@
 }
 
 .btn--danger:hover:not(:disabled) {
-  background: #dc2626;
-  border-color: #dc2626;
+  background: #e87699;
+  border-color: #e87699;
   transform: translateY(-1px);
 }
 
@@ -198,7 +198,7 @@
 
 .input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(35, 131, 226, 0.1);
+  box-shadow: 0 0 0 3px rgba(137, 180, 250, 0.2);
 }
 
 .input::placeholder {
@@ -210,7 +210,7 @@
 }
 
 .input--error:focus {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 0 3px rgba(243, 139, 168, 0.2);
 }
 
 .textarea {
@@ -220,7 +220,7 @@
 
 .select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23bac2de' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 16px;
@@ -248,22 +248,22 @@
 }
 
 .badge--primary {
-  background: rgba(35, 131, 226, 0.1);
+  background: rgba(137, 180, 250, 0.15);
   color: var(--color-primary);
 }
 
 .badge--success {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(166, 227, 161, 0.15);
   color: var(--color-success);
 }
 
 .badge--warning {
-  background: rgba(245, 158, 11, 0.1);
+  background: rgba(249, 226, 175, 0.15);
   color: var(--color-warning);
 }
 
 .badge--danger {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(243, 139, 168, 0.15);
   color: var(--color-danger);
 }
 
@@ -276,7 +276,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;

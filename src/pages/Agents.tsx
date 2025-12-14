@@ -661,8 +661,8 @@ function Agents() {
                   {agent.platform ? (
                     <span
                       style={{
-                        backgroundColor: agent.platform === 'whatsapp' ? '#25D366' : '#E4405F',
-                        color: 'white',
+                        backgroundColor: agent.platform === 'whatsapp' ? 'rgba(166, 227, 161, 0.2)' : 'rgba(243, 139, 168, 0.2)',
+                        color: agent.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '6px',
@@ -674,12 +674,12 @@ function Agents() {
                     >
                       {agent.platform === 'whatsapp' ? (
                         <>
-                          <WhatsAppIcon size={14} color="white" />
+                          <WhatsAppIcon size={14} color="#a6e3a1" />
                           WhatsApp
                         </>
                       ) : (
                         <>
-                          <InstagramIcon size={14} color="white" />
+                          <InstagramIcon size={14} color="#f38ba8" />
                           Instagram
                         </>
                       )}
@@ -785,7 +785,7 @@ function Agents() {
                                 e.currentTarget.style.background = 'transparent'
                               }}
                             >
-                              <WhatsAppIcon size={16} color="#25D366" />
+                              <WhatsAppIcon size={16} color="#a6e3a1" />
                               Asignar WhatsApp
                             </button>
                             <button
@@ -814,7 +814,7 @@ function Agents() {
                                 e.currentTarget.style.background = 'transparent'
                               }}
                             >
-                              <InstagramIcon size={16} color="#E4405F" />
+                              <InstagramIcon size={16} color="#f38ba8" />
                               Asignar Instagram
                             </button>
                           </>

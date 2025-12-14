@@ -121,7 +121,7 @@ function Landing() {
                   margin: '0 auto var(--spacing-md)',
                 }}
               >
-                <Brain size={32} color="white" />
+                <Brain size={32} color="var(--color-primary)" />
               </div>
               <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
                 Agentes de IA
@@ -144,14 +144,14 @@ function Landing() {
                   width: '64px',
                   height: '64px',
                   borderRadius: 'var(--border-radius-lg)',
-                  background: '#25D366',
+                  background: 'rgba(166, 227, 161, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto var(--spacing-md)',
                 }}
               >
-                <WhatsAppIcon size={32} color="white" />
+                <WhatsAppIcon size={32} color="#a6e3a1" />
               </div>
               <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
                 WhatsApp Business
@@ -174,14 +174,14 @@ function Landing() {
                   width: '64px',
                   height: '64px',
                   borderRadius: 'var(--border-radius-lg)',
-                  background: '#E4405F',
+                  background: 'rgba(243, 139, 168, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto var(--spacing-md)',
                 }}
               >
-                <InstagramIcon size={32} color="white" />
+                <InstagramIcon size={32} color="#f38ba8" />
               </div>
               <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
                 Instagram
@@ -230,7 +230,7 @@ function Landing() {
                     flexShrink: 0,
                   }}
                 >
-                  <Check size={20} color="white" />
+                  <Check size={20} color="var(--color-bg)" />
                 </div>
                 <p style={{ fontSize: 'var(--font-size-lg)', margin: 0, color: 'var(--color-text)' }}>
                   {benefit}

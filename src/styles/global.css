@@ -95,7 +95,7 @@ input, textarea, select {
 
 /* Selection */
 ::selection {
-  background: rgba(35, 131, 226, 0.2);
+  background: rgba(137, 180, 250, 0.3);
   color: var(--color-text);
 }
 
@@ -119,5 +119,3 @@ input, textarea, select {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
-
-

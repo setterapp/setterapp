@@ -109,8 +109,8 @@ function Conversations() {
                   <div style={{ marginTop: 'var(--spacing-xs)', display: 'flex', gap: 'var(--spacing-xs)', alignItems: 'center' }}>
                     <span
                       style={{
-                        backgroundColor: conversation.platform === 'whatsapp' ? '#25D366' : '#E4405F',
-                        color: 'white',
+                        backgroundColor: conversation.platform === 'whatsapp' ? 'rgba(166, 227, 161, 0.2)' : 'rgba(243, 139, 168, 0.2)',
+                        color: conversation.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px',
@@ -126,7 +126,7 @@ function Conversations() {
                       <span
                         style={{
                           backgroundColor: 'var(--color-primary)',
-                          color: 'white',
+                          color: 'var(--color-bg)',
                           borderRadius: '50%',
                           width: '24px',
                           height: '24px',

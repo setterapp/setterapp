@@ -358,7 +358,7 @@ function Analytics() {
             <div>
               <div className="flex items-center justify-between" style={{ marginBottom: 'var(--spacing-sm)' }}>
                 <div className="flex items-center" style={{ gap: 'var(--spacing-sm)' }}>
-                  <WhatsAppIcon size={20} color="#25D366" />
+                  <WhatsAppIcon size={20} color="#a6e3a1" />
                   <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text)' }}>WhatsApp</span>
                 </div>
                 <span style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>
@@ -375,7 +375,7 @@ function Analytics() {
                 <div style={{
                   width: `${metrics.totalConversations > 0 ? (metrics.whatsappConversations / metrics.totalConversations) * 100 : 0}%`,
                   height: '100%',
-                  background: '#25D366',
+                  background: '#a6e3a1',
                   borderRadius: '4px',
                   transition: 'width 0.3s ease'
                 }} />
@@ -384,7 +384,7 @@ function Analytics() {
             <div>
               <div className="flex items-center justify-between" style={{ marginBottom: 'var(--spacing-sm)' }}>
                 <div className="flex items-center" style={{ gap: 'var(--spacing-sm)' }}>
-                  <InstagramIcon size={20} color="#E4405F" />
+                  <InstagramIcon size={20} color="#f38ba8" />
                   <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text)' }}>Instagram</span>
                 </div>
                 <span style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>
@@ -401,7 +401,7 @@ function Analytics() {
                 <div style={{
                   width: `${metrics.totalConversations > 0 ? (metrics.instagramConversations / metrics.totalConversations) * 100 : 0}%`,
                   height: '100%',
-                  background: '#E4405F',
+                  background: '#f38ba8',
                   borderRadius: '4px',
                   transition: 'width 0.3s ease'
                 }} />
@@ -433,7 +433,7 @@ function Analytics() {
                 }}>
                   {day.count > 0 && (
                     <span style={{
-                      color: 'white',
+                      color: 'var(--color-bg)',
                       fontSize: 'var(--font-size-xs)',
                       fontWeight: 600,
                       marginBottom: '4px'
@@ -468,7 +468,7 @@ function Analytics() {
               <div key={index}>
                 <div className="flex items-center justify-between" style={{ marginBottom: 'var(--spacing-sm)' }}>
                   <div className="flex items-center" style={{ gap: 'var(--spacing-sm)' }}>
-                    <Brain size={16} color="#2383E2" />
+                    <Brain size={16} color="var(--color-primary)" />
                     <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text)', fontWeight: 500 }}>
                       {item.agentName}
                     </span>
@@ -477,8 +477,8 @@ function Analytics() {
                         fontSize: 'var(--font-size-xs)',
                         padding: '2px 8px',
                         borderRadius: '12px',
-                        background: item.platform === 'whatsapp' ? '#25D366' : '#E4405F',
-                        color: 'white'
+                        background: item.platform === 'whatsapp' ? 'rgba(166, 227, 161, 0.2)' : 'rgba(243, 139, 168, 0.2)',
+                        color: item.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8'
                       }}>
                         {item.platform === 'whatsapp' ? 'WA' : 'IG'}
                       </span>

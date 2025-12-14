@@ -130,7 +130,7 @@ export default function AgentTestChat({ agent }: AgentTestChatProps) {
                 background: message.role === 'user'
                   ? 'var(--color-primary)'
                   : 'var(--color-bg)',
-                color: message.role === 'user' ? 'white' : 'var(--color-text)',
+                color: message.role === 'user' ? 'var(--color-bg)' : 'var(--color-text)',
                 border: message.role === 'assistant' ? '1px solid var(--color-border)' : 'none',
                 fontSize: 'var(--font-size-sm)',
                 lineHeight: 1.5,
