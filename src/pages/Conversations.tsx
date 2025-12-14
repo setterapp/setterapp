@@ -181,7 +181,8 @@ function Conversations() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: 'var(--color-text-secondary)',
+                      color: 'var(--color-text)',
+                      opacity: 0.7,
                       borderRadius: 'var(--border-radius-sm)',
                     }}
                   >

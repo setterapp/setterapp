@@ -16,10 +16,10 @@
   --color-border: #313244;
   --color-border-light: #45475a;
 
-  /* Text */
+  /* Text - Improved contrast for dark theme */
   --color-text: #cdd6f4;
-  --color-text-secondary: #bac2de;
-  --color-text-tertiary: #a6adc8;
+  --color-text-secondary: #c9d1d9;
+  --color-text-tertiary: #b1bac4;
 
   /* Layout */
   --border-radius: 8px;
@@ -104,12 +104,14 @@
   background: transparent;
   color: var(--color-text-secondary);
   border-color: transparent;
+  opacity: 0.9;
 }
 
 .btn--ghost:hover:not(:disabled) {
   background: var(--color-bg-secondary);
   color: var(--color-text);
   border-color: var(--color-border);
+  opacity: 1;
 }
 
 .btn--danger {
@@ -203,6 +205,7 @@
 
 .input::placeholder {
   color: var(--color-text-tertiary);
+  opacity: 0.8;
 }
 
 .input--error {
@@ -269,7 +272,8 @@
 
 .badge--secondary {
   background: var(--color-bg-tertiary);
-  color: var(--color-text-secondary);
+  color: var(--color-text);
+  opacity: 0.9;
 }
 
 /* Modal */

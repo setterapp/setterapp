@@ -255,7 +255,7 @@ function Agents() {
                     onChange={(e) => updateConfig('assistantName', e.target.value)}
                     placeholder="Ej: Juan, María, etc."
                   />
-                  <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
+                  <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)', opacity: 0.9 }}>
                     Nombre que verán tus clientes al interactuar con el asistente
                   </small>
                 </div>
@@ -353,7 +353,7 @@ function Agents() {
                     placeholder="Un enlace por línea&#10;https://www.ejemplo.com&#10;https://www.otro-ejemplo.com"
                     rows={3}
                   />
-                  <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
+                  <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)', opacity: 0.9 }}>
                     Un enlace por línea. Recursos importantes que el asistente debe conocer.
                   </small>
                 </div>
@@ -734,7 +734,8 @@ function Agents() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: 'var(--color-text-secondary)',
+                        color: 'var(--color-text)',
+                        opacity: 0.7,
                         borderRadius: 'var(--border-radius-sm)',
                       }}
                     >

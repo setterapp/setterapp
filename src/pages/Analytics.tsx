@@ -231,7 +231,7 @@ function Analytics() {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <MessageSquare size={24} color="#2383E2" />
+                <MessageSquare size={24} color="var(--color-primary)" />
               </div>
               <div>
                 <h3 className="card-title" style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
@@ -273,7 +273,7 @@ function Analytics() {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Zap size={24} color="#10B981" />
+                <Zap size={24} color="var(--color-success)" />
               </div>
             <div>
               <h3 className="card-title" style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
@@ -301,7 +301,7 @@ function Analytics() {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Inbox size={24} color="#F59E0B" />
+                <Inbox size={24} color="var(--color-warning)" />
               </div>
             <div>
               <h3 className="card-title" style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
@@ -329,7 +329,7 @@ function Analytics() {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Brain size={24} color="#2383E2" />
+                <Brain size={24} color="var(--color-primary)" />
               </div>
             <div>
               <h3 className="card-title" style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
