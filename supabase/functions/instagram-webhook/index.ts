@@ -56,25 +56,48 @@ Deno.serve(async (req: Request) => {
     if (req.method === 'POST') {
       const body = await req.json();
       console.log('📨 Instagram webhook event received:', JSON.stringify(body, null, 2));
+      console.log('📨 Event object type:', body.object);
+      console.log('📨 Event entries:', body.entry?.length || 0);
 
-      if (body.object === 'instagram') {
+      // Instagram puede enviar eventos con object: 'instagram' o 'page'
+      if (body.object === 'instagram' || body.object === 'page') {
         for (const entry of body.entry || []) {
           const pageId = entry.id;
-
-          // Procesar eventos de mensajería
+          console.log('📨 Processing entry with pageId:', pageId);
+          
+          // Procesar eventos de mensajería (formato estándar)
           if (entry.messaging) {
+            console.log('📨 Found messaging events:', entry.messaging.length);
             for (const event of entry.messaging) {
               await processInstagramEvent(event, pageId);
             }
           }
 
-          // Procesar otros tipos de eventos si los hay
+          // Procesar eventos en formato changes (alternativo)
           if (entry.changes) {
+            console.log('📨 Found changes events:', entry.changes.length);
             for (const change of entry.changes) {
-              await processInstagramChange(change, pageId);
+              // Si el change es de tipo messaging, procesarlo
+              if (change.field === 'messages' && change.value) {
+                console.log('📨 Processing messaging change:', change.value);
+                await processInstagramEvent(change.value, pageId);
+              } else {
+                await processInstagramChange(change, pageId);
+              }
+            }
+          }
+
+          // También verificar si hay mensajes directamente en el entry
+          if (entry.messages) {
+            console.log('📨 Found messages directly in entry:', entry.messages.length);
+            for (const message of entry.messages) {
+              await processInstagramEvent({ message }, pageId);
             }
           }
         }
+      } else {
+        console.warn('⚠️ Unknown event object type:', body.object);
+        console.warn('⚠️ Full body:', JSON.stringify(body, null, 2));
       }
 
       // Responder 200 OK a Instagram para confirmar recepción
@@ -98,33 +121,44 @@ Deno.serve(async (req: Request) => {
 });
 
 /**
- * Obtiene el user_id asociado a una integración de Instagram por pageId
+ * Obtiene el user_id asociado a una integración de Instagram
+ * Intenta buscar por pageId primero, si no encuentra, usa la primera integración conectada
  */
 async function getUserIdFromPageId(pageId: string): Promise<string | null> {
   try {
-    // Buscar la integración de Instagram que tenga este pageId en su config
-    const { data: integration, error } = await supabase
+    // Primero intentar buscar todas las integraciones de Instagram conectadas
+    const { data: integrations, error } = await supabase
       .from('integrations')
       .select('user_id, config')
       .eq('type', 'instagram')
-      .eq('status', 'connected')
-      .single();
+      .eq('status', 'connected');
 
-    if (error || !integration) {
-      console.error('❌ Error finding integration for pageId:', pageId, error);
+    if (error) {
+      console.error('❌ Error finding integrations:', error);
       return null;
     }
 
-    // Verificar si el pageId coincide (puede estar en config.instagram_page_id o config.page_id)
-    const config = integration.config || {};
-    const instagramPageId = config.instagram_page_id || config.page_id;
-
-    if (instagramPageId === pageId || !instagramPageId) {
-      // Si no hay pageId específico, usar la primera integración conectada
-      return integration.user_id;
+    if (!integrations || integrations.length === 0) {
+      console.error('❌ No connected Instagram integrations found');
+      return null;
     }
 
-    return null;
+    // Si hay pageId, intentar encontrar una que coincida
+    if (pageId) {
+      for (const integration of integrations) {
+        const config = integration.config || {};
+        const instagramPageId = config.instagram_page_id || config.page_id;
+        
+        if (instagramPageId === pageId) {
+          console.log('✅ Found integration matching pageId:', pageId);
+          return integration.user_id;
+        }
+      }
+    }
+
+    // Si no hay pageId o no coincide, usar la primera integración conectada
+    console.log('⚠️ No matching pageId found, using first connected integration');
+    return integrations[0].user_id;
   } catch (error) {
     console.error('❌ Error getting user_id from pageId:', error);
     return null;
