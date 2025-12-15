@@ -97,15 +97,33 @@ function Integrations() {
 
   async function handleInstagramConnect() {
     try {
-      // Usar Supabase Auth para Instagram (mismo método que WhatsApp)
-      // Esto redirigirá a Facebook OAuth y luego volverá a /auth/callback
-      const result = await instagramService.connectInstagram()
+      const { instagramDirectService } = await import('../services/instagram-direct')
+      const result = await instagramDirectService.connectInstagram()
 
-      if (result.url) {
-        // Redirigir a Facebook OAuth
-        window.location.href = result.url
-      } else {
-        throw new Error('No se pudo obtener la URL de autorización')
+      if (result.code) {
+        // Process the code from popup
+        const storedUserId = sessionStorage.getItem('instagram_oauth_user_id')
+        if (!storedUserId) {
+          throw new Error('Sesión no encontrada')
+        }
+
+        // Exchange code for token
+        const tokenData = await instagramDirectService.exchangeCodeForToken(result.code)
+
+        // Store token in integration
+        await instagramDirectService.storeAccessToken(
+          storedUserId,
+          tokenData.access_token,
+          {
+            user_id: tokenData.user_id,
+            username: tokenData.username,
+          }
+        )
+
+        sessionStorage.removeItem('instagram_oauth_state')
+        sessionStorage.removeItem('instagram_oauth_user_id')
+
+        refetch()
       }
     } catch (error: any) {
       console.error('Error connecting Instagram:', error)

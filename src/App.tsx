@@ -11,6 +11,7 @@ import Analytics from './pages/Analytics'
 import Conversations from './pages/Conversations'
 import SettingsPage from './pages/Settings'
 import AuthCallback from './pages/AuthCallback'
+import InstagramCallback from './pages/InstagramCallback'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import Logo from './components/Logo'
@@ -110,6 +111,7 @@ function App() {
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/auth/instagram/callback" element={<InstagramCallback />} />
         <Route
           element={
             <ProtectedRoute>
