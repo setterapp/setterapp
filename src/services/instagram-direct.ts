@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 /**
  * Instagram Direct OAuth Service
  * Handles authentication directly through Instagram OAuth (not Facebook)
- * 
+ *
  * This uses Instagram's direct OAuth endpoint: instagram.com/oauth/authorize/third_party
  * Based on the competitor's implementation
  */
@@ -44,7 +44,7 @@ export const instagramDirectService = {
 
       // Generate state for CSRF protection
       const state = crypto.randomUUID()
-      
+
       // Store state in sessionStorage to verify on callback
       sessionStorage.setItem('instagram_oauth_state', state)
       sessionStorage.setItem('instagram_oauth_user_id', currentSession.user.id)

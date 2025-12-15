@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase'
+import { instagramDirectService } from '../instagram-direct'
 
 /**
  * Facebook/Instagram OAuth Service
@@ -8,21 +9,8 @@ import { supabase } from '../../lib/supabase'
  * autenticarnos con Facebook OAuth para acceder a Instagram.
  */
 
-// Scopes necesarios para Instagram
-// Basado en los permisos activados en Meta Developers
-const INSTAGRAM_SCOPES = [
-  'pages_show_list',                    // ✅ Activado - Listar páginas conectadas
-  'public_profile',                     // ✅ Activado - Perfil público
-  'email',                              // ✅ Email del usuario (configurado en Meta)
-  // Permisos para mensajería (DMs) - Necesarios para recibir y responder mensajes
-  'instagram_business_manage_messages', // ✅ Gestionar mensajes de Instagram Business
-  'instagram_manage_messages',         // ✅ Gestionar mensajes directos
-  'pages_read_engagement',              // ✅ Leer engagement de páginas (necesario para mensajería)
-  // Los siguientes requieren hacer al menos 1 API test call antes de usar:
-  // 'instagram_basic',                  // ⚠️ Requiere 1 API test call
-  // 'instagram_manage_comments',        // ⚠️ Requiere 1 API test call
-  // 'pages_messaging',                  // ⚠️ NO usar - causa error "Invalid Scopes"
-]
+// Note: Instagram scopes are now handled by instagram-direct.ts service
+// This file maintains backwards compatibility and redirects to the direct OAuth flow
 
 export const instagramService = {
   /**
@@ -52,7 +40,6 @@ export const instagramService = {
 
       // Use Instagram direct OAuth (like competitor)
       // This redirects to instagram.com/login directly, not Facebook
-      const { instagramDirectService } = await import('./instagram-direct')
       return await instagramDirectService.connectInstagram()
     } catch (error) {
       console.error('❌ Error connecting Instagram:', error)

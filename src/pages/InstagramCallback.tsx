@@ -6,7 +6,6 @@ function InstagramCallback() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const handleInstagramCallback = async () => {
@@ -21,7 +20,6 @@ function InstagramCallback() {
         if (errorParam) {
           console.error('❌ Error from Instagram:', errorParam, errorDescription)
           setError(errorDescription || errorParam || 'Error al autorizar con Instagram')
-          setLoading(false)
           setTimeout(() => navigate('/integrations'), 5000)
           return
         }
@@ -33,7 +31,6 @@ function InstagramCallback() {
         if (!state || state !== storedState) {
           console.error('❌ Invalid state parameter')
           setError('Solicitud inválida. Por favor, intenta de nuevo.')
-          setLoading(false)
           setTimeout(() => navigate('/integrations'), 5000)
           return
         }
@@ -41,7 +38,6 @@ function InstagramCallback() {
         if (!code) {
           console.error('❌ No authorization code received')
           setError('No se recibió código de autorización')
-          setLoading(false)
           setTimeout(() => navigate('/integrations'), 5000)
           return
         }
@@ -49,7 +45,6 @@ function InstagramCallback() {
         if (!storedUserId) {
           console.error('❌ No user ID found in session')
           setError('Sesión no encontrada. Por favor, inicia sesión de nuevo.')
-          setLoading(false)
           setTimeout(() => navigate('/login'), 5000)
           return
         }
@@ -85,13 +80,12 @@ function InstagramCallback() {
         sessionStorage.removeItem('instagram_oauth_user_id')
 
         console.log('✅ Instagram conectado exitosamente')
-        
+
         // Redirect to integrations page
         navigate('/integrations')
       } catch (err: any) {
         console.error('❌ Error en Instagram callback:', err)
         setError(err.message || 'Error al completar la conexión con Instagram')
-        setLoading(false)
         setTimeout(() => navigate('/integrations'), 5000)
       }
     }
