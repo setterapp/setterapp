@@ -260,13 +260,13 @@ function Integrations() {
                   borderRadius: 'var(--border-radius-lg)',
                   padding: 'var(--spacing-lg)',
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: 'var(--spacing-md)',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   transition: 'var(--transition)',
                 }}
               >
-                {/* Top: Title and metadata */}
-                <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-md)' }}>
+                {/* Left: Title and metadata */}
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
                   <div
                     style={{
                       width: '48px',
@@ -286,24 +286,24 @@ function Integrations() {
                       <InstagramIcon size={24} color="#f38ba8" />
                     )}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ flex: 1 }}>
                     <h3 style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>
                       {integration.name}
                     </h3>
-                  <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', wordBreak: 'break-word' }}>
-                    {integration.updated_at && (
-                      <>Última actualización {formatDate(integration.updated_at)}</>
-                    )}
-                    {integration.created_at && integration.updated_at && ' | '}
-                    {integration.created_at && (
-                      <>Creado {formatFullDate(integration.created_at)}</>
-                    )}
-                  </p>
+                    <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                      {integration.updated_at && (
+                        <>Última actualización {formatDate(integration.updated_at)}</>
+                      )}
+                      {integration.created_at && integration.updated_at && ' | '}
+                      {integration.created_at && (
+                        <>Creado {formatFullDate(integration.created_at)}</>
+                      )}
+                    </p>
                   </div>
                 </div>
 
-                {/* Bottom: Controls */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', paddingTop: 'var(--spacing-sm)', borderTop: '1px solid var(--color-border)' }}>
+                {/* Right: Controls */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
                   {/* Active Label */}
                   {isConnected && (
                     <span
@@ -311,14 +311,13 @@ function Integrations() {
                         fontSize: 'var(--font-size-sm)',
                         fontWeight: 600,
                         color: 'var(--color-success)',
+                        minWidth: '60px',
+                        textAlign: 'right',
                       }}
                     >
                       Activo
                     </span>
                   )}
-
-                  {/* Spacer to push controls to the right */}
-                  <div style={{ flex: 1 }} />
 
                   {/* Toggle Switch */}
                   <ToggleSwitch
