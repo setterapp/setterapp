@@ -21,18 +21,15 @@ import { supabase } from '../lib/supabase'
 // These should be set in your Meta App settings
 const INSTAGRAM_APP_ID = import.meta.env.VITE_INSTAGRAM_APP_ID || '1206229924794990'
 const INSTAGRAM_APP_SECRET = import.meta.env.VITE_INSTAGRAM_APP_SECRET || ''
-// Use custom redirect URI if set, otherwise try Supabase, then fallback to local callback
+// Instagram uses direct OAuth (not Supabase OAuth), so always use local callback
 // The redirect URI must match EXACTLY what's configured in Meta Developers → Settings → Basic → Valid OAuth Redirect URIs
 const getRedirectUri = () => {
+  // Use custom redirect URI if explicitly set in env
   if (import.meta.env.VITE_INSTAGRAM_REDIRECT_URI) {
     return import.meta.env.VITE_INSTAGRAM_REDIRECT_URI
   }
-  // Try to use Supabase redirect URI if Supabase URL is available (most common setup)
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  if (supabaseUrl) {
-    return `${supabaseUrl}/auth/v1/callback`
-  }
-  // Fallback to local callback page
+  // Instagram OAuth direct always uses local callback (not Supabase callback)
+  // Supabase callback is only for Supabase's OAuth flow, not direct Instagram OAuth
   return `${window.location.origin}/auth/instagram/callback`
 }
 const INSTAGRAM_REDIRECT_URI = getRedirectUri()
