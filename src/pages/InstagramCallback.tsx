@@ -52,8 +52,8 @@ function InstagramCallback() {
         }
 
         // Verify state (CSRF protection)
-        const storedState = sessionStorage.getItem('instagram_oauth_state')
-        const storedUserId = sessionStorage.getItem('instagram_oauth_user_id')
+        const storedState = localStorage.getItem('instagram_oauth_state')
+        const storedUserId = localStorage.getItem('instagram_oauth_user_id')
 
         if (!state || state !== storedState) {
           console.error('❌ Invalid state parameter')
@@ -102,9 +102,9 @@ function InstagramCallback() {
           }
         )
 
-        // Clean up session storage
-        sessionStorage.removeItem('instagram_oauth_state')
-        sessionStorage.removeItem('instagram_oauth_user_id')
+        // Clean up local storage
+        localStorage.removeItem('instagram_oauth_state')
+        localStorage.removeItem('instagram_oauth_user_id')
 
         console.log('✅ Instagram conectado exitosamente')
 
@@ -143,4 +143,3 @@ function InstagramCallback() {
 }
 
 export default InstagramCallback
-

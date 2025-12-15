@@ -104,7 +104,7 @@ function Integrations() {
 
       if (result.code) {
         // Process the code from popup
-        const storedUserId = sessionStorage.getItem('instagram_oauth_user_id')
+        const storedUserId = localStorage.getItem('instagram_oauth_user_id')
         if (!storedUserId) {
           throw new Error('Sesión no encontrada')
         }
@@ -122,13 +122,13 @@ function Integrations() {
           }
         )
 
-        sessionStorage.removeItem('instagram_oauth_state')
-        sessionStorage.removeItem('instagram_oauth_user_id')
+        localStorage.removeItem('instagram_oauth_state')
+        localStorage.removeItem('instagram_oauth_user_id')
 
         // Refresh integrations and show success
         await refetch()
         console.log('✅ Instagram conectado exitosamente')
-        
+
         // Ensure we're on the integrations page (in case user navigated away)
         navigate('/integrations', { replace: true })
       }

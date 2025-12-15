@@ -122,9 +122,9 @@ export const instagramDirectService = {
       // Generate state for CSRF protection
       const state = crypto.randomUUID()
 
-      // Store state in sessionStorage to verify on callback
-      sessionStorage.setItem('instagram_oauth_state', state)
-      sessionStorage.setItem('instagram_oauth_user_id', currentSession.user.id)
+      // Store state in localStorage (not sessionStorage) so popup can access it
+      localStorage.setItem('instagram_oauth_state', state)
+      localStorage.setItem('instagram_oauth_user_id', currentSession.user.id)
 
       // Build Instagram OAuth URL (direct Instagram OAuth)
       // Using Instagram's direct OAuth endpoint as provided in the setup link
