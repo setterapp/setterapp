@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
  * Instagram Direct OAuth Service
  * Handles authentication directly through Instagram OAuth
  *
- * This uses Instagram's direct OAuth endpoint: instagram.com/oauth/authorize
+ * This uses Instagram's direct OAuth endpoint: api.instagram.com/oauth/authorize
  * The redirect URI can be either:
  * - Supabase callback: https://your-project.supabase.co/auth/v1/callback
  * - Local callback: https://yourdomain.com/auth/instagram/callback
@@ -128,7 +128,7 @@ export const instagramDirectService = {
 
       // Build Instagram OAuth URL (direct Instagram OAuth)
       // Using Instagram's direct OAuth endpoint as provided in the setup link
-      const authUrl = new URL('https://www.instagram.com/oauth/authorize')
+      const authUrl = new URL('https://api.instagram.com/oauth/authorize')
       authUrl.searchParams.set('redirect_uri', actualRedirectUri)
       authUrl.searchParams.set('response_type', 'code')
       authUrl.searchParams.set('scope', INSTAGRAM_SCOPES.join(','))
