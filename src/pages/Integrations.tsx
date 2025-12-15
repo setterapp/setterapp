@@ -97,9 +97,34 @@ function Integrations() {
 
   async function handleInstagramConnect() {
     try {
-      await instagramService.connectInstagram()
-      // El usuario será redirigido al login de OAuth
-      // Después volverá a /integrations
+      const { instagramDirectService } = await import('../services/instagram-direct')
+      const result = await instagramDirectService.connectInstagram()
+      
+      if (result.code) {
+        // Process the code from popup
+        const storedUserId = sessionStorage.getItem('instagram_oauth_user_id')
+        if (!storedUserId) {
+          throw new Error('Sesión no encontrada')
+        }
+
+        // Exchange code for token
+        const tokenData = await instagramDirectService.exchangeCodeForToken(result.code)
+        
+        // Store token in integration
+        await instagramDirectService.storeAccessToken(
+          storedUserId,
+          tokenData.access_token,
+          {
+            user_id: tokenData.user_id,
+            username: tokenData.username,
+          }
+        )
+
+        sessionStorage.removeItem('instagram_oauth_state')
+        sessionStorage.removeItem('instagram_oauth_user_id')
+        
+        refetch()
+      }
     } catch (error: any) {
       console.error('Error connecting Instagram:', error)
       alert(`Error al conectar Instagram: ${error.message || 'Error desconocido'}`)

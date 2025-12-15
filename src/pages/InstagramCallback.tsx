@@ -16,6 +16,32 @@ function InstagramCallback() {
         const errorParam = searchParams.get('error')
         const errorDescription = searchParams.get('error_description')
 
+        // If we're in a popup, send message to parent window and close
+        if (window.opener && !window.opener.closed) {
+          try {
+            if (errorParam) {
+              window.opener.postMessage({
+                type: 'instagram_oauth_error',
+                error: errorDescription || errorParam
+              }, window.location.origin)
+            } else if (code) {
+              window.opener.postMessage({
+                type: 'instagram_oauth_success',
+                code: code,
+                url: window.location.href,
+                state: state
+              }, window.location.origin)
+            }
+            // Close popup after sending message
+            setTimeout(() => {
+              window.close()
+            }, 100)
+          } catch (e) {
+            console.error('Error sending message to parent:', e)
+          }
+          return
+        }
+
         // Check for errors from Instagram
         if (errorParam) {
           console.error('❌ Error from Instagram:', errorParam, errorDescription)

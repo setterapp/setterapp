@@ -12,7 +12,8 @@ import { supabase } from '../lib/supabase'
 // These should be set in your Meta App settings
 const INSTAGRAM_APP_ID = import.meta.env.VITE_INSTAGRAM_APP_ID || '893993129727776'
 const INSTAGRAM_APP_SECRET = import.meta.env.VITE_INSTAGRAM_APP_SECRET || ''
-const INSTAGRAM_REDIRECT_URI = `${window.location.origin}/auth/instagram/callback`
+// Use the actual domain - this must match exactly what's configured in Meta Developers
+const INSTAGRAM_REDIRECT_URI = import.meta.env.VITE_INSTAGRAM_REDIRECT_URI || `${window.location.origin}/auth/instagram/callback`
 
 // Scopes for Instagram Business API
 const INSTAGRAM_SCOPES = [
@@ -26,9 +27,9 @@ const INSTAGRAM_SCOPES = [
 export const instagramDirectService = {
   /**
    * Initiate Instagram direct OAuth flow
-   * This redirects directly to Instagram login (not Facebook)
+   * This opens Instagram login in a popup window (not Facebook)
    */
-  async connectInstagram() {
+  async connectInstagram(): Promise<{ code: string; url: string }> {
     try {
       // Verify user is authenticated in our app first
       const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession()
@@ -39,7 +40,8 @@ export const instagramDirectService = {
 
       console.log('🔗 Iniciando OAuth directo de Instagram...', {
         userId: currentSession.user.id,
-        userEmail: currentSession.user.email
+        userEmail: currentSession.user.email,
+        redirectUri: INSTAGRAM_REDIRECT_URI
       })
 
       // Generate state for CSRF protection
@@ -58,6 +60,8 @@ export const instagramDirectService = {
       authUrl.searchParams.set('client_id', INSTAGRAM_APP_ID)
       authUrl.searchParams.set('force_reauth', '0')
 
+      console.log('🔗 Instagram OAuth URL:', authUrl.toString())
+
       // Redirect to Instagram login with enable_fb_login option
       // This allows users to login with Instagram directly OR use Facebook as fallback
       const loginUrl = new URL('https://www.instagram.com/accounts/login/')
@@ -66,10 +70,75 @@ export const instagramDirectService = {
       loginUrl.searchParams.set('enable_fb_login', '')
       loginUrl.searchParams.set('next', authUrl.toString())
 
-      console.log('✅ Redirigiendo a Instagram OAuth directo...')
-      window.location.href = loginUrl.toString()
+      console.log('✅ Abriendo Instagram OAuth en popup...', loginUrl.toString())
+      
+      // Open in popup window
+      const width = 600
+      const height = 700
+      const left = (window.screen.width / 2) - (width / 2)
+      const top = (window.screen.height / 2) - (height / 2)
 
-      return { url: loginUrl.toString() }
+      const popup = window.open(
+        loginUrl.toString(),
+        'Instagram Login',
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes,location=no,directories=no,status=no`
+      )
+
+      if (!popup) {
+        throw new Error('No se pudo abrir la ventana popup. Por favor, permite ventanas emergentes para este sitio.')
+      }
+
+      // Listen for the callback using postMessage
+      // The callback page will send a message when it loads
+      return new Promise((resolve, reject) => {
+        const messageHandler = (event: MessageEvent) => {
+          // Verify origin for security - allow our domain
+          const allowedOrigins = [
+            window.location.origin,
+            window.location.protocol + '//' + window.location.host,
+            window.location.protocol + '//' + window.location.hostname,
+          ]
+          
+          if (!allowedOrigins.some(origin => event.origin === origin || event.origin.includes(window.location.hostname))) {
+            return
+          }
+
+          if (event.data && event.data.type === 'instagram_oauth_success') {
+            window.removeEventListener('message', messageHandler)
+            if (!popup.closed) {
+              popup.close()
+            }
+            resolve({ code: event.data.code, url: event.data.url })
+          } else if (event.data && event.data.type === 'instagram_oauth_error') {
+            window.removeEventListener('message', messageHandler)
+            if (!popup.closed) {
+              popup.close()
+            }
+            reject(new Error(event.data.error || 'Error al autorizar con Instagram'))
+          }
+        }
+
+        window.addEventListener('message', messageHandler)
+
+        // Also poll for popup being closed
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed)
+            window.removeEventListener('message', messageHandler)
+            reject(new Error('La ventana de autorización fue cerrada'))
+          }
+        }, 500)
+
+        // Timeout after 5 minutes
+        setTimeout(() => {
+          clearInterval(checkClosed)
+          window.removeEventListener('message', messageHandler)
+          if (!popup.closed) {
+            popup.close()
+          }
+          reject(new Error('Tiempo de espera agotado'))
+        }, 5 * 60 * 1000)
+      })
     } catch (error) {
       console.error('❌ Error connecting Instagram:', error)
       throw error

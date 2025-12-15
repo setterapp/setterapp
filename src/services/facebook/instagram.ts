@@ -39,7 +39,7 @@ export const instagramService = {
       })
 
       // Use Instagram direct OAuth (like competitor)
-      // This redirects to instagram.com/login directly, not Facebook
+      // This opens instagram.com/login in a popup window, not Facebook
       return await instagramDirectService.connectInstagram()
     } catch (error) {
       console.error('❌ Error connecting Instagram:', error)
