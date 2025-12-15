@@ -40,7 +40,7 @@ export const instagramDirectService = {
 
       // Determine the actual redirect URI being used
       const actualRedirectUri = INSTAGRAM_REDIRECT_URI
-      
+
       console.log('🔗 Iniciando OAuth directo de Instagram...', {
         userId: currentSession.user.id,
         userEmail: currentSession.user.email,

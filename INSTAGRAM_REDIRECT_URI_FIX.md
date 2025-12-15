@@ -5,6 +5,15 @@
 Invalid Request: Request parameters are invalid: Invalid redirect_uri
 ```
 
+## ✅ Redirect URI Correcto (Basado en tu URL actual)
+
+Si estás usando Supabase Auth, el redirect URI es:
+```
+https://afqbakvvfpebnxzjewsk.supabase.co/auth/v1/callback
+```
+
+Este es el redirect URI que debes agregar en Meta Developers.
+
 ## 🔍 Diagnóstico
 
 El redirect URI debe coincidir **EXACTAMENTE** entre:
