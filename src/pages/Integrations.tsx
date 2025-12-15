@@ -99,7 +99,7 @@ function Integrations() {
     try {
       const { instagramDirectService } = await import('../services/instagram-direct')
       const result = await instagramDirectService.connectInstagram()
-      
+
       if (result.code) {
         // Process the code from popup
         const storedUserId = sessionStorage.getItem('instagram_oauth_user_id')
@@ -109,7 +109,7 @@ function Integrations() {
 
         // Exchange code for token
         const tokenData = await instagramDirectService.exchangeCodeForToken(result.code)
-        
+
         // Store token in integration
         await instagramDirectService.storeAccessToken(
           storedUserId,
@@ -122,7 +122,7 @@ function Integrations() {
 
         sessionStorage.removeItem('instagram_oauth_state')
         sessionStorage.removeItem('instagram_oauth_user_id')
-        
+
         refetch()
       }
     } catch (error: any) {

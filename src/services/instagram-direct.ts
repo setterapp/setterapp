@@ -71,7 +71,7 @@ export const instagramDirectService = {
       loginUrl.searchParams.set('next', authUrl.toString())
 
       console.log('✅ Abriendo Instagram OAuth en popup...', loginUrl.toString())
-      
+
       // Open in popup window
       const width = 600
       const height = 700
@@ -98,7 +98,7 @@ export const instagramDirectService = {
             window.location.protocol + '//' + window.location.host,
             window.location.protocol + '//' + window.location.hostname,
           ]
-          
+
           if (!allowedOrigins.some(origin => event.origin === origin || event.origin.includes(window.location.hostname))) {
             return
           }
