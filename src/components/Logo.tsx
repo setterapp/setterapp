@@ -48,9 +48,9 @@ export default function Logo({ size = 32, variant = 'full' }: LogoProps) {
         />
         <circle cx="16" cy="16" r="3" fill="currentColor" />
       </svg>
-      <span style={{ 
-        fontSize: size * 0.6, 
-        fontWeight: 700, 
+      <span style={{
+        fontSize: size * 0.6,
+        fontWeight: 700,
         color: 'currentColor',
         letterSpacing: '-0.5px'
       }}>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Brain, ArrowRight, Check } from 'lucide-react'
+import { ArrowRight, Check } from 'lucide-react'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import Logo from '../components/Logo'
@@ -283,18 +283,18 @@ function Landing() {
           color: 'var(--color-text-secondary)',
         }}
       >
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
           alignItems: 'center',
           gap: 'var(--spacing-md)',
           flexWrap: 'wrap',
           marginBottom: 'var(--spacing-md)'
         }}>
-          <Link 
-            to="/privacy" 
-            style={{ 
-              color: 'var(--color-text-secondary)', 
+          <Link
+            to="/privacy"
+            style={{
+              color: 'var(--color-text-secondary)',
               textDecoration: 'none',
               fontSize: 'var(--font-size-sm)',
               transition: 'var(--transition)'

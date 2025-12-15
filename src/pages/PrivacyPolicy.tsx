@@ -16,10 +16,10 @@ function PrivacyPolicy() {
         border: '1px solid var(--color-border)',
       }}>
         <div style={{ marginBottom: 'var(--spacing-xl)' }}>
-          <Link 
-            to="/" 
-            style={{ 
-              color: 'var(--color-primary)', 
+          <Link
+            to="/"
+            style={{
+              color: 'var(--color-primary)',
               textDecoration: 'none',
               fontSize: 'var(--font-size-sm)',
               display: 'inline-flex',
