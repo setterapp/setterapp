@@ -119,7 +119,7 @@ function Landing() {
                   margin: '0 auto var(--spacing-md)',
                 }}
               >
-                <Brain size={32} color="var(--color-primary)" />
+                <Logo size={32} variant="icon" />
               </div>
               <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
                 Agentes de IA
