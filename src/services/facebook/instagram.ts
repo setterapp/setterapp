@@ -45,43 +45,15 @@ export const instagramService = {
         throw new Error('Debes iniciar sesión primero antes de conectar Instagram')
       }
 
-      console.log('🔗 Iniciando OAuth de Facebook para Instagram...', {
+      console.log('🔗 Iniciando OAuth directo de Instagram...', {
         userId: currentSession.user.id,
         userEmail: currentSession.user.email
       })
 
-      // Iniciar OAuth con Facebook
-      // IMPORTANTE: Instagram Business API no tiene su propio OAuth provider.
-      // Se autentica a través de Facebook OAuth porque Instagram es propiedad de Meta/Facebook.
-      // Esto es el método oficial y requerido por Meta para acceder a Instagram Business API.
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          // Usar solo scopes básicos que funcionan sin App Review
-          scopes: INSTAGRAM_SCOPES.join(','),
-          redirectTo: `${window.location.origin}/auth/callback?redirect_to=/integrations&provider=facebook&integration=instagram`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent', // Forzar consentimiento para obtener todos los permisos
-            display: 'page', // Usar display=page para mejor experiencia
-          },
-          // Esto asegura que se vincule a la sesión actual en lugar de crear una nueva
-          skipBrowserRedirect: false,
-        }
-      })
-
-      if (error) {
-        console.error('❌ Error en connectInstagram:', error)
-        throw error
-      }
-
-      if (!data.url) {
-        console.warn('⚠️ No se obtuvo URL de redirección.')
-        throw new Error('No se pudo obtener la URL de autorización de Facebook')
-      }
-
-      console.log('✅ Redirigiendo a Facebook OAuth...')
-      return data
+      // Use Instagram direct OAuth (like competitor)
+      // This redirects to instagram.com/login directly, not Facebook
+      const { instagramDirectService } = await import('./instagram-direct')
+      return await instagramDirectService.connectInstagram()
     } catch (error) {
       console.error('❌ Error connecting Instagram:', error)
       throw error
