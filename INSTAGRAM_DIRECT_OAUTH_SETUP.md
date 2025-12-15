@@ -1,5 +1,29 @@
 # Configuración de Instagram OAuth Directo
 
+## 🔄 Diferencia entre Facebook OAuth (Supabase) vs Instagram OAuth Directo
+
+### Método 1: Facebook OAuth (pasando por Supabase) ❌ NO lo usamos ahora
+- **Redirect URI:** `https://afqbakvvfpebnxzjewsk.supabase.co/auth/v1/callback` (de Supabase)
+- **Flujo:** Usuario → Facebook → **Supabase** → Tu app
+- Supabase maneja todo el OAuth automáticamente
+- Instagram redirige a Supabase, no a tu app
+
+### Método 2: Instagram OAuth Directo (que estamos usando ahora) ✅
+- **Redirect URI:** `https://setterapp.ai/auth/instagram/callback` (de tu app, NO Supabase)
+- **Flujo:** Usuario → Instagram → **Tu app directamente** (página `InstagramCallback.tsx`)
+- Tu app maneja el OAuth manualmente
+- Instagram redirige directamente a tu aplicación, no a Supabase
+
+**¿Por qué usamos el método 2?**
+- Permite login directo con Instagram (no pasa por Facebook)
+- Abre el login de Instagram, no el de Facebook
+- Funciona con cuentas de Instagram que no están conectadas a Facebook
+- Es lo que hace el competidor
+
+**Entonces:**
+- ❌ NO necesitas configurar el redirect URI de Supabase (`https://afqbakvvfpebnxzjewsk.supabase.co/auth/v1/callback`)
+- ✅ SÍ necesitas configurar el redirect URI de tu app (`https://setterapp.ai/auth/instagram/callback`)
+
 ## ⚠️ IMPORTANTE: Configurar Redirect URI en Meta Developers
 
 Para que el login directo de Instagram funcione, necesitas agregar el redirect URI en la configuración de Instagram de tu app de Meta.
@@ -19,7 +43,7 @@ Para que el login directo de Instagram funcione, necesitas agregar el redirect U
    https://setterapp.ai/auth/instagram/callback
    http://localhost:5173/auth/instagram/callback
    ```
-   
+
    ⚠️ **DEBE coincidir exactamente** (mismo protocolo, dominio, path, sin trailing slash)
 
 4. **Guarda los cambios**
