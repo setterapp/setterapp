@@ -51,16 +51,19 @@ export const instagramService = {
       })
 
       // Iniciar OAuth con Facebook
-      // Supabase vinculará el token de Facebook a la sesión actual del usuario
+      // IMPORTANTE: Instagram Business API no tiene su propio OAuth provider.
+      // Se autentica a través de Facebook OAuth porque Instagram es propiedad de Meta/Facebook.
+      // Esto es el método oficial y requerido por Meta para acceder a Instagram Business API.
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
           // Usar solo scopes básicos que funcionan sin App Review
           scopes: INSTAGRAM_SCOPES.join(','),
-          redirectTo: `${window.location.origin}/auth/callback?redirect_to=/integrations&provider=facebook`,
+          redirectTo: `${window.location.origin}/auth/callback?redirect_to=/integrations&provider=facebook&integration=instagram`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent', // Forzar consentimiento para obtener todos los permisos
+            display: 'page', // Usar display=page para mejor experiencia
           },
           // Esto asegura que se vincule a la sesión actual en lugar de crear una nueva
           skipBrowserRedirect: false,

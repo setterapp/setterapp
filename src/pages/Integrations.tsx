@@ -97,6 +97,18 @@ function Integrations() {
 
   async function handleInstagramConnect() {
     try {
+      // Explicar al usuario que Instagram usa Facebook OAuth
+      const confirmed = confirm(
+        'Para conectar Instagram, necesitarás autorizar a través de Facebook.\n\n' +
+        'Esto es normal: Instagram Business API usa la autenticación de Facebook.\n\n' +
+        '¿Continuar con la conexión?'
+      )
+      
+      if (!confirmed) {
+        refetch() // Revertir el toggle si el usuario cancela
+        return
+      }
+
       await instagramService.connectInstagram()
       // El usuario será redirigido a Facebook OAuth
       // Después volverá a /integrations
