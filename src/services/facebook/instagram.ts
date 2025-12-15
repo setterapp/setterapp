@@ -1,5 +1,4 @@
 import { supabase } from '../../lib/supabase'
-import { instagramDirectService } from '../instagram-direct'
 
 /**
  * Facebook/Instagram OAuth Service
@@ -9,13 +8,18 @@ import { instagramDirectService } from '../instagram-direct'
  * autenticarnos con Facebook OAuth para acceder a Instagram.
  */
 
-// Note: Instagram scopes are now handled by instagram-direct.ts service
-// This file maintains backwards compatibility and redirects to the direct OAuth flow
+// Instagram Business API scopes
+const INSTAGRAM_SCOPES = [
+  'pages_show_list', // Listar páginas de Facebook conectadas
+  'pages_read_engagement', // Leer engagement (necesario para mensajería)
+  'instagram_business_basic', // Información básica de Instagram Business
+  'instagram_business_manage_messages', // Gestionar mensajes de Instagram Business
+  'instagram_business_manage_comments', // Gestionar comentarios
+  'instagram_business_content_publish', // Publicar contenido
+  'instagram_business_manage_insights', // Ver insights/estadísticas
+]
 
 export const instagramService = {
-  /**
-   * Initiate Facebook OAuth flow for Instagram access
-   */
   /**
    * Initiate Facebook OAuth flow for Instagram access
    *
@@ -23,6 +27,8 @@ export const instagramService = {
    * Si el usuario ya está autenticado en tu app, Supabase vinculará el token
    * de Facebook a su sesión actual. Si no está autenticado, será redirigido
    * a iniciar sesión primero.
+   *
+   * El redirect URI será el de Supabase: https://[project-id].supabase.co/auth/v1/callback
    */
   async connectInstagram() {
     try {
@@ -33,14 +39,38 @@ export const instagramService = {
         throw new Error('Debes iniciar sesión primero antes de conectar Instagram')
       }
 
-      console.log('🔗 Iniciando OAuth directo de Instagram...', {
+      console.log('🔗 Iniciando OAuth de Facebook para Instagram Business...', {
         userId: currentSession.user.id,
         userEmail: currentSession.user.email
       })
 
-      // Use Instagram direct OAuth (like competitor)
-      // This opens instagram.com/login in a popup window, not Facebook
-      return await instagramDirectService.connectInstagram()
+      // Iniciar OAuth con Facebook a través de Supabase
+      // Supabase vinculará el token de Facebook a la sesión actual del usuario
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'facebook',
+        options: {
+          scopes: INSTAGRAM_SCOPES.join(','),
+          redirectTo: `${window.location.origin}/auth/callback?redirect_to=/integrations&provider=facebook&integration=instagram`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent', // Forzar consentimiento para obtener todos los permisos
+          },
+          skipBrowserRedirect: false,
+        }
+      })
+
+      if (error) {
+        console.error('❌ Error en connectInstagram:', error)
+        throw error
+      }
+
+      if (!data.url) {
+        console.warn('⚠️ No se obtuvo URL de redirección.')
+        throw new Error('No se pudo obtener la URL de autorización de Facebook')
+      }
+
+      console.log('✅ Redirigiendo a Facebook OAuth para Instagram...')
+      return data
     } catch (error) {
       console.error('❌ Error connecting Instagram:', error)
       throw error
