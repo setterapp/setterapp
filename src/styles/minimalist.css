@@ -301,6 +301,27 @@
   box-shadow: var(--shadow-lg);
   padding: 0;
   box-sizing: border-box;
+  margin: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+  .modal {
+    max-width: calc(100vw - 2 * var(--spacing-md));
+    max-height: 85vh;
+    margin: var(--spacing-md);
+  }
+
+  .modal-overlay {
+    padding: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .modal {
+    max-width: calc(100vw - 2 * var(--spacing-sm));
+    margin: var(--spacing-sm);
+    max-height: 90vh;
+  }
 }
 
 .modal > * {
@@ -431,5 +452,106 @@
   .grid--3,
   .grid--4 {
     grid-template-columns: 1fr;
+  }
+
+  /* Landing page responsive */
+  .landing-header {
+    padding: var(--spacing-md) !important;
+  }
+
+  .landing-hero {
+    padding: 40px var(--spacing-md) !important;
+  }
+
+  .landing-hero-title {
+    margin-bottom: var(--spacing-lg) !important;
+  }
+
+  .landing-hero-buttons {
+    flex-direction: column;
+  }
+
+  .landing-hero-buttons .btn {
+    width: 100%;
+  }
+
+  .landing-features {
+    padding: 40px var(--spacing-md) !important;
+  }
+
+  .landing-features-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--spacing-md) !important;
+  }
+
+  .landing-benefits {
+    padding: 40px var(--spacing-md) !important;
+  }
+
+  .landing-cta {
+    padding: 40px var(--spacing-md) !important;
+  }
+
+  .landing-section-title {
+    margin-bottom: var(--spacing-lg) !important;
+  }
+
+  /* Button improvements for mobile */
+  .btn--lg {
+    padding: 10px 20px;
+    font-size: var(--font-size-sm);
+  }
+
+  /* Integration cards */
+  .integration-card {
+    padding: var(--spacing-md) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-hero {
+    padding: 30px var(--spacing-sm) !important;
+  }
+
+  .landing-features,
+  .landing-benefits,
+  .landing-cta {
+    padding: 30px var(--spacing-sm) !important;
+  }
+}
+
+/* Responsive improvements for internal pages */
+@media (max-width: 768px) {
+  /* Conversation cards */
+  .conversation-card {
+    padding: var(--spacing-md) !important;
+  }
+
+  /* Analytics charts grid */
+  .analytics-charts-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Analytics metric cards */
+  .analytics-charts-grid .card {
+    min-width: auto;
+  }
+
+  /* Integrations and Agents cards */
+  .flex.justify-between {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  /* Smaller font sizes on very small screens */
+  .page-header h2 {
+    font-size: var(--font-size-lg) !important;
+  }
+
+  /* Make metric numbers smaller on mobile */
+  .card p[style*="font-size: 2rem"] {
+    font-size: 1.5rem !important;
   }
 }

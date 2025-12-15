@@ -9,18 +9,21 @@ function Landing() {
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
       {/* Header */}
       <header
+        className="landing-header"
         style={{
-          padding: 'var(--spacing-xl) var(--spacing-xl)',
+          padding: 'var(--spacing-lg) var(--spacing-xl)',
           borderBottom: '1px solid var(--color-border)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 'var(--spacing-md)',
         }}
       >
         <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
           <Logo size={32} />
         </Link>
-        <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center', flexWrap: 'wrap' }}>
           <Link to="/login" className="btn btn--ghost">
             Iniciar sesión
           </Link>
@@ -32,16 +35,18 @@ function Landing() {
 
       {/* Hero Section */}
       <section
+        className="landing-hero"
         style={{
-          padding: '80px var(--spacing-xl)',
+          padding: '60px var(--spacing-xl)',
           textAlign: 'center',
           maxWidth: '900px',
           margin: '0 auto',
         }}
       >
         <h2
+          className="landing-hero-title"
           style={{
-            fontSize: '3.5rem',
+            fontSize: 'clamp(2rem, 5vw, 3.5rem)',
             fontWeight: 700,
             margin: '0 0 var(--spacing-xl) 0',
             color: 'var(--color-text)',
@@ -62,7 +67,7 @@ function Landing() {
           Conecta WhatsApp e Instagram. Crea agentes inteligentes que gestionen
           tus conversaciones automáticamente.
         </p>
-        <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center' }}>
+        <div className="landing-hero-buttons" style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link to="/register" className="btn btn--primary btn--lg">
             Comenzar gratis
             <ArrowRight size={20} />
@@ -75,15 +80,17 @@ function Landing() {
 
       {/* Features Section */}
       <section
+        className="landing-features"
         style={{
-          padding: '80px var(--spacing-xl)',
+          padding: '60px var(--spacing-xl)',
           background: 'var(--color-bg-secondary)',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h3
+            className="landing-section-title"
             style={{
-              fontSize: '2.5rem',
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
               textAlign: 'center',
               margin: '0 0 var(--spacing-2xl) 0',
@@ -93,10 +100,11 @@ function Landing() {
             Todo lo que necesitas en un solo lugar
           </h3>
           <div
+            className="landing-features-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: 'var(--spacing-xl)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 'var(--spacing-lg)',
             }}
           >
             {/* Feature 1 */}
@@ -194,11 +202,12 @@ function Landing() {
       </section>
 
       {/* Benefits Section */}
-      <section style={{ padding: '80px var(--spacing-xl)' }}>
+      <section className="landing-benefits" style={{ padding: '60px var(--spacing-xl)' }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <h3
+            className="landing-section-title"
             style={{
-              fontSize: '2.5rem',
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
               textAlign: 'center',
               margin: '0 0 var(--spacing-2xl) 0',
@@ -241,16 +250,18 @@ function Landing() {
 
       {/* CTA Section */}
       <section
+        className="landing-cta"
         style={{
-          padding: '80px var(--spacing-xl)',
+          padding: '60px var(--spacing-xl)',
           background: 'var(--color-bg-secondary)',
           textAlign: 'center',
         }}
       >
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
           <h3
+            className="landing-section-title"
             style={{
-              fontSize: '2.5rem',
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
               margin: '0 0 var(--spacing-md) 0',
               color: 'var(--color-text)',

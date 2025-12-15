@@ -81,22 +81,44 @@ function Conversations() {
             return (
               <div
                 key={conversation.id}
+                className="conversation-card"
                 style={{
                   background: 'var(--color-bg)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--border-radius-lg)',
                   padding: 'var(--spacing-lg)',
                   display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  flexDirection: 'column',
+                  gap: 'var(--spacing-md)',
                   transition: 'var(--transition)',
                 }}
               >
-                {/* Left: Title and metadata */}
+                {/* Top: Title and metadata */}
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>
-                    {conversation.contact || 'Sin nombre'}
-                  </h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xs)' }}>
+                    <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)', flex: 1 }}>
+                      {conversation.contact || 'Sin nombre'}
+                    </h3>
+                    {conversation.unread_count > 0 && (
+                      <span
+                        style={{
+                          backgroundColor: 'var(--color-primary)',
+                          color: 'var(--color-bg)',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          fontWeight: '600',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {conversation.unread_count}
+                      </span>
+                    )}
+                  </div>
                   <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
                     {conversation.last_message_at && (
                       <>Último mensaje {formatDate(conversation.last_message_at)}</>
@@ -106,7 +128,7 @@ function Conversations() {
                       <>Creado {formatFullDate(conversation.created_at)}</>
                     )}
                   </p>
-                  <div style={{ marginTop: 'var(--spacing-xs)', display: 'flex', gap: 'var(--spacing-xs)', alignItems: 'center' }}>
+                  <div style={{ marginTop: 'var(--spacing-xs)', display: 'flex', gap: 'var(--spacing-xs)', alignItems: 'center', flexWrap: 'wrap' }}>
                     <span
                       style={{
                         backgroundColor: conversation.platform === 'whatsapp' ? 'rgba(166, 227, 161, 0.2)' : 'rgba(243, 139, 168, 0.2)',
@@ -122,50 +144,30 @@ function Conversations() {
                     >
                       {conversation.platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'}
                     </span>
-                    {conversation.unread_count > 0 && (
-                      <span
-                        style={{
-                          backgroundColor: 'var(--color-primary)',
-                          color: 'var(--color-bg)',
-                          borderRadius: '50%',
-                          width: '24px',
-                          height: '24px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.75rem',
-                          fontWeight: '600',
-                        }}
-                      >
-                        {conversation.unread_count}
-                      </span>
-                    )}
                   </div>
                 </div>
 
-                {/* Right: Controls */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                  {/* Active Label */}
-                  {isActive && (
-                    <span
-                      style={{
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: 600,
-                        color: 'var(--color-success)',
-                        minWidth: '60px',
-                        textAlign: 'right',
-                      }}
-                    >
-                      Activo
-                    </span>
-                  )}
-
-                  {/* Toggle Switch */}
-                  <ToggleSwitch
-                    checked={isActive}
-                    onChange={() => {}}
-                    disabled
-                  />
+                {/* Bottom: Controls */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-md)', paddingTop: 'var(--spacing-sm)', borderTop: '1px solid var(--color-border)' }}>
+                  {/* Active Label and Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', flex: 1 }}>
+                    {isActive && (
+                      <span
+                        style={{
+                          fontSize: 'var(--font-size-sm)',
+                          fontWeight: 600,
+                          color: 'var(--color-success)',
+                        }}
+                      >
+                        Activo
+                      </span>
+                    )}
+                    <ToggleSwitch
+                      checked={isActive}
+                      onChange={() => {}}
+                      disabled
+                    />
+                  </div>
 
                   {/* Menu Icon */}
                   <button

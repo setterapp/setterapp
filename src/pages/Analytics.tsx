@@ -328,7 +328,7 @@ function Analytics() {
       </div>
 
       {/* Gráficos */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 'var(--spacing-md)', marginTop: 'var(--spacing-md)' }}>
+      <div className="analytics-charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 'var(--spacing-md)', marginTop: 'var(--spacing-md)' }}>
         {/* Conversaciones por plataforma */}
         <div className="card">
           <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>

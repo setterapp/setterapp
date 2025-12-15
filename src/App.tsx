@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Link, useLocation, Outlet } from 'react-router-dom'
-import { Brain, Plug, BarChart3, MessageSquare, Settings } from 'lucide-react'
+import { Brain, Plug, BarChart3, MessageSquare, Settings, Menu, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -17,6 +18,7 @@ import './App.css'
 
 function Layout() {
   const location = useLocation()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const navItems = [
     { path: '/analytics', label: 'Analíticas', icon: BarChart3 },
@@ -26,11 +28,52 @@ function Layout() {
     { path: '/settings', label: 'Ajustes', icon: Settings },
   ]
 
+  // Cerrar sidebar cuando cambia la ruta en móvil
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [location.pathname])
+
+  // Prevenir scroll del body cuando el sidebar está abierto en móvil
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [sidebarOpen])
+
   return (
     <div className="app-container">
-      <nav className="sidebar">
+      {/* Mobile menu button */}
+      <button
+        className="mobile-menu-button"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label="Toggle menu"
+      >
+        {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <nav className={`sidebar ${sidebarOpen ? 'sidebar--open' : ''}`}>
         <div className="sidebar-header">
           <Logo size={24} />
+          <button
+            className="sidebar-close-button"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
         </div>
         <ul className="nav-list">
           {navItems.map((item) => {
@@ -41,6 +84,7 @@ function Layout() {
                 <Link
                   to={item.path}
                   className={isActive ? 'active' : ''}
+                  onClick={() => setSidebarOpen(false)}
                 >
                   <Icon size={18} />
                   {item.label}

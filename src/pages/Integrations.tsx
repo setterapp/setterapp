@@ -221,19 +221,20 @@ function Integrations() {
             return (
               <div
                 key={integration.id}
+                className="integration-card"
                 style={{
                   background: 'var(--color-bg)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--border-radius-lg)',
                   padding: 'var(--spacing-lg)',
                   display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  flexDirection: 'column',
+                  gap: 'var(--spacing-md)',
                   transition: 'var(--transition)',
                 }}
               >
-                {/* Left: Title and metadata */}
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                {/* Top: Title and metadata */}
+                <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-md)' }}>
                   <div
                     style={{
                       width: '48px',
@@ -253,11 +254,11 @@ function Integrations() {
                       <InstagramIcon size={24} color="#f38ba8" />
                     )}
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>
                       {integration.name}
                     </h3>
-                  <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                  <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', wordBreak: 'break-word' }}>
                     {integration.updated_at && (
                       <>Última actualización {formatDate(integration.updated_at)}</>
                     )}
@@ -269,8 +270,8 @@ function Integrations() {
                   </div>
                 </div>
 
-                {/* Right: Controls */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                {/* Bottom: Controls */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-md)', paddingTop: 'var(--spacing-sm)', borderTop: '1px solid var(--color-border)' }}>
                   {/* Active Label */}
                   {isConnected && (
                     <span
