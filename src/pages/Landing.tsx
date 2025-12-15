@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Brain, ArrowRight, Check } from 'lucide-react'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
+import Logo from '../components/Logo'
 
 function Landing() {
   return (
@@ -16,12 +17,9 @@ function Landing() {
           alignItems: 'center',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-          <Brain size={32} color="var(--color-primary)" />
-          <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)', fontWeight: 700, color: 'var(--color-text)' }}>
-            AppSetter
-          </h1>
-        </div>
+        <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Logo size={32} />
+        </Link>
         <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center' }}>
           <Link to="/login" className="btn btn--ghost">
             Iniciar sesión
@@ -285,6 +283,28 @@ function Landing() {
           color: 'var(--color-text-secondary)',
         }}
       >
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          gap: 'var(--spacing-md)',
+          flexWrap: 'wrap',
+          marginBottom: 'var(--spacing-md)'
+        }}>
+          <Link 
+            to="/privacy" 
+            style={{ 
+              color: 'var(--color-text-secondary)', 
+              textDecoration: 'none',
+              fontSize: 'var(--font-size-sm)',
+              transition: 'var(--transition)'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
+          >
+            Política de Privacidad
+          </Link>
+        </div>
         <p style={{ margin: 0, fontSize: 'var(--font-size-sm)' }}>
           © 2024 AppSetter. Todos los derechos reservados.
         </p>

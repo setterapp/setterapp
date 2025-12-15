@@ -3,6 +3,7 @@ import { Brain, Plug, BarChart3, MessageSquare, Settings } from 'lucide-react'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 import Agents from './pages/Agents'
 import Integrations from './pages/Integrations'
 import Analytics from './pages/Analytics'
@@ -11,6 +12,7 @@ import SettingsPage from './pages/Settings'
 import AuthCallback from './pages/AuthCallback'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
+import Logo from './components/Logo'
 import './App.css'
 
 function Layout() {
@@ -28,7 +30,7 @@ function Layout() {
     <div className="app-container">
       <nav className="sidebar">
         <div className="sidebar-header">
-          <h1>AppSetter</h1>
+          <Logo size={24} />
         </div>
         <ul className="nav-list">
           {navItems.map((item) => {
@@ -62,6 +64,7 @@ function App() {
         <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
           element={
