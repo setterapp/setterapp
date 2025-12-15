@@ -10,7 +10,7 @@ import { supabase } from '../lib/supabase'
 
 // Instagram OAuth configuration
 // These should be set in your Meta App settings
-const INSTAGRAM_APP_ID = import.meta.env.VITE_INSTAGRAM_APP_ID || '893993129727776'
+const INSTAGRAM_APP_ID = import.meta.env.VITE_INSTAGRAM_APP_ID || '1206229924794990'
 const INSTAGRAM_APP_SECRET = import.meta.env.VITE_INSTAGRAM_APP_SECRET || ''
 // Use the actual domain - this must match exactly what's configured in Meta Developers
 const INSTAGRAM_REDIRECT_URI = import.meta.env.VITE_INSTAGRAM_REDIRECT_URI || `${window.location.origin}/auth/instagram/callback`
@@ -60,14 +60,14 @@ export const instagramDirectService = {
       sessionStorage.setItem('instagram_oauth_state', state)
       sessionStorage.setItem('instagram_oauth_user_id', currentSession.user.id)
 
-      // Build Instagram OAuth URL
-      const authUrl = new URL('https://www.instagram.com/oauth/authorize/third_party')
+      // Build Instagram OAuth URL (using /oauth/authorize directly for Business Login)
+      const authUrl = new URL('https://www.instagram.com/oauth/authorize')
       authUrl.searchParams.set('redirect_uri', actualRedirectUri)
       authUrl.searchParams.set('response_type', 'code')
       authUrl.searchParams.set('scope', INSTAGRAM_SCOPES.join(','))
       authUrl.searchParams.set('state', state)
       authUrl.searchParams.set('client_id', INSTAGRAM_APP_ID)
-      authUrl.searchParams.set('force_reauth', '0')
+      authUrl.searchParams.set('force_reauth', 'true')
 
       console.log('🔗 Instagram OAuth URL completa:', authUrl.toString())
       console.log('🔍 Parámetros de la URL:', {
@@ -76,15 +76,10 @@ export const instagramDirectService = {
         scope: authUrl.searchParams.get('scope')
       })
 
-      // Redirect to Instagram login with enable_fb_login option
-      // This allows users to login with Instagram directly OR use Facebook as fallback
-      const loginUrl = new URL('https://www.instagram.com/accounts/login/')
-      loginUrl.searchParams.set('force_authentication', '')
-      loginUrl.searchParams.set('platform_app_id', INSTAGRAM_APP_ID)
-      loginUrl.searchParams.set('enable_fb_login', '')
-      loginUrl.searchParams.set('next', authUrl.toString())
+      // Use the auth URL directly (Business Login method)
+      // No need for intermediate login URL redirect
 
-      console.log('✅ Abriendo Instagram OAuth en popup...', loginUrl.toString())
+      console.log('✅ Abriendo Instagram Business Login en popup...', authUrl.toString())
 
       // Open in popup window
       const width = 600
@@ -93,7 +88,7 @@ export const instagramDirectService = {
       const top = (window.screen.height / 2) - (height / 2)
 
       const popup = window.open(
-        loginUrl.toString(),
+        authUrl.toString(),
         'Instagram Login',
         `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes,location=no,directories=no,status=no`
       )
