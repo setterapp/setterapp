@@ -38,11 +38,20 @@ export const instagramDirectService = {
         throw new Error('Debes iniciar sesión primero antes de conectar Instagram')
       }
 
+      // Determine the actual redirect URI being used
+      const actualRedirectUri = INSTAGRAM_REDIRECT_URI
+      
       console.log('🔗 Iniciando OAuth directo de Instagram...', {
         userId: currentSession.user.id,
         userEmail: currentSession.user.email,
-        redirectUri: INSTAGRAM_REDIRECT_URI
+        redirectUri: actualRedirectUri,
+        windowOrigin: window.location.origin,
+        hasEnvVar: !!import.meta.env.VITE_INSTAGRAM_REDIRECT_URI
       })
+
+      // ⚠️ IMPORTANT: Log the exact redirect URI that will be sent to Instagram
+      console.log('⚠️ REDIRECT URI QUE SE ESTÁ ENVIANDO:', actualRedirectUri)
+      console.log('⚠️ Este URI DEBE estar configurado EXACTAMENTE en Meta Developers → Settings → Basic → Valid OAuth Redirect URIs')
 
       // Generate state for CSRF protection
       const state = crypto.randomUUID()
@@ -53,14 +62,19 @@ export const instagramDirectService = {
 
       // Build Instagram OAuth URL
       const authUrl = new URL('https://www.instagram.com/oauth/authorize/third_party')
-      authUrl.searchParams.set('redirect_uri', INSTAGRAM_REDIRECT_URI)
+      authUrl.searchParams.set('redirect_uri', actualRedirectUri)
       authUrl.searchParams.set('response_type', 'code')
       authUrl.searchParams.set('scope', INSTAGRAM_SCOPES.join(','))
       authUrl.searchParams.set('state', state)
       authUrl.searchParams.set('client_id', INSTAGRAM_APP_ID)
       authUrl.searchParams.set('force_reauth', '0')
 
-      console.log('🔗 Instagram OAuth URL:', authUrl.toString())
+      console.log('🔗 Instagram OAuth URL completa:', authUrl.toString())
+      console.log('🔍 Parámetros de la URL:', {
+        redirect_uri: authUrl.searchParams.get('redirect_uri'),
+        client_id: authUrl.searchParams.get('client_id'),
+        scope: authUrl.searchParams.get('scope')
+      })
 
       // Redirect to Instagram login with enable_fb_login option
       // This allows users to login with Instagram directly OR use Facebook as fallback
