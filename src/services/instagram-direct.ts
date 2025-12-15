@@ -19,8 +19,8 @@ import { supabase } from '../lib/supabase'
 
 // Instagram OAuth configuration
 // These should be set in your Meta App settings
+// Note: INSTAGRAM_APP_SECRET is now only used in the Edge Function, not in the client
 const INSTAGRAM_APP_ID = import.meta.env.VITE_INSTAGRAM_APP_ID || '1206229924794990'
-const INSTAGRAM_APP_SECRET = import.meta.env.VITE_INSTAGRAM_APP_SECRET || ''
 // Instagram uses direct OAuth (not Supabase OAuth), so always use local callback
 // The redirect URI must match EXACTLY what's configured in Meta Developers → Settings → Basic → Valid OAuth Redirect URIs
 const getRedirectUri = () => {
