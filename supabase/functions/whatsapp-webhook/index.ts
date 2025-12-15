@@ -60,7 +60,7 @@ Deno.serve(async (req: Request) => {
       if (body.object === 'whatsapp_business_account') {
         for (const entry of body.entry || []) {
           const phoneNumberId = entry.id;
-          
+
           // Procesar eventos de mensajería
           if (entry.changes) {
             for (const change of entry.changes) {
@@ -69,7 +69,7 @@ Deno.serve(async (req: Request) => {
                   await processWhatsAppEvent(event, change.value, phoneNumberId);
                 }
               }
-              
+
               // Procesar status updates (delivered, read, etc.)
               if (change.value?.statuses) {
                 for (const status of change.value.statuses) {
@@ -122,7 +122,7 @@ async function getUserIdFromPhoneNumberId(phoneNumberId: string): Promise<string
     // Verificar si el phoneNumberId coincide (puede estar en config.phoneNumberId)
     const config = integration.config || {};
     const configPhoneNumberId = config.phoneNumberId;
-    
+
     if (configPhoneNumberId === phoneNumberId || !configPhoneNumberId) {
       // Si no hay phoneNumberId específico, usar la primera integración conectada
       return integration.user_id;
@@ -149,7 +149,7 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
       const messageText = event.text?.body || '';
       const timestamp = parseInt(event.timestamp) * 1000; // WhatsApp timestamp está en segundos
       const contactName = value.contacts?.[0]?.profile?.name || senderId;
-      
+
       // Obtener user_id de la integración
       const userId = await getUserIdFromPhoneNumberId(phoneNumberId);
       if (!userId) {
@@ -161,7 +161,7 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
 
       // Buscar o crear conversación
       let conversationId: string | null = null;
-      
+
       // Buscar conversación existente
       const { data: existingConv, error: findError } = await supabase
         .from('conversations')
@@ -178,7 +178,7 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
       if (existingConv) {
         conversationId = existingConv.id;
         console.log('✅ Found existing conversation:', conversationId);
-        
+
         // Actualizar last_message_at, unread_count y contact name si cambió
         // Primero obtener el unread_count actual
         const { data: currentConv } = await supabase
@@ -186,7 +186,7 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
           .select('unread_count')
           .eq('id', conversationId)
           .single();
-        
+
         await supabase
           .from('conversations')
           .update({
@@ -268,4 +268,3 @@ async function processWhatsAppStatus(status: any) {
     console.error('Error processing WhatsApp status:', error);
   }
 }
-

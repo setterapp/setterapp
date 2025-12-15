@@ -60,7 +60,7 @@ Deno.serve(async (req: Request) => {
       if (body.object === 'instagram') {
         for (const entry of body.entry || []) {
           const pageId = entry.id;
-          
+
           // Procesar eventos de mensajería
           if (entry.messaging) {
             for (const event of entry.messaging) {
@@ -118,7 +118,7 @@ async function getUserIdFromPageId(pageId: string): Promise<string | null> {
     // Verificar si el pageId coincide (puede estar en config.instagram_page_id o config.page_id)
     const config = integration.config || {};
     const instagramPageId = config.instagram_page_id || config.page_id;
-    
+
     if (instagramPageId === pageId || !instagramPageId) {
       // Si no hay pageId específico, usar la primera integración conectada
       return integration.user_id;
@@ -146,7 +146,7 @@ async function processInstagramEvent(event: any, pageId: string) {
       const timestamp = event.timestamp;
       const messageId = message.mid || message.id;
       const messageText = message.text || '';
-      
+
       // Obtener user_id de la integración
       const userId = await getUserIdFromPageId(pageId);
       if (!userId) {
@@ -158,7 +158,7 @@ async function processInstagramEvent(event: any, pageId: string) {
 
       // Buscar o crear conversación
       let conversationId: string | null = null;
-      
+
       // Buscar conversación existente
       const { data: existingConv, error: findError } = await supabase
         .from('conversations')
@@ -175,7 +175,7 @@ async function processInstagramEvent(event: any, pageId: string) {
       if (existingConv) {
         conversationId = existingConv.id;
         console.log('✅ Found existing conversation:', conversationId);
-        
+
         // Actualizar last_message_at y unread_count
         // Primero obtener el unread_count actual
         const { data: currentConv } = await supabase
@@ -183,7 +183,7 @@ async function processInstagramEvent(event: any, pageId: string) {
           .select('unread_count')
           .eq('id', conversationId)
           .single();
-        
+
         await supabase
           .from('conversations')
           .update({
