@@ -6,6 +6,10 @@ function InstagramCallback() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [error, setError] = useState<string | null>(null)
+  // Check immediately if we're in a popup
+  const [isPopup] = useState(() => {
+    return !!(window.opener && !window.opener.closed)
+  })
 
   useEffect(() => {
     const handleInstagramCallback = async () => {
@@ -17,8 +21,12 @@ function InstagramCallback() {
         const errorDescription = searchParams.get('error_description')
 
         // If we're in a popup, send message to parent window and close immediately
-        if (window.opener && !window.opener.closed) {
+        // Check for popup BEFORE doing anything else
+        if (isPopup) {
           try {
+            // Small delay to ensure message is sent
+            await new Promise(resolve => setTimeout(resolve, 100))
+
             if (errorParam) {
               window.opener.postMessage({
                 type: 'instagram_oauth_error',
@@ -32,13 +40,25 @@ function InstagramCallback() {
                 state: state
               }, window.location.origin)
             }
-            // Close popup immediately after sending message
-            window.close()
+
+            // Close popup immediately - use setTimeout to ensure message is sent first
+            setTimeout(() => {
+              window.close()
+              // Force close if still open
+              if (!window.closed) {
+                window.close()
+              }
+            }, 200)
             return
           } catch (e) {
             console.error('Error sending message to parent:', e)
             // Still try to close the popup
-            window.close()
+            setTimeout(() => {
+              window.close()
+              if (!window.closed) {
+                window.close()
+              }
+            }, 100)
             return
           }
         }
@@ -118,7 +138,12 @@ function InstagramCallback() {
     }
 
     handleInstagramCallback()
-  }, [navigate, searchParams])
+  }, [navigate, searchParams, isPopup])
+
+  // If we're in a popup, don't render anything - just close it
+  if (isPopup) {
+    return null
+  }
 
   if (error) {
     return (
