@@ -1,25 +1,48 @@
 import { supabase } from '../lib/supabase'
 
 /**
- * Instagram Business OAuth Service
- * Handles authentication through Facebook OAuth for Instagram Business API
+ * Instagram Direct OAuth Service
+ * Handles authentication directly through Instagram OAuth
  *
- * IMPORTANT: Instagram Business API requires Facebook OAuth, not direct Instagram OAuth.
- * The user must have an Instagram Business Account linked to a Facebook Page.
+ * This uses Instagram's direct OAuth endpoint: instagram.com/oauth/authorize
+ * The redirect URI can be either:
+ * - Supabase callback: https://your-project.supabase.co/auth/v1/callback
+ * - Local callback: https://yourdomain.com/auth/instagram/callback
  *
  * Configuration required in Meta Developers:
  * 1. Go to Meta Developers → Your App → Settings → Basic
  * 2. Add your redirect URI to "Valid OAuth Redirect URIs"
- *    Example: https://yourdomain.com/auth/instagram/callback
+ *    Example: https://your-project.supabase.co/auth/v1/callback
+ *    Or: https://yourdomain.com/auth/instagram/callback
  * 3. Make sure the redirect URI matches EXACTLY (including protocol, domain, and path)
  */
 
-// Facebook/Instagram OAuth configuration
+// Instagram OAuth configuration
 // These should be set in your Meta App settings
 const INSTAGRAM_APP_ID = import.meta.env.VITE_INSTAGRAM_APP_ID || '1206229924794990'
 const INSTAGRAM_APP_SECRET = import.meta.env.VITE_INSTAGRAM_APP_SECRET || ''
-// Use the actual domain - this must match EXACTLY what's configured in Meta Developers → Settings → Basic → Valid OAuth Redirect URIs
-const INSTAGRAM_REDIRECT_URI = import.meta.env.VITE_INSTAGRAM_REDIRECT_URI || `${window.location.origin}/auth/instagram/callback`
+// Use Supabase redirect URI if available, otherwise use local callback
+// The redirect URI must match EXACTLY what's configured in Meta Developers → Settings → Basic → Valid OAuth Redirect URIs
+const getRedirectUri = () => {
+  if (import.meta.env.VITE_INSTAGRAM_REDIRECT_URI) {
+    return import.meta.env.VITE_INSTAGRAM_REDIRECT_URI
+  }
+  // Try to use Supabase redirect URI if Supabase URL is available
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  if (supabaseUrl) {
+    return `${supabaseUrl}/auth/v1/callback`
+  }
+  // Fallback to local callback
+  return `${window.location.origin}/auth/instagram/callback`
+}
+const INSTAGRAM_REDIRECT_URI = getRedirectUri()
+
+// Validate App ID is configured (warn if using default)
+if (!import.meta.env.VITE_INSTAGRAM_APP_ID) {
+  console.warn('⚠️ VITE_INSTAGRAM_APP_ID no está configurado, usando valor por defecto:', INSTAGRAM_APP_ID)
+  console.warn('⚠️ Para producción, configura VITE_INSTAGRAM_APP_ID en tu archivo .env')
+  console.warn('⚠️ Puedes encontrar tu App ID en Meta Developers → Settings → Basic → App ID')
+}
 
 // Scopes for Instagram Business API
 const INSTAGRAM_SCOPES = [
@@ -32,9 +55,9 @@ const INSTAGRAM_SCOPES = [
 
 export const instagramDirectService = {
   /**
-   * Initiate Facebook OAuth flow for Instagram Business API
-   * This opens Facebook login in a popup window
-   * The user must have an Instagram Business Account linked to a Facebook Page
+   * Initiate Instagram direct OAuth flow
+   * This opens Instagram login in a popup window
+   * Uses the direct Instagram OAuth endpoint as provided in Meta Developers setup
    */
   async connectInstagram(): Promise<{ code: string; url: string }> {
     try {
@@ -48,13 +71,31 @@ export const instagramDirectService = {
       // Determine the actual redirect URI being used
       const actualRedirectUri = INSTAGRAM_REDIRECT_URI
 
-      console.log('🔗 Iniciando Facebook OAuth para Instagram Business...', {
+      // Validate App ID before proceeding
+      if (!INSTAGRAM_APP_ID || INSTAGRAM_APP_ID.trim() === '') {
+        throw new Error('App ID de Instagram no configurado. Por favor, configura VITE_INSTAGRAM_APP_ID en tu archivo .env. Puedes encontrar tu App ID en Meta Developers → Settings → Basic → App ID')
+      }
+
+      // Note: If using Supabase redirect URI, Supabase will handle the callback
+      // and the code will be processed by Supabase auth, not our InstagramCallback page
+      const isSupabaseRedirect = actualRedirectUri.includes('supabase.co/auth/v1/callback')
+      if (isSupabaseRedirect) {
+        console.log('⚠️ Usando redirect URI de Supabase. Supabase manejará el callback.')
+      }
+
+      console.log('🔗 Iniciando Instagram OAuth directo...', {
         userId: currentSession.user.id,
         userEmail: currentSession.user.email,
         redirectUri: actualRedirectUri,
         windowOrigin: window.location.origin,
-        hasEnvVar: !!import.meta.env.VITE_INSTAGRAM_REDIRECT_URI
+        hasEnvVar: !!import.meta.env.VITE_INSTAGRAM_REDIRECT_URI,
+        appId: INSTAGRAM_APP_ID ? `${INSTAGRAM_APP_ID.substring(0, 4)}...${INSTAGRAM_APP_ID.substring(INSTAGRAM_APP_ID.length - 4)}` : 'NO CONFIGURADO',
+        hasAppIdEnvVar: !!import.meta.env.VITE_INSTAGRAM_APP_ID
       })
+
+      // ⚠️ IMPORTANT: Log the App ID being used
+      console.log('⚠️ APP ID QUE SE ESTÁ USANDO:', INSTAGRAM_APP_ID)
+      console.log('⚠️ Este App ID DEBE ser el mismo que aparece en Meta Developers → Settings → Basic → App ID')
 
       // ⚠️ IMPORTANT: Log the exact redirect URI that will be sent to Facebook
       console.log('⚠️ REDIRECT URI QUE SE ESTÁ ENVIANDO:', actualRedirectUri)
@@ -84,28 +125,40 @@ export const instagramDirectService = {
       sessionStorage.setItem('instagram_oauth_state', state)
       sessionStorage.setItem('instagram_oauth_user_id', currentSession.user.id)
 
-      // Build Facebook OAuth URL for Instagram Business API
-      // Instagram Business API requires Facebook OAuth, not direct Instagram OAuth
-      const authUrl = new URL('https://www.facebook.com/v18.0/dialog/oauth')
+      // Build Instagram OAuth URL (direct Instagram OAuth)
+      // Using Instagram's direct OAuth endpoint as provided in the setup link
+      const authUrl = new URL('https://www.instagram.com/oauth/authorize')
       authUrl.searchParams.set('redirect_uri', actualRedirectUri)
       authUrl.searchParams.set('response_type', 'code')
       authUrl.searchParams.set('scope', INSTAGRAM_SCOPES.join(','))
       authUrl.searchParams.set('state', state)
       authUrl.searchParams.set('client_id', INSTAGRAM_APP_ID)
-      authUrl.searchParams.set('auth_type', 'rerequest') // Force re-authentication
+      authUrl.searchParams.set('force_reauth', 'true') // Force re-authentication
 
       console.log('🔗 Instagram OAuth URL completa:', authUrl.toString())
       console.log('⚠️ URL completa que se enviará a Facebook:', authUrl.toString())
       console.log('🔍 Parámetros de la URL:', {
         redirect_uri: authUrl.searchParams.get('redirect_uri'),
         client_id: authUrl.searchParams.get('client_id'),
+        client_id_length: authUrl.searchParams.get('client_id')?.length || 0,
         scope: authUrl.searchParams.get('scope')
       })
+
+      // Validate App ID format (should be numeric, typically 15-16 digits)
+      if (!/^\d+$/.test(INSTAGRAM_APP_ID)) {
+        console.error('❌ App ID tiene formato inválido. Debe ser numérico.')
+        throw new Error(`App ID inválido: "${INSTAGRAM_APP_ID}". El App ID debe ser numérico y coincidir con el que aparece en Meta Developers → Settings → Basic → App ID`)
+      }
+
+      if (INSTAGRAM_APP_ID.length < 10 || INSTAGRAM_APP_ID.length > 20) {
+        console.warn('⚠️ App ID tiene una longitud inusual:', INSTAGRAM_APP_ID.length, 'dígitos')
+        console.warn('⚠️ Los App IDs de Facebook típicamente tienen 15-16 dígitos')
+      }
 
       // Use the auth URL directly (Business Login method)
       // No need for intermediate login URL redirect
 
-      console.log('✅ Abriendo Facebook OAuth para Instagram Business en popup...', authUrl.toString())
+      console.log('✅ Abriendo Instagram OAuth en popup...', authUrl.toString())
 
       // Open in popup window
       const width = 600
@@ -115,7 +168,7 @@ export const instagramDirectService = {
 
       const popup = window.open(
         authUrl.toString(),
-        'Facebook Login - Instagram Business',
+        'Instagram Login',
         `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes,location=no,directories=no,status=no`
       )
 
@@ -185,9 +238,8 @@ export const instagramDirectService = {
    */
   async exchangeCodeForToken(code: string) {
     try {
-      // Use Facebook Graph API to exchange code for token
-      // Instagram Business API tokens are obtained through Facebook OAuth
-      const response = await fetch('https://graph.facebook.com/v18.0/oauth/access_token', {
+      // Use Instagram OAuth endpoint to exchange code for token
+      const response = await fetch('https://api.instagram.com/oauth/access_token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -202,59 +254,14 @@ export const instagramDirectService = {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        console.error('❌ Error response from Facebook:', errorData)
-        throw new Error(errorData.error?.message || errorData.error_message || 'Error al intercambiar código por token')
+        console.error('❌ Error response from Instagram:', errorData)
+        throw new Error(errorData.error_message || errorData.error?.message || 'Error al intercambiar código por token')
       }
 
       const data = await response.json()
 
-      // Facebook Graph API returns access_token directly
-      // We need to get Instagram user info separately
+      // Instagram OAuth direct endpoint returns access_token, user_id, and sometimes username
       if (data.access_token) {
-        // Try to get Instagram Business Account info
-        // Note: This requires the user to have an Instagram Business Account linked to their Facebook Page
-        try {
-          // First, get user's pages
-          const pagesResponse = await fetch(
-            `https://graph.facebook.com/v18.0/me/accounts?access_token=${data.access_token}`
-          )
-
-          if (pagesResponse.ok) {
-            const pagesData = await pagesResponse.json()
-            if (pagesData.data && pagesData.data.length > 0) {
-              // Get Instagram Business Account from first page
-              const pageId = pagesData.data[0].id
-              const instagramResponse = await fetch(
-                `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account&access_token=${data.access_token}`
-              )
-
-              if (instagramResponse.ok) {
-                const instagramData = await instagramResponse.json()
-                if (instagramData.instagram_business_account) {
-                  const igAccountId = instagramData.instagram_business_account.id
-                  // Get Instagram account details
-                  const igDetailsResponse = await fetch(
-                    `https://graph.facebook.com/v18.0/${igAccountId}?fields=username,id&access_token=${data.access_token}`
-                  )
-
-                  if (igDetailsResponse.ok) {
-                    const igDetails = await igDetailsResponse.json()
-                    return {
-                      access_token: data.access_token,
-                      user_id: igDetails.id,
-                      username: igDetails.username,
-                    }
-                  }
-                }
-              }
-            }
-          }
-        } catch (igError) {
-          console.warn('⚠️ Could not fetch Instagram Business Account info:', igError)
-          // Return token anyway, user can connect later
-        }
-
-        // Return token even if we couldn't get Instagram account info
         return {
           access_token: data.access_token,
           user_id: data.user_id || null,
