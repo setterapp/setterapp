@@ -97,24 +97,12 @@ function Integrations() {
 
   async function handleInstagramConnect() {
     try {
-      // Explicar al usuario que Instagram usa Facebook OAuth
-      const confirmed = confirm(
-        'Para conectar Instagram, necesitarás autorizar a través de Facebook.\n\n' +
-        'Esto es normal: Instagram Business API usa la autenticación de Facebook.\n\n' +
-        '¿Continuar con la conexión?'
-      )
-      
-      if (!confirmed) {
-        refetch() // Revertir el toggle si el usuario cancela
-        return
-      }
-
       await instagramService.connectInstagram()
-      // El usuario será redirigido a Facebook OAuth
+      // El usuario será redirigido al login de OAuth
       // Después volverá a /integrations
     } catch (error: any) {
       console.error('Error connecting Instagram:', error)
-      alert(`Error al conectar con Facebook/Instagram: ${error.message || 'Error desconocido'}`)
+      alert(`Error al conectar Instagram: ${error.message || 'Error desconocido'}`)
       refetch() // Refetch para revertir el toggle si la conexión falló
     }
   }
