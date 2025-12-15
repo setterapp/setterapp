@@ -1,14 +1,14 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const VERIFY_TOKEN = Deno.env.get('INSTAGRAM_WEBHOOK_VERIFY_TOKEN') || 'd368c7bd78882ba8aae97e480701363127efee4d7f2a2ed79c124fb123d088ec';
+const VERIFY_TOKEN = Deno.env.get('WHATSAPP_WEBHOOK_VERIFY_TOKEN') || 'whatsapp_verify_token_change_me';
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 // Crear cliente de Supabase con service role key para operaciones administrativas
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-console.log(`Instagram webhook function up and running!`);
+console.log(`WhatsApp webhook function up and running!`);
 
 Deno.serve(async (req: Request) => {
   // Manejar CORS
@@ -55,29 +55,33 @@ Deno.serve(async (req: Request) => {
     // Recibir eventos del webhook (POST request)
     if (req.method === 'POST') {
       const body = await req.json();
-      console.log('📨 Instagram webhook event received:', JSON.stringify(body, null, 2));
+      console.log('📨 WhatsApp webhook event received:', JSON.stringify(body, null, 2));
 
-      if (body.object === 'instagram') {
+      if (body.object === 'whatsapp_business_account') {
         for (const entry of body.entry || []) {
-          const pageId = entry.id;
+          const phoneNumberId = entry.id;
           
           // Procesar eventos de mensajería
-          if (entry.messaging) {
-            for (const event of entry.messaging) {
-              await processInstagramEvent(event, pageId);
-            }
-          }
-
-          // Procesar otros tipos de eventos si los hay
           if (entry.changes) {
             for (const change of entry.changes) {
-              await processInstagramChange(change, pageId);
+              if (change.value?.messages) {
+                for (const event of change.value.messages) {
+                  await processWhatsAppEvent(event, change.value, phoneNumberId);
+                }
+              }
+              
+              // Procesar status updates (delivered, read, etc.)
+              if (change.value?.statuses) {
+                for (const status of change.value.statuses) {
+                  await processWhatsAppStatus(status);
+                }
+              }
             }
           }
         }
       }
 
-      // Responder 200 OK a Instagram para confirmar recepción
+      // Responder 200 OK a WhatsApp para confirmar recepción
       return new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -98,63 +102,62 @@ Deno.serve(async (req: Request) => {
 });
 
 /**
- * Obtiene el user_id asociado a una integración de Instagram por pageId
+ * Obtiene el user_id asociado a una integración de WhatsApp por phoneNumberId
  */
-async function getUserIdFromPageId(pageId: string): Promise<string | null> {
+async function getUserIdFromPhoneNumberId(phoneNumberId: string): Promise<string | null> {
   try {
-    // Buscar la integración de Instagram que tenga este pageId en su config
+    // Buscar la integración de WhatsApp que tenga este phoneNumberId en su config
     const { data: integration, error } = await supabase
       .from('integrations')
       .select('user_id, config')
-      .eq('type', 'instagram')
+      .eq('type', 'whatsapp')
       .eq('status', 'connected')
       .single();
 
     if (error || !integration) {
-      console.error('❌ Error finding integration for pageId:', pageId, error);
+      console.error('❌ Error finding WhatsApp integration for phoneNumberId:', phoneNumberId, error);
       return null;
     }
 
-    // Verificar si el pageId coincide (puede estar en config.instagram_page_id o config.page_id)
+    // Verificar si el phoneNumberId coincide (puede estar en config.phoneNumberId)
     const config = integration.config || {};
-    const instagramPageId = config.instagram_page_id || config.page_id;
+    const configPhoneNumberId = config.phoneNumberId;
     
-    if (instagramPageId === pageId || !instagramPageId) {
-      // Si no hay pageId específico, usar la primera integración conectada
+    if (configPhoneNumberId === phoneNumberId || !configPhoneNumberId) {
+      // Si no hay phoneNumberId específico, usar la primera integración conectada
       return integration.user_id;
     }
 
     return null;
   } catch (error) {
-    console.error('❌ Error getting user_id from pageId:', error);
+    console.error('❌ Error getting user_id from phoneNumberId:', error);
     return null;
   }
 }
 
 /**
- * Procesa eventos de mensajería de Instagram
+ * Procesa eventos de mensajería de WhatsApp
  */
-async function processInstagramEvent(event: any, pageId: string) {
+async function processWhatsAppEvent(event: any, value: any, phoneNumberId: string) {
   try {
-    console.log('📩 Processing Instagram messaging event:', JSON.stringify(event, null, 2));
+    console.log('📩 Processing WhatsApp messaging event:', JSON.stringify(event, null, 2));
 
-    // Solo procesar mensajes entrantes (inbound)
-    if (event.message && !event.message.is_echo) {
-      const message = event.message;
-      const senderId = event.sender?.id;
-      const recipientId = event.recipient?.id;
-      const timestamp = event.timestamp;
-      const messageId = message.mid || message.id;
-      const messageText = message.text || '';
+    // Solo procesar mensajes entrantes (no outbound)
+    if (event.from && event.type === 'text') {
+      const senderId = event.from;
+      const messageId = event.id;
+      const messageText = event.text?.body || '';
+      const timestamp = parseInt(event.timestamp) * 1000; // WhatsApp timestamp está en segundos
+      const contactName = value.contacts?.[0]?.profile?.name || senderId;
       
       // Obtener user_id de la integración
-      const userId = await getUserIdFromPageId(pageId);
+      const userId = await getUserIdFromPhoneNumberId(phoneNumberId);
       if (!userId) {
-        console.error('❌ Could not find user_id for pageId:', pageId);
+        console.error('❌ Could not find user_id for phoneNumberId:', phoneNumberId);
         return;
       }
 
-      console.log('✅ Found user_id:', userId, 'for pageId:', pageId);
+      console.log('✅ Found user_id:', userId, 'for phoneNumberId:', phoneNumberId);
 
       // Buscar o crear conversación
       let conversationId: string | null = null;
@@ -164,7 +167,7 @@ async function processInstagramEvent(event: any, pageId: string) {
         .from('conversations')
         .select('id')
         .eq('user_id', userId)
-        .eq('platform', 'instagram')
+        .eq('platform', 'whatsapp')
         .eq('platform_conversation_id', senderId)
         .single();
 
@@ -176,7 +179,7 @@ async function processInstagramEvent(event: any, pageId: string) {
         conversationId = existingConv.id;
         console.log('✅ Found existing conversation:', conversationId);
         
-        // Actualizar last_message_at y unread_count
+        // Actualizar last_message_at, unread_count y contact name si cambió
         // Primero obtener el unread_count actual
         const { data: currentConv } = await supabase
           .from('conversations')
@@ -187,7 +190,8 @@ async function processInstagramEvent(event: any, pageId: string) {
         await supabase
           .from('conversations')
           .update({
-            last_message_at: new Date(timestamp * 1000).toISOString(),
+            contact: contactName,
+            last_message_at: new Date(timestamp).toISOString(),
             unread_count: (currentConv?.unread_count || 0) + 1,
             updated_at: new Date().toISOString(),
           })
@@ -198,11 +202,11 @@ async function processInstagramEvent(event: any, pageId: string) {
           .from('conversations')
           .insert({
             user_id: userId,
-            platform: 'instagram',
+            platform: 'whatsapp',
             platform_conversation_id: senderId,
-            platform_page_id: pageId,
-            contact: senderId, // Usar senderId como nombre temporal, se puede actualizar después
-            last_message_at: new Date(timestamp * 1000).toISOString(),
+            platform_page_id: phoneNumberId,
+            contact: contactName,
+            last_message_at: new Date(timestamp).toISOString(),
             unread_count: 1,
           })
           .select('id')
@@ -230,8 +234,8 @@ async function processInstagramEvent(event: any, pageId: string) {
             message_type: 'text',
             metadata: {
               sender_id: senderId,
-              recipient_id: recipientId,
-              timestamp: timestamp,
+              phone_number_id: phoneNumberId,
+              timestamp: event.timestamp,
             },
           });
 
@@ -243,33 +247,25 @@ async function processInstagramEvent(event: any, pageId: string) {
       }
 
       // Manejar otros tipos de mensajes (imágenes, etc.)
-      if (message.attachments) {
-        console.log('📎 Message has attachments:', message.attachments);
-        // TODO: Guardar información de attachments en metadata
+      if (event.type !== 'text') {
+        console.log('📎 Message type:', event.type, event);
+        // TODO: Guardar información de otros tipos de mensajes en metadata
       }
     }
-
-    // Manejar otros tipos de eventos (delivery, read, etc.)
-    if (event.delivery) {
-      console.log('📬 Message delivery receipt:', event.delivery);
-    }
-
-    if (event.read) {
-      console.log('👁️ Message read receipt:', event.read);
-    }
   } catch (error) {
-    console.error('❌ Error processing Instagram event:', error);
+    console.error('❌ Error processing WhatsApp event:', error);
   }
 }
 
 /**
- * Procesa cambios en Instagram (publicaciones, comentarios, etc.)
+ * Procesa actualizaciones de estado de mensajes (delivered, read, etc.)
  */
-async function processInstagramChange(change: any, pageId: string) {
+async function processWhatsAppStatus(status: any) {
   try {
-    console.log('🔄 Processing Instagram change:', change);
-    // Implementa la lógica para procesar cambios si es necesario
+    console.log('📬 WhatsApp status update:', status);
+    // TODO: Actualizar estado de mensajes en la base de datos si es necesario
   } catch (error) {
-    console.error('Error processing Instagram change:', error);
+    console.error('Error processing WhatsApp status:', error);
   }
 }
+
