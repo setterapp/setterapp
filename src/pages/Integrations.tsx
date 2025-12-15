@@ -303,7 +303,7 @@ function Integrations() {
                 </div>
 
                 {/* Bottom: Controls */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-md)', paddingTop: 'var(--spacing-md)', borderTop: '1px solid var(--color-border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', paddingTop: 'var(--spacing-sm)', borderTop: '1px solid var(--color-border)' }}>
                   {/* Active Label */}
                   {isConnected && (
                     <span
@@ -316,18 +316,18 @@ function Integrations() {
                       Activo
                     </span>
                   )}
-                  {!isConnected && <div />}
 
-                  {/* Right side: Toggle and Menu */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                    {/* Toggle Switch */}
-                    <ToggleSwitch
-                      checked={isConnected}
-                      onChange={(checked) => handleToggle(integration.id, integration.type, checked)}
-                    />
+                  {/* Spacer to push controls to the right */}
+                  <div style={{ flex: 1 }} />
 
-                    {/* Menu Icon */}
-                    <div style={{ position: 'relative' }}>
+                  {/* Toggle Switch */}
+                  <ToggleSwitch
+                    checked={isConnected}
+                    onChange={(checked) => handleToggle(integration.id, integration.type, checked)}
+                  />
+
+                  {/* Menu Icon */}
+                  <div style={{ position: 'relative' }}>
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
@@ -432,7 +432,6 @@ function Integrations() {
                         )}
                       </div>
                     )}
-                    </div>
                   </div>
                 </div>
               </div>
