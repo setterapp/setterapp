@@ -172,7 +172,7 @@ export const instagramDirectService = {
       // The callback page will send a message when it loads
       return new Promise((resolve, reject) => {
         // Declare checkRedirect before messageHandler so it's in scope
-        let checkRedirect: ReturnType<typeof setInterval> | null = null
+        let checkRedirect: ReturnType<typeof setInterval> | undefined = undefined
 
         const messageHandler = (event: MessageEvent) => {
           // Verify origin for security - allow our domain
@@ -188,7 +188,7 @@ export const instagramDirectService = {
 
           if (event.data && event.data.type === 'instagram_oauth_success') {
             window.removeEventListener('message', messageHandler)
-            if (checkRedirect) {
+            if (checkRedirect !== undefined) {
               clearInterval(checkRedirect)
             }
             // Close popup if still open
@@ -198,7 +198,7 @@ export const instagramDirectService = {
             resolve({ code: event.data.code, url: event.data.url })
           } else if (event.data && event.data.type === 'instagram_oauth_error') {
             window.removeEventListener('message', messageHandler)
-            if (checkRedirect) {
+            if (checkRedirect !== undefined) {
               clearInterval(checkRedirect)
             }
             // Close popup if still open
@@ -216,7 +216,9 @@ export const instagramDirectService = {
           try {
             // Check if popup has been redirected to our callback or Supabase callback
             if (popup.closed) {
-              clearInterval(checkRedirect)
+              if (checkRedirect !== undefined) {
+                clearInterval(checkRedirect)
+              }
               window.removeEventListener('message', messageHandler)
               // Don't reject if popup closed - it might have closed after success
               return
@@ -240,7 +242,7 @@ export const instagramDirectService = {
 
         // Timeout after 5 minutes
         setTimeout(() => {
-          if (checkRedirect) {
+          if (checkRedirect !== undefined) {
             clearInterval(checkRedirect)
           }
           window.removeEventListener('message', messageHandler)
