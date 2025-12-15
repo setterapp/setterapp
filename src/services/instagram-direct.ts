@@ -266,27 +266,33 @@ export const instagramDirectService = {
 
   /**
    * Exchange authorization code for access token
+   * Uses Supabase Edge Function to avoid CORS issues
    */
   async exchangeCodeForToken(code: string) {
     try {
-      // Use Instagram OAuth endpoint to exchange code for token
-      const response = await fetch('https://api.instagram.com/oauth/access_token', {
+      // Get Supabase URL from environment
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      if (!supabaseUrl) {
+        throw new Error('VITE_SUPABASE_URL no está configurado')
+      }
+
+      // Call Edge Function to exchange code for token (avoids CORS)
+      const response = await fetch(`${supabaseUrl}/functions/v1/instagram-exchange-token`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`,
         },
-        body: new URLSearchParams({
-          client_id: INSTAGRAM_APP_ID,
-          client_secret: INSTAGRAM_APP_SECRET,
-          redirect_uri: INSTAGRAM_REDIRECT_URI,
+        body: JSON.stringify({
           code: code,
+          redirect_uri: INSTAGRAM_REDIRECT_URI,
         }),
       })
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        console.error('❌ Error response from Instagram:', errorData)
-        throw new Error(errorData.error_message || errorData.error?.message || 'Error al intercambiar código por token')
+        console.error('❌ Error response from Edge Function:', errorData)
+        throw new Error(errorData.error || 'Error al intercambiar código por token')
       }
 
       const data = await response.json()
