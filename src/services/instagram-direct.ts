@@ -21,14 +21,18 @@ import { supabase } from '../lib/supabase'
 // These should be set in your Meta App settings
 const INSTAGRAM_APP_ID = import.meta.env.VITE_INSTAGRAM_APP_ID || '1206229924794990'
 const INSTAGRAM_APP_SECRET = import.meta.env.VITE_INSTAGRAM_APP_SECRET || ''
-// Use custom redirect URI if set, otherwise use local callback
+// Use custom redirect URI if set, otherwise try Supabase, then fallback to local callback
 // The redirect URI must match EXACTLY what's configured in Meta Developers → Settings → Basic → Valid OAuth Redirect URIs
-// We use our own callback page to properly handle popup closing
 const getRedirectUri = () => {
   if (import.meta.env.VITE_INSTAGRAM_REDIRECT_URI) {
     return import.meta.env.VITE_INSTAGRAM_REDIRECT_URI
   }
-  // Always use our own callback page for better popup control
+  // Try to use Supabase redirect URI if Supabase URL is available (most common setup)
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  if (supabaseUrl) {
+    return `${supabaseUrl}/auth/v1/callback`
+  }
+  // Fallback to local callback page
   return `${window.location.origin}/auth/instagram/callback`
 }
 const INSTAGRAM_REDIRECT_URI = getRedirectUri()
@@ -72,8 +76,13 @@ export const instagramDirectService = {
         throw new Error('App ID de Instagram no configurado. Por favor, configura VITE_INSTAGRAM_APP_ID en tu archivo .env. Puedes encontrar tu App ID en Meta Developers → Settings → Basic → App ID')
       }
 
-      // We use our own callback page to properly handle popup closing
-      console.log('✅ Usando callback page propio para mejor control del popup')
+      // Log which redirect URI is being used
+      const isSupabaseRedirect = actualRedirectUri.includes('supabase.co/auth/v1/callback')
+      if (isSupabaseRedirect) {
+        console.log('✅ Usando redirect URI de Supabase (Supabase manejará el callback)')
+      } else {
+        console.log('✅ Usando callback page propio para mejor control del popup')
+      }
 
       console.log('🔗 Iniciando Instagram OAuth directo...', {
         userId: currentSession.user.id,
