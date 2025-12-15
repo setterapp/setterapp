@@ -171,6 +171,9 @@ export const instagramDirectService = {
       // Listen for the callback using postMessage
       // The callback page will send a message when it loads
       return new Promise((resolve, reject) => {
+        // Declare checkRedirect before messageHandler so it's in scope
+        let checkRedirect: ReturnType<typeof setInterval> | null = null
+
         const messageHandler = (event: MessageEvent) => {
           // Verify origin for security - allow our domain
           const allowedOrigins = [
@@ -185,7 +188,9 @@ export const instagramDirectService = {
 
           if (event.data && event.data.type === 'instagram_oauth_success') {
             window.removeEventListener('message', messageHandler)
-            clearInterval(checkClosed)
+            if (checkRedirect) {
+              clearInterval(checkRedirect)
+            }
             // Close popup if still open
             if (popup && !popup.closed) {
               popup.close()
@@ -193,7 +198,9 @@ export const instagramDirectService = {
             resolve({ code: event.data.code, url: event.data.url })
           } else if (event.data && event.data.type === 'instagram_oauth_error') {
             window.removeEventListener('message', messageHandler)
-            clearInterval(checkClosed)
+            if (checkRedirect) {
+              clearInterval(checkRedirect)
+            }
             // Close popup if still open
             if (popup && !popup.closed) {
               popup.close()
@@ -205,7 +212,7 @@ export const instagramDirectService = {
         window.addEventListener('message', messageHandler)
 
         // Also poll for popup URL changes (when redirect happens)
-        const checkRedirect = setInterval(() => {
+        checkRedirect = setInterval(() => {
           try {
             // Check if popup has been redirected to our callback or Supabase callback
             if (popup.closed) {
@@ -214,7 +221,7 @@ export const instagramDirectService = {
               // Don't reject if popup closed - it might have closed after success
               return
             }
-            
+
             // Try to check popup location (may fail due to cross-origin)
             try {
               const popupUrl = popup.location.href
@@ -233,7 +240,9 @@ export const instagramDirectService = {
 
         // Timeout after 5 minutes
         setTimeout(() => {
-          clearInterval(checkRedirect)
+          if (checkRedirect) {
+            clearInterval(checkRedirect)
+          }
           window.removeEventListener('message', messageHandler)
           if (popup && !popup.closed) {
             popup.close()
