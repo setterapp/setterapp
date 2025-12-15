@@ -21,18 +21,14 @@ import { supabase } from '../lib/supabase'
 // These should be set in your Meta App settings
 const INSTAGRAM_APP_ID = import.meta.env.VITE_INSTAGRAM_APP_ID || '1206229924794990'
 const INSTAGRAM_APP_SECRET = import.meta.env.VITE_INSTAGRAM_APP_SECRET || ''
-// Use Supabase redirect URI if available, otherwise use local callback
+// Use custom redirect URI if set, otherwise use local callback
 // The redirect URI must match EXACTLY what's configured in Meta Developers → Settings → Basic → Valid OAuth Redirect URIs
+// We use our own callback page to properly handle popup closing
 const getRedirectUri = () => {
   if (import.meta.env.VITE_INSTAGRAM_REDIRECT_URI) {
     return import.meta.env.VITE_INSTAGRAM_REDIRECT_URI
   }
-  // Try to use Supabase redirect URI if Supabase URL is available
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  if (supabaseUrl) {
-    return `${supabaseUrl}/auth/v1/callback`
-  }
-  // Fallback to local callback
+  // Always use our own callback page for better popup control
   return `${window.location.origin}/auth/instagram/callback`
 }
 const INSTAGRAM_REDIRECT_URI = getRedirectUri()
@@ -76,12 +72,8 @@ export const instagramDirectService = {
         throw new Error('App ID de Instagram no configurado. Por favor, configura VITE_INSTAGRAM_APP_ID en tu archivo .env. Puedes encontrar tu App ID en Meta Developers → Settings → Basic → App ID')
       }
 
-      // Note: If using Supabase redirect URI, Supabase will handle the callback
-      // and the code will be processed by Supabase auth, not our InstagramCallback page
-      const isSupabaseRedirect = actualRedirectUri.includes('supabase.co/auth/v1/callback')
-      if (isSupabaseRedirect) {
-        console.log('⚠️ Usando redirect URI de Supabase. Supabase manejará el callback.')
-      }
+      // We use our own callback page to properly handle popup closing
+      console.log('✅ Usando callback page propio para mejor control del popup')
 
       console.log('🔗 Iniciando Instagram OAuth directo...', {
         userId: currentSession.user.id,
@@ -193,13 +185,17 @@ export const instagramDirectService = {
 
           if (event.data && event.data.type === 'instagram_oauth_success') {
             window.removeEventListener('message', messageHandler)
-            if (!popup.closed) {
+            clearInterval(checkClosed)
+            // Close popup if still open
+            if (popup && !popup.closed) {
               popup.close()
             }
             resolve({ code: event.data.code, url: event.data.url })
           } else if (event.data && event.data.type === 'instagram_oauth_error') {
             window.removeEventListener('message', messageHandler)
-            if (!popup.closed) {
+            clearInterval(checkClosed)
+            // Close popup if still open
+            if (popup && !popup.closed) {
               popup.close()
             }
             reject(new Error(event.data.error || 'Error al autorizar con Instagram'))
@@ -208,20 +204,38 @@ export const instagramDirectService = {
 
         window.addEventListener('message', messageHandler)
 
-        // Also poll for popup being closed
-        const checkClosed = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(checkClosed)
-            window.removeEventListener('message', messageHandler)
-            reject(new Error('La ventana de autorización fue cerrada'))
+        // Also poll for popup URL changes (when redirect happens)
+        const checkRedirect = setInterval(() => {
+          try {
+            // Check if popup has been redirected to our callback or Supabase callback
+            if (popup.closed) {
+              clearInterval(checkRedirect)
+              window.removeEventListener('message', messageHandler)
+              // Don't reject if popup closed - it might have closed after success
+              return
+            }
+            
+            // Try to check popup location (may fail due to cross-origin)
+            try {
+              const popupUrl = popup.location.href
+              // If popup is on our domain or Supabase domain, it means redirect happened
+              if (popupUrl.includes(window.location.hostname) || popupUrl.includes('supabase.co')) {
+                // The callback page should handle closing the popup
+                // Just wait for the message
+              }
+            } catch (e) {
+              // Cross-origin error is expected, ignore
+            }
+          } catch (e) {
+            // Ignore errors
           }
         }, 500)
 
         // Timeout after 5 minutes
         setTimeout(() => {
-          clearInterval(checkClosed)
+          clearInterval(checkRedirect)
           window.removeEventListener('message', messageHandler)
-          if (!popup.closed) {
+          if (popup && !popup.closed) {
             popup.close()
           }
           reject(new Error('Tiempo de espera agotado'))

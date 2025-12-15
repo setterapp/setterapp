@@ -16,7 +16,7 @@ function InstagramCallback() {
         const errorParam = searchParams.get('error')
         const errorDescription = searchParams.get('error_description')
 
-        // If we're in a popup, send message to parent window and close
+        // If we're in a popup, send message to parent window and close immediately
         if (window.opener && !window.opener.closed) {
           try {
             if (errorParam) {
@@ -32,14 +32,15 @@ function InstagramCallback() {
                 state: state
               }, window.location.origin)
             }
-            // Close popup after sending message
-            setTimeout(() => {
-              window.close()
-            }, 100)
+            // Close popup immediately after sending message
+            window.close()
+            return
           } catch (e) {
             console.error('Error sending message to parent:', e)
+            // Still try to close the popup
+            window.close()
+            return
           }
-          return
         }
 
         // Check for errors from Instagram
@@ -142,3 +143,4 @@ function InstagramCallback() {
 }
 
 export default InstagramCallback
+

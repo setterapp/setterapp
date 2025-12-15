@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Plug, Check, X, MoreVertical } from 'lucide-react'
 import { useIntegrations } from '../hooks/useIntegrations'
 import { instagramService } from '../services/facebook/instagram'
@@ -10,6 +11,7 @@ import InstagramIcon from '../components/icons/InstagramIcon'
 import { formatDate, formatFullDate } from '../utils/date'
 
 function Integrations() {
+  const navigate = useNavigate()
   const { integrations, loading, error, updateIntegration, refetch } = useIntegrations()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [showConnectModal, setShowConnectModal] = useState<string | null>(null)
@@ -123,7 +125,12 @@ function Integrations() {
         sessionStorage.removeItem('instagram_oauth_state')
         sessionStorage.removeItem('instagram_oauth_user_id')
 
-        refetch()
+        // Refresh integrations and show success
+        await refetch()
+        console.log('✅ Instagram conectado exitosamente')
+        
+        // Ensure we're on the integrations page (in case user navigated away)
+        navigate('/integrations', { replace: true })
       }
     } catch (error: any) {
       console.error('Error connecting Instagram:', error)
