@@ -86,7 +86,7 @@ SELECT * FROM conversations ORDER BY created_at DESC LIMIT 5;
 SELECT * FROM messages ORDER BY created_at DESC LIMIT 5;
 
 -- Ver conversaciones con conteo de mensajes
-SELECT 
+SELECT
   c.id,
   c.contact,
   c.platform,

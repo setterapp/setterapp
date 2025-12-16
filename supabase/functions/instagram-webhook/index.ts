@@ -64,7 +64,7 @@ Deno.serve(async (req: Request) => {
         for (const entry of body.entry || []) {
           const pageId = entry.id;
           console.log('📨 Processing entry with pageId:', pageId);
-          
+
           // Procesar eventos de mensajería (formato estándar)
           if (entry.messaging) {
             console.log('📨 Found messaging events:', entry.messaging.length);
@@ -148,7 +148,7 @@ async function getUserIdFromPageId(pageId: string): Promise<string | null> {
       for (const integration of integrations) {
         const config = integration.config || {};
         const instagramPageId = config.instagram_page_id || config.page_id;
-        
+
         if (instagramPageId === pageId) {
           console.log('✅ Found integration matching pageId:', pageId);
           return integration.user_id;

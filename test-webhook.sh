@@ -17,7 +17,7 @@ if [ "$1" == "instagram" ] || [ -z "$1" ]; then
   curl -s "${SUPABASE_URL}/functions/v1/instagram-webhook?hub.mode=subscribe&hub.verify_token=${INSTAGRAM_VERIFY_TOKEN}&hub.challenge=test123"
   echo ""
   echo ""
-  
+
   echo "📱 Testing Instagram Webhook (POST - Message)"
   echo "---------------------------------------------------"
   curl -X POST "${SUPABASE_URL}/functions/v1/instagram-webhook" \
@@ -47,7 +47,7 @@ if [ "$1" == "whatsapp" ] || [ -z "$1" ]; then
   curl -s "${SUPABASE_URL}/functions/v1/whatsapp-webhook?hub.mode=subscribe&hub.verify_token=${WHATSAPP_VERIFY_TOKEN}&hub.challenge=test123"
   echo ""
   echo ""
-  
+
   echo "💬 Testing WhatsApp Webhook (POST - Message)"
   echo "---------------------------------------------------"
   curl -X POST "${SUPABASE_URL}/functions/v1/whatsapp-webhook" \
@@ -87,4 +87,3 @@ echo "   1. Los GET deben devolver el challenge (test123)"
 echo "   2. Los POST deben devolver {\"success\":true}"
 echo "   3. Revisa los logs en Supabase Dashboard"
 echo "   4. Verifica en la base de datos: SELECT * FROM conversations; SELECT * FROM messages;"
-

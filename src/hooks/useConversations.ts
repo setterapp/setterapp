@@ -11,6 +11,7 @@ export interface Conversation {
   last_message_at?: string
   created_at: string
   updated_at: string
+  lead_status?: 'cold' | 'warm' | 'hot' | null
 }
 
 export function useConversations() {
