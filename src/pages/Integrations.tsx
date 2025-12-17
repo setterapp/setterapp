@@ -5,7 +5,6 @@ import { useIntegrations } from '../hooks/useIntegrations'
 import { instagramService } from '../services/facebook/instagram'
 import { whatsappService } from '../services/facebook/whatsapp'
 import ToggleSwitch from '../components/common/ToggleSwitch'
-import IntegrationModal from '../components/IntegrationModal'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import { formatDate, formatFullDate } from '../utils/date'
@@ -14,7 +13,6 @@ function Integrations() {
   const navigate = useNavigate()
   const { integrations, loading, error, updateIntegration, refetch } = useIntegrations()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-  const [showConnectModal, setShowConnectModal] = useState<string | null>(null)
 
 
   // Recargar datos cuando se monta el componente (útil después del callback de OAuth)
@@ -75,29 +73,6 @@ function Integrations() {
     }
   }
 
-  // Método obsoleto - ya no se usa tokens manuales, solo OAuth
-  // Se mantiene por compatibilidad pero no se llama desde la UI
-  const handleConnectWithToken = async (
-    type: 'whatsapp' | 'instagram',
-    token: string,
-    phoneNumberId?: string,
-    businessAccountId?: string
-  ) => {
-    const integration = integrations.find(i => i.type === type)
-    if (!integration) {
-      throw new Error(`No se encontró la integración de ${type}`)
-    }
-
-    const config: Record<string, any> = { token }
-    if (phoneNumberId) config.phoneNumberId = phoneNumberId
-    if (businessAccountId) config.businessAccountId = businessAccountId
-
-    await updateIntegration(integration.id, {
-      status: 'connected',
-      config,
-      connected_at: new Date().toISOString(),
-    })
-  }
 
   async function handleInstagramConnect() {
     try {
