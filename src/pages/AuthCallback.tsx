@@ -76,12 +76,35 @@ function AuthCallback() {
                 const integration = integrations[0]
                 console.log('📝 Integración encontrada:', integration)
 
+                // Si es WhatsApp, obtener información de la cuenta de WhatsApp Business
+                let config: Record<string, any> = {}
+                if (integrationType === 'whatsapp') {
+                  try {
+                    console.log('📱 Obteniendo información de WhatsApp Business...')
+                    const { whatsappService } = await import('../services/facebook/whatsapp')
+                    const whatsappInfo = await whatsappService.getWhatsAppBusinessAccount()
+
+                    config = {
+                      pageId: whatsappInfo.pageId,
+                      whatsappBusinessAccountId: whatsappInfo.whatsappBusinessAccountId,
+                      phoneNumberId: whatsappInfo.phoneNumberId,
+                    }
+
+                    console.log('✅ Información de WhatsApp Business obtenida:', config)
+                  } catch (whatsappError: any) {
+                    console.error('⚠️ Error al obtener información de WhatsApp Business:', whatsappError)
+                    // Continuar con la conexión aunque falle la obtención de info
+                    // El usuario puede configurarlo después
+                  }
+                }
+
                 // Actualizar a "connected" cuando viene del flujo de OAuth
                 const { data: updated, error: updateError } = await supabase
                   .from('integrations')
                   .update({
                     status: 'connected',
-                    connected_at: new Date().toISOString()
+                    connected_at: new Date().toISOString(),
+                    config: Object.keys(config).length > 0 ? config : undefined
                   })
                   .eq('id', integration.id)
                   .eq('user_id', session.user.id)

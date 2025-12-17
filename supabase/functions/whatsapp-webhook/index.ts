@@ -106,26 +106,40 @@ Deno.serve(async (req: Request) => {
  */
 async function getUserIdFromPhoneNumberId(phoneNumberId: string): Promise<string | null> {
   try {
-    // Buscar la integración de WhatsApp que tenga este phoneNumberId en su config
-    const { data: integration, error } = await supabase
+    // Primero intentar buscar por phoneNumberId específico en config
+    const { data: integrations, error } = await supabase
       .from('integrations')
       .select('user_id, config')
       .eq('type', 'whatsapp')
-      .eq('status', 'connected')
-      .single();
+      .eq('status', 'connected');
 
-    if (error || !integration) {
-      console.error('❌ Error finding WhatsApp integration for phoneNumberId:', phoneNumberId, error);
+    if (error) {
+      console.error('❌ Error finding WhatsApp integrations:', error);
       return null;
     }
 
-    // Verificar si el phoneNumberId coincide (puede estar en config.phoneNumberId)
-    const config = integration.config || {};
-    const configPhoneNumberId = config.phoneNumberId;
+    if (!integrations || integrations.length === 0) {
+      console.error('❌ No WhatsApp integrations found');
+      return null;
+    }
 
-    if (configPhoneNumberId === phoneNumberId || !configPhoneNumberId) {
-      // Si no hay phoneNumberId específico, usar la primera integración conectada
-      return integration.user_id;
+    // Buscar la integración que coincida con el phoneNumberId
+    for (const integration of integrations) {
+      const config = integration.config || {};
+      const configPhoneNumberId = config.phoneNumberId;
+
+      // Si el phoneNumberId coincide exactamente, usar esta integración
+      if (configPhoneNumberId === phoneNumberId) {
+        console.log('✅ Found matching integration for phoneNumberId:', phoneNumberId);
+        return integration.user_id;
+      }
+    }
+
+    // Si no hay coincidencia exacta pero hay integraciones, usar la primera
+    // (útil para casos donde el phoneNumberId no está guardado aún)
+    if (integrations.length > 0) {
+      console.log('⚠️ No exact match found, using first connected integration');
+      return integrations[0].user_id;
     }
 
     return null;

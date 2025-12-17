@@ -75,6 +75,8 @@ function Integrations() {
     }
   }
 
+  // Método obsoleto - ya no se usa tokens manuales, solo OAuth
+  // Se mantiene por compatibilidad pero no se llama desde la UI
   const handleConnectWithToken = async (
     type: 'whatsapp' | 'instagram',
     token: string,
@@ -396,13 +398,9 @@ function Integrations() {
                         ) : (
                           <button
                             onClick={() => {
-                              if (integration.type === 'whatsapp' || integration.type === 'instagram') {
-                                setShowConnectModal(integration.type)
-                                setOpenMenuId(null)
-                              } else {
-                                handleToggle(integration.id, integration.type, true)
-                                setOpenMenuId(null)
-                              }
+                              // WhatsApp e Instagram usan OAuth automático, no modal de tokens
+                              handleToggle(integration.id, integration.type, true)
+                              setOpenMenuId(null)
                             }}
                             style={{
                               width: '100%',
@@ -439,17 +437,8 @@ function Integrations() {
         </div>
       )}
 
-      {/* Modal para conectar WhatsApp/Instagram */}
-      {showConnectModal && (
-        <IntegrationModal
-          isOpen={!!showConnectModal}
-          onClose={() => setShowConnectModal(null)}
-          integrationType={showConnectModal as 'whatsapp' | 'instagram'}
-          onConnect={(token, phoneNumberId, businessAccountId) =>
-            handleConnectWithToken(showConnectModal as 'whatsapp' | 'instagram', token, phoneNumberId, businessAccountId)
-          }
-        />
-      )}
+      {/* Modal para conectar WhatsApp/Instagram - Ya no se usa, solo OAuth automático */}
+      {/* Se mantiene por si acaso se necesita en el futuro, pero no se muestra */}
     </div>
   )
 }
