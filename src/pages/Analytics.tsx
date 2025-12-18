@@ -11,11 +11,18 @@ import {
   ArrowDown,
   RefreshCcw
 } from 'lucide-react'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { useConversations } from '../hooks/useConversations'
 import { useAgents } from '../hooks/useAgents'
 import { useIntegrations } from '../hooks/useIntegrations'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart"
 
 type TimeRange = 'today' | 'week' | 'month' | 'all'
 
@@ -145,8 +152,6 @@ function Analytics() {
     // Simular refresh
     setTimeout(() => setRefreshing(false), 1000)
   }
-
-  const maxDayCount = Math.max(...metrics.conversationsByDay.map(d => d.count), 1)
 
   if (loading) {
     return (
@@ -397,43 +402,52 @@ function Analytics() {
             <Calendar size={20} />
             Actividad (Últimos 7 días)
           </h3>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'var(--spacing-xs)', height: '200px' }}>
-            {metrics.conversationsByDay.map((day, index) => (
-              <div key={index} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                <div style={{
-                  width: '100%',
-                  background: 'var(--color-primary)',
-                  borderRadius: '4px 4px 0 0',
-                  height: `${(day.count / maxDayCount) * 180}px`,
-                  minHeight: day.count > 0 ? '4px' : '0',
-                  transition: 'height 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'center',
-                  paddingTop: 'var(--spacing-xs)'
-                }}>
-                  {day.count > 0 && (
-                    <span style={{
-                      color: 'var(--color-bg)',
-                      fontSize: 'var(--font-size-xs)',
-                      fontWeight: 600,
-                      marginBottom: '4px'
-                    }}>
-                      {day.count}
-                    </span>
-                  )}
-                </div>
-                <span style={{
-                  fontSize: 'var(--font-size-xs)',
-                  color: 'var(--color-text-secondary)',
-                  textAlign: 'center',
-                  writingMode: 'horizontal-tb'
-                }}>
-                  {day.date}
-                </span>
-              </div>
-            ))}
-          </div>
+          <ChartContainer
+            config={{
+              count: {
+                label: "Conversaciones",
+                color: "var(--color-primary)",
+              },
+            } satisfies ChartConfig}
+            style={{ height: '250px' }}
+          >
+            <BarChart
+              accessibilityLayer
+              data={metrics.conversationsByDay.map(d => ({ date: d.date, count: d.count }))}
+              margin={{ top: 20, right: 10, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid
+                vertical={false}
+                stroke="#000"
+                strokeWidth={2}
+                strokeDasharray="0"
+              />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={{ stroke: '#000', strokeWidth: 3 }}
+                tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 12 }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={{ stroke: '#000', strokeWidth: 3 }}
+                tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 12 }}
+                width={30}
+              />
+              <ChartTooltip
+                cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
+                content={<ChartTooltipContent indicator="dot" hideLabel />}
+              />
+              <Bar
+                dataKey="count"
+                fill="var(--color-count)"
+                radius={0}
+                stroke="#000"
+                strokeWidth={3}
+              />
+            </BarChart>
+          </ChartContainer>
         </div>
       </div>
 
