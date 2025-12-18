@@ -20,11 +20,22 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messagesEndRef.current) {
+      const messagesContainer = messagesEndRef.current.closest('.messages-container')
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight
+      }
+    }
   }
 
   useEffect(() => {
-    scrollToBottom()
+    // Solo hacer scroll si hay mensajes y no es el primer render
+    if (messages.length > 0) {
+      // Usar setTimeout para asegurar que el DOM se haya actualizado
+      setTimeout(() => {
+        scrollToBottom()
+      }, 100)
+    }
   }, [messages])
 
   const PlatformIcon = conversation.platform === 'whatsapp' ? WhatsAppIcon : InstagramIcon

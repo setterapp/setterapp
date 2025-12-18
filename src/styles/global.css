@@ -139,6 +139,7 @@ input, textarea, select {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  position: relative;
 }
 
 .conversations-card {
@@ -202,13 +203,13 @@ input, textarea, select {
 .conversation-list-items {
   flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-sm);
+  padding: var(--spacing-md);
   background: var(--color-bg);
 }
 
 /* Conversation Item - Neobrutalism Style */
 .conversation-item {
-  padding: var(--spacing-sm);
+  padding: var(--spacing-md);
   margin-bottom: var(--spacing-sm);
   border: 2px solid #000;
   border-radius: var(--border-radius-sm);
@@ -216,7 +217,7 @@ input, textarea, select {
   transition: all 0.1s ease;
   display: flex;
   gap: var(--spacing-sm);
-  align-items: flex-start;
+  align-items: center;
   position: relative;
   background: var(--color-bg);
 }

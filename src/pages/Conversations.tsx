@@ -18,10 +18,18 @@ function Conversations() {
   }, [])
 
   // Manejar selección de conversación
-  const handleSelectConversation = (id: string) => {
+  const handleSelectConversation = (id: string, event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
     setSelectedConversationId(id)
     if (isFirstSelection) {
       setIsFirstSelection(false)
+    }
+    // Prevenir scroll de la página principal
+    if (window.scrollY > 0) {
+      window.scrollTo({ top: 0, behavior: 'instant' })
     }
   }
 

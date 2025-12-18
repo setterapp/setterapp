@@ -130,6 +130,11 @@
   overflow-y: auto;
 }
 
+.main-content:has(.conversations-container) {
+  overflow: hidden;
+  padding: 0;
+}
+
 .page-header {
   margin-bottom: var(--spacing-xl);
 }

@@ -8,7 +8,7 @@ import Badge from './common/Badge'
 interface ConversationListProps {
   conversations: Conversation[]
   selectedId: string | null
-  onSelect: (id: string) => void
+  onSelect: (id: string, event?: React.MouseEvent) => void
 }
 
 export default function ConversationList({ conversations, selectedId, onSelect }: ConversationListProps) {
@@ -68,7 +68,11 @@ export default function ConversationList({ conversations, selectedId, onSelect }
               <div
                 key={conversation.id}
                 className={`conversation-item ${isSelected ? 'conversation-item--selected' : ''}`}
-                onClick={() => onSelect(conversation.id)}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onSelect(conversation.id, e)
+                }}
               >
                 <div
                   className="conversation-item-icon"
