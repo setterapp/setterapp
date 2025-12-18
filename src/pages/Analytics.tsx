@@ -86,10 +86,10 @@ function Analytics() {
     // Integraciones conectadas
     const connectedIntegrations = integrations.filter(int => int.status === 'connected').length
 
-    // Conversaciones por día (últimos 30 días)
-    const conversationsByDay = Array.from({ length: 30 }, (_, i) => {
+    // Conversaciones por día (últimos 21 días)
+    const conversationsByDay = Array.from({ length: 21 }, (_, i) => {
       const date = new Date()
-      date.setDate(date.getDate() - (29 - i))
+      date.setDate(date.getDate() - (20 - i))
       date.setHours(0, 0, 0, 0)
       const nextDay = new Date(date)
       nextDay.setDate(nextDay.getDate() + 1)
@@ -337,7 +337,7 @@ function Analytics() {
       <div className="card" style={{ marginTop: 'var(--spacing-md)' }}>
         <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
           <Calendar size={20} />
-          Actividad (Últimos 30 días)
+          Actividad (Últimos 21 días)
         </h3>
         <ChartContainer
           config={{
