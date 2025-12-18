@@ -53,16 +53,16 @@ export function DataTable<TData, TValue>({
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow 
+              <TableRow
                 key={headerGroup.id}
-                style={{ 
+                style={{
                   background: 'var(--color-bg)',
                   color: 'var(--color-text)'
                 }}
               >
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead 
+                    <TableHead
                       key={header.id}
                       style={{ color: 'var(--color-text)' }}
                     >
@@ -85,15 +85,15 @@ export function DataTable<TData, TValue>({
                 return (
                   <TableRow
                     key={row.id}
-                    style={{ 
+                    style={{
                       background: 'var(--color-bg)',
                       color: 'var(--color-text)'
                     }}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell 
+                      <TableCell
                         key={cell.id}
-                        style={{ 
+                        style={{
                           borderBottom: isLastRow ? 'none' : '2px solid #000'
                         }}
                       >
@@ -107,8 +107,8 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  style={{ 
-                    height: '96px', 
+                  style={{
+                    height: '96px',
                     textAlign: 'center',
                     borderBottom: 'none'
                   }}

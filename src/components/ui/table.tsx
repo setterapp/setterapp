@@ -4,8 +4,8 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, style, ...props }, ref) => (
-  <div style={{ 
-    width: '100%', 
+  <div style={{
+    width: '100%',
     overflow: 'auto',
     border: '2px solid #000',
   }}>
