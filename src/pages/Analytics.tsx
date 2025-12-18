@@ -366,6 +366,7 @@ function Analytics() {
               stroke="#e5e5e5"
               strokeWidth={1}
               strokeDasharray="0"
+              horizontalPoints={[]}
             />
             <XAxis
               dataKey="date"
@@ -379,6 +380,8 @@ function Analytics() {
               axisLine={false}
               tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 12 }}
               width={30}
+              allowDecimals={false}
+              domain={[0, 'dataMax']}
               tickFormatter={(value) => {
                 const intValue = Math.floor(value)
                 return intValue > 0 ? intValue.toString() : ''
