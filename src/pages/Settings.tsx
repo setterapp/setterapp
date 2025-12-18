@@ -3,7 +3,6 @@ import { Settings, User, LogOut, Globe, Bell, Shield, Save } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
-import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 
 interface UserSettings {
