@@ -115,12 +115,11 @@
   color: var(--color-text);
   border: 2px solid #000;
   box-shadow: 2px 2px 0px 0px #000;
-  transform: translate(-1px, -1px);
 }
 
 .nav-list a:active {
-  transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0px 0px #000;
+  transform: translate(2px, 2px);
+  box-shadow: none;
 }
 
 .nav-list a.active {
@@ -132,13 +131,12 @@
 }
 
 .nav-list a.active:hover {
-  transform: translate(-1px, -1px);
   box-shadow: 4px 4px 0px 0px #000;
 }
 
 .nav-list a.active:active {
-  transform: translate(1px, 1px);
-  box-shadow: 2px 2px 0px 0px #000;
+  transform: translate(3px, 3px);
+  box-shadow: none;
 }
 
 .main-content {
