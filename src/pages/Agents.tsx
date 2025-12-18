@@ -156,52 +156,6 @@ function Agents() {
         title={editingAgent ? 'Editar Agente' : 'Nuevo Agente'}
       >
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '80vh' }}>
-          {/* Progress Indicator */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: 'var(--spacing-lg)',
-            paddingBottom: 'var(--spacing-md)',
-            borderBottom: '2px solid #000',
-            marginBottom: 'var(--spacing-lg)',
-            flexShrink: 0,
-          }}>
-            {[1, 2, 3, 4, 5, 6].map((step) => (
-              <div key={step} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                <div
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: step <= currentStep ? 'var(--color-primary)' : 'var(--color-bg-secondary)',
-                    border: '2px solid #000',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: 'var(--font-size-sm)',
-                    color: step <= currentStep ? '#000' : 'var(--color-text-secondary)',
-                    boxShadow: step === currentStep ? '4px 4px 0px 0px #000' : '2px 2px 0px 0px #000',
-                    flexShrink: 0,
-                  }}
-                >
-                  {step}
-                </div>
-                {step < totalSteps && (
-                  <div
-                    style={{
-                      flex: 1,
-                      height: '2px',
-                      background: step < currentStep ? 'var(--color-primary)' : '#ccc',
-                      margin: '0 var(--spacing-xs)',
-                    }}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-
           {/* Form Content - Scrollable */}
           <div style={{
             flex: 1,
