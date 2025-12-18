@@ -14,20 +14,17 @@ export default function Logo({ size = 32, variant = 'full' }: LogoProps) {
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: 'block' }}
     >
-      {/* Chat bubble main body */}
-      <rect
-        x="2"
-        y="2"
-        width="18"
-        height="14"
-        rx="2"
+      {/* Chat bubble con cola - path unificado */}
+      <path
+        d="M4 2h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H8l-4 4V4c0-1.1.9-2 2-2z"
         fill="var(--color-bg)"
         stroke="var(--color-border)"
         strokeWidth="2"
+        strokeLinejoin="round"
       />
-      {/* Chat bubble tail - sobresaliente triangular */}
+      {/* Cola triangular que sobresale desde abajo izquierda */}
       <polygon
-        points="6,16 10,16 6,22"
+        points="4,16 8,16 4,22"
         fill="var(--color-bg)"
         stroke="var(--color-border)"
         strokeWidth="2"
