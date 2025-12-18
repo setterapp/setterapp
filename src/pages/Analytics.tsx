@@ -379,10 +379,11 @@ function Analytics() {
               axisLine={false}
               tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 12 }}
               width={30}
+              tickFormatter={(value) => Math.floor(value).toString()}
             />
             <ChartTooltip
               cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
-              content={<ChartTooltipContent indicator="dot" />}
+              content={<ChartTooltipContent indicator="dot" formatter={(value) => Math.floor(Number(value)).toString()} />}
             />
             <Bar
               dataKey="whatsapp"
