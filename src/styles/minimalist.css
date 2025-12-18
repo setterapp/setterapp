@@ -26,10 +26,10 @@
   --border-radius-sm: 6px;
   --border-radius-lg: 12px;
   /* Neobrutalism shadows - offset instead of soft */
-  --shadow-neo-sm: 4px 4px 0px 0px #000;
-  --shadow-neo: 6px 6px 0px 0px #000;
-  --shadow-neo-lg: 8px 8px 0px 0px #000;
-  --shadow-neo-xl: 10px 10px 0px 0px #000;
+  --shadow-neo-sm: 2px 2px 0px 0px #000;
+  --shadow-neo: 3px 3px 0px 0px #000;
+  --shadow-neo-lg: 4px 4px 0px 0px #000;
+  --shadow-neo-xl: 6px 6px 0px 0px #000;
   --border-neo: 4px;
 
   /* Spacing */
@@ -64,6 +64,8 @@
   --color-desktop: var(--color-primary);
   --color-mobile: var(--color-success);
   --color-visitors: var(--color-primary);
+  --color-whatsapp: #a6e3a1;
+  --color-instagram: #f38ba8;
 }
 
 /* Button - Neobrutalism Style */
