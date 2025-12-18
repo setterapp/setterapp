@@ -93,7 +93,25 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
               <ArrowLeft size={24} />
             </button>
           )}
-          <PlatformIcon size={28} />
+          {conversation.platform === 'instagram' ? (
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: 'var(--border-radius-sm)',
+                border: '2px solid #000',
+                background: '#f38ba8',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <InstagramIcon size={20} color="#000" />
+            </div>
+          ) : (
+            <PlatformIcon size={28} />
+          )}
           <div style={{ flex: 1 }}>
             <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', fontWeight: 600 }}>
               {conversation.contact || 'Sin nombre'}

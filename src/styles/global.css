@@ -313,7 +313,7 @@ input, textarea, select {
 
 .chat-header {
   padding: var(--spacing-lg);
-  border-bottom: 3px solid #000;
+  border-bottom: 4px solid #000;
   background: var(--color-bg);
   flex-shrink: 0;
 }
@@ -325,13 +325,13 @@ input, textarea, select {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  background: var(--color-bg);
+  background: var(--color-bg-secondary);
   min-height: 0;
 }
 
 .message-input-container {
   padding: var(--spacing-lg);
-  border-top: 3px solid #000;
+  border-top: 4px solid #000;
   background: var(--color-bg);
   display: flex;
   gap: var(--spacing-sm);
