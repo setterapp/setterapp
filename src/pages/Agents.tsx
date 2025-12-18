@@ -661,31 +661,32 @@ function Agents() {
                   {agent.platform ? (
                     <span
                       style={{
-                        backgroundColor: agent.platform === 'whatsapp' ? 'rgba(166, 227, 161, 0.2)' : 'rgba(243, 139, 168, 0.2)',
-                        color: agent.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
+                        backgroundColor: agent.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
+                        color: '#000',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '6px',
                         padding: '4px 8px',
                         borderRadius: 'var(--border-radius-sm)',
                         fontSize: 'var(--font-size-sm)',
-                        fontWeight: 500,
+                        fontWeight: 600,
+                        border: '2px solid #000',
                       }}
                     >
                       {agent.platform === 'whatsapp' ? (
                         <>
-                          <WhatsAppIcon size={14} color="#a6e3a1" />
+                          <WhatsAppIcon size={14} color="#000" />
                           WhatsApp
                         </>
                       ) : (
                         <>
-                          <InstagramIcon size={14} color="#f38ba8" />
+                          <InstagramIcon size={14} color="#000" />
                           Instagram
                         </>
                       )}
                     </span>
                   ) : (
-                    <span style={{ background: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid var(--color-border)', padding: '4px 8px', borderRadius: 'var(--border-radius-sm)', fontSize: 'var(--font-size-sm)', fontWeight: 500 }}>
+                    <span style={{ background: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '6px', border: '2px solid var(--color-border)', padding: '4px 8px', borderRadius: 'var(--border-radius-sm)', fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
                       Sin asignar
                     </span>
                   )}
