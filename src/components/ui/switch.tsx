@@ -9,7 +9,7 @@ interface SwitchProps {
 }
 
 const Switch = React.forwardRef<HTMLLabelElement, SwitchProps>(
-  ({ checked = false, onCheckedChange, disabled = false, className, style, ...props }, ref) => {
+  ({ checked = false, onCheckedChange, disabled = false, className, style }, ref) => {
     return (
       <label
         ref={ref}
