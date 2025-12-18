@@ -132,7 +132,6 @@
 
 .main-content:has(.conversations-container) {
   overflow: hidden;
-  padding: 0;
 }
 
 .page-header {
@@ -302,13 +301,17 @@
 
   .main-content {
     margin-left: 0;
+    padding: var(--spacing-md);
+    padding-top: calc(48px + var(--spacing-md));
+  }
+
+  .main-content:has(.conversations-container) {
     padding: 0;
     padding-top: calc(48px + var(--spacing-md));
   }
 
   .main-content .conversations-container {
-    padding-top: 48px;
-    height: calc(100vh - 48px);
+    height: calc(100vh - 48px - var(--spacing-md));
   }
 
   .page-header {
@@ -354,13 +357,17 @@
 
 @media (max-width: 480px) {
   .main-content {
+    padding: var(--spacing-sm);
+    padding-top: calc(48px + var(--spacing-sm));
+  }
+
+  .main-content:has(.conversations-container) {
     padding: 0;
     padding-top: calc(48px + var(--spacing-sm));
   }
 
   .main-content .conversations-container {
-    padding-top: 48px;
-    height: calc(100vh - 48px);
+    height: calc(100vh - 48px - var(--spacing-sm));
   }
 
   .page-header h2 {
