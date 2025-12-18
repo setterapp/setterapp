@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Brain, Plus, Trash2, MoreVertical, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react'
+import { Brain, Plus, Trash2, MoreVertical, MessageSquare, ArrowRight } from 'lucide-react'
 import { useAgents, type AgentConfig, type Agent } from '../hooks/useAgents'
 import ToggleSwitch from '../components/common/ToggleSwitch'
 import Modal from '../components/common/Modal'
@@ -20,7 +20,8 @@ function Agents() {
     platform: '' as 'whatsapp' | 'instagram' | '',
     config: {} as AgentConfig,
   })
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['basic', 'identity']))
+  const [currentStep, setCurrentStep] = useState(1)
+  const totalSteps = 6
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,7 +40,7 @@ function Agents() {
         await createAgent(agentData)
       }
       setFormData({ name: '', description: '', platform: '', config: {} })
-      setExpandedSections(new Set(['basic', 'identity']))
+      setCurrentStep(1)
       setShowForm(false)
     } catch (err) {
       console.error('Error saving agent:', err)
@@ -58,16 +59,16 @@ function Agents() {
     setShowForm(true)
   }
 
-  const toggleSection = (section: string) => {
-    setExpandedSections((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(section)) {
-        newSet.delete(section)
-      } else {
-        newSet.add(section)
-      }
-      return newSet
-    })
+  const nextStep = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
   }
 
   const updateConfig = (key: keyof AgentConfig, value: any) => {
@@ -153,32 +154,69 @@ function Agents() {
         }}
         title={editingAgent ? 'Editar Agente' : 'Nuevo Agente'}
       >
-        <form onSubmit={handleSubmit} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-          {/* Sección Básica */}
-          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <button
-              type="button"
-              onClick={() => toggleSection('basic')}
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: 'var(--spacing-md)',
-                background: 'var(--color-bg-secondary)',
-                border: 'none',
-                borderRadius: 'var(--border-radius)',
-                cursor: 'pointer',
-                marginBottom: 'var(--spacing-md)',
-                fontSize: 'var(--font-size-base)',
-                fontWeight: 600,
-              }}
-            >
-              <span style={{ color: 'var(--color-text)' }}>Información Básica</span>
-              {expandedSections.has('basic') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
-            </button>
-            {expandedSections.has('basic') && (
-              <div style={{ paddingLeft: 'var(--spacing-md)' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '80vh' }}>
+          {/* Progress Indicator */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            padding: 'var(--spacing-lg)',
+            paddingBottom: 'var(--spacing-md)',
+            borderBottom: '4px solid #000',
+            marginBottom: 'var(--spacing-lg)',
+            flexShrink: 0,
+          }}>
+            {[1, 2, 3, 4, 5, 6].map((step) => (
+              <div key={step} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <div
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: step <= currentStep ? 'var(--color-primary)' : 'var(--color-bg-secondary)',
+                    border: '4px solid #000',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: 'var(--font-size-sm)',
+                    color: step <= currentStep ? '#000' : 'var(--color-text-secondary)',
+                    boxShadow: step === currentStep ? '4px 4px 0px 0px #000' : '2px 2px 0px 0px #000',
+                    flexShrink: 0,
+                  }}
+                >
+                  {step}
+                </div>
+                {step < totalSteps && (
+                  <div
+                    style={{
+                      flex: 1,
+                      height: '4px',
+                      background: step < currentStep ? 'var(--color-primary)' : 'var(--color-bg-secondary)',
+                      border: '2px solid #000',
+                      margin: '0 var(--spacing-xs)',
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Form Content - Scrollable */}
+          <div style={{ 
+            flex: 1, 
+            overflowY: 'auto', 
+            overflowX: 'hidden',
+            padding: '0 var(--spacing-lg)',
+            paddingBottom: 'var(--spacing-md)',
+          }}>
+          {/* Step 1: Información Básica */}
+          {currentStep === 1 && (
+            <div>
+              <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
+                Información Básica
+              </h3>
+              <div>
                 <div className="form-group">
                   <label htmlFor="name">Nombre del Agente *</label>
                   <input
@@ -217,34 +255,16 @@ function Agents() {
                   </select>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Sección Identidad */}
-          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <button
-              type="button"
-              onClick={() => toggleSection('identity')}
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: 'var(--spacing-md)',
-                background: 'var(--color-bg-secondary)',
-                border: 'none',
-                borderRadius: 'var(--border-radius)',
-                cursor: 'pointer',
-                marginBottom: 'var(--spacing-md)',
-                fontSize: 'var(--font-size-base)',
-                fontWeight: 600,
-              }}
-            >
-              <span style={{ color: 'var(--color-text)' }}>Identidad del Asistente</span>
-              {expandedSections.has('identity') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
-            </button>
-            {expandedSections.has('identity') && (
-              <div style={{ paddingLeft: 'var(--spacing-md)' }}>
+          {/* Step 2: Identidad del Asistente */}
+          {currentStep === 2 && (
+            <div>
+              <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
+                Identidad del Asistente
+              </h3>
+              <div>
                 <div className="form-group">
                   <label htmlFor="assistantName">Nombre del Asistente (para clientes)</label>
                   <input
@@ -282,34 +302,16 @@ function Agents() {
                   />
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Sección Negocio */}
-          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <button
-              type="button"
-              onClick={() => toggleSection('business')}
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: 'var(--spacing-md)',
-                background: 'var(--color-bg-secondary)',
-                border: 'none',
-                borderRadius: 'var(--border-radius)',
-                cursor: 'pointer',
-                marginBottom: 'var(--spacing-md)',
-                fontSize: 'var(--font-size-base)',
-                fontWeight: 600,
-              }}
-            >
-              <span style={{ color: 'var(--color-text)' }}>Información del Negocio</span>
-              {expandedSections.has('business') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
-            </button>
-            {expandedSections.has('business') && (
-              <div style={{ paddingLeft: 'var(--spacing-md)' }}>
+          {/* Step 3: Información del Negocio */}
+          {currentStep === 3 && (
+            <div>
+              <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
+                Información del Negocio
+              </h3>
+              <div>
                 <div className="form-group">
                   <label htmlFor="clientGoals">Objetivos del Cliente</label>
                   <textarea
@@ -358,34 +360,16 @@ function Agents() {
                   </small>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Sección Comportamiento */}
-          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <button
-              type="button"
-              onClick={() => toggleSection('behavior')}
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: 'var(--spacing-md)',
-                background: 'var(--color-bg-secondary)',
-                border: 'none',
-                borderRadius: 'var(--border-radius)',
-                cursor: 'pointer',
-                marginBottom: 'var(--spacing-md)',
-                fontSize: 'var(--font-size-base)',
-                fontWeight: 600,
-              }}
-            >
-              <span style={{ color: 'var(--color-text)' }}>Comportamiento y Horarios</span>
-              {expandedSections.has('behavior') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
-            </button>
-            {expandedSections.has('behavior') && (
-              <div style={{ paddingLeft: 'var(--spacing-md)' }}>
+          {/* Step 4: Comportamiento */}
+          {currentStep === 4 && (
+            <div>
+              <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
+                Comportamiento y Horarios
+              </h3>
+              <div>
                 <div className="form-group">
                   <label htmlFor="openingQuestion">Pregunta de Apertura</label>
                   <textarea
@@ -431,34 +415,16 @@ function Agents() {
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Sección Calificación */}
-          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <button
-              type="button"
-              onClick={() => toggleSection('qualification')}
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: 'var(--spacing-md)',
-                background: 'var(--color-bg-secondary)',
-                border: 'none',
-                borderRadius: 'var(--border-radius)',
-                cursor: 'pointer',
-                marginBottom: 'var(--spacing-md)',
-                fontSize: 'var(--font-size-base)',
-                fontWeight: 600,
-              }}
-            >
-              <span style={{ color: 'var(--color-text)' }}>Calificación de Leads</span>
-              {expandedSections.has('qualification') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
-            </button>
-            {expandedSections.has('qualification') && (
-              <div style={{ paddingLeft: 'var(--spacing-md)' }}>
+          {/* Step 5: Calificación de Leads */}
+          {currentStep === 5 && (
+            <div>
+              <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
+                Calificación de Leads
+              </h3>
+              <div>
                 <div className="form-group">
                   <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
                     <input
@@ -558,10 +524,21 @@ function Agents() {
                   />
                 </div>
               </div>
-            )}
+            </div>
+          )}
           </div>
 
-          <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end', marginTop: 'var(--spacing-xl)', paddingTop: 'var(--spacing-md)', borderTop: '1px solid var(--color-border)' }}>
+          {/* Navigation Buttons */}
+          <div style={{ 
+            display: 'flex', 
+            gap: 'var(--spacing-md)', 
+            justifyContent: 'space-between',
+            padding: 'var(--spacing-lg)',
+            paddingTop: 'var(--spacing-md)',
+            borderTop: '4px solid #000',
+            flexShrink: 0,
+            background: 'var(--color-bg)',
+          }}>
             <button
               type="button"
               className="btn btn--secondary"
@@ -569,15 +546,37 @@ function Agents() {
                 setShowForm(false)
                 setEditingAgent(null)
                 setFormData({ name: '', description: '', platform: '', config: {} })
-                setExpandedSections(new Set(['basic', 'identity']))
+                setCurrentStep(1)
               }}
             >
               Cancelar
             </button>
-            <button type="submit" className="btn btn--primary">
-              <Plus size={18} />
-              {editingAgent ? 'Guardar Cambios' : 'Crear Agente'}
-            </button>
+            <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+              {currentStep > 1 && (
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  onClick={prevStep}
+                >
+                  Atrás
+                </button>
+              )}
+              {currentStep < totalSteps ? (
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  onClick={nextStep}
+                >
+                  Continuar
+                  <ArrowRight size={18} />
+                </button>
+              ) : (
+                <button type="submit" className="btn btn--primary">
+                  <Plus size={18} />
+                  {editingAgent ? 'Guardar Cambios' : 'Crear Agente'}
+                </button>
+              )}
+            </div>
           </div>
         </form>
       </Modal>

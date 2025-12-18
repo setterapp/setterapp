@@ -27,7 +27,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         {title && (
-          <div className="flex justify-between items-center" style={{ padding: 'var(--spacing-xl)', paddingBottom: 'var(--spacing-lg)', borderBottom: '1px solid var(--color-border)' }}>
+          <div className="flex justify-between items-center" style={{ padding: 'var(--spacing-xl)', paddingBottom: 'var(--spacing-lg)', borderBottom: '4px solid #000', flexShrink: 0 }}>
             <h2 className="text-xl font-semibold">{title}</h2>
             <button
               onClick={onClose}
@@ -38,7 +38,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
           </div>
         )}
 
-        <div style={{ padding: title ? 'var(--spacing-xl)' : 0 }}>
+        <div style={{ padding: title ? 0 : 0, display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '90vh', overflow: 'hidden' }}>
           {children}
         </div>
       </div>
