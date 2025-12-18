@@ -7,28 +7,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Catppuccin Mocha Palette
+        // Catppuccin Light Palette for Neobrutalism
         primary: {
           DEFAULT: '#89b4fa',
-          hover: '#74c7ec',
+          hover: '#6da3e8',
         },
         secondary: '#9399b2',
-        success: '#a6e3a1',
-        warning: '#f9e2af',
-        danger: '#f38ba8',
+        success: '#40a02b',
+        warning: '#df8e1d',
+        danger: '#d20f39',
         bg: {
-          DEFAULT: '#1e1e2e',
-          secondary: '#181825',
-          tertiary: '#11111b',
+          DEFAULT: '#ffffff',
+          secondary: '#f5f5f5',
+          tertiary: '#e8e8e8',
         },
         border: {
-          DEFAULT: '#313244',
-          light: '#45475a',
+          DEFAULT: '#000000',
+          light: '#404040',
         },
         text: {
-          DEFAULT: '#cdd6f4',
-          secondary: '#c9d1d9',
-          tertiary: '#b1bac4',
+          DEFAULT: '#1a1a1a',
+          secondary: '#4a4a4a',
+          tertiary: '#6a6a6a',
         },
       },
       borderRadius: {

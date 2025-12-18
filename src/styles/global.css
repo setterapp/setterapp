@@ -80,35 +80,37 @@ input, textarea, select {
 
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
   background: var(--color-bg-secondary);
+  border: 2px solid #000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: var(--color-text-tertiary);
+  border: 2px solid #000;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-tertiary);
+  background: var(--color-text);
 }
 
 /* Selection */
 ::selection {
-  background: rgba(137, 180, 250, 0.3);
-  color: var(--color-text);
+  background: #89b4fa;
+  color: #000;
 }
 
 /* Loading Spinner */
 .spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid var(--color-border);
-  border-top: 2px solid var(--color-primary);
+  border: 3px solid var(--color-bg-tertiary);
+  border-top: 3px solid var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -189,9 +191,9 @@ input, textarea, select {
 }
 
 .conversation-item--selected {
-  background: var(--color-bg-secondary);
+  background: #e3f2fd;
   border-left: 6px solid var(--color-primary);
-  box-shadow: inset 4px 0px 0px 0px rgba(137, 180, 250, 0.3);
+  box-shadow: inset 4px 0px 0px 0px rgba(137, 180, 250, 0.5);
 }
 
 .conversation-item-icon {
