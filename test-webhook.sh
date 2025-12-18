@@ -25,7 +25,7 @@ curl -X POST "${SUPABASE_URL}/functions/v1/instagram-webhook" \
     "entry": [{
       "id": "test_page_id",
       "messaging": [{
-        "sender": {"id": "123456789"},
+        "sender": {"id": "1234567891107"},
         "recipient": {"id": "987654321"},
         "timestamp": '$(date +%s)',
         "message": {

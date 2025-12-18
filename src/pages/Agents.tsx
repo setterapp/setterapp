@@ -7,6 +7,7 @@ import AgentTestChat from '../components/AgentTestChat'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import { formatDate, formatFullDate } from '../utils/date'
+import { Checkbox } from '../components/ui/checkbox'
 
 function Agents() {
   const { agents, loading, error, createAgent, updateAgent, deleteAgent } = useAgents()
@@ -425,11 +426,10 @@ function Agents() {
               </h3>
               <div>
                 <div className="form-group">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                    <input
-                      type="checkbox"
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer' }}>
+                    <Checkbox
                       checked={formData.config.enableQualification || false}
-                      onChange={(e) => updateConfig('enableQualification', e.target.checked)}
+                      onCheckedChange={(checked) => updateConfig('enableQualification', checked)}
                     />
                     <span style={{ color: 'var(--color-text)' }}>Habilitar calificación de leads</span>
                   </label>
