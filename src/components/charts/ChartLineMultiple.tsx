@@ -55,14 +55,14 @@ export default function ChartLineMultiple() {
           >
             <CartesianGrid
               vertical={false}
-              stroke="#000"
-              strokeWidth={2}
+              stroke="#e5e5e5"
+              strokeWidth={1}
               strokeDasharray="0"
             />
             <XAxis
               dataKey="month"
               tickLine={false}
-              axisLine={{ stroke: '#000', strokeWidth: 3 }}
+              axisLine={false}
               tickMargin={8}
               tick={{ fill: 'var(--color-text)', fontWeight: 600 }}
               tickFormatter={(value) => value.slice(0, 3)}

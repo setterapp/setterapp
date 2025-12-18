@@ -418,20 +418,20 @@ function Analytics() {
             >
               <CartesianGrid
                 vertical={false}
-                stroke="#000"
-                strokeWidth={2}
+                stroke="#e5e5e5"
+                strokeWidth={1}
                 strokeDasharray="0"
               />
               <XAxis
                 dataKey="date"
                 tickLine={false}
                 tickMargin={10}
-                axisLine={{ stroke: '#000', strokeWidth: 3 }}
+                axisLine={false}
                 tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 12 }}
               />
               <YAxis
                 tickLine={false}
-                axisLine={{ stroke: '#000', strokeWidth: 3 }}
+                axisLine={false}
                 tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 12 }}
                 width={30}
               />
@@ -442,7 +442,7 @@ function Analytics() {
               <Bar
                 dataKey="count"
                 fill="var(--color-count)"
-                radius={0}
+                radius={4}
                 stroke="#000"
                 strokeWidth={3}
               />

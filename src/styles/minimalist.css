@@ -26,11 +26,11 @@
   --border-radius-sm: 6px;
   --border-radius-lg: 12px;
   /* Neobrutalism shadows - offset instead of soft */
-  --shadow-neo-sm: 2px 2px 0px 0px rgba(0, 0, 0, 0.8);
-  --shadow-neo: 4px 4px 0px 0px rgba(0, 0, 0, 0.8);
-  --shadow-neo-lg: 6px 6px 0px 0px rgba(0, 0, 0, 0.8);
-  --shadow-neo-xl: 8px 8px 0px 0px rgba(0, 0, 0, 0.8);
-  --border-neo: 3px;
+  --shadow-neo-sm: 4px 4px 0px 0px #000;
+  --shadow-neo: 6px 6px 0px 0px #000;
+  --shadow-neo-lg: 8px 8px 0px 0px #000;
+  --shadow-neo-xl: 10px 10px 0px 0px #000;
+  --border-neo: 4px;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -190,11 +190,11 @@
 /* Card - Neobrutalism Style */
 .card {
   background: var(--color-bg);
-  border: var(--border-neo) solid #000;
-  border-radius: var(--border-radius);
+  border: 4px solid #000;
+  border-radius: 12px;
   padding: var(--spacing-lg);
   transition: all 0.1s ease;
-  box-shadow: var(--shadow-neo);
+  box-shadow: 8px 8px 0px 0px #000;
 }
 
 .card--hover {
@@ -203,17 +203,17 @@
 
 .card--hover:hover {
   transform: translate(2px, 2px);
-  box-shadow: var(--shadow-neo-sm);
+  box-shadow: 6px 6px 0px 0px #000;
 }
 
 .card--hover:active {
   transform: translate(4px, 4px);
-  box-shadow: none;
+  box-shadow: 4px 4px 0px 0px #000;
 }
 
 .card--secondary {
   background: var(--color-bg-secondary);
-  border-color: #000;
+  border: 4px solid #000;
 }
 
 /* Input - Neobrutalism Style */
