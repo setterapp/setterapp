@@ -15,8 +15,6 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { useConversations } from '../hooks/useConversations'
 import { useAgents } from '../hooks/useAgents'
 import { useIntegrations } from '../hooks/useIntegrations'
-import WhatsAppIcon from '../components/icons/WhatsAppIcon'
-import InstagramIcon from '../components/icons/InstagramIcon'
 import {
   ChartContainer,
   ChartTooltip,
