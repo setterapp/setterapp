@@ -37,6 +37,11 @@ function Layout() {
     setSidebarOpen(false)
   }, [location.pathname])
 
+  // Resetear botón presionado cuando cambia la ruta
+  useEffect(() => {
+    setPressedButton(null)
+  }, [location.pathname])
+
   // Prevenir scroll del body cuando el sidebar está abierto en móvil
   useEffect(() => {
     if (sidebarOpen) {
@@ -52,9 +57,6 @@ function Layout() {
   const handleLinkClick = (path: string) => {
     setPressedButton(path)
     setSidebarOpen(false)
-    setTimeout(() => {
-      setPressedButton(null)
-    }, 600)
   }
 
   return (
