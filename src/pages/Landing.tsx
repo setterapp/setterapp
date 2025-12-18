@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check, Zap, MessageSquare, BarChart3 } from 'lucide-react'
+import { ArrowRight, Check, Zap, MessageSquare } from 'lucide-react'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
 
