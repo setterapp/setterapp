@@ -143,13 +143,14 @@ input, textarea, select {
 }
 
 .conversations-card {
-  padding: 0;
+  padding: 0 !important;
   overflow: hidden;
   display: flex;
   flex-shrink: 0;
   width: 420px;
   height: 100%;
-  transition: width 0.3s ease-out;
+  transition: width 0.3s ease-out !important;
+  margin: 0;
 }
 
 .conversations-card--expanded {
