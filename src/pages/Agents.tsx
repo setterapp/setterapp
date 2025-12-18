@@ -162,7 +162,7 @@ function Agents() {
             alignItems: 'center',
             padding: 'var(--spacing-lg)',
             paddingBottom: 'var(--spacing-md)',
-            borderBottom: '4px solid #000',
+            borderBottom: '2px solid #000',
             marginBottom: 'var(--spacing-lg)',
             flexShrink: 0,
           }}>
@@ -174,7 +174,7 @@ function Agents() {
                     height: '32px',
                     borderRadius: '50%',
                     background: step <= currentStep ? 'var(--color-primary)' : 'var(--color-bg-secondary)',
-                    border: '4px solid #000',
+                    border: '2px solid #000',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -191,7 +191,7 @@ function Agents() {
                   <div
                     style={{
                       flex: 1,
-                      height: '4px',
+                      height: '2px',
                       background: step < currentStep ? 'var(--color-primary)' : 'var(--color-bg-secondary)',
                       border: '2px solid #000',
                       margin: '0 var(--spacing-xs)',
@@ -517,7 +517,7 @@ function Agents() {
             justifyContent: 'space-between',
             padding: 'var(--spacing-lg)',
             paddingTop: 'var(--spacing-md)',
-            borderTop: '4px solid #000',
+            borderTop: '2px solid #000',
             flexShrink: 0,
             background: 'var(--color-bg)',
           }}>
