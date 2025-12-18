@@ -14,12 +14,24 @@ export default function Logo({ size = 32, variant = 'full' }: LogoProps) {
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: 'block' }}
     >
-      {/* Chat bubble - background color */}
-      <path
-        d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"
+      {/* Chat bubble main body */}
+      <rect
+        x="2"
+        y="2"
+        width="18"
+        height="14"
+        rx="2"
         fill="var(--color-bg)"
         stroke="var(--color-border)"
-        strokeWidth="1"
+        strokeWidth="2"
+      />
+      {/* Chat bubble tail - sobresaliente triangular */}
+      <polygon
+        points="6,16 10,16 6,22"
+        fill="var(--color-bg)"
+        stroke="var(--color-border)"
+        strokeWidth="2"
+        strokeLinejoin="round"
       />
       {/* Lightning bolt - danger color */}
       <path
@@ -47,6 +59,7 @@ export default function Logo({ size = 32, variant = 'full' }: LogoProps) {
     </div>
   )
 }
+
 
 
 
