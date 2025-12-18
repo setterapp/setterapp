@@ -150,7 +150,7 @@ function Agents() {
           setShowForm(false)
           setEditingAgent(null)
           setFormData({ name: '', description: '', platform: '', config: {} })
-          setExpandedSections(new Set(['basic', 'identity']))
+          setCurrentStep(1)
         }}
         title={editingAgent ? 'Editar Agente' : 'Nuevo Agente'}
       >
@@ -473,7 +473,41 @@ function Agents() {
                   </>
                 )}
               </div>
-            )}
+            </div>
+          )}
+
+          {/* Step 6: Personalización */}
+          {currentStep === 6 && (
+            <div>
+              <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
+                Personalización Avanzada
+              </h3>
+              <div>
+                <div className="form-group">
+                  <label htmlFor="toneGuidelines">Guías de Tono</label>
+                  <textarea
+                    id="toneGuidelines"
+                    className="input textarea"
+                    value={formData.config.toneGuidelines || ''}
+                    onChange={(e) => updateConfig('toneGuidelines', e.target.value)}
+                    placeholder="Instrucciones sobre el tono y estilo de comunicación del asistente"
+                    rows={3}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="additionalContext">Contexto Adicional</label>
+                  <textarea
+                    id="additionalContext"
+                    className="input textarea"
+                    value={formData.config.additionalContext || ''}
+                    onChange={(e) => updateConfig('additionalContext', e.target.value)}
+                    placeholder="Cualquier información adicional que el asistente deba conocer"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
           </div>
 
           {/* Navigation Buttons */}
