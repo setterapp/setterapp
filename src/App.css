@@ -124,6 +124,7 @@
 .nav-list a.pressed {
   transform: translate(3px, 3px) !important;
   box-shadow: none !important;
+  border: 2px solid #000 !important;
 }
 
 .nav-list a.active {
@@ -144,6 +145,7 @@
 .nav-list a.active.pressed {
   transform: translate(3px, 3px) !important;
   box-shadow: none !important;
+  border: 2px solid #000 !important;
 }
 
 .main-content {

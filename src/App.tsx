@@ -54,7 +54,7 @@ function Layout() {
     setSidebarOpen(false)
     setTimeout(() => {
       setPressedButton(null)
-    }, 300)
+    }, 600)
   }
 
   return (
