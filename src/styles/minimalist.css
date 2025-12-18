@@ -52,6 +52,18 @@
 
   /* Transitions */
   --transition: all 0.15s ease;
+
+  /* Chart Colors - Neobrutalism Style */
+  --chart-1: var(--color-primary);
+  --chart-2: var(--color-success);
+  --chart-3: var(--color-warning);
+  --chart-4: var(--color-danger);
+  --chart-5: var(--color-secondary);
+
+  /* Chart color variables for recharts */
+  --color-desktop: var(--color-primary);
+  --color-mobile: var(--color-success);
+  --color-visitors: var(--color-primary);
 }
 
 /* Button - Neobrutalism Style */
