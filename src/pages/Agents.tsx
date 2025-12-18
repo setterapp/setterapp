@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Brain, Plus, Trash2, MoreVertical, MessageSquare, ArrowRight } from 'lucide-react'
 import { useAgents, type AgentConfig, type Agent } from '../hooks/useAgents'
-import ToggleSwitch from '../components/common/ToggleSwitch'
+import { Switch } from '../components/ui/switch'
 import Modal from '../components/common/Modal'
 import AgentTestChat from '../components/AgentTestChat'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
@@ -647,9 +647,9 @@ function Agents() {
                   )}
 
                   {/* Toggle Switch */}
-                  <ToggleSwitch
+                  <Switch
                     checked={isActive}
-                    onChange={(checked) => {
+                    onCheckedChange={(checked) => {
                       if (checked && !agent.platform) {
                         // Si se activa y no tiene plataforma, asignar WhatsApp por defecto
                         handleAssignPlatform(agent.id, 'whatsapp')

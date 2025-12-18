@@ -4,7 +4,7 @@ import { Plug, Check, X, MoreVertical } from 'lucide-react'
 import { useIntegrations } from '../hooks/useIntegrations'
 import { instagramService } from '../services/facebook/instagram'
 import { whatsappService } from '../services/facebook/whatsapp'
-import ToggleSwitch from '../components/common/ToggleSwitch'
+import { Switch } from '../components/ui/switch'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import { formatDate, formatFullDate } from '../utils/date'
@@ -298,9 +298,9 @@ function Integrations() {
                   )}
 
                   {/* Toggle Switch */}
-                  <ToggleSwitch
+                  <Switch
                     checked={isConnected}
-                    onChange={(checked) => handleToggle(integration.id, integration.type, checked)}
+                    onCheckedChange={(checked) => handleToggle(integration.id, integration.type, checked)}
                   />
 
                   {/* Menu Icon */}

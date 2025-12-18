@@ -496,3 +496,12 @@ input, textarea, select {
     display: none;
   }
 }
+
+/* Switch Component */
+button[role="switch"][data-state="checked"] span[data-state="checked"] {
+  transform: translateX(26px);
+}
+
+button[role="switch"][data-state="unchecked"] span[data-state="unchecked"] {
+  transform: translateX(2px);
+}
