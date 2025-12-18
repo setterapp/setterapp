@@ -161,7 +161,7 @@ function Agents() {
             flex: 1,
             overflowY: 'auto',
             overflowX: 'hidden',
-            padding: '0 var(--spacing-lg)',
+            padding: 'var(--spacing-lg)',
             paddingBottom: 'var(--spacing-md)',
           }}>
           {/* Step 1: Información Básica */}

@@ -27,7 +27,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         {title && (
-          <div className="flex justify-between items-center" style={{ padding: 'var(--spacing-xl)', paddingBottom: 'var(--spacing-lg)', borderBottom: '4px solid #000', flexShrink: 0 }}>
+          <div className="flex justify-between items-center" style={{ padding: 'var(--spacing-xl)', paddingBottom: 'var(--spacing-lg)', borderBottom: '2px solid #000', flexShrink: 0 }}>
             <h2 className="text-xl font-semibold">{title}</h2>
             <button
               onClick={onClose}
