@@ -156,9 +156,9 @@ function Agents() {
       >
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '80vh' }}>
           {/* Progress Indicator */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
             padding: 'var(--spacing-lg)',
             paddingBottom: 'var(--spacing-md)',
@@ -203,9 +203,9 @@ function Agents() {
           </div>
 
           {/* Form Content - Scrollable */}
-          <div style={{ 
-            flex: 1, 
-            overflowY: 'auto', 
+          <div style={{
+            flex: 1,
+            overflowY: 'auto',
             overflowX: 'hidden',
             padding: '0 var(--spacing-lg)',
             paddingBottom: 'var(--spacing-md)',
@@ -381,7 +381,7 @@ function Agents() {
                     rows={2}
                   />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--spacing-md)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 'var(--spacing-md)' }}>
                   <div className="form-group">
                     <label htmlFor="activeHoursStart">Hora Inicio</label>
                     <input
@@ -500,7 +500,7 @@ function Agents() {
               {expandedSections.has('customization') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
             </button>
             {expandedSections.has('customization') && (
-              <div style={{ paddingLeft: 'var(--spacing-md)' }}>
+              <div>
                 <div className="form-group">
                   <label htmlFor="toneGuidelines">Guías de Tono</label>
                   <textarea
@@ -529,9 +529,9 @@ function Agents() {
           </div>
 
           {/* Navigation Buttons */}
-          <div style={{ 
-            display: 'flex', 
-            gap: 'var(--spacing-md)', 
+          <div style={{
+            display: 'flex',
+            gap: 'var(--spacing-md)',
             justifyContent: 'space-between',
             padding: 'var(--spacing-lg)',
             paddingTop: 'var(--spacing-md)',
