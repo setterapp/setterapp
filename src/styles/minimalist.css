@@ -194,7 +194,7 @@
   border-radius: 12px;
   padding: var(--spacing-lg);
   transition: all 0.1s ease;
-  box-shadow: 8px 8px 0px 0px #000;
+  box-shadow: 4px 4px 0px 0px #000;
 }
 
 .card--hover {
@@ -202,13 +202,13 @@
 }
 
 .card--hover:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 6px 6px 0px 0px #000;
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0px 0px #000;
 }
 
 .card--hover:active {
-  transform: translate(4px, 4px);
-  box-shadow: 4px 4px 0px 0px #000;
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px #000;
 }
 
 .card--secondary {

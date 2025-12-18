@@ -88,20 +88,23 @@ function Analytics() {
     // Integraciones conectadas
     const connectedIntegrations = integrations.filter(int => int.status === 'connected').length
 
-    // Conversaciones por día (últimos 7 días)
-    const conversationsByDay = Array.from({ length: 7 }, (_, i) => {
+    // Conversaciones por día (últimos 30 días)
+    const conversationsByDay = Array.from({ length: 30 }, (_, i) => {
       const date = new Date()
-      date.setDate(date.getDate() - (6 - i))
+      date.setDate(date.getDate() - (29 - i))
       date.setHours(0, 0, 0, 0)
       const nextDay = new Date(date)
       nextDay.setDate(nextDay.getDate() + 1)
 
+      const dayConversations = filteredConversations.filter(conv => {
+        const convDate = new Date(conv.created_at)
+        return convDate >= date && convDate < nextDay
+      })
+
       return {
         date: date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
-        count: filteredConversations.filter(conv => {
-          const convDate = new Date(conv.created_at)
-          return convDate >= date && convDate < nextDay
-        }).length
+        whatsapp: dayConversations.filter(conv => conv.platform === 'whatsapp').length,
+        instagram: dayConversations.filter(conv => conv.platform === 'instagram').length
       }
     })
 
@@ -332,123 +335,69 @@ function Analytics() {
         </div>
       </div>
 
-      {/* Gráficos */}
-      <div className="analytics-charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 'var(--spacing-md)', marginTop: 'var(--spacing-md)' }}>
-        {/* Conversaciones por plataforma */}
-        <div className="card">
-          <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
-            <BarChart3 size={20} />
-            Conversaciones por Plataforma
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-            <div>
-              <div className="flex items-center justify-between" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <div className="flex items-center" style={{ gap: 'var(--spacing-sm)' }}>
-                  <WhatsAppIcon size={20} color="#a6e3a1" />
-                  <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text)' }}>WhatsApp</span>
-                </div>
-                <span style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>
-                  {metrics.whatsappConversations}
-                </span>
-              </div>
-              <div style={{
-                width: '100%',
-                height: '8px',
-                background: 'var(--color-bg-secondary)',
-                borderRadius: '4px',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${metrics.totalConversations > 0 ? (metrics.whatsappConversations / metrics.totalConversations) * 100 : 0}%`,
-                  height: '100%',
-                  background: '#a6e3a1',
-                  borderRadius: '4px',
-                  transition: 'width 0.3s ease'
-                }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <div className="flex items-center" style={{ gap: 'var(--spacing-sm)' }}>
-                  <InstagramIcon size={20} color="#f38ba8" />
-                  <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text)' }}>Instagram</span>
-                </div>
-                <span style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>
-                  {metrics.instagramConversations}
-                </span>
-              </div>
-              <div style={{
-                width: '100%',
-                height: '8px',
-                background: 'var(--color-bg-secondary)',
-                borderRadius: '4px',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${metrics.totalConversations > 0 ? (metrics.instagramConversations / metrics.totalConversations) * 100 : 0}%`,
-                  height: '100%',
-                  background: '#f38ba8',
-                  borderRadius: '4px',
-                  transition: 'width 0.3s ease'
-                }} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Actividad por día */}
-        <div className="card">
-          <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
-            <Calendar size={20} />
-            Actividad (Últimos 7 días)
-          </h3>
-          <ChartContainer
-            config={{
-              count: {
-                label: "Conversaciones",
-                color: "var(--color-primary)",
-              },
-            } satisfies ChartConfig}
-            style={{ height: '250px' }}
+      {/* Gráfico de actividad */}
+      <div className="card" style={{ marginTop: 'var(--spacing-md)' }}>
+        <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
+          <Calendar size={20} />
+          Actividad (Últimos 30 días)
+        </h3>
+        <ChartContainer
+          config={{
+            whatsapp: {
+              label: "WhatsApp",
+              color: "#a6e3a1",
+            },
+            instagram: {
+              label: "Instagram",
+              color: "#f38ba8",
+            },
+          } satisfies ChartConfig}
+          style={{ height: '300px' }}
+        >
+          <BarChart
+            accessibilityLayer
+            data={metrics.conversationsByDay}
+            margin={{ top: 20, right: 10, left: 0, bottom: 0 }}
           >
-            <BarChart
-              accessibilityLayer
-              data={metrics.conversationsByDay.map(d => ({ date: d.date, count: d.count }))}
-              margin={{ top: 20, right: 10, left: 0, bottom: 0 }}
-            >
-              <CartesianGrid
-                vertical={false}
-                stroke="#e5e5e5"
-                strokeWidth={1}
-                strokeDasharray="0"
-              />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 12 }}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 12 }}
-                width={30}
-              />
-              <ChartTooltip
-                cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
-                content={<ChartTooltipContent indicator="dot" hideLabel />}
-              />
-              <Bar
-                dataKey="count"
-                fill="var(--color-count)"
-                radius={4}
-                stroke="#000"
-                strokeWidth={3}
-              />
-            </BarChart>
-          </ChartContainer>
-        </div>
+            <CartesianGrid
+              vertical={false}
+              stroke="#e5e5e5"
+              strokeWidth={1}
+              strokeDasharray="0"
+            />
+            <XAxis
+              dataKey="date"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+              tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 12 }}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 12 }}
+              width={30}
+            />
+            <ChartTooltip
+              cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
+              content={<ChartTooltipContent indicator="dot" />}
+            />
+            <Bar
+              dataKey="whatsapp"
+              fill="var(--color-whatsapp)"
+              radius={4}
+              stroke="#000"
+              strokeWidth={3}
+            />
+            <Bar
+              dataKey="instagram"
+              fill="var(--color-instagram)"
+              radius={4}
+              stroke="#000"
+              strokeWidth={3}
+            />
+          </BarChart>
+        </ChartContainer>
       </div>
 
       {/* Conversaciones por agente */}
