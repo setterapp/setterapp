@@ -43,7 +43,7 @@ const Switch = React.forwardRef<HTMLLabelElement, SwitchProps>(
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: checked ? 'var(--color-primary)' : 'var(--color-border)',
+            backgroundColor: checked ? 'var(--color-primary-hover)' : 'var(--color-border)',
             borderRadius: '28px',
             transition: 'var(--transition)',
           }}
