@@ -53,30 +53,29 @@ function Conversations() {
 
   return (
     <div className="conversations-container">
-      {/* Lista de conversaciones - ocultar en mobile cuando hay una seleccionada */}
-      {(!isMobile || !selectedConversationId) && (
-        <div className="conversation-list-card">
+      <div className={`conversations-card ${selectedConversationId ? 'conversations-card--expanded' : ''} ${isFirstSelection && selectedConversationId ? 'conversations-card--animating' : ''}`}>
+        {/* Lista de conversaciones - ocultar en mobile cuando hay una seleccionada */}
+        {(!isMobile || !selectedConversationId) && (
           <ConversationList
             conversations={conversations}
             selectedId={selectedConversationId}
             onSelect={handleSelectConversation}
           />
-        </div>
-      )}
+        )}
 
-      {/* Panel de chat o estado vacío */}
-      {selectedConversationId && selectedConversation ? (
-        <div className={isFirstSelection ? 'chat-panel-wrapper chat-panel-wrapper--animated' : 'chat-panel-wrapper'}>
+        {/* Panel de chat */}
+        {selectedConversationId && selectedConversation && (
           <ChatPanel
             conversationId={selectedConversationId}
             conversation={selectedConversation}
             onBack={isMobile ? () => setSelectedConversationId(null) : undefined}
             isMobile={isMobile}
           />
-        </div>
-      ) : (
-        !isMobile && <EmptyConversation />
-      )}
+        )}
+      </div>
+
+      {/* Estado vacío solo cuando no hay conversación seleccionada */}
+      {!selectedConversationId && !isMobile && <EmptyConversation />}
     </div>
   )
 }
