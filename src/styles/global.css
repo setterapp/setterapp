@@ -161,7 +161,7 @@ input, textarea, select {
 }
 
 .conversation-list-header {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-lg) 0;
   background: var(--color-bg);
   flex-shrink: 0;
 }
