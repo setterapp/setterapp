@@ -70,8 +70,13 @@ export default function ConversationList({ conversations, selectedId, onSelect }
                 className={`conversation-item ${isSelected ? 'conversation-item--selected' : ''}`}
                 onClick={() => onSelect(conversation.id)}
               >
-                <div className="conversation-item-icon">
-                  <PlatformIcon size={24} />
+                <div
+                  className="conversation-item-icon"
+                  style={{
+                    background: conversation.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8'
+                  }}
+                >
+                  <PlatformIcon size={20} color="#000" />
                 </div>
 
                 <div className="conversation-item-content">
