@@ -134,7 +134,7 @@ input, textarea, select {
 .conversations-container {
   display: flex;
   height: calc(100vh - 60px);
-  background: var(--color-bg-secondary);
+  background: var(--color-bg);
   overflow: hidden;
 }
 
