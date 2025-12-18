@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check } from 'lucide-react'
+import { ArrowRight, Check, Zap, MessageSquare, BarChart3 } from 'lucide-react'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
-import Logo from '../components/Logo'
 
 function Landing() {
   return (
@@ -12,16 +11,35 @@ function Landing() {
         className="landing-header"
         style={{
           padding: 'var(--spacing-lg) var(--spacing-xl)',
-          borderBottom: '1px solid var(--color-border)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: 'var(--spacing-md)',
+          maxWidth: '1400px',
+          margin: '0 auto',
         }}
       >
-        <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Logo size={32} />
+        <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              background: 'var(--color-primary)',
+              border: '4px solid #000',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '4px 4px 0px 0px #000',
+              animation: 'pulse 2s ease-in-out infinite',
+            }}
+          >
+            <Zap size={24} color="#000" fill="#000" />
+          </div>
+          <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: 'var(--color-text)' }}>
+            AppSetter
+          </span>
         </Link>
         <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center', flexWrap: 'wrap' }}>
           <Link to="/login" className="btn btn--ghost">
@@ -37,44 +55,70 @@ function Landing() {
       <section
         className="landing-hero"
         style={{
-          padding: '60px var(--spacing-xl)',
+          padding: '80px var(--spacing-xl)',
           textAlign: 'center',
-          maxWidth: '900px',
+          maxWidth: '1000px',
           margin: '0 auto',
         }}
       >
-        <h2
-          className="landing-hero-title"
+        <div
+          className="card"
           style={{
-            fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-            fontWeight: 700,
-            margin: '0 0 var(--spacing-xl) 0',
-            color: 'var(--color-text)',
-            lineHeight: 1.2,
+            padding: 'var(--spacing-2xl)',
+            marginBottom: 'var(--spacing-2xl)',
+            animation: 'slideInUp 0.6s ease-out',
           }}
         >
-          Automatiza tus conversaciones con{' '}
-          <span style={{ color: 'var(--color-primary)' }}>Agentes de IA</span>
-        </h2>
-        <p
-          style={{
-            fontSize: 'var(--font-size-lg)',
-            color: 'var(--color-text-secondary)',
-            margin: '0 0 var(--spacing-2xl) 0',
-            lineHeight: 1.6,
-          }}
-        >
-          Conecta WhatsApp e Instagram. Crea agentes inteligentes que gestionen
-          tus conversaciones automáticamente.
-        </p>
-        <div className="landing-hero-buttons" style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link to="/register" className="btn btn--primary btn--lg">
-            Comenzar gratis
-            <ArrowRight size={20} />
-          </Link>
-          <Link to="/login" className="btn btn--secondary btn--lg">
-            Iniciar sesión
-          </Link>
+          <div
+            style={{
+              width: '120px',
+              height: '120px',
+              background: 'var(--color-bg-secondary)',
+              border: '4px solid #000',
+              borderRadius: '12px',
+              margin: '0 auto var(--spacing-lg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '4px 4px 0px 0px #000',
+              animation: 'float 3s ease-in-out infinite',
+            }}
+          >
+            <MessageSquare size={64} color="#000" strokeWidth={2.5} />
+          </div>
+          <h2
+            className="landing-hero-title"
+            style={{
+              fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+              fontWeight: 700,
+              margin: '0 0 var(--spacing-lg) 0',
+              color: 'var(--color-text)',
+              lineHeight: 1.2,
+            }}
+          >
+            Automatiza tus conversaciones con{' '}
+            <span style={{ color: 'var(--color-primary)' }}>Agentes de IA</span>
+          </h2>
+          <p
+            style={{
+              fontSize: 'var(--font-size-lg)',
+              color: 'var(--color-text-secondary)',
+              margin: '0 0 var(--spacing-2xl) 0',
+              lineHeight: 1.6,
+            }}
+          >
+            Conecta WhatsApp e Instagram. Crea agentes inteligentes que gestionen
+            tus conversaciones automáticamente.
+          </p>
+          <div className="landing-hero-buttons" style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to="/register" className="btn btn--primary btn--lg" style={{ animation: 'slideInUp 0.8s ease-out' }}>
+              Comenzar gratis
+              <ArrowRight size={20} />
+            </Link>
+            <Link to="/login" className="btn btn--secondary btn--lg" style={{ animation: 'slideInUp 1s ease-out' }}>
+              Iniciar sesión
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -109,25 +153,30 @@ function Landing() {
           >
             {/* Feature 1 */}
             <div
-              className="card"
+              className="card card--hover"
               style={{
                 padding: 'var(--spacing-2xl)',
                 textAlign: 'center',
+                animation: 'slideInUp 0.6s ease-out',
+                animationDelay: '0.1s',
+                animationFillMode: 'both',
               }}
             >
               <div
                 style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: 'var(--border-radius-lg)',
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '12px',
                   background: 'var(--color-primary)',
+                  border: '4px solid #000',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto var(--spacing-md)',
+                  boxShadow: '4px 4px 0px 0px #000',
                 }}
               >
-                <Logo size={32} variant="icon" />
+                <Zap size={40} color="#000" fill="#000" />
               </div>
               <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
                 Agentes de IA
@@ -139,25 +188,30 @@ function Landing() {
 
             {/* Feature 2 */}
             <div
-              className="card"
+              className="card card--hover"
               style={{
                 padding: 'var(--spacing-2xl)',
                 textAlign: 'center',
+                animation: 'slideInUp 0.6s ease-out',
+                animationDelay: '0.2s',
+                animationFillMode: 'both',
               }}
             >
               <div
                 style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: 'var(--border-radius-lg)',
-                  background: 'rgba(166, 227, 161, 0.2)',
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '12px',
+                  background: '#a6e3a1',
+                  border: '4px solid #000',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto var(--spacing-md)',
+                  boxShadow: '4px 4px 0px 0px #000',
                 }}
               >
-                <WhatsAppIcon size={32} color="#a6e3a1" />
+                <WhatsAppIcon size={40} color="#000" />
               </div>
               <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
                 WhatsApp Business
@@ -169,25 +223,30 @@ function Landing() {
 
             {/* Feature 3 */}
             <div
-              className="card"
+              className="card card--hover"
               style={{
                 padding: 'var(--spacing-2xl)',
                 textAlign: 'center',
+                animation: 'slideInUp 0.6s ease-out',
+                animationDelay: '0.3s',
+                animationFillMode: 'both',
               }}
             >
               <div
                 style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: 'var(--border-radius-lg)',
-                  background: 'rgba(243, 139, 168, 0.2)',
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '12px',
+                  background: '#f38ba8',
+                  border: '4px solid #000',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto var(--spacing-md)',
+                  boxShadow: '4px 4px 0px 0px #000',
                 }}
               >
-                <InstagramIcon size={32} color="#f38ba8" />
+                <InstagramIcon size={40} color="#000" />
               </div>
               <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
                 Instagram
@@ -224,22 +283,36 @@ function Landing() {
               'Fácil de configurar y usar',
               'Escalable para cualquier negocio',
             ].map((benefit, index) => (
-              <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+              <div
+                key={index}
+                className="card"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-md)',
+                  padding: 'var(--spacing-lg)',
+                  animation: `slideInLeft 0.5s ease-out`,
+                  animationDelay: `${index * 0.1}s`,
+                  animationFillMode: 'both',
+                }}
+              >
                 <div
                   style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '12px',
                     background: 'var(--color-success)',
+                    border: '4px solid #000',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
+                    boxShadow: '2px 2px 0px 0px #000',
                   }}
                 >
-                  <Check size={20} color="var(--color-bg)" />
+                  <Check size={20} color="#000" strokeWidth={3} />
                 </div>
-                <p style={{ fontSize: 'var(--font-size-lg)', margin: 0, color: 'var(--color-text)' }}>
+                <p style={{ fontSize: 'var(--font-size-lg)', margin: 0, color: 'var(--color-text)', fontWeight: 500 }}>
                   {benefit}
                 </p>
               </div>
@@ -289,7 +362,6 @@ function Landing() {
       <footer
         style={{
           padding: 'var(--spacing-2xl)',
-          borderTop: '1px solid var(--color-border)',
           textAlign: 'center',
           color: 'var(--color-text-secondary)',
         }}
