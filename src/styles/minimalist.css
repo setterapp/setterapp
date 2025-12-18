@@ -81,11 +81,12 @@
   font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.1s ease;
+  transition: all 0.15s ease;
   outline: none;
   text-align: center;
   position: relative;
   box-shadow: none;
+  transform: translate(0, 0);
 }
 
 .btn:focus-visible {
@@ -102,10 +103,13 @@
 
 .btn--primary:hover:not(:disabled) {
   background: var(--color-primary-hover);
+  box-shadow: 3px 3px 0px 0px #000;
+  transform: translate(0, 0);
 }
 
 .btn--primary:active:not(:disabled) {
-  opacity: 0.8;
+  transform: translate(3px, 3px);
+  box-shadow: none;
 }
 
 .btn--secondary {
@@ -116,10 +120,13 @@
 
 .btn--secondary:hover:not(:disabled) {
   background: var(--color-bg-secondary);
+  box-shadow: 3px 3px 0px 0px #000;
+  transform: translate(0, 0);
 }
 
 .btn--secondary:active:not(:disabled) {
-  opacity: 0.8;
+  transform: translate(3px, 3px);
+  box-shadow: none;
 }
 
 .btn--ghost {
@@ -133,20 +140,31 @@
   background: var(--color-bg-secondary);
   color: var(--color-text);
   border-color: #000;
+  box-shadow: 3px 3px 0px 0px #000;
+  transform: translate(0, 0);
+}
+
+.btn--ghost:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: none;
 }
 
 .btn--danger {
   background: var(--color-danger);
   color: #000;
   border-color: #000;
+  box-shadow: var(--shadow-neo-sm);
 }
 
 .btn--danger:hover:not(:disabled) {
   background: #e87699;
+  box-shadow: 3px 3px 0px 0px #000;
+  transform: translate(0, 0);
 }
 
 .btn--danger:active:not(:disabled) {
-  opacity: 0.8;
+  transform: translate(3px, 3px);
+  box-shadow: none;
 }
 
 /* Icon-only button variant */
