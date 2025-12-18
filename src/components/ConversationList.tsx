@@ -84,17 +84,22 @@ export default function ConversationList({ conversations, selectedId, onSelect }
                     <h4 className="conversation-item-name" style={{ fontWeight: conversation.unread_count > 0 ? 600 : 500 }}>
                       {conversation.contact || 'Sin nombre'}
                     </h4>
-                    {leadStatusVariant && leadStatusLabel && (
+                    <p className="conversation-item-timestamp">
+                      {conversation.last_message_at
+                        ? formatDate(conversation.last_message_at)
+                        : formatDate(conversation.created_at)}
+                    </p>
+                  </div>
+                  <p className="conversation-item-message">
+                    Último mensaje de la conversación...
+                  </p>
+                  {leadStatusVariant && leadStatusLabel && (
+                    <div style={{ marginTop: 'var(--spacing-xs)' }}>
                       <Badge variant={leadStatusVariant as any}>
                         {leadStatusLabel}
                       </Badge>
-                    )}
-                  </div>
-                  <p className="conversation-item-timestamp">
-                    {conversation.last_message_at
-                      ? formatDate(conversation.last_message_at)
-                      : formatDate(conversation.created_at)}
-                  </p>
+                    </div>
+                  )}
                 </div>
 
                 {conversation.unread_count > 0 && (

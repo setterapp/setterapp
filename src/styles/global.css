@@ -164,7 +164,7 @@ input, textarea, select {
 }
 
 .conversation-list-header {
-  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-lg) var(--spacing-xs);
+  padding: var(--spacing-md);
   background: var(--color-bg);
   flex-shrink: 0;
 }
@@ -172,21 +172,21 @@ input, textarea, select {
 .conversation-list-items {
   flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-xs) var(--spacing-xs) var(--spacing-xs) var(--spacing-xs);
+  padding: var(--spacing-sm);
   background: var(--color-bg);
 }
 
 /* Conversation Item - Neobrutalism Style */
 .conversation-item {
   padding: var(--spacing-sm);
-  margin: 0 var(--spacing-xs) var(--spacing-xs) 0;
+  margin-bottom: var(--spacing-sm);
   border: 2px solid #000;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
   transition: all 0.1s ease;
   display: flex;
   gap: var(--spacing-sm);
-  align-items: center;
+  align-items: flex-start;
   position: relative;
   background: var(--color-bg);
 }
@@ -237,6 +237,17 @@ input, textarea, select {
   margin: 0;
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.conversation-item-message {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: var(--spacing-xs);
 }
 
 .conversation-item-badge {
