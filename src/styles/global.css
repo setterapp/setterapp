@@ -191,9 +191,10 @@ input, textarea, select {
 }
 
 .conversation-item--selected {
-  background: #e3f2fd;
+  background: #b3d9ff;
+  border: 3px solid #000;
   border-left: 6px solid var(--color-primary);
-  box-shadow: inset 4px 0px 0px 0px rgba(137, 180, 250, 0.5);
+  box-shadow: var(--shadow-neo-sm);
 }
 
 .conversation-item-icon {
