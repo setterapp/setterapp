@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Link, useLocation, Outlet } from 'react-router-dom'
-import { Brain, Plug, BarChart3, MessageSquare, Settings, Menu, X } from 'lucide-react'
+import { Brain, Plug, BarChart3, MessageSquare, Settings, Menu, X, Users } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
@@ -9,6 +9,7 @@ import Agents from './pages/Agents'
 import Integrations from './pages/Integrations'
 import Analytics from './pages/Analytics'
 import Conversations from './pages/Conversations'
+import Contacts from './pages/Contacts'
 import SettingsPage from './pages/Settings'
 import AuthCallback from './pages/AuthCallback'
 import InstagramCallback from './pages/InstagramCallback'
@@ -24,6 +25,7 @@ function Layout() {
   const navItems = [
     { path: '/analytics', label: 'Analíticas', icon: BarChart3 },
     { path: '/conversations', label: 'Conversaciones', icon: MessageSquare },
+    { path: '/contacts', label: 'Contactos', icon: Users },
     { path: '/agents', label: 'Agentes', icon: Brain },
     { path: '/integrations', label: 'Integraciones', icon: Plug },
     { path: '/settings', label: 'Ajustes', icon: Settings },
@@ -121,6 +123,7 @@ function App() {
         >
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/conversations" element={<Conversations />} />
+          <Route path="/contacts" element={<Contacts />} />
           <Route path="/agents" element={<Agents />} />
           <Route path="/integrations" element={<Integrations />} />
           <Route path="/settings" element={<SettingsPage />} />
