@@ -169,14 +169,14 @@ input, textarea, select {
 .conversation-list-items {
   flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-xs) var(--spacing-xs) 0;
   background: var(--color-bg);
 }
 
 /* Conversation Item - Neobrutalism Style */
 .conversation-item {
   padding: var(--spacing-sm);
-  margin: var(--spacing-xs);
+  margin: var(--spacing-xs) var(--spacing-xs) var(--spacing-xs) var(--spacing-xs);
   border: 2px solid #000;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
