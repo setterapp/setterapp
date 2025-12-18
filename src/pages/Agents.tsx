@@ -192,8 +192,7 @@ function Agents() {
                     style={{
                       flex: 1,
                       height: '2px',
-                      background: step < currentStep ? 'var(--color-primary)' : 'var(--color-bg-secondary)',
-                      border: '2px solid #000',
+                      background: step < currentStep ? 'var(--color-primary)' : '#ccc',
                       margin: '0 var(--spacing-xs)',
                     }}
                   />
