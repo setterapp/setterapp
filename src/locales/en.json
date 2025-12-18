@@ -1,0 +1,176 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "create": "Create",
+    "search": "Search",
+    "back": "Back",
+    "continue": "Continue",
+    "actions": "Actions",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "navigation": {
+    "conversations": "Conversations",
+    "agents": "AI Agents",
+    "analytics": "Analytics",
+    "integrations": "Integrations",
+    "calendar": "Calendar",
+    "settings": "Settings"
+  },
+  "agents": {
+    "title": "AI Agents",
+    "description": "Create and manage AI agents for WhatsApp and Instagram",
+    "createAgent": "Create Agent",
+    "editAgent": "Edit Agent",
+    "newAgent": "New Agent",
+    "deleteConfirm": "Are you sure you want to delete this agent?",
+    "saveChanges": "Save Changes",
+    "testAgent": "Test Agent",
+    "assignWhatsApp": "Assign WhatsApp",
+    "assignInstagram": "Assign Instagram",
+    "unassigned": "Unassigned",
+    "lastUpdate": "Last update",
+    "created": "Created",
+    "empty": {
+      "title": "No agents created",
+      "description": "Create your first AI agent to get started"
+    },
+    "form": {
+      "step1": {
+        "title": "Basic Information",
+        "name": "Agent Name",
+        "namePlaceholder": "Ex: Sales Assistant",
+        "description": "Description",
+        "descriptionPlaceholder": "Describe the agent's capabilities and personality...",
+        "platform": "Platform"
+      },
+      "step2": {
+        "title": "Assistant Identity",
+        "assistantName": "Assistant Name (for clients)",
+        "assistantNamePlaceholder": "Ex: John, Mary, etc.",
+        "assistantNameHelp": "Name that your clients will see when interacting with the assistant",
+        "companyName": "Company/Program Name",
+        "companyNamePlaceholder": "Ex: My Company, My Program",
+        "ownerName": "Owner Name",
+        "ownerNamePlaceholder": "Your name"
+      },
+      "step3": {
+        "title": "Business Information",
+        "clientGoals": "Client Goals",
+        "clientGoalsPlaceholder": "What goals does your service/product help achieve? Be specific.",
+        "offerDetails": "Offer Details",
+        "offerDetailsPlaceholder": "What packages or services do you offer? What does each include?",
+        "businessNiche": "Business Niche",
+        "businessNichePlaceholder": "Ex: Real Estate, Coaching, Fitness, E-commerce",
+        "importantLinks": "Important Links",
+        "importantLinksPlaceholder": "One link per line\nhttps://www.example.com\nhttps://www.another-example.com",
+        "importantLinksHelp": "One link per line. Important resources the assistant should know."
+      },
+      "step4": {
+        "title": "Behavior and Schedule",
+        "openingQuestion": "Opening Question",
+        "openingQuestionPlaceholder": "First question the assistant will ask. Should be open-ended and allow the client to share their needs.",
+        "activeHoursStart": "Start Time",
+        "activeHoursEnd": "End Time",
+        "responseInterval": "Interval (min)"
+      },
+      "step5": {
+        "title": "Lead Qualification",
+        "enableQualification": "Enable lead qualification",
+        "qualifyingQuestion": "Qualifying Question",
+        "qualifyingQuestionPlaceholder": "Question to determine if the lead is qualified",
+        "qualificationCriteria": "Qualification Criteria",
+        "qualificationCriteriaPlaceholder": "Ex: Minimum $5000 available to invest",
+        "disqualifyMessage": "Message for Disqualified Leads",
+        "disqualifyMessagePlaceholder": "Message or link to free resources for unqualified leads"
+      },
+      "step6": {
+        "title": "Advanced Customization",
+        "toneGuidelines": "Tone Guidelines",
+        "toneGuidelinesPlaceholder": "Instructions about the assistant's tone and communication style",
+        "additionalContext": "Additional Context",
+        "additionalContextPlaceholder": "Any additional information the assistant should know"
+      }
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "description": "Metrics and statistics of your conversations and agents",
+    "refresh": "Refresh",
+    "period": "Period:",
+    "today": "Today",
+    "week": "7 days",
+    "month": "30 days",
+    "all": "All",
+    "metrics": {
+      "conversations": "Conversations",
+      "responseRate": "Response Rate",
+      "messages": "Messages",
+      "activeAgents": "Active Agents"
+    },
+    "activity": "Activity (Last 21 days)",
+    "conversationsByAgent": "Conversations by Agent",
+    "empty": {
+      "title": "No data yet",
+      "description": "Analytics will appear here once you have active conversations"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your account and preferences",
+    "profile": "Profile",
+    "language": "Language",
+    "timezone": "Time Zone",
+    "notifications": "Notifications",
+    "theme": "Theme",
+    "account": "Account",
+    "personalInfo": "Personal Information",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phone": "Phone",
+    "email": "Email",
+    "notificationSettings": {
+      "title": "Notification Settings",
+      "email": "Email Notifications",
+      "push": "Push Notifications",
+      "newConversation": "New Conversations"
+    },
+    "themeSettings": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "logout": "Logout",
+    "saveChanges": "Save Changes",
+    "changesSaved": "Changes saved successfully"
+  },
+  "integrations": {
+    "title": "Integrations",
+    "description": "Connect your WhatsApp and Instagram accounts",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "connected": "Connected",
+    "notConnected": "Not Connected",
+    "whatsapp": "WhatsApp",
+    "instagram": "Instagram"
+  },
+  "conversations": {
+    "title": "Conversations",
+    "search": "Search conversations...",
+    "filter": "Filter",
+    "all": "All",
+    "unread": "Unread",
+    "empty": {
+      "title": "No conversations",
+      "description": "Conversations will appear here"
+    }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "description": "Manage your events and appointments"
+  }
+}

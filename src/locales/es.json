@@ -1,0 +1,176 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "create": "Crear",
+    "search": "Buscar",
+    "back": "Atrás",
+    "continue": "Continuar",
+    "actions": "Acciones",
+    "active": "Activo",
+    "inactive": "Inactivo"
+  },
+  "navigation": {
+    "conversations": "Conversaciones",
+    "agents": "Agentes de IA",
+    "analytics": "Analíticas",
+    "integrations": "Integraciones",
+    "calendar": "Calendario",
+    "settings": "Ajustes"
+  },
+  "agents": {
+    "title": "Agentes de IA",
+    "description": "Crea y gestiona agentes de IA para WhatsApp e Instagram",
+    "createAgent": "Crear Agente",
+    "editAgent": "Editar Agente",
+    "newAgent": "Nuevo Agente",
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar este agente?",
+    "saveChanges": "Guardar Cambios",
+    "testAgent": "Probar Agente",
+    "assignWhatsApp": "Asignar WhatsApp",
+    "assignInstagram": "Asignar Instagram",
+    "unassigned": "Sin asignar",
+    "lastUpdate": "Última actualización",
+    "created": "Creado",
+    "empty": {
+      "title": "No hay agentes creados",
+      "description": "Crea tu primer agente de IA para comenzar"
+    },
+    "form": {
+      "step1": {
+        "title": "Información Básica",
+        "name": "Nombre del Agente",
+        "namePlaceholder": "Ej: Asistente de Ventas",
+        "description": "Descripción",
+        "descriptionPlaceholder": "Describe las capacidades y personalidad del agente...",
+        "platform": "Plataforma"
+      },
+      "step2": {
+        "title": "Identidad del Asistente",
+        "assistantName": "Nombre del Asistente (para clientes)",
+        "assistantNamePlaceholder": "Ej: Juan, María, etc.",
+        "assistantNameHelp": "Nombre que verán tus clientes al interactuar con el asistente",
+        "companyName": "Nombre de la Empresa/Programa",
+        "companyNamePlaceholder": "Ej: Mi Empresa, Mi Programa",
+        "ownerName": "Nombre del Propietario",
+        "ownerNamePlaceholder": "Tu nombre"
+      },
+      "step3": {
+        "title": "Información del Negocio",
+        "clientGoals": "Objetivos del Cliente",
+        "clientGoalsPlaceholder": "¿Qué objetivos ayuda tu servicio/producto a lograr? Sé específico.",
+        "offerDetails": "Detalles de la Oferta",
+        "offerDetailsPlaceholder": "¿Qué paquetes o servicios ofreces? ¿Qué incluye cada uno?",
+        "businessNiche": "Nicho de Negocio",
+        "businessNichePlaceholder": "Ej: Bienes Raíces, Coaching, Fitness, E-commerce",
+        "importantLinks": "Enlaces Importantes",
+        "importantLinksPlaceholder": "Un enlace por línea\nhttps://www.ejemplo.com\nhttps://www.otro-ejemplo.com",
+        "importantLinksHelp": "Un enlace por línea. Recursos importantes que el asistente debe conocer."
+      },
+      "step4": {
+        "title": "Comportamiento y Horarios",
+        "openingQuestion": "Pregunta de Apertura",
+        "openingQuestionPlaceholder": "Primera pregunta que hará el asistente. Debe ser abierta y permitir que el cliente comparta sus necesidades.",
+        "activeHoursStart": "Hora Inicio",
+        "activeHoursEnd": "Hora Fin",
+        "responseInterval": "Intervalo (min)"
+      },
+      "step5": {
+        "title": "Calificación de Leads",
+        "enableQualification": "Habilitar calificación de leads",
+        "qualifyingQuestion": "Pregunta de Calificación",
+        "qualifyingQuestionPlaceholder": "Pregunta para determinar si el lead está calificado",
+        "qualificationCriteria": "Criterios de Calificación",
+        "qualificationCriteriaPlaceholder": "Ej: Mínimo $5000 disponible para invertir",
+        "disqualifyMessage": "Mensaje para Descalificados",
+        "disqualifyMessagePlaceholder": "Mensaje o enlace a recursos gratuitos para leads no calificados"
+      },
+      "step6": {
+        "title": "Personalización Avanzada",
+        "toneGuidelines": "Guías de Tono",
+        "toneGuidelinesPlaceholder": "Instrucciones sobre el tono y estilo de comunicación del asistente",
+        "additionalContext": "Contexto Adicional",
+        "additionalContextPlaceholder": "Cualquier información adicional que el asistente deba conocer"
+      }
+    }
+  },
+  "analytics": {
+    "title": "Analíticas",
+    "description": "Métricas y estadísticas de tus conversaciones y agentes",
+    "refresh": "Actualizar",
+    "period": "Período:",
+    "today": "Hoy",
+    "week": "7 días",
+    "month": "30 días",
+    "all": "Todo",
+    "metrics": {
+      "conversations": "Conversaciones",
+      "responseRate": "Tasa de Respuesta",
+      "messages": "Mensajes",
+      "activeAgents": "Agentes Activos"
+    },
+    "activity": "Actividad (Últimos 21 días)",
+    "conversationsByAgent": "Conversaciones por Agente",
+    "empty": {
+      "title": "No hay datos aún",
+      "description": "Las analíticas aparecerán aquí una vez que tengas conversaciones activas"
+    }
+  },
+  "settings": {
+    "title": "Ajustes",
+    "description": "Gestiona tu cuenta y preferencias",
+    "profile": "Perfil",
+    "language": "Idioma",
+    "timezone": "Zona Horaria",
+    "notifications": "Notificaciones",
+    "theme": "Tema",
+    "account": "Cuenta",
+    "personalInfo": "Información Personal",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "phone": "Teléfono",
+    "email": "Correo Electrónico",
+    "notificationSettings": {
+      "title": "Configuración de Notificaciones",
+      "email": "Notificaciones por Email",
+      "push": "Notificaciones Push",
+      "newConversation": "Nuevas Conversaciones"
+    },
+    "themeSettings": {
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Sistema"
+    },
+    "logout": "Cerrar Sesión",
+    "saveChanges": "Guardar Cambios",
+    "changesSaved": "Cambios guardados exitosamente"
+  },
+  "integrations": {
+    "title": "Integraciones",
+    "description": "Conecta tus cuentas de WhatsApp e Instagram",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "connected": "Conectado",
+    "notConnected": "No Conectado",
+    "whatsapp": "WhatsApp",
+    "instagram": "Instagram"
+  },
+  "conversations": {
+    "title": "Conversaciones",
+    "search": "Buscar conversaciones...",
+    "filter": "Filtrar",
+    "all": "Todas",
+    "unread": "No leídas",
+    "empty": {
+      "title": "No hay conversaciones",
+      "description": "Las conversaciones aparecerán aquí"
+    }
+  },
+  "calendar": {
+    "title": "Calendario",
+    "description": "Gestiona tus eventos y citas"
+  }
+}

@@ -26,6 +26,12 @@ function Agents() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Solo permitir submit en el último paso
+    if (currentStep !== totalSteps) {
+      return
+    }
+
     try {
       const agentData = {
         name: formData.name,

@@ -3,6 +3,8 @@ import { Settings, User, LogOut, Globe, Bell, Shield, Save } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n'
 
 interface UserSettings {
   firstName: string
@@ -91,6 +93,10 @@ function SettingsPage() {
       })
 
       if (error) throw error
+
+      // Guardar idioma en localStorage y actualizar i18n
+      localStorage.setItem('userLanguage', settings.language)
+      i18n.changeLanguage(settings.language)
 
       // Aplicar tema si cambió
       if (settings.theme === 'dark') {
@@ -240,8 +246,6 @@ function SettingsPage() {
                 >
                   <option value="es">Español</option>
                   <option value="en">English</option>
-                  <option value="pt">Português</option>
-                  <option value="fr">Français</option>
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
