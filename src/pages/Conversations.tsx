@@ -8,6 +8,7 @@ function Conversations() {
   const { conversations, loading, error } = useConversations()
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [isFirstSelection, setIsFirstSelection] = useState(true)
 
   // Detectar cambios de tamaño de ventana para responsive
   useEffect(() => {
@@ -15,6 +16,14 @@ function Conversations() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // Manejar selección de conversación
+  const handleSelectConversation = (id: string) => {
+    setSelectedConversationId(id)
+    if (isFirstSelection) {
+      setIsFirstSelection(false)
+    }
+  }
 
   // Encontrar la conversación seleccionada
   const selectedConversation = conversations.find((c) => c.id === selectedConversationId)
@@ -46,21 +55,25 @@ function Conversations() {
     <div className="conversations-container">
       {/* Lista de conversaciones - ocultar en mobile cuando hay una seleccionada */}
       {(!isMobile || !selectedConversationId) && (
-        <ConversationList
-          conversations={conversations}
-          selectedId={selectedConversationId}
-          onSelect={setSelectedConversationId}
-        />
+        <div className="conversation-list-card">
+          <ConversationList
+            conversations={conversations}
+            selectedId={selectedConversationId}
+            onSelect={handleSelectConversation}
+          />
+        </div>
       )}
 
       {/* Panel de chat o estado vacío */}
       {selectedConversationId && selectedConversation ? (
-        <ChatPanel
-          conversationId={selectedConversationId}
-          conversation={selectedConversation}
-          onBack={isMobile ? () => setSelectedConversationId(null) : undefined}
-          isMobile={isMobile}
-        />
+        <div className={isFirstSelection ? 'chat-panel-wrapper chat-panel-wrapper--animated' : 'chat-panel-wrapper'}>
+          <ChatPanel
+            conversationId={selectedConversationId}
+            conversation={selectedConversation}
+            onBack={isMobile ? () => setSelectedConversationId(null) : undefined}
+            isMobile={isMobile}
+          />
+        </div>
       ) : (
         !isMobile && <EmptyConversation />
       )}
