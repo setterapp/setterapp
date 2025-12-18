@@ -102,23 +102,24 @@
   padding: var(--spacing-sm) var(--spacing-md);
   color: var(--color-text-secondary);
   text-decoration: none;
-  transition: all 0.1s ease;
+  transition: all 0.15s ease;
   border-radius: var(--border-radius-sm);
   font-size: var(--font-size-sm);
   font-weight: 500;
   border: 2px solid transparent;
   position: relative;
+  box-shadow: none;
 }
 
 .nav-list a:hover {
   background: var(--color-bg-secondary);
   color: var(--color-text);
   border: 2px solid #000;
-  box-shadow: 2px 2px 0px 0px #000;
+  box-shadow: 3px 3px 0px 0px #000;
 }
 
 .nav-list a:active {
-  transform: translate(2px, 2px);
+  transform: translate(3px, 3px);
   box-shadow: none;
 }
 
@@ -128,10 +129,12 @@
   font-weight: 600;
   border: 2px solid #000;
   box-shadow: 3px 3px 0px 0px #000;
+  transform: translate(0, 0);
 }
 
 .nav-list a.active:hover {
   box-shadow: 4px 4px 0px 0px #000;
+  transform: translate(-1px, -1px);
 }
 
 .nav-list a.active:active {
