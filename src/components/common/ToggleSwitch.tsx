@@ -38,6 +38,7 @@ export default function ToggleSwitch({ checked, onChange, disabled = false }: To
           backgroundColor: checked ? 'var(--color-success)' : 'var(--color-border)',
           borderRadius: '28px',
           transition: 'var(--transition)',
+          border: '1px solid #000',
         }}
       >
         <span
