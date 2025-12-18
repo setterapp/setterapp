@@ -22,3 +22,5 @@ export default function WhatsAppIcon({ size = 24, color = 'currentColor' }: What
 
 
 
+
+

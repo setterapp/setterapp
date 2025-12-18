@@ -82,3 +82,4 @@ const WHATSAPP_SCOPES = [
 - [WhatsApp Business API Permissions](https://developers.facebook.com/docs/whatsapp/cloud-api/get-started)
 - [Facebook App Review Process](https://developers.facebook.com/docs/app-review)
 - [Business Manager API](https://developers.facebook.com/docs/business-manager-api)
+

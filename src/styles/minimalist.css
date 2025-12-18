@@ -1,4 +1,4 @@
-/* Minimalist Design System - Notion Style */
+/* Neobrutalism Design System - Catppuccin Mocha Palette */
 
 :root {
   /* Colors - Catppuccin Mocha Palette */
@@ -21,13 +21,16 @@
   --color-text-secondary: #c9d1d9;
   --color-text-tertiary: #b1bac4;
 
-  /* Layout */
+  /* Layout - Neobrutalism Style */
   --border-radius: 8px;
   --border-radius-sm: 6px;
   --border-radius-lg: 12px;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+  /* Neobrutalism shadows - offset instead of soft */
+  --shadow-neo-sm: 2px 2px 0px 0px rgba(0, 0, 0, 0.8);
+  --shadow-neo: 4px 4px 0px 0px rgba(0, 0, 0, 0.8);
+  --shadow-neo-lg: 6px 6px 0px 0px rgba(0, 0, 0, 0.8);
+  --shadow-neo-xl: 8px 8px 0px 0px rgba(0, 0, 0, 0.8);
+  --border-neo: 3px;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -51,79 +54,94 @@
   --transition: all 0.15s ease;
 }
 
-/* Button */
+/* Button - Neobrutalism Style */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
   padding: 8px 16px;
-  border: 2px solid transparent;
+  border: var(--border-neo) solid #000;
   border-radius: var(--border-radius-sm);
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.1s ease;
   outline: none;
   text-align: center;
   position: relative;
+  box-shadow: var(--shadow-neo);
 }
 
 .btn:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 3px solid var(--color-primary);
   outline-offset: 2px;
 }
 
 .btn--primary {
   background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
+  color: #000;
+  border-color: #000;
 }
 
 .btn--primary:hover:not(:disabled) {
   background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-neo-sm);
+}
+
+.btn--primary:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: none;
 }
 
 .btn--secondary {
   background: var(--color-bg);
   color: var(--color-text);
-  border-color: var(--color-border);
+  border-color: #000;
 }
 
 .btn--secondary:hover:not(:disabled) {
   background: var(--color-bg-secondary);
-  border-color: var(--color-text-tertiary);
-  transform: translateY(-1px);
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-neo-sm);
+}
+
+.btn--secondary:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: none;
 }
 
 .btn--ghost {
   background: transparent;
   color: var(--color-text-secondary);
-  border-color: transparent;
-  opacity: 0.9;
+  border-color: var(--color-border);
+  box-shadow: none;
 }
 
 .btn--ghost:hover:not(:disabled) {
   background: var(--color-bg-secondary);
   color: var(--color-text);
-  border-color: var(--color-border);
-  opacity: 1;
+  border-color: #000;
+  box-shadow: var(--shadow-neo-sm);
 }
 
 .btn--danger {
   background: var(--color-danger);
-  color: white;
-  border-color: var(--color-danger);
+  color: #000;
+  border-color: #000;
 }
 
 .btn--danger:hover:not(:disabled) {
   background: #e87699;
-  border-color: #e87699;
-  transform: translateY(-1px);
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-neo-sm);
+}
+
+.btn--danger:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: none;
 }
 
 /* Icon-only button variant */
@@ -157,13 +175,14 @@
   transform: none !important;
 }
 
-/* Card */
+/* Card - Neobrutalism Style */
 .card {
   background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  border: var(--border-neo) solid #000;
   border-radius: var(--border-radius);
   padding: var(--spacing-lg);
-  transition: var(--transition);
+  transition: all 0.1s ease;
+  box-shadow: var(--shadow-neo);
 }
 
 .card--hover {
@@ -171,36 +190,45 @@
 }
 
 .card--hover:hover {
-  border-color: var(--color-border);
-  box-shadow: var(--shadow-sm);
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-neo-sm);
+}
+
+.card--hover:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
 }
 
 .card--secondary {
   background: var(--color-bg-secondary);
-  border-color: transparent;
+  border-color: #000;
 }
 
-/* Input */
+/* Input - Neobrutalism Style */
 .input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid var(--color-border);
+  border: var(--border-neo) solid #000;
   border-radius: var(--border-radius-sm);
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
   color: var(--color-text);
   background: var(--color-bg);
-  transition: var(--transition);
+  transition: all 0.1s ease;
   outline: none;
+  box-shadow: var(--shadow-neo-sm);
 }
 
 .input:hover {
-  border-color: var(--color-border);
+  border-color: var(--color-primary);
 }
 
 .input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(137, 180, 250, 0.2);
+  outline: 3px solid var(--color-primary);
+  outline-offset: 0px;
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px 0px rgba(0, 0, 0, 0.8);
 }
 
 .input::placeholder {
@@ -213,7 +241,7 @@
 }
 
 .input--error:focus {
-  box-shadow: 0 0 0 3px rgba(243, 139, 168, 0.2);
+  outline-color: var(--color-danger);
 }
 
 .textarea {
@@ -223,7 +251,7 @@
 
 .select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23bac2de' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 16px;
@@ -238,55 +266,55 @@
   color: var(--color-text);
 }
 
-/* Badge */
+/* Badge - Neobrutalism Style */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
   border-radius: 12px;
+  border: 2px solid #000;
   font-size: var(--font-size-xs);
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
+  box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.8);
 }
 
 .badge--primary {
-  background: rgba(137, 180, 250, 0.15);
-  color: var(--color-primary);
+  background: var(--color-primary);
+  color: #000;
 }
 
 .badge--success {
-  background: rgba(166, 227, 161, 0.15);
-  color: var(--color-success);
+  background: var(--color-success);
+  color: #000;
 }
 
 .badge--warning {
-  background: rgba(249, 226, 175, 0.15);
-  color: var(--color-warning);
+  background: var(--color-warning);
+  color: #000;
 }
 
 .badge--danger {
-  background: rgba(243, 139, 168, 0.15);
-  color: var(--color-danger);
+  background: var(--color-danger);
+  color: #000;
 }
 
 .badge--secondary {
   background: var(--color-bg-tertiary);
   color: var(--color-text);
-  opacity: 0.9;
 }
 
-/* Modal */
+/* Modal - Neobrutalism Style */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: var(--spacing-lg);
-  backdrop-filter: blur(4px);
 }
 
 .modal {
@@ -297,8 +325,9 @@
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--color-bg);
+  border: var(--border-neo) solid #000;
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-neo-xl);
   padding: 0;
   box-sizing: border-box;
   margin: var(--spacing-lg);

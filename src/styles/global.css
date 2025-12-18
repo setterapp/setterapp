@@ -1,5 +1,9 @@
 @import './minimalist.css';
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 * {
   margin: 0;
   padding: 0;
@@ -144,10 +148,10 @@ input, textarea, select {
   text-align: center;
 }
 
-/* Conversation List */
+/* Conversation List - Neobrutalism Style */
 .conversation-list {
   width: 320px;
-  border-right: 1px solid var(--color-border);
+  border-right: 3px solid #000;
   background: var(--color-bg);
   display: flex;
   flex-direction: column;
@@ -156,7 +160,7 @@ input, textarea, select {
 
 .conversation-list-header {
   padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 3px solid #000;
   background: var(--color-bg);
   flex-shrink: 0;
 }
@@ -166,12 +170,12 @@ input, textarea, select {
   overflow-y: auto;
 }
 
-/* Conversation Item */
+/* Conversation Item - Neobrutalism Style */
 .conversation-item {
   padding: var(--spacing-md);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 3px solid #000;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.1s ease;
   display: flex;
   gap: var(--spacing-sm);
   align-items: flex-start;
@@ -181,11 +185,13 @@ input, textarea, select {
 
 .conversation-item:hover {
   background: var(--color-bg-secondary);
+  transform: translateX(2px);
 }
 
 .conversation-item--selected {
   background: var(--color-bg-secondary);
-  border-left: 3px solid var(--color-primary);
+  border-left: 6px solid var(--color-primary);
+  box-shadow: inset 4px 0px 0px 0px rgba(137, 180, 250, 0.3);
 }
 
 .conversation-item-icon {
@@ -197,6 +203,8 @@ input, textarea, select {
   justify-content: center;
   border-radius: 50%;
   background: var(--color-bg-secondary);
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.8);
 }
 
 .conversation-item-content {
@@ -235,18 +243,20 @@ input, textarea, select {
 
 .unread-badge {
   background-color: var(--color-primary);
-  color: var(--color-bg);
+  color: #000;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  border: 2px solid #000;
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.8);
 }
 
-/* Chat Panel */
+/* Chat Panel - Neobrutalism Style */
 .chat-panel {
   flex: 1;
   display: flex;
@@ -257,7 +267,7 @@ input, textarea, select {
 
 .chat-header {
   padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 3px solid #000;
   background: var(--color-bg);
   flex-shrink: 0;
 }
@@ -274,7 +284,7 @@ input, textarea, select {
 
 .message-input-container {
   padding: var(--spacing-lg);
-  border-top: 1px solid var(--color-border);
+  border-top: 3px solid #000;
   background: var(--color-bg);
   display: flex;
   gap: var(--spacing-sm);
@@ -327,7 +337,8 @@ input, textarea, select {
   height: 32px;
   border-radius: 50%;
   background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -341,17 +352,21 @@ input, textarea, select {
 
 .message-bubble--inbound .message-content {
   background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  border: 3px solid #000;
   padding: var(--spacing-md);
   border-radius: var(--border-radius);
   color: var(--color-text);
+  box-shadow: var(--shadow-neo-sm);
 }
 
 .message-bubble--outbound .message-content {
   background: var(--color-primary);
+  border: 3px solid #000;
   padding: var(--spacing-md);
   border-radius: var(--border-radius);
-  color: white;
+  color: #000;
+  font-weight: 500;
+  box-shadow: var(--shadow-neo-sm);
 }
 
 .message-sender {
@@ -393,4 +408,6 @@ input, textarea, select {
     display: none;
   }
 }
+
+
 

@@ -145,3 +145,5 @@ Los logs de las Edge Functions están disponibles en:
 - Verifica RLS policies en las tablas
 - Refresca la página de conversaciones
 
+
+
