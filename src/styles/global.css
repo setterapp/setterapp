@@ -20,7 +20,7 @@ body {
   font-size: var(--font-size-base);
   line-height: 1.6;
   color: var(--color-text);
-  background: var(--color-bg-secondary);
+  background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -133,7 +133,10 @@ input, textarea, select {
 /* Main Container */
 .conversations-container {
   display: flex;
-  height: calc(100vh - 60px);
+  height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   background: var(--color-bg);
   overflow: hidden;
 }
