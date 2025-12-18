@@ -148,13 +148,13 @@ input, textarea, select {
   overflow: hidden;
   display: flex;
   flex-shrink: 0;
-  width: 320px;
+  width: 420px;
+  height: 100%;
   transition: width 0.3s ease-out;
 }
 
 .conversations-card--expanded {
-  width: calc(100% - 400px);
-  max-width: 1400px;
+  width: 100%;
 }
 
 .conversations-card--animating {
@@ -163,10 +163,10 @@ input, textarea, select {
 
 @keyframes expandCard {
   from {
-    width: 320px;
+    width: 420px;
   }
   to {
-    width: calc(100% - 400px);
+    width: 100%;
   }
 }
 
@@ -184,11 +184,13 @@ input, textarea, select {
 
 /* Conversation List - Neobrutalism Style */
 .conversation-list {
-  width: 320px;
+  width: 420px;
   background: var(--color-bg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 100%;
+  flex-shrink: 0;
 }
 
 .conversation-list-header {
@@ -324,6 +326,7 @@ input, textarea, select {
   flex-direction: column;
   gap: var(--spacing-md);
   background: var(--color-bg);
+  min-height: 0;
 }
 
 .message-input-container {
