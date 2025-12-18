@@ -4,7 +4,11 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, style, ...props }, ref) => (
-  <div style={{ width: '100%', overflow: 'auto' }}>
+  <div style={{ 
+    width: '100%', 
+    overflow: 'auto',
+    border: '2px solid #000',
+  }}>
     <table
       ref={ref}
       className={className}
@@ -53,7 +57,6 @@ const TableRow = React.forwardRef<
     ref={ref}
     className={className}
     style={{
-      borderBottom: '2px solid #000',
       ...style,
     }}
     {...props}
@@ -73,6 +76,7 @@ const TableHead = React.forwardRef<
       textAlign: 'left',
       fontWeight: 600,
       fontSize: 'var(--font-size-sm)',
+      borderBottom: '2px solid #000',
       ...style,
     }}
     {...props}
@@ -88,7 +92,7 @@ const TableCell = React.forwardRef<
     ref={ref}
     className={className}
     style={{
-      padding: 'var(--spacing-md)',
+      padding: '8px 16px',
       fontSize: 'var(--font-size-sm)',
       ...style,
     }}
@@ -105,4 +109,3 @@ export {
   TableRow,
   TableCell,
 }
-

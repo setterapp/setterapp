@@ -51,12 +51,21 @@ export function DataTable<TData, TValue>({
     <div style={{ width: '100%' }}>
       <div>
         <Table>
-          <TableHeader style={{ background: 'var(--color-bg-secondary)' }}>
+          <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow 
+                key={headerGroup.id}
+                style={{ 
+                  background: 'var(--color-bg)',
+                  color: 'var(--color-text)'
+                }}
+              >
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead 
+                      key={header.id}
+                      style={{ color: 'var(--color-text)' }}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -71,23 +80,38 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  style={{ background: 'var(--color-bg)' }}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row, index) => {
+                const isLastRow = index === table.getRowModel().rows.length - 1
+                return (
+                  <TableRow
+                    key={row.id}
+                    style={{ 
+                      background: 'var(--color-bg)',
+                      color: 'var(--color-text)'
+                    }}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell 
+                        key={cell.id}
+                        style={{ 
+                          borderBottom: isLastRow ? 'none' : '2px solid #000'
+                        }}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )
+              })
             ) : (
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  style={{ height: '96px', textAlign: 'center' }}
+                  style={{ 
+                    height: '96px', 
+                    textAlign: 'center',
+                    borderBottom: 'none'
+                  }}
                 >
                   No hay resultados.
                 </TableCell>
@@ -103,10 +127,10 @@ export function DataTable<TData, TValue>({
         gap: 'var(--spacing-md)',
         paddingTop: 'var(--spacing-md)',
       }}>
-        <div style={{ 
-          fontSize: 'var(--font-size-sm)', 
+        <div style={{
+          fontSize: 'var(--font-size-sm)',
           color: 'var(--color-text)',
-          flex: 1 
+          flex: 1
         }}>
           {table.getFilteredSelectedRowModel().rows.length} de{" "}
           {table.getFilteredRowModel().rows.length} fila(s) seleccionadas.
