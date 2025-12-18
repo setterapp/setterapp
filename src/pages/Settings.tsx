@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, User, LogOut, Globe, Bell, Moon, Shield, Save } from 'lucide-react'
+import { Settings, User, LogOut, Globe, Bell, Shield, Save } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -75,7 +75,7 @@ function SettingsPage() {
 
   const handleSaveSettings = async () => {
     if (!user) return
-    
+
     setSaving(true)
     try {
       const { error } = await supabase.auth.updateUser({
@@ -89,16 +89,16 @@ function SettingsPage() {
           theme: settings.theme,
         },
       })
-      
+
       if (error) throw error
-      
+
       // Aplicar tema si cambió
       if (settings.theme === 'dark') {
         document.documentElement.classList.add('dark')
       } else {
         document.documentElement.classList.remove('dark')
       }
-      
+
       alert('Configuración guardada exitosamente')
     } catch (err: any) {
       console.error('Error al guardar configuración:', err)
