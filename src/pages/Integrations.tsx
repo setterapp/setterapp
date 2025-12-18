@@ -249,7 +249,7 @@ function Integrations() {
                       width: '48px',
                       height: '48px',
                       borderRadius: 'var(--border-radius)',
-                      background: '#ffffff',
+                      background: integration.type === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
                       border: '2px solid #000',
                       display: 'flex',
                       alignItems: 'center',
@@ -258,10 +258,10 @@ function Integrations() {
                     }}
                   >
                     {integration.type === 'whatsapp' && (
-                      <WhatsAppIcon size={24} color="#a6e3a1" />
+                      <WhatsAppIcon size={24} color="#000" />
                     )}
                     {integration.type === 'instagram' && (
-                      <InstagramIcon size={24} color="#f38ba8" />
+                      <InstagramIcon size={24} color="#000" />
                     )}
                   </div>
                   <div style={{ flex: 1 }}>
