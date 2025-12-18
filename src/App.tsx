@@ -21,6 +21,7 @@ import './App.css'
 function Layout() {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [pressedButton, setPressedButton] = useState<string | null>(null)
 
   const navItems = [
     { path: '/analytics', label: 'Analíticas', icon: BarChart3 },
@@ -47,6 +48,14 @@ function Layout() {
       document.body.style.overflow = 'unset'
     }
   }, [sidebarOpen])
+
+  const handleLinkClick = (path: string) => {
+    setPressedButton(path)
+    setSidebarOpen(false)
+    setTimeout(() => {
+      setPressedButton(null)
+    }, 150)
+  }
 
   return (
     <div className="app-container">
@@ -82,12 +91,13 @@ function Layout() {
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+            const isPressed = pressedButton === item.path
             return (
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  className={isActive ? 'active' : ''}
-                  onClick={() => setSidebarOpen(false)}
+                  className={`${isActive ? 'active' : ''} ${isPressed ? 'pressed' : ''}`}
+                  onClick={() => handleLinkClick(item.path)}
                 >
                   <Icon size={18} />
                   {item.label}
