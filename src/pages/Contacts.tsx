@@ -125,9 +125,7 @@ function Contacts() {
         </div>
       </div>
 
-      <div className="card">
-        <DataTable columns={columns} data={data} />
-      </div>
+      <DataTable columns={columns} data={data} />
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import * as React from "react"
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'secondary' | 'ghost'
+  variant?: 'default' | 'secondary' | 'ghost' | 'noShadow'
   size?: 'default' | 'sm' | 'lg'
 }
 
@@ -12,10 +12,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       alignItems: 'center',
       justifyContent: 'center',
       gap: 'var(--spacing-sm)',
-      padding: size === 'sm' ? 'var(--spacing-xs) var(--spacing-sm)' :
+      padding: size === 'sm' ? '6px 12px' :
                size === 'lg' ? 'var(--spacing-md) var(--spacing-lg)' :
                'var(--spacing-sm) var(--spacing-md)',
-      fontSize: size === 'sm' ? 'var(--font-size-sm)' :
+      fontSize: size === 'sm' ? 'var(--font-size-xs)' :
                 size === 'lg' ? 'var(--font-size-lg)' :
                 'var(--font-size-base)',
       fontWeight: 600,
@@ -25,8 +25,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       transition: 'all 0.15s ease',
       position: 'relative',
       boxShadow: 'none',
+      transform: 'translate(0, 0)',
       background: variant === 'secondary' ? 'var(--color-bg-secondary)' :
                   variant === 'ghost' ? 'transparent' :
+                  variant === 'noShadow' ? 'var(--color-bg-secondary)' :
                   'var(--color-primary)',
       color: variant === 'ghost' ? 'var(--color-text)' : '#000',
     }
@@ -40,7 +42,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           ...style,
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.boxShadow = '3px 3px 0px 0px #000'
+          if (variant !== 'noShadow') {
+            e.currentTarget.style.boxShadow = '3px 3px 0px 0px #000'
+          }
         }}
         onMouseLeave={(e) => {
           if (!e.currentTarget.matches(':active')) {
@@ -54,7 +58,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         }}
         onMouseUp={(e) => {
           e.currentTarget.style.transform = 'translate(0, 0)'
-          e.currentTarget.style.boxShadow = '3px 3px 0px 0px #000'
+          if (variant !== 'noShadow') {
+            e.currentTarget.style.boxShadow = '3px 3px 0px 0px #000'
+          }
         }}
         {...props}
       />
