@@ -9,22 +9,25 @@ export default function Logo({ size = 32, variant = 'full' }: LogoProps) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 24 24"
+      viewBox="0 0 24 26"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: 'block' }}
     >
-      {/* Chat bubble con cola - path unificado */}
-      <path
-        d="M4 2h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H8l-4 4V4c0-1.1.9-2 2-2z"
+      {/* Chat bubble main body */}
+      <rect
+        x="4"
+        y="2"
+        width="16"
+        height="14"
+        rx="2"
         fill="var(--color-bg)"
         stroke="var(--color-border)"
         strokeWidth="2"
-        strokeLinejoin="round"
       />
-      {/* Cola triangular que sobresale desde abajo izquierda */}
-      <polygon
-        points="4,16 8,16 4,22"
+      {/* Cola triangular que sobresale desde abajo izquierda - más visible */}
+      <path
+        d="M4 16 L8 16 L4 24 Z"
         fill="var(--color-bg)"
         stroke="var(--color-border)"
         strokeWidth="2"
