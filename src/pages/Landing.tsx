@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Check, Zap, MessageSquare } from 'lucide-react'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
+import Logo from '../components/Logo'
 
 function Landing() {
   return (
@@ -21,22 +22,7 @@ function Landing() {
         }}
       >
         <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              background: 'var(--color-primary)',
-              border: '4px solid #000',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '4px 4px 0px 0px #000',
-              animation: 'pulse 2s ease-in-out infinite',
-            }}
-          >
-            <Zap size={24} color="#000" fill="#000" />
-          </div>
+          <Logo size={48} variant="icon" />
           <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: 'var(--color-text)' }}>
             AppSetter
           </span>
