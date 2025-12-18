@@ -232,8 +232,9 @@
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: translate(3px, 3px);
-  box-shadow: none;
+  transform: translate(3px, 3px) !important;
+  box-shadow: none !important;
+  border: 2px solid #000 !important;
 }
 
 .btn-secondary {
@@ -258,8 +259,9 @@
 }
 
 .btn-secondary:active:not(:disabled) {
-  transform: translate(3px, 3px);
-  box-shadow: none;
+  transform: translate(3px, 3px) !important;
+  box-shadow: none !important;
+  border: 2px solid #000 !important;
 }
 
 .form-group {
