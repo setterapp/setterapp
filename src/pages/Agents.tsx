@@ -475,52 +475,6 @@ function Agents() {
               </div>
             )}
           </div>
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: 'var(--spacing-md)',
-                background: 'var(--color-bg-secondary)',
-                border: 'none',
-                borderRadius: 'var(--border-radius)',
-                cursor: 'pointer',
-                marginBottom: 'var(--spacing-md)',
-                fontSize: 'var(--font-size-base)',
-                fontWeight: 600,
-              }}
-            >
-              <span style={{ color: 'var(--color-text)' }}>Personalización Avanzada</span>
-              {expandedSections.has('customization') ? <ChevronUp size={20} color="var(--color-text)" /> : <ChevronDown size={20} color="var(--color-text)" />}
-            </button>
-            {expandedSections.has('customization') && (
-              <div>
-                <div className="form-group">
-                  <label htmlFor="toneGuidelines">Guías de Tono</label>
-                  <textarea
-                    id="toneGuidelines"
-                    className="input textarea"
-                    value={formData.config.toneGuidelines || ''}
-                    onChange={(e) => updateConfig('toneGuidelines', e.target.value)}
-                    placeholder="Instrucciones sobre el tono y estilo de comunicación del asistente"
-                    rows={3}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="additionalContext">Contexto Adicional</label>
-                  <textarea
-                    id="additionalContext"
-                    className="input textarea"
-                    value={formData.config.additionalContext || ''}
-                    onChange={(e) => updateConfig('additionalContext', e.target.value)}
-                    placeholder="Cualquier información adicional que el asistente deba conocer"
-                    rows={3}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-          </div>
 
           {/* Navigation Buttons */}
           <div style={{
