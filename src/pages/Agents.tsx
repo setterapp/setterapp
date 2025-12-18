@@ -475,12 +475,6 @@ function Agents() {
               </div>
             )}
           </div>
-
-          {/* Sección Personalización */}
-          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <button
-              type="button"
-              onClick={() => toggleSection('customization')}
               style={{
                 width: '100%',
                 display: 'flex',
