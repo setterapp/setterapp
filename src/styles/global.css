@@ -162,7 +162,6 @@ input, textarea, select {
 
 .conversation-list-header {
   padding: var(--spacing-lg);
-  border-bottom: 3px solid #000;
   background: var(--color-bg);
   flex-shrink: 0;
 }
@@ -170,6 +169,8 @@ input, textarea, select {
 .conversation-list-items {
   flex: 1;
   overflow-y: auto;
+  padding: var(--spacing-xs);
+  background: var(--color-bg);
 }
 
 /* Conversation Item - Neobrutalism Style */
