@@ -177,7 +177,7 @@ input, textarea, select {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg);
+  background: var(--color-bg-secondary);
   padding: var(--spacing-2xl);
   text-align: center;
 }
