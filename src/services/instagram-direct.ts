@@ -365,5 +365,92 @@ export const instagramDirectService = {
       console.error('❌ Error storing access token:', error)
       throw error
     }
+  },
+
+  /**
+   * Send a message via Instagram Direct API
+   * Uses the Instagram Messaging API to send messages
+   */
+  async sendMessage({
+    userId,
+    recipientId,
+    message,
+  }: {
+    userId?: string
+    recipientId: string
+    message: string
+  }) {
+    try {
+      // Get user's Instagram integration to retrieve access token
+      let integration
+      if (userId) {
+        const { data, error } = await supabase
+          .from('integrations')
+          .select('config')
+          .eq('type', 'instagram')
+          .eq('user_id', userId)
+          .eq('status', 'connected')
+          .single()
+
+        if (error) throw new Error(`No se encontró integración de Instagram: ${error.message}`)
+        integration = data
+      } else {
+        // If no userId provided, get the first connected Instagram integration
+        const { data, error } = await supabase
+          .from('integrations')
+          .select('config')
+          .eq('type', 'instagram')
+          .eq('status', 'connected')
+          .limit(1)
+          .single()
+
+        if (error) throw new Error(`No se encontró integración de Instagram: ${error.message}`)
+        integration = data
+      }
+
+      const accessToken = integration?.config?.access_token
+      const instagramUserId = integration?.config?.instagram_user_id || integration?.config?.instagram_page_id
+
+      if (!accessToken) {
+        throw new Error('No se encontró access token de Instagram. Por favor, reconecta Instagram.')
+      }
+
+      if (!instagramUserId) {
+        throw new Error('No se encontró Instagram User ID. Por favor, reconecta Instagram.')
+      }
+
+      // Send message using Instagram Messaging API
+      // https://developers.facebook.com/docs/instagram-api/guides/messaging
+      const response = await fetch(
+        `https://graph.instagram.com/v21.0/${instagramUserId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            recipient: {
+              id: recipientId
+            },
+            message: {
+              text: message
+            }
+          })
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(`Error al enviar mensaje a Instagram: ${errorData.error?.message || response.statusText}`)
+      }
+
+      const data = await response.json()
+      console.log('✅ Mensaje enviado a Instagram:', data)
+      return data
+    } catch (error) {
+      console.error('❌ Error sending Instagram message:', error)
+      throw error
+    }
   }
 }
