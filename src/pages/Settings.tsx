@@ -46,6 +46,9 @@ function SettingsPage() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) {
+        // Obtener idioma de localStorage como fallback
+        const savedLanguage = localStorage.getItem('userLanguage') || 'es'
+
         // Cargar preferencias desde Supabase
         const { data: preferences, error } = await supabase
           .from('user_preferences')
@@ -54,11 +57,12 @@ function SettingsPage() {
           .single()
 
         if (!error && preferences) {
-          setSettings({
+          // Usar preferencias de Supabase
+          const userSettings = {
             firstName: preferences.first_name || '',
             lastName: preferences.last_name || '',
             phone: preferences.phone || '',
-            language: preferences.language || 'es',
+            language: preferences.language || savedLanguage,
             timezone: preferences.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
             notifications: preferences.notifications || {
               email: true,
@@ -67,9 +71,17 @@ function SettingsPage() {
               newMessage: true,
             },
             theme: preferences.theme || 'light',
-          })
+          }
+          setSettings(userSettings)
           // Aplicar idioma guardado
-          i18n.changeLanguage(preferences.language || 'es')
+          i18n.changeLanguage(userSettings.language)
+        } else {
+          // Si no hay preferencias en Supabase, usar localStorage
+          setSettings(prev => ({
+            ...prev,
+            language: savedLanguage
+          }))
+          i18n.changeLanguage(savedLanguage)
         }
       }
       setLoading(false)
@@ -254,12 +266,30 @@ function SettingsPage() {
                   id="language"
                   className="input select"
                   value={settings.language}
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const newLanguage = e.target.value
                     setSettings({ ...settings, language: newLanguage })
                     // Cambiar idioma inmediatamente
                     localStorage.setItem('userLanguage', newLanguage)
                     i18n.changeLanguage(newLanguage)
+
+                    // Guardar automáticamente en Supabase
+                    if (user) {
+                      await supabase
+                        .from('user_preferences')
+                        .upsert({
+                          user_id: user.id,
+                          language: newLanguage,
+                          first_name: settings.firstName,
+                          last_name: settings.lastName,
+                          phone: settings.phone,
+                          timezone: settings.timezone,
+                          notifications: settings.notifications,
+                          theme: settings.theme,
+                        }, {
+                          onConflict: 'user_id'
+                        })
+                    }
                   }}
                   style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
                 >
