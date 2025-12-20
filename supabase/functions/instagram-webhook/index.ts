@@ -122,6 +122,85 @@ Deno.serve(async (req: Request) => {
 });
 
 /**
+ * Obtiene el perfil de un usuario de Instagram usando la Graph API
+ */
+async function getInstagramUserProfile(userId: string, senderId: string): Promise<{ name?: string; username?: string; profile_picture?: string } | null> {
+  try {
+    // Obtener integración de Instagram para acceder al token
+    const { data: integration, error } = await supabase
+      .from('integrations')
+      .select('config')
+      .eq('type', 'instagram')
+      .eq('user_id', userId)
+      .eq('status', 'connected')
+      .single();
+
+    if (error || !integration) {
+      console.warn('⚠️ No se encontró integración de Instagram para obtener perfil');
+      return null;
+    }
+
+    const accessToken = integration.config?.access_token;
+    if (!accessToken) {
+      console.warn('⚠️ No hay access token disponible para obtener perfil');
+      return null;
+    }
+
+    // Intentar obtener el perfil del usuario usando la Graph API
+    // Nota: Instagram Graph API puede requerir permisos específicos para obtener perfiles
+    try {
+      const response = await fetch(
+        `https://graph.instagram.com/v21.0/${senderId}?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        // Si falla, intentar con el endpoint alternativo
+        const altResponse = await fetch(
+          `https://graph.facebook.com/v21.0/${senderId}?fields=id,username,name,profile_pic&access_token=${accessToken}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!altResponse.ok) {
+          console.warn('⚠️ No se pudo obtener perfil de Instagram:', await altResponse.text());
+          return null;
+        }
+
+        const altData = await altResponse.json();
+        return {
+          name: altData.name || null,
+          username: altData.username || null,
+          profile_picture: altData.profile_pic || null,
+        };
+      }
+
+      const data = await response.json();
+      return {
+        name: data.name || null,
+        username: data.username || null,
+        profile_picture: data.profile_picture_url || null,
+      };
+    } catch (error) {
+      console.warn('⚠️ Error al obtener perfil de Instagram:', error);
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Error getting Instagram user profile:', error);
+    return null;
+  }
+}
+
+/**
  * Obtiene el user_id asociado a una integración de Instagram
  * Intenta buscar por pageId primero, si no encuentra, usa la primera integración conectada
  */
@@ -253,6 +332,19 @@ async function processInstagramEvent(event: any, pageId: string) {
 
       console.log('✅ Found user_id:', userId, 'for pageId:', pageId);
 
+      // Obtener perfil del usuario de Instagram (nombre, username, foto)
+      console.log('📸 Obteniendo perfil de Instagram para:', senderId);
+      const userProfile = await getInstagramUserProfile(userId, senderId);
+      if (userProfile) {
+        console.log('✅ Perfil obtenido:', userProfile);
+      } else {
+        console.log('⚠️ No se pudo obtener perfil, se usará senderId como nombre');
+      }
+
+      // Determinar el nombre a mostrar (username > name > senderId)
+      const displayName = userProfile?.username || userProfile?.name || senderId;
+      const contactName = userProfile?.name || userProfile?.username || senderId;
+
       // Buscar o crear conversación
       let conversationId: string | null = null;
 
@@ -274,23 +366,45 @@ async function processInstagramEvent(event: any, pageId: string) {
         console.log('✅ Found existing conversation:', conversationId);
 
         // Actualizar last_message_at y unread_count
+        // También actualizar el nombre si tenemos nueva información del perfil
         // Primero obtener el unread_count actual
         const { data: currentConv } = await supabase
           .from('conversations')
-          .select('unread_count')
+          .select('unread_count, contact')
           .eq('id', conversationId)
           .single();
 
         const updateDate = new Date(timestampInMs);
         const updateDateISO = updateDate.toISOString();
 
+        // Si el contacto actual es solo un ID y tenemos nombre/username, actualizarlo
+        const updateData: any = {
+          last_message_at: updateDateISO,
+          unread_count: (currentConv?.unread_count || 0) + 1,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Actualizar el nombre si tenemos información del perfil y el contacto actual es solo un ID
+        if (userProfile && (currentConv?.contact === senderId || !currentConv?.contact || currentConv?.contact.match(/^\d+$/))) {
+          updateData.contact = displayName;
+          updateData.contact_metadata = {
+            username: userProfile.username,
+            name: userProfile.name,
+            profile_picture: userProfile.profile_picture,
+          };
+          console.log('📝 Actualizando nombre de contacto y metadata:', displayName, userProfile);
+        } else if (userProfile) {
+          // Actualizar metadata aunque el nombre ya esté actualizado
+          updateData.contact_metadata = {
+            username: userProfile.username,
+            name: userProfile.name,
+            profile_picture: userProfile.profile_picture,
+          };
+        }
+
         await supabase
           .from('conversations')
-          .update({
-            last_message_at: updateDateISO,
-            unread_count: (currentConv?.unread_count || 0) + 1,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq('id', conversationId);
 
         console.log('✅ Updated conversation:', conversationId);
@@ -313,9 +427,14 @@ async function processInstagramEvent(event: any, pageId: string) {
             platform: 'instagram',
             platform_conversation_id: senderId,
             platform_page_id: pageId,
-            contact: senderId, // Usar senderId como nombre temporal, se puede actualizar después
+            contact: displayName, // Usar username o name si está disponible
             last_message_at: lastMessageDateISO,
             unread_count: 1,
+            contact_metadata: userProfile ? {
+              username: userProfile.username,
+              name: userProfile.name,
+              profile_picture: userProfile.profile_picture,
+            } : {},
           })
           .select('id')
           .single();

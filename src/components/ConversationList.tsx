@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { MessageSquare } from 'lucide-react'
 import type { Conversation } from '../hooks/useConversations'
 import { formatDate } from '../utils/date'
@@ -65,57 +66,119 @@ export default function ConversationList({ conversations, selectedId, onSelect }
             const leadStatusLabel = getLeadStatusLabel(conversation.lead_status)
 
             return (
-              <div
+              <ConversationItem
                 key={conversation.id}
-                className={`conversation-item ${isSelected ? 'conversation-item--selected' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  onSelect(conversation.id, e)
-                }}
-              >
-                <div
-                  className="conversation-item-icon"
-                  style={{
-                    background: conversation.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8'
-                  }}
-                >
-                  <PlatformIcon size={20} color="#000" />
-                </div>
-
-                <div className="conversation-item-content">
-                  <div className="conversation-item-header">
-                    <h4 className="conversation-item-name" style={{ fontWeight: conversation.unread_count > 0 ? 600 : 500 }}>
-                      {conversation.contact || 'Sin nombre'}
-                    </h4>
-                    <p className="conversation-item-timestamp">
-                      {conversation.last_message_at
-                        ? formatDate(conversation.last_message_at)
-                        : formatDate(conversation.created_at)}
-                    </p>
-                  </div>
-                  <p className="conversation-item-message">
-                    Último mensaje de la conversación...
-                  </p>
-                  {leadStatusVariant && leadStatusLabel && (
-                    <div style={{ marginTop: 'var(--spacing-xs)' }}>
-                      <Badge variant={leadStatusVariant as any}>
-                        {leadStatusLabel}
-                      </Badge>
-                    </div>
-                  )}
-                </div>
-
-                {conversation.unread_count > 0 && (
-                  <div className="conversation-item-badge">
-                    <span className="unread-badge">{conversation.unread_count}</span>
-                  </div>
-                )}
-              </div>
+                conversation={conversation}
+                PlatformIcon={PlatformIcon}
+                isSelected={isSelected}
+                leadStatusVariant={leadStatusVariant}
+                leadStatusLabel={leadStatusLabel}
+                onSelect={onSelect}
+              />
             )
           })
         )}
       </div>
+    </div>
+  )
+}
+
+function ConversationItem({
+  conversation,
+  PlatformIcon,
+  isSelected,
+  leadStatusVariant,
+  leadStatusLabel,
+  onSelect,
+}: {
+  conversation: Conversation
+  PlatformIcon: React.ComponentType<{ size?: number; color?: string }>
+  isSelected: boolean
+  leadStatusVariant: 'secondary' | 'warning' | 'danger' | null
+  leadStatusLabel: string | null
+  onSelect: (id: string, event?: React.MouseEvent) => void
+}) {
+  const [imageError, setImageError] = useState(false)
+  const profilePicture = conversation.contact_metadata?.profile_picture
+
+  return (
+    <div
+      className={`conversation-item ${isSelected ? 'conversation-item--selected' : ''}`}
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onSelect(conversation.id, e)
+      }}
+    >
+      {/* Mostrar foto de perfil si está disponible y no hay error, sino mostrar el icono de plataforma */}
+      {profilePicture && !imageError ? (
+        <div
+          className="conversation-item-avatar"
+          style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            overflow: 'hidden',
+            flexShrink: 0,
+            border: '3px solid var(--color-border)',
+            background: conversation.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <img
+            src={profilePicture}
+            alt={conversation.contact}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+            onError={() => {
+              setImageError(true)
+            }}
+          />
+        </div>
+      ) : (
+        <div
+          className="conversation-item-icon"
+          style={{
+            background: conversation.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8'
+          }}
+        >
+          <PlatformIcon size={20} color="#000" />
+        </div>
+      )}
+
+      <div className="conversation-item-content">
+        <div className="conversation-item-header">
+          <h4 className="conversation-item-name" style={{ fontWeight: conversation.unread_count > 0 ? 600 : 500 }}>
+            {conversation.contact || 'Sin nombre'}
+          </h4>
+          <p className="conversation-item-timestamp">
+            {conversation.last_message_at
+              ? formatDate(conversation.last_message_at)
+              : formatDate(conversation.created_at)}
+          </p>
+        </div>
+        <p className="conversation-item-message">
+          Último mensaje de la conversación...
+        </p>
+        {leadStatusVariant && leadStatusLabel && (
+          <div style={{ marginTop: 'var(--spacing-xs)' }}>
+            <Badge variant={leadStatusVariant as any}>
+              {leadStatusLabel}
+            </Badge>
+          </div>
+        )}
+      </div>
+
+      {conversation.unread_count > 0 && (
+        <div className="conversation-item-badge">
+          <span className="unread-badge">{conversation.unread_count}</span>
+        </div>
+      )}
     </div>
   )
 }

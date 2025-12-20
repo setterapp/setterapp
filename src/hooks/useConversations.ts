@@ -12,6 +12,11 @@ export interface Conversation {
   created_at: string
   updated_at: string
   lead_status?: 'cold' | 'warm' | 'hot' | null
+  contact_metadata?: {
+    username?: string
+    name?: string
+    profile_picture?: string
+  }
 }
 
 export function useConversations() {
