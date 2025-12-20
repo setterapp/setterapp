@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Settings, User, LogOut, Globe, Bell, Shield, Save } from 'lucide-react'
+import { Settings, User, LogOut, Globe, Bell, Shield } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { useTranslation } from 'react-i18next'
+import { Checkbox } from '../components/ui/checkbox'
 import i18n from '../i18n'
 
 interface UserSettings {
@@ -25,7 +26,6 @@ function SettingsPage() {
   const { t } = useTranslation()
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState<UserSettings>({
     firstName: '',
     lastName: '',
@@ -97,45 +97,28 @@ function SettingsPage() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const handleSaveSettings = async () => {
+  // Función para guardar automáticamente en Supabase
+  const saveToSupabase = async (updates: Partial<UserSettings>) => {
     if (!user) return
 
-    setSaving(true)
     try {
-      // Guardar en Supabase user_preferences
-      const { error } = await supabase
+      const settingsToSave = { ...settings, ...updates }
+      await supabase
         .from('user_preferences')
         .upsert({
           user_id: user.id,
-          first_name: settings.firstName,
-          last_name: settings.lastName,
-          phone: settings.phone,
-          language: settings.language,
-          timezone: settings.timezone,
-          notifications: settings.notifications,
-          theme: settings.theme,
+          first_name: settingsToSave.firstName,
+          last_name: settingsToSave.lastName,
+          phone: settingsToSave.phone,
+          language: settingsToSave.language,
+          timezone: settingsToSave.timezone,
+          notifications: settingsToSave.notifications,
+          theme: settingsToSave.theme,
         }, {
           onConflict: 'user_id'
         })
-
-      if (error) throw error
-
-      // Guardar idioma en localStorage
-      localStorage.setItem('userLanguage', settings.language)
-
-      // Aplicar tema si cambió
-      if (settings.theme === 'dark') {
-        document.documentElement.classList.add('dark')
-      } else {
-        document.documentElement.classList.remove('dark')
-      }
-
-      alert(t('settings.changesSaved'))
     } catch (err: any) {
       console.error('Error al guardar configuración:', err)
-      alert(`Error: ${err.message}`)
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -220,6 +203,7 @@ function SettingsPage() {
                   className="input"
                   value={settings.firstName}
                   onChange={(e) => setSettings({ ...settings, firstName: e.target.value })}
+                  onBlur={() => saveToSupabase({ firstName: settings.firstName })}
                   placeholder={t('settings.firstName')}
                   style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
                 />
@@ -232,6 +216,7 @@ function SettingsPage() {
                   className="input"
                   value={settings.lastName}
                   onChange={(e) => setSettings({ ...settings, lastName: e.target.value })}
+                  onBlur={() => saveToSupabase({ lastName: settings.lastName })}
                   placeholder={t('settings.lastName')}
                   style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
                 />
@@ -244,6 +229,7 @@ function SettingsPage() {
                   className="input"
                   value={settings.phone}
                   onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                  onBlur={() => saveToSupabase({ phone: settings.phone })}
                   placeholder="+34 123 456 789"
                   style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
                 />
@@ -303,7 +289,11 @@ function SettingsPage() {
                   id="timezone"
                   className="input select"
                   value={settings.timezone}
-                  onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
+                  onChange={(e) => {
+                    const newTimezone = e.target.value
+                    setSettings({ ...settings, timezone: newTimezone })
+                    saveToSupabase({ timezone: newTimezone })
+                  }}
                   style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
                 >
                   <option value="Europe/Madrid">Madrid (GMT+1)</option>
@@ -320,7 +310,17 @@ function SettingsPage() {
                   id="theme"
                   className="input select"
                   value={settings.theme}
-                  onChange={(e) => setSettings({ ...settings, theme: e.target.value as 'light' | 'dark' | 'auto' })}
+                  onChange={(e) => {
+                    const newTheme = e.target.value as 'light' | 'dark' | 'auto'
+                    setSettings({ ...settings, theme: newTheme })
+                    saveToSupabase({ theme: newTheme })
+                    // Aplicar tema inmediatamente
+                    if (newTheme === 'dark') {
+                      document.documentElement.classList.add('dark')
+                    } else {
+                      document.documentElement.classList.remove('dark')
+                    }
+                  }}
                   style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
                 >
                   <option value="light">{t('settings.themeSettings.light')}</option>
@@ -340,59 +340,55 @@ function SettingsPage() {
               </h3>
             </div>
             <div className="flex flex-col gap-sm">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--spacing-xs) 0' }}>
-                <label style={{ fontSize: 'var(--font-size-sm)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications.email}
-                    onChange={(e) => setSettings({
-                      ...settings,
-                      notifications: { ...settings.notifications, email: e.target.checked }
-                    })}
-                    style={{ marginRight: 'var(--spacing-xs)' }}
-                  />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', padding: 'var(--spacing-xs) 0' }}>
+                <Checkbox
+                  checked={settings.notifications.email}
+                  onCheckedChange={(checked) => {
+                    const newNotifications = { ...settings.notifications, email: checked as boolean }
+                    setSettings({ ...settings, notifications: newNotifications })
+                    saveToSupabase({ notifications: newNotifications })
+                  }}
+                />
+                <label style={{ fontSize: 'var(--font-size-sm)', cursor: 'pointer', userSelect: 'none' }}>
                   {t('settings.notificationSettings.email')}
                 </label>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--spacing-xs) 0' }}>
-                <label style={{ fontSize: 'var(--font-size-sm)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications.push}
-                    onChange={(e) => setSettings({
-                      ...settings,
-                      notifications: { ...settings.notifications, push: e.target.checked }
-                    })}
-                    style={{ marginRight: 'var(--spacing-xs)' }}
-                  />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', padding: 'var(--spacing-xs) 0' }}>
+                <Checkbox
+                  checked={settings.notifications.push}
+                  onCheckedChange={(checked) => {
+                    const newNotifications = { ...settings.notifications, push: checked as boolean }
+                    setSettings({ ...settings, notifications: newNotifications })
+                    saveToSupabase({ notifications: newNotifications })
+                  }}
+                />
+                <label style={{ fontSize: 'var(--font-size-sm)', cursor: 'pointer', userSelect: 'none' }}>
                   {t('settings.notificationSettings.push')}
                 </label>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--spacing-xs) 0' }}>
-                <label style={{ fontSize: 'var(--font-size-sm)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications.newConversation}
-                    onChange={(e) => setSettings({
-                      ...settings,
-                      notifications: { ...settings.notifications, newConversation: e.target.checked }
-                    })}
-                    style={{ marginRight: 'var(--spacing-xs)' }}
-                  />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', padding: 'var(--spacing-xs) 0' }}>
+                <Checkbox
+                  checked={settings.notifications.newConversation}
+                  onCheckedChange={(checked) => {
+                    const newNotifications = { ...settings.notifications, newConversation: checked as boolean }
+                    setSettings({ ...settings, notifications: newNotifications })
+                    saveToSupabase({ notifications: newNotifications })
+                  }}
+                />
+                <label style={{ fontSize: 'var(--font-size-sm)', cursor: 'pointer', userSelect: 'none' }}>
                   {t('settings.notificationSettings.newConversation')}
                 </label>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--spacing-xs) 0' }}>
-                <label style={{ fontSize: 'var(--font-size-sm)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications.newMessage}
-                    onChange={(e) => setSettings({
-                      ...settings,
-                      notifications: { ...settings.notifications, newMessage: e.target.checked }
-                    })}
-                    style={{ marginRight: 'var(--spacing-xs)' }}
-                  />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', padding: 'var(--spacing-xs) 0' }}>
+                <Checkbox
+                  checked={settings.notifications.newMessage}
+                  onCheckedChange={(checked) => {
+                    const newNotifications = { ...settings.notifications, newMessage: checked as boolean }
+                    setSettings({ ...settings, notifications: newNotifications })
+                    saveToSupabase({ notifications: newNotifications })
+                  }}
+                />
+                <label style={{ fontSize: 'var(--font-size-sm)', cursor: 'pointer', userSelect: 'none' }}>
                   {t('settings.notificationSettings.newMessage')}
                 </label>
               </div>
@@ -436,29 +432,6 @@ function SettingsPage() {
         </div>
       )}
 
-      {/* Botón de guardar */}
-      {user && (
-        <div style={{ marginTop: 'var(--spacing-md)', display: 'flex', justifyContent: 'flex-end' }}>
-          <button
-            onClick={handleSaveSettings}
-            disabled={saving}
-            className="btn btn--primary"
-            style={{ minWidth: '150px' }}
-          >
-            {saving ? (
-              <>
-                <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
-                {t('common.save')}...
-              </>
-            ) : (
-              <>
-                <Save size={18} />
-                {t('settings.saveChanges')}
-              </>
-            )}
-          </button>
-        </div>
-      )}
     </div>
   )
 }
