@@ -3,6 +3,7 @@ import { Settings, User, LogOut, Globe, Bell, Shield, Save } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 
 interface UserSettings {
@@ -21,6 +22,7 @@ interface UserSettings {
 }
 
 function SettingsPage() {
+  const { t } = useTranslation()
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -44,22 +46,31 @@ function SettingsPage() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        // Cargar configuración del usuario desde metadata
-        const metadata = session.user.user_metadata || {}
-        setSettings({
-          firstName: metadata.first_name || '',
-          lastName: metadata.last_name || '',
-          phone: metadata.phone || '',
-          language: metadata.language || 'es',
-          timezone: metadata.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-          notifications: metadata.notifications || {
-            email: true,
-            push: true,
-            newConversation: true,
-            newMessage: true,
-          },
-          theme: metadata.theme || 'light',
-        })
+        // Cargar preferencias desde Supabase
+        const { data: preferences, error } = await supabase
+          .from('user_preferences')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single()
+
+        if (!error && preferences) {
+          setSettings({
+            firstName: preferences.first_name || '',
+            lastName: preferences.last_name || '',
+            phone: preferences.phone || '',
+            language: preferences.language || 'es',
+            timezone: preferences.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+            notifications: preferences.notifications || {
+              email: true,
+              push: true,
+              newConversation: true,
+              newMessage: true,
+            },
+            theme: preferences.theme || 'light',
+          })
+          // Aplicar idioma guardado
+          i18n.changeLanguage(preferences.language || 'es')
+        }
       }
       setLoading(false)
     })
@@ -79,8 +90,11 @@ function SettingsPage() {
 
     setSaving(true)
     try {
-      const { error } = await supabase.auth.updateUser({
-        data: {
+      // Guardar en Supabase user_preferences
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: user.id,
           first_name: settings.firstName,
           last_name: settings.lastName,
           phone: settings.phone,
@@ -88,14 +102,14 @@ function SettingsPage() {
           timezone: settings.timezone,
           notifications: settings.notifications,
           theme: settings.theme,
-        },
-      })
+        }, {
+          onConflict: 'user_id'
+        })
 
       if (error) throw error
 
-      // Guardar idioma en localStorage y actualizar i18n
+      // Guardar idioma en localStorage
       localStorage.setItem('userLanguage', settings.language)
-      i18n.changeLanguage(settings.language)
 
       // Aplicar tema si cambió
       if (settings.theme === 'dark') {
@@ -104,10 +118,10 @@ function SettingsPage() {
         document.documentElement.classList.remove('dark')
       }
 
-      alert('Configuración guardada exitosamente')
+      alert(t('settings.changesSaved'))
     } catch (err: any) {
       console.error('Error al guardar configuración:', err)
-      alert(`Error al guardar: ${err.message}`)
+      alert(`Error: ${err.message}`)
     } finally {
       setSaving(false)
     }
@@ -151,7 +165,7 @@ function SettingsPage() {
       <div className="card">
         <div className="empty-state">
           <div className="spinner"></div>
-          <p>Cargando...</p>
+          <p>{t('common.loading')}</p>
         </div>
       </div>
     )
@@ -164,9 +178,9 @@ function SettingsPage() {
           <div>
             <h2 className="flex items-center gap-md" style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--spacing-xs)' }}>
               <Settings size={20} />
-              Ajustes
+              {t('settings.title')}
             </h2>
-            <p style={{ fontSize: 'var(--font-size-sm)', margin: 0 }}>Gestiona tu cuenta y preferencias</p>
+            <p style={{ fontSize: 'var(--font-size-sm)', margin: 0 }}>{t('settings.description')}</p>
           </div>
         </div>
       </div>
@@ -178,40 +192,40 @@ function SettingsPage() {
             <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
               <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
                 <User size={18} />
-                Información Personal
+                {t('settings.personalInfo')}
               </h3>
             </div>
             <div className="flex flex-col gap-sm">
               <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>Email</label>
+                <label className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.email')}</label>
                 <p className="text-secondary" style={{ fontSize: 'var(--font-size-sm)', margin: 0 }}>{user.email}</p>
               </div>
               <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label htmlFor="firstName" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>Nombre</label>
+                <label htmlFor="firstName" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.firstName')}</label>
                 <input
                   id="firstName"
                   type="text"
                   className="input"
                   value={settings.firstName}
                   onChange={(e) => setSettings({ ...settings, firstName: e.target.value })}
-                  placeholder="Tu nombre"
+                  placeholder={t('settings.firstName')}
                   style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
                 />
               </div>
               <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label htmlFor="lastName" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>Apellido</label>
+                <label htmlFor="lastName" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.lastName')}</label>
                 <input
                   id="lastName"
                   type="text"
                   className="input"
                   value={settings.lastName}
                   onChange={(e) => setSettings({ ...settings, lastName: e.target.value })}
-                  placeholder="Tu apellido"
+                  placeholder={t('settings.lastName')}
                   style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
                 />
               </div>
               <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label htmlFor="phone" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>Teléfono</label>
+                <label htmlFor="phone" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.phone')}</label>
                 <input
                   id="phone"
                   type="tel"
@@ -230,12 +244,12 @@ function SettingsPage() {
             <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
               <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
                 <Globe size={18} />
-                Preferencias
+                {t('settings.profile')}
               </h3>
             </div>
             <div className="flex flex-col gap-sm">
               <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label htmlFor="language" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>Idioma</label>
+                <label htmlFor="language" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.language')}</label>
                 <select
                   id="language"
                   className="input select"
@@ -254,7 +268,7 @@ function SettingsPage() {
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label htmlFor="timezone" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>Zona Horaria</label>
+                <label htmlFor="timezone" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.timezone')}</label>
                 <select
                   id="timezone"
                   className="input select"
@@ -271,7 +285,7 @@ function SettingsPage() {
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label htmlFor="theme" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>Tema</label>
+                <label htmlFor="theme" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.theme')}</label>
                 <select
                   id="theme"
                   className="input select"
@@ -279,9 +293,9 @@ function SettingsPage() {
                   onChange={(e) => setSettings({ ...settings, theme: e.target.value as 'light' | 'dark' | 'auto' })}
                   style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
                 >
-                  <option value="light">Claro</option>
-                  <option value="dark">Oscuro</option>
-                  <option value="auto">Automático</option>
+                  <option value="light">{t('settings.themeSettings.light')}</option>
+                  <option value="dark">{t('settings.themeSettings.dark')}</option>
+                  <option value="auto">{t('settings.themeSettings.system')}</option>
                 </select>
               </div>
             </div>
@@ -292,7 +306,7 @@ function SettingsPage() {
             <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
               <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
                 <Bell size={18} />
-                Notificaciones
+                {t('settings.notifications')}
               </h3>
             </div>
             <div className="flex flex-col gap-sm">
@@ -307,7 +321,7 @@ function SettingsPage() {
                     })}
                     style={{ marginRight: 'var(--spacing-xs)' }}
                   />
-                  Email
+                  {t('settings.notificationSettings.email')}
                 </label>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--spacing-xs) 0' }}>
@@ -321,7 +335,7 @@ function SettingsPage() {
                     })}
                     style={{ marginRight: 'var(--spacing-xs)' }}
                   />
-                  Notificaciones Push
+                  {t('settings.notificationSettings.push')}
                 </label>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--spacing-xs) 0' }}>
@@ -335,7 +349,7 @@ function SettingsPage() {
                     })}
                     style={{ marginRight: 'var(--spacing-xs)' }}
                   />
-                  Nueva Conversación
+                  {t('settings.notificationSettings.newConversation')}
                 </label>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--spacing-xs) 0' }}>
@@ -349,7 +363,7 @@ function SettingsPage() {
                     })}
                     style={{ marginRight: 'var(--spacing-xs)' }}
                   />
-                  Nuevo Mensaje
+                  {t('settings.notificationSettings.newMessage')}
                 </label>
               </div>
             </div>
@@ -360,12 +374,12 @@ function SettingsPage() {
             <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
               <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
                 <Shield size={18} />
-                Cuenta y Seguridad
+                {t('settings.account')}
               </h3>
             </div>
             <div className="flex flex-col gap-sm">
               <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>ID de usuario</label>
+                <label className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>User ID</label>
                 <p className="text-secondary text-sm" style={{ fontFamily: 'monospace', fontSize: 'var(--font-size-xs)', margin: 0, wordBreak: 'break-all' }}>
                   {user.id}
                 </p>
@@ -373,7 +387,7 @@ function SettingsPage() {
               <div style={{ marginTop: 'var(--spacing-sm)', paddingTop: 'var(--spacing-sm)', borderTop: '2px solid #000' }}>
                 <button onClick={handleLogout} className="btn btn--danger btn--sm" style={{ width: '100%' }}>
                   <LogOut size={16} />
-                  Cerrar sesión
+                  {t('settings.logout')}
                 </button>
               </div>
             </div>
@@ -404,12 +418,12 @@ function SettingsPage() {
             {saving ? (
               <>
                 <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
-                Guardando...
+                {t('common.save')}...
               </>
             ) : (
               <>
                 <Save size={18} />
-                Guardar Cambios
+                {t('settings.saveChanges')}
               </>
             )}
           </button>

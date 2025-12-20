@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Link, useLocation, Outlet } from 'react-router-dom'
 import { Brain, Plug, BarChart3, MessageSquare, Settings, Menu, X, Users } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -19,17 +20,18 @@ import Logo from './components/Logo'
 import './App.css'
 
 function Layout() {
+  const { t } = useTranslation()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [pressedButton, setPressedButton] = useState<string | null>(null)
 
   const navItems = [
-    { path: '/analytics', label: 'Analíticas', icon: BarChart3 },
-    { path: '/conversations', label: 'Conversaciones', icon: MessageSquare },
-    { path: '/contacts', label: 'Contactos', icon: Users },
-    { path: '/agents', label: 'Agentes', icon: Brain },
-    { path: '/integrations', label: 'Integraciones', icon: Plug },
-    { path: '/settings', label: 'Ajustes', icon: Settings },
+    { path: '/analytics', label: t('navigation.analytics'), icon: BarChart3 },
+    { path: '/conversations', label: t('navigation.conversations'), icon: MessageSquare },
+    { path: '/contacts', label: t('navigation.contacts'), icon: Users },
+    { path: '/agents', label: t('navigation.agents'), icon: Brain },
+    { path: '/integrations', label: t('navigation.integrations'), icon: Plug },
+    { path: '/settings', label: t('navigation.settings'), icon: Settings },
   ]
 
   // Cerrar sidebar cuando cambia la ruta en móvil

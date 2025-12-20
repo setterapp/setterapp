@@ -19,7 +19,8 @@
     "analytics": "Analytics",
     "integrations": "Integrations",
     "calendar": "Calendar",
-    "settings": "Settings"
+    "settings": "Settings",
+    "contacts": "Contacts"
   },
   "agents": {
     "title": "AI Agents",
@@ -137,7 +138,8 @@
       "title": "Notification Settings",
       "email": "Email Notifications",
       "push": "Push Notifications",
-      "newConversation": "New Conversations"
+      "newConversation": "New Conversations",
+      "newMessage": "New Messages"
     },
     "themeSettings": {
       "light": "Light",
