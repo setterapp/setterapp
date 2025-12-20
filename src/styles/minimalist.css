@@ -515,10 +515,15 @@
   /* Landing page responsive */
   .landing-header {
     padding: var(--spacing-md) !important;
+    gap: var(--spacing-sm) !important;
   }
 
   .landing-hero {
     padding: 40px var(--spacing-md) !important;
+  }
+
+  .landing-hero .card {
+    padding: var(--spacing-xl) var(--spacing-md) !important;
   }
 
   .landing-hero-title {
@@ -527,10 +532,12 @@
 
   .landing-hero-buttons {
     flex-direction: column;
+    width: 100%;
   }
 
   .landing-hero-buttons .btn {
     width: 100%;
+    min-height: 48px;
   }
 
   .landing-features {
@@ -550,19 +557,46 @@
     padding: 40px var(--spacing-md) !important;
   }
 
+  .landing-cta .btn {
+    width: 100%;
+    min-height: 48px;
+  }
+
   .landing-section-title {
     margin-bottom: var(--spacing-lg) !important;
   }
 
-  /* Button improvements for mobile */
+  /* Button improvements for mobile - make more touch-friendly */
+  .btn {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
   .btn--lg {
-    padding: 10px 20px;
-    font-size: var(--font-size-sm);
+    min-height: 48px;
+    padding: 12px 20px;
+    font-size: var(--font-size-base);
+  }
+
+  .btn--sm {
+    min-height: 40px;
+    padding: 8px 14px;
   }
 
   /* Integration cards */
   .integration-card {
     padding: var(--spacing-md) !important;
+  }
+
+  /* Make cards more compact on mobile */
+  .card {
+    border-width: 3px;
+    box-shadow: 3px 3px 0px 0px #000;
+  }
+
+  /* Improve text readability on mobile */
+  body {
+    -webkit-text-size-adjust: 100%;
   }
 }
 
@@ -571,10 +605,34 @@
     padding: 30px var(--spacing-sm) !important;
   }
 
+  .landing-hero .card {
+    padding: var(--spacing-lg) var(--spacing-sm) !important;
+  }
+
   .landing-features,
   .landing-benefits,
   .landing-cta {
     padding: 30px var(--spacing-sm) !important;
+  }
+
+  /* Smaller cards on very small screens */
+  .card {
+    padding: var(--spacing-sm) !important;
+    border-width: 2px;
+    box-shadow: 2px 2px 0px 0px #000;
+  }
+
+  /* Make buttons even more touch-friendly on small screens */
+  .btn {
+    min-height: 48px;
+    padding: 12px 18px;
+    font-size: var(--font-size-base);
+  }
+
+  .btn--lg {
+    min-height: 52px;
+    padding: 14px 22px;
+    font-size: var(--font-size-lg);
   }
 }
 
@@ -600,6 +658,18 @@
     flex-direction: column;
     gap: var(--spacing-sm);
   }
+
+  /* Improve modal on mobile */
+  .modal {
+    margin: var(--spacing-sm);
+    max-height: 90vh;
+  }
+
+  /* Better input sizing */
+  .input, .select, .textarea {
+    font-size: 16px;
+    padding: 10px 12px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -611,5 +681,20 @@
   /* Make metric numbers smaller on mobile */
   .card p[style*="font-size: 2rem"] {
     font-size: 1.5rem !important;
+  }
+
+  /* Reduce spacing on very small screens */
+  :root {
+    --spacing-xl: 24px;
+    --spacing-2xl: 32px;
+  }
+
+  /* Smaller typography */
+  .text-3xl {
+    font-size: var(--font-size-2xl);
+  }
+
+  .text-2xl {
+    font-size: var(--font-size-xl);
   }
 }

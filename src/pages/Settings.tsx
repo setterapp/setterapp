@@ -240,7 +240,13 @@ function SettingsPage() {
                   id="language"
                   className="input select"
                   value={settings.language}
-                  onChange={(e) => setSettings({ ...settings, language: e.target.value })}
+                  onChange={(e) => {
+                    const newLanguage = e.target.value
+                    setSettings({ ...settings, language: newLanguage })
+                    // Cambiar idioma inmediatamente
+                    localStorage.setItem('userLanguage', newLanguage)
+                    i18n.changeLanguage(newLanguage)
+                  }}
                   style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
                 >
                   <option value="es">Español</option>
