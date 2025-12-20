@@ -127,3 +127,14 @@ VITE_INSTAGRAM_REDIRECT_URI=  # Optional, defaults to {origin}/auth/instagram/ca
 3. Push to the remote repository with `git push`
 
 This ensures all work is immediately saved and synchronized.
+
+## Documentation Policy
+
+**DO NOT create .md files** unless explicitly requested by the user. This includes:
+- README files
+- Documentation files
+- Setup guides
+- Instruction files
+- Testing guides
+
+Keep all documentation in code comments or this CLAUDE.md file when necessary.
