@@ -178,9 +178,71 @@ async function processInstagramEvent(event: any, pageId: string) {
       const message = event.message;
       const senderId = event.sender?.id;
       const recipientId = event.recipient?.id;
-      const timestamp = event.timestamp;
+      // Instagram puede enviar timestamp en milisegundos o segundos
+      // Si es mayor que 1e12, está en milisegundos
+      const rawTimestamp = event.timestamp;
+
+      // Determinar si está en milisegundos o segundos
+      // Los timestamps en milisegundos son típicamente > 1e12 (año 2001)
+      // Los timestamps en segundos son típicamente < 1e10 (año 2286)
+      let timestampInMs: number;
+      let timestampInSeconds: number;
+
+      if (rawTimestamp > 1e12) {
+        // Está en milisegundos
+        timestampInMs = rawTimestamp;
+        timestampInSeconds = Math.floor(rawTimestamp / 1000);
+      } else {
+        // Está en segundos
+        timestampInSeconds = rawTimestamp;
+        timestampInMs = rawTimestamp * 1000;
+      }
+
+      // Validar que el timestamp sea razonable (entre 2000 y 2100)
+      const dateFromTimestamp = new Date(timestampInMs);
+      const year = dateFromTimestamp.getFullYear();
+      const isValidDate = !isNaN(dateFromTimestamp.getTime()) && year >= 2000 && year <= 2100;
+
+      if (!isValidDate) {
+        console.error('❌ Invalid timestamp detected:', {
+          rawTimestamp,
+          timestampInMs,
+          timestampInSeconds,
+          dateFromTimestamp: dateFromTimestamp.toISOString(),
+          year,
+          isValidDate
+        });
+        // Usar timestamp actual como fallback
+        timestampInMs = Date.now();
+        timestampInSeconds = Math.floor(Date.now() / 1000);
+        console.log('⚠️ Using current timestamp as fallback:', {
+          timestampInMs,
+          timestampInSeconds,
+          date: new Date(timestampInMs).toISOString()
+        });
+      }
+
+      // Asegurarse de que timestampInMs sea un número válido
+      if (!Number.isFinite(timestampInMs) || timestampInMs <= 0) {
+        console.error('❌ timestampInMs is not a valid number:', timestampInMs);
+        timestampInMs = Date.now();
+        timestampInSeconds = Math.floor(Date.now() / 1000);
+      }
+
       const messageId = message.mid || message.id;
       const messageText = message.text || '';
+
+      console.log('📩 Message details:', {
+        senderId,
+        recipientId,
+        rawTimestamp,
+        timestampInSeconds,
+        timestampInMs,
+        dateFromTimestamp: new Date(timestampInMs).toISOString(),
+        messageId,
+        messageText,
+        pageId
+      });
 
       // Obtener user_id de la integración
       const userId = await getUserIdFromPageId(pageId);
@@ -219,16 +281,31 @@ async function processInstagramEvent(event: any, pageId: string) {
           .eq('id', conversationId)
           .single();
 
+        const updateDate = new Date(timestampInMs);
+        const updateDateISO = updateDate.toISOString();
+
         await supabase
           .from('conversations')
           .update({
-            last_message_at: new Date(timestamp * 1000).toISOString(),
+            last_message_at: updateDateISO,
             unread_count: (currentConv?.unread_count || 0) + 1,
             updated_at: new Date().toISOString(),
           })
           .eq('id', conversationId);
+
+        console.log('✅ Updated conversation:', conversationId);
       } else {
         // Crear nueva conversación
+        // Asegurarse de que la fecha sea válida antes de insertar
+        const lastMessageDate = new Date(timestampInMs);
+        const lastMessageDateISO = lastMessageDate.toISOString();
+
+        console.log('📅 Creating conversation with date:', {
+          timestampInMs,
+          lastMessageDate: lastMessageDateISO,
+          isValid: !isNaN(lastMessageDate.getTime())
+        });
+
         const { data: newConv, error: createError } = await supabase
           .from('conversations')
           .insert({
@@ -237,7 +314,7 @@ async function processInstagramEvent(event: any, pageId: string) {
             platform_conversation_id: senderId,
             platform_page_id: pageId,
             contact: senderId, // Usar senderId como nombre temporal, se puede actualizar después
-            last_message_at: new Date(timestamp * 1000).toISOString(),
+            last_message_at: lastMessageDateISO,
             unread_count: 1,
           })
           .select('id')
@@ -254,7 +331,15 @@ async function processInstagramEvent(event: any, pageId: string) {
 
       // Guardar el mensaje
       if (conversationId && messageText) {
-        const { error: messageError } = await supabase
+        console.log('💾 Saving message to database:', {
+          conversationId,
+          userId,
+          messageId,
+          messageText,
+          senderId
+        });
+
+        const { data: savedMessage, error: messageError } = await supabase
           .from('messages')
           .insert({
             conversation_id: conversationId,
@@ -266,14 +351,18 @@ async function processInstagramEvent(event: any, pageId: string) {
             metadata: {
               sender_id: senderId,
               recipient_id: recipientId,
-              timestamp: timestamp,
+              timestamp: timestampInSeconds,
+              raw_timestamp: rawTimestamp,
             },
-          });
+          })
+          .select('id')
+          .single();
 
         if (messageError) {
           console.error('❌ Error saving message:', messageError);
+          console.error('❌ Error details:', JSON.stringify(messageError, null, 2));
         } else {
-          console.log('✅ Message saved successfully');
+          console.log('✅ Message saved successfully with ID:', savedMessage?.id);
 
           // 🤖 Generar y enviar respuesta automática con IA
           // Esta función se ejecuta de forma asíncrona sin bloquear la respuesta del webhook
