@@ -21,8 +21,10 @@ export default function MessageBubble({ message, platform }: MessageBubbleProps)
           </div>
         )}
         <div className="message-content">
-          <div className="message-text">{message.content}</div>
-          <div className="message-timestamp">{formatDate(message.created_at)}</div>
+          <div className="message-text-wrapper">
+            <div className="message-text">{message.content}</div>
+            <div className="message-timestamp">{formatDate(message.created_at)}</div>
+          </div>
         </div>
       </div>
     </div>
