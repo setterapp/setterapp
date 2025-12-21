@@ -436,21 +436,21 @@ input, textarea, select {
 }
 
 .message-bubble--inbound .message-content {
-  background: var(--color-bg);
-  border: 2px solid #000;
-  padding: 6px 12px;
-  border-radius: var(--border-radius);
-  color: var(--color-text);
-  box-shadow: var(--shadow-neo-sm);
-}
-
-.message-bubble--outbound .message-content {
   background: var(--color-primary);
   border: 2px solid #000;
   padding: 6px 12px;
   border-radius: var(--border-radius);
   color: #000;
   font-weight: 500;
+  box-shadow: var(--shadow-neo-sm);
+}
+
+.message-bubble--outbound .message-content {
+  background: var(--color-bg);
+  border: 2px solid #000;
+  padding: 6px 12px;
+  border-radius: var(--border-radius);
+  color: var(--color-text);
   box-shadow: var(--shadow-neo-sm);
 }
 

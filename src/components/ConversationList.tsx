@@ -174,7 +174,7 @@ function ConversationItem({
         )}
       </div>
 
-      {conversation.unread_count > 0 && (
+      {conversation.unread_count > 0 && !isSelected && (
         <div className="conversation-item-badge">
           <span className="unread-badge">{conversation.unread_count}</span>
         </div>
