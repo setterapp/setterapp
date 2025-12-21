@@ -22,9 +22,6 @@ export default function MessageBubble({ message, platform, contact }: MessageBub
           </div>
         )}
         <div className="message-content">
-          <div className="message-sender">
-            {isInbound ? contact || 'Desconocido' : 'Tú'}
-          </div>
           <div className="message-text">{message.content}</div>
           <div className="message-timestamp">{formatDate(message.created_at)}</div>
         </div>
