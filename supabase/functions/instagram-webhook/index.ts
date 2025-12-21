@@ -182,6 +182,11 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         const data = await response.json();
         if (data.error) {
           console.log('⚠️ Error en respuesta directa:', data.error);
+          // Si el token ha expirado, no intentar más métodos
+          if (data.error.code === 190 || data.error.code === '190') {
+            console.warn('⚠️ Token expirado, no se puede obtener perfil');
+            return null;
+          }
         } else {
           console.log('✅ Perfil obtenido directamente:', data);
           return {
@@ -193,6 +198,16 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
       } else {
         const errorText = await response.text();
         console.log('⚠️ Primer intento falló:', errorText);
+        // Verificar si es error de token expirado
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.error?.code === 190 || errorData.error?.code === '190') {
+            console.warn('⚠️ Token expirado, no se puede obtener perfil');
+            return null;
+          }
+        } catch (e) {
+          // No es JSON, continuar con otros métodos
+        }
       }
 
       // Método 2: Intentar con el endpoint de Facebook Graph API
@@ -210,6 +225,11 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         const data = await response.json();
         if (data.error) {
           console.log('⚠️ Error en respuesta de Facebook:', data.error);
+          // Si el token ha expirado, no intentar más métodos
+          if (data.error.code === 190 || data.error.code === '190') {
+            console.warn('⚠️ Token expirado, no se puede obtener perfil');
+            return null;
+          }
         } else {
           console.log('✅ Perfil obtenido desde Facebook:', data);
           return {
@@ -221,6 +241,16 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
       } else {
         const errorText = await response.text();
         console.log('⚠️ Segundo intento falló:', errorText);
+        // Verificar si es error de token expirado
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.error?.code === 190 || errorData.error?.code === '190') {
+            console.warn('⚠️ Token expirado, no se puede obtener perfil');
+            return null;
+          }
+        } catch (e) {
+          // No es JSON, continuar con otros métodos
+        }
       }
 
       // Método 3: Intentar obtener información a través del endpoint de conversaciones
@@ -818,6 +848,17 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error('❌ Error enviando mensaje a Instagram:', errorData);
+      
+      // Si el token ha expirado (error code 190), marcar la integración como desconectada
+      if (errorData.error?.code === 190 || errorData.error?.code === '190') {
+        console.warn('⚠️ Token de Instagram expirado, marcando integración como desconectada');
+        await supabase
+          .from('integrations')
+          .update({ status: 'disconnected' })
+          .eq('type', 'instagram')
+          .eq('user_id', userId);
+      }
+      
       return null;
     }
 
