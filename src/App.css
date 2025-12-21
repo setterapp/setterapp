@@ -159,7 +159,7 @@
 
 .main-content:has(.conversations-container) {
   overflow: hidden;
-  padding: 0;
+  padding: var(--spacing-xl);
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -355,12 +355,12 @@
   }
 
   .main-content:has(.conversations-container) {
-    padding: 0;
+    padding: var(--spacing-md);
     padding-top: calc(56px + var(--spacing-md));
   }
 
   .main-content .conversations-container {
-    height: calc(100vh - 56px - var(--spacing-md));
+    height: calc(100vh - 56px - var(--spacing-md) * 2);
   }
 
   .page-header {
@@ -434,12 +434,12 @@
   }
 
   .main-content:has(.conversations-container) {
-    padding: 0;
+    padding: var(--spacing-sm);
     padding-top: calc(56px + var(--spacing-sm));
   }
 
   .main-content .conversations-container {
-    height: calc(100vh - 56px - var(--spacing-sm));
+    height: calc(100vh - 56px - var(--spacing-sm) * 2);
   }
 
   .page-header h2 {
