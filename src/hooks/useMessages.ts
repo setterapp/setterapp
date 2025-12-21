@@ -90,6 +90,12 @@ export function useMessages(conversationId: string | null) {
   }
 
   useEffect(() => {
+    // Resetear mensajes cuando cambia la conversación
+    if (conversationId) {
+      setMessages([])
+      setError(null)
+    }
+
     const checkAuthAndFetch = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session || !conversationId) {
