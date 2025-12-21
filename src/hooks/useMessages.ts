@@ -90,19 +90,24 @@ export function useMessages(conversationId: string | null) {
   }
 
   useEffect(() => {
-    // Resetear mensajes cuando cambia la conversación
-    if (conversationId) {
+    const checkAuthAndFetch = async () => {
+      // Resetear mensajes inmediatamente cuando cambia la conversación
       setMessages([])
       setError(null)
-    }
 
-    const checkAuthAndFetch = async () => {
+      // Invalidar caché de la conversación anterior si existe
+      if (conversationId) {
+        cacheService.remove(`messages-${conversationId}`)
+      }
+
       const { data: { session } } = await supabase.auth.getSession()
       if (!session || !conversationId) {
         setLoading(false)
         return
       }
-      await fetchMessages()
+
+      // Forzar fetch sin caché para la nueva conversación
+      await fetchMessages(false)
       // Marcar como leído cuando se abre la conversación
       await markAsRead()
     }
