@@ -91,20 +91,24 @@ export function useMessages(conversationId: string | null) {
 
   useEffect(() => {
     const checkAuthAndFetch = async () => {
-      // Resetear mensajes inmediatamente cuando cambia la conversación
+      // Verificar sesión primero
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session || !conversationId) {
+        setMessages([])
+        setLoading(false)
+        setError(null)
+        return
+      }
+
+      // Poner loading en true ANTES de resetear mensajes
+      setLoading(true)
+
+      // Resetear mensajes y error
       setMessages([])
       setError(null)
 
-      // Invalidar caché de la conversación anterior si existe
-      if (conversationId) {
-        cacheService.remove(`messages-${conversationId}`)
-      }
-
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session || !conversationId) {
-        setLoading(false)
-        return
-      }
+      // Invalidar caché de la conversación
+      cacheService.remove(`messages-${conversationId}`)
 
       // Forzar fetch sin caché para la nueva conversación
       await fetchMessages(false)
