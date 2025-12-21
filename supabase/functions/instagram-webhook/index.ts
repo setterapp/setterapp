@@ -158,7 +158,7 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         .eq('status', 'connected')
         .single();
 
-      const instagramBusinessAccountId = integrationWithAccount?.config?.instagram_user_id || 
+      const instagramBusinessAccountId = integrationWithAccount?.config?.instagram_user_id ||
                                          integrationWithAccount?.config?.instagram_business_account_id;
 
       if (!instagramBusinessAccountId) {
@@ -238,7 +238,7 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
       if (convResponse.ok) {
         const convData = await convResponse.json();
         console.log('📋 Conversaciones obtenidas:', convData);
-        
+
         // Buscar la conversación que contiene este senderId
         if (convData.data && convData.data.length > 0) {
           for (const conversation of convData.data) {
