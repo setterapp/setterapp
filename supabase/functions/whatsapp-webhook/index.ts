@@ -4,6 +4,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 const VERIFY_TOKEN = Deno.env.get('WHATSAPP_WEBHOOK_VERIFY_TOKEN') || 'whatsapp_verify_token_change_me';
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? '';
 
 // Crear cliente de Supabase con service role key para operaciones administrativas
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -257,6 +258,14 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
           console.error('❌ Error saving message:', messageError);
         } else {
           console.log('✅ Message saved successfully');
+
+          // 🤖 Generar y enviar respuesta automática con IA
+          // Esta función se ejecuta de forma asíncrona sin bloquear la respuesta del webhook
+          generateAndSendAutoReply(userId, conversationId, senderId, messageText, phoneNumberId)
+            .catch(error => {
+              console.error('❌ Error en respuesta automática:', error);
+              // No lanzar el error para no afectar el webhook
+            });
         }
       }
 
@@ -280,5 +289,300 @@ async function processWhatsAppStatus(status: any) {
     // TODO: Actualizar estado de mensajes en la base de datos si es necesario
   } catch (error) {
     console.error('Error processing WhatsApp status:', error);
+  }
+}
+
+/**
+ * Obtiene el agent de WhatsApp asignado al usuario
+ */
+async function getWhatsAppAgent(userId: string) {
+  try {
+    const { data: agent, error } = await supabase
+      .from('agents')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('platform', 'whatsapp')
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('❌ Error getting agent:', error);
+      return null;
+    }
+
+    return agent;
+  } catch (error) {
+    console.error('❌ Error getting agent:', error);
+    return null;
+  }
+}
+
+/**
+ * Obtiene el historial de conversación para generar contexto
+ */
+async function getConversationHistory(conversationId: string, limit: number = 50) {
+  try {
+    const { data: messages, error } = await supabase
+      .from('messages')
+      .select('content, direction, created_at')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('❌ Error getting conversation history:', error);
+      return [];
+    }
+
+    // Convertir al formato de OpenAI (más recientes al final)
+    return (messages || [])
+      .reverse()
+      .map(msg => ({
+        role: msg.direction === 'inbound' ? 'user' : 'assistant',
+        content: msg.content
+      }));
+  } catch (error) {
+    console.error('❌ Error getting conversation history:', error);
+    return [];
+  }
+}
+
+/**
+ * Construye el system prompt basado en la configuración del agente
+ */
+function buildSystemPrompt(agentName: string, description: string, config: any): string {
+  let prompt = `Eres ${agentName || 'un asistente de IA'}.\n\n`;
+
+  if (description) {
+    prompt += `Descripción: ${description}\n\n`;
+  }
+
+  if (config?.assistantName) {
+    prompt += `Tu nombre es ${config.assistantName}.\n`;
+  }
+  if (config?.companyName) {
+    prompt += `Trabajas para ${config.companyName}.\n`;
+  }
+  if (config?.ownerName) {
+    prompt += `El propietario es ${config.ownerName}.\n`;
+  }
+
+  if (config?.businessNiche) {
+    prompt += `\nNicho de negocio: ${config.businessNiche}\n`;
+  }
+  if (config?.clientGoals) {
+    prompt += `\nObjetivos que ayudas a lograr: ${config.clientGoals}\n`;
+  }
+  if (config?.offerDetails) {
+    prompt += `\nDetalles de la oferta: ${config.offerDetails}\n`;
+  }
+  if (config?.importantLinks && config.importantLinks.length > 0) {
+    prompt += `\nEnlaces importantes:\n${config.importantLinks.map((link: string) => `- ${link}`).join('\n')}\n`;
+  }
+
+  if (config?.openingQuestion) {
+    prompt += `\nTu pregunta de apertura es: "${config.openingQuestion}"\n`;
+  }
+
+  if (config?.toneGuidelines) {
+    prompt += `\nGuías de tono: ${config.toneGuidelines}\n`;
+  }
+  if (config?.additionalContext) {
+    prompt += `\nContexto adicional: ${config.additionalContext}\n`;
+  }
+
+  prompt += `\n\nINSTRUCCIONES IMPORTANTES:\n`;
+  prompt += `- Responde de manera natural, amigable y profesional.\n`;
+  prompt += `- Mantén las conversaciones enfocadas y útiles.\n`;
+  prompt += `- Sé conciso pero completo en tus respuestas.\n`;
+  prompt += `- Si no sabes algo, admítelo honestamente.\n`;
+  prompt += `- Siempre mantén el tono y estilo definido en las guías de tono.\n`;
+
+  return prompt;
+}
+
+/**
+ * Genera una respuesta usando OpenAI
+ */
+async function generateAIResponse(systemPrompt: string, conversationHistory: any[], userMessage: string) {
+  if (!OPENAI_API_KEY) {
+    console.error('❌ OPENAI_API_KEY no está configurada');
+    return null;
+  }
+
+  try {
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...conversationHistory,
+      { role: 'user', content: userMessage }
+    ];
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 500
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('❌ OpenAI API error:', errorData);
+      return null;
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  } catch (error) {
+    console.error('❌ Error generating AI response:', error);
+    return null;
+  }
+}
+
+/**
+ * Envía un mensaje a WhatsApp
+ */
+async function sendWhatsAppMessage(userId: string, phoneNumberId: string, recipientPhone: string, message: string) {
+  try {
+    // Obtener integración de WhatsApp del usuario
+    const { data: integration, error } = await supabase
+      .from('integrations')
+      .select('config')
+      .eq('type', 'whatsapp')
+      .eq('user_id', userId)
+      .eq('status', 'connected')
+      .single();
+
+    if (error || !integration) {
+      console.error('❌ No se encontró integración de WhatsApp:', error);
+      return null;
+    }
+
+    const accessToken = integration?.config?.access_token;
+
+    if (!accessToken) {
+      console.error('❌ Falta access token de WhatsApp');
+      return null;
+    }
+
+    // Enviar mensaje usando WhatsApp Cloud API
+    const response = await fetch(
+      `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: recipientPhone,
+          type: 'text',
+          text: { body: message }
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('❌ Error enviando mensaje a WhatsApp:', errorData);
+
+      // Si el token ha expirado, marcar la integración como desconectada
+      if (errorData.error?.code === 190 || errorData.error?.code === '190') {
+        console.warn('⚠️ Token de WhatsApp expirado, marcando integración como desconectada');
+        await supabase
+          .from('integrations')
+          .update({ status: 'disconnected' })
+          .eq('type', 'whatsapp')
+          .eq('user_id', userId);
+      }
+
+      return null;
+    }
+
+    const data = await response.json();
+    console.log('✅ Mensaje enviado a WhatsApp:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Error sending WhatsApp message:', error);
+    return null;
+  }
+}
+
+/**
+ * Genera y envía una respuesta automática con IA
+ */
+async function generateAndSendAutoReply(
+  userId: string,
+  conversationId: string,
+  recipientPhone: string,
+  inboundMessage: string,
+  phoneNumberId: string
+) {
+  try {
+    console.log('🤖 Generando respuesta automática con IA...');
+
+    // 1. Obtener el agent de WhatsApp del usuario
+    const agent = await getWhatsAppAgent(userId);
+    if (!agent) {
+      console.log('⚠️ No se encontró agent de WhatsApp, no se enviará respuesta automática');
+      return;
+    }
+
+    console.log('✅ Agent encontrado:', agent.name);
+
+    // 2. Obtener historial de conversación
+    const conversationHistory = await getConversationHistory(conversationId);
+
+    // 3. Construir system prompt
+    const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config);
+
+    // 4. Generar respuesta con IA
+    const aiResponse = await generateAIResponse(systemPrompt, conversationHistory, inboundMessage);
+
+    if (!aiResponse) {
+      console.error('❌ No se pudo generar respuesta con IA');
+      return;
+    }
+
+    console.log('✅ Respuesta generada:', aiResponse);
+
+    // 5. Enviar respuesta a WhatsApp
+    const sendResult = await sendWhatsAppMessage(userId, phoneNumberId, recipientPhone, aiResponse);
+
+    if (!sendResult) {
+      console.error('❌ No se pudo enviar mensaje a WhatsApp');
+      return;
+    }
+
+    // 6. Guardar mensaje enviado en la BD
+    const { error: messageError } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        user_id: userId,
+        platform_message_id: sendResult.messages?.[0]?.id || Date.now().toString(),
+        content: aiResponse,
+        direction: 'outbound',
+        message_type: 'text',
+        metadata: {
+          generated_by: 'ai',
+          agent_id: agent.id,
+          model: 'gpt-4o-mini'
+        },
+      });
+
+    if (messageError) {
+      console.error('❌ Error guardando mensaje enviado:', messageError);
+    } else {
+      console.log('✅ Respuesta automática enviada y guardada correctamente');
+    }
+  } catch (error) {
+    console.error('❌ Error en generateAndSendAutoReply:', error);
   }
 }

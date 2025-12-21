@@ -677,7 +677,7 @@ async function getInstagramAgent(userId: string) {
 /**
  * Obtiene el historial de conversación para generar contexto
  */
-async function getConversationHistory(conversationId: string, limit: number = 10) {
+async function getConversationHistory(conversationId: string, limit: number = 50) {
   try {
     const { data: messages, error } = await supabase
       .from('messages')
