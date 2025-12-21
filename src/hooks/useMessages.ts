@@ -90,22 +90,19 @@ export function useMessages(conversationId: string | null) {
   }
 
   useEffect(() => {
+    // INMEDIATAMENTE resetear mensajes y poner loading cuando cambia conversationId
+    // Esto es SÍNCRONO y ocurre ANTES de cualquier operación async
+    setLoading(true)
+    setMessages([])
+    setError(null)
+
     const checkAuthAndFetch = async () => {
-      // Verificar sesión primero
+      // Verificar sesión
       const { data: { session } } = await supabase.auth.getSession()
       if (!session || !conversationId) {
-        setMessages([])
         setLoading(false)
-        setError(null)
         return
       }
-
-      // Poner loading en true ANTES de resetear mensajes
-      setLoading(true)
-
-      // Resetear mensajes y error
-      setMessages([])
-      setError(null)
 
       // Invalidar caché de la conversación
       cacheService.remove(`messages-${conversationId}`)
