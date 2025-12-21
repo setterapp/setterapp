@@ -147,9 +147,28 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
     }
 
     // Intentar obtener el perfil del usuario usando la Graph API
-    // Nota: Instagram Graph API puede requerir permisos específicos para obtener perfiles
+    // Nota: El senderId es un IGSID (Instagram Scoped ID) que requiere endpoints específicos
     try {
-      const response = await fetch(
+      // Obtener el instagram_business_account_id de la integración
+      const { data: integrationWithAccount } = await supabase
+        .from('integrations')
+        .select('config')
+        .eq('type', 'instagram')
+        .eq('user_id', userId)
+        .eq('status', 'connected')
+        .single();
+
+      const instagramBusinessAccountId = integrationWithAccount?.config?.instagram_user_id || 
+                                         integrationWithAccount?.config?.instagram_business_account_id;
+
+      if (!instagramBusinessAccountId) {
+        console.warn('⚠️ No se encontró instagram_business_account_id en la integración');
+        return null;
+      }
+
+      // Método 1: Intentar obtener el perfil directamente usando el senderId
+      // Esto puede funcionar si el senderId es un ID válido de Instagram
+      let response = await fetch(
         `https://graph.instagram.com/v21.0/${senderId}?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
         {
           method: 'GET',
@@ -159,37 +178,113 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         }
       );
 
-      if (!response.ok) {
-        // Si falla, intentar con el endpoint alternativo
-        const altResponse = await fetch(
-          `https://graph.facebook.com/v21.0/${senderId}?fields=id,username,name,profile_pic&access_token=${accessToken}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        if (!altResponse.ok) {
-          console.warn('⚠️ No se pudo obtener perfil de Instagram:', await altResponse.text());
-          return null;
+      if (response.ok) {
+        const data = await response.json();
+        if (data.error) {
+          console.log('⚠️ Error en respuesta directa:', data.error);
+        } else {
+          console.log('✅ Perfil obtenido directamente:', data);
+          return {
+            name: data.name || null,
+            username: data.username || null,
+            profile_picture: data.profile_picture_url || null,
+          };
         }
-
-        const altData = await altResponse.json();
-        return {
-          name: altData.name || null,
-          username: altData.username || null,
-          profile_picture: altData.profile_pic || null,
-        };
+      } else {
+        const errorText = await response.text();
+        console.log('⚠️ Primer intento falló:', errorText);
       }
 
-      const data = await response.json();
-      return {
-        name: data.name || null,
-        username: data.username || null,
-        profile_picture: data.profile_picture_url || null,
-      };
+      // Método 2: Intentar con el endpoint de Facebook Graph API
+      response = await fetch(
+        `https://graph.facebook.com/v21.0/${senderId}?fields=id,username,name,profile_pic&access_token=${accessToken}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.error) {
+          console.log('⚠️ Error en respuesta de Facebook:', data.error);
+        } else {
+          console.log('✅ Perfil obtenido desde Facebook:', data);
+          return {
+            name: data.name || null,
+            username: data.username || null,
+            profile_picture: data.profile_pic || null,
+          };
+        }
+      } else {
+        const errorText = await response.text();
+        console.log('⚠️ Segundo intento falló:', errorText);
+      }
+
+      // Método 3: Intentar obtener información a través del endpoint de conversaciones
+      // Buscar conversaciones que incluyan este senderId como participante
+      const convResponse = await fetch(
+        `https://graph.instagram.com/v21.0/${instagramBusinessAccountId}/conversations?fields=participants&access_token=${accessToken}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (convResponse.ok) {
+        const convData = await convResponse.json();
+        console.log('📋 Conversaciones obtenidas:', convData);
+        
+        // Buscar la conversación que contiene este senderId
+        if (convData.data && convData.data.length > 0) {
+          for (const conversation of convData.data) {
+            if (conversation.participants?.data) {
+              const participant = conversation.participants.data.find((p: any) => p.id === senderId);
+              if (participant) {
+                console.log('✅ Participante encontrado:', participant);
+                // Intentar obtener el perfil completo del participante
+                const participantResponse = await fetch(
+                  `https://graph.instagram.com/v21.0/${participant.id}?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
+                  {
+                    method: 'GET',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                  }
+                );
+
+                if (participantResponse.ok) {
+                  const participantData = await participantResponse.json();
+                  if (!participantData.error) {
+                    return {
+                      name: participantData.name || participant.name || null,
+                      username: participantData.username || participant.username || null,
+                      profile_picture: participantData.profile_picture_url || participant.profile_pic || null,
+                    };
+                  }
+                }
+
+                // Si no podemos obtener más datos, usar los que tenemos del participante
+                return {
+                  name: participant.name || null,
+                  username: participant.username || null,
+                  profile_picture: participant.profile_pic || null,
+                };
+              }
+            }
+          }
+        }
+      } else {
+        const errorText = await convResponse.text();
+        console.log('⚠️ Error obteniendo conversaciones:', errorText);
+      }
+
+      console.warn('⚠️ No se pudo obtener perfil de Instagram después de todos los intentos');
+      return null;
     } catch (error) {
       console.warn('⚠️ Error al obtener perfil de Instagram:', error);
       return null;
