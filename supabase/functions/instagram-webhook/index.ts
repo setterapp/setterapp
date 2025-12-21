@@ -848,7 +848,7 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error('❌ Error enviando mensaje a Instagram:', errorData);
-      
+
       // Si el token ha expirado (error code 190), marcar la integración como desconectada
       if (errorData.error?.code === 190 || errorData.error?.code === '190') {
         console.warn('⚠️ Token de Instagram expirado, marcando integración como desconectada');
@@ -858,7 +858,7 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
           .eq('type', 'instagram')
           .eq('user_id', userId);
       }
-      
+
       return null;
     }
 

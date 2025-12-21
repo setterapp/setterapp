@@ -116,13 +116,57 @@ export function useMessages(conversationId: string | null) {
           table: 'messages',
           filter: `conversation_id=eq.${conversationId}`
         },
-        () => {
-          // Invalidar caché y recargar
+        (payload) => {
+          console.log('🔄 Realtime update en mensajes:', payload.eventType)
+          
+          if (payload.eventType === 'INSERT') {
+            // Agregar nuevo mensaje sin recargar todo
+            const newMessage = payload.new as Message
+            setMessages(prev => {
+              // Evitar duplicados
+              if (prev.find(m => m.id === newMessage.id)) {
+                return prev
+              }
+              // Agregar al final y ordenar por created_at
+              const updated = [...prev, newMessage]
+              return updated.sort((a, b) => {
+                return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+              })
+            })
+          } else if (payload.eventType === 'UPDATE') {
+            // Actualizar mensaje existente
+            const updatedMessage = payload.new as Message
+            setMessages(prev => {
+              const index = prev.findIndex(m => m.id === updatedMessage.id)
+              if (index === -1) {
+                // Si no existe, agregarlo
+                const updated = [...prev, updatedMessage]
+                return updated.sort((a, b) => {
+                  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                })
+              }
+              // Actualizar
+              const updated = [...prev]
+              updated[index] = updatedMessage
+              return updated
+            })
+          } else if (payload.eventType === 'DELETE') {
+            // Eliminar mensaje
+            const deletedId = payload.old.id
+            setMessages(prev => prev.filter(m => m.id !== deletedId))
+          }
+          
+          // Invalidar caché
           cacheService.remove(`messages-${conversationId}`)
-          fetchMessages(false)
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Suscrito a cambios de mensajes en tiempo real para conversación:', conversationId)
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Error en suscripción de mensajes')
+        }
+      })
 
     return () => {
       supabase.removeChannel(channel)

@@ -29,14 +29,16 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
   }
 
   useEffect(() => {
-    // Solo hacer scroll si hay mensajes y no es el primer render
+    // Hacer scroll automático cuando hay nuevos mensajes
     if (messages.length > 0) {
-      // Usar setTimeout para asegurar que el DOM se haya actualizado
-      setTimeout(() => {
-        scrollToBottom()
-      }, 100)
+      // Usar requestAnimationFrame para asegurar que el DOM se haya actualizado
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          scrollToBottom()
+        }, 50)
+      })
     }
-  }, [messages])
+  }, [messages.length, messages])
 
   const PlatformIcon = conversation.platform === 'whatsapp' ? WhatsAppIcon : InstagramIcon
 

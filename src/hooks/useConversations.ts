@@ -78,31 +78,115 @@ export function useConversations() {
     checkAuthAndFetch()
 
     // Suscribirse a cambios en tiempo real
-    const channel = supabase
-      .channel('conversations_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'conversations' },
-        () => {
-          // Invalidar caché y recargar
-          cacheService.remove('conversations')
-          fetchConversations(false)
-        }
-      )
-      .subscribe()
+    // Filtrar por user_id del usuario autenticado
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    
+    const setupRealtime = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      channel = supabase
+        .channel('conversations_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'conversations',
+            filter: `user_id=eq.${session.user.id}`
+          },
+          (payload) => {
+            console.log('🔄 Realtime update en conversaciones:', payload.eventType)
+            
+            if (payload.eventType === 'INSERT') {
+              // Agregar nueva conversación al inicio
+              const newConversation = payload.new as Conversation
+              setConversations(prev => {
+                // Evitar duplicados
+                if (prev.find(c => c.id === newConversation.id)) {
+                  return prev
+                }
+                // Agregar al inicio y ordenar por last_message_at
+                const updated = [newConversation, ...prev]
+                return updated.sort((a, b) => {
+                  const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
+                  const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
+                  return bTime - aTime
+                })
+              })
+            } else if (payload.eventType === 'UPDATE') {
+              // Actualizar conversación existente
+              const updatedConversation = payload.new as Conversation
+              setConversations(prev => {
+                const index = prev.findIndex(c => c.id === updatedConversation.id)
+                if (index === -1) {
+                  // Si no existe, agregarla
+                  const updated = [updatedConversation, ...prev]
+                  return updated.sort((a, b) => {
+                    const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
+                    const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
+                    return bTime - aTime
+                  })
+                }
+                // Actualizar y reordenar
+                const updated = [...prev]
+                updated[index] = updatedConversation
+                return updated.sort((a, b) => {
+                  const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
+                  const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
+                  return bTime - aTime
+                })
+              })
+            } else if (payload.eventType === 'DELETE') {
+              // Eliminar conversación
+              const deletedId = payload.old.id
+              setConversations(prev => prev.filter(c => c.id !== deletedId))
+            }
+            
+            // Invalidar caché
+            cacheService.remove('conversations')
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Suscrito a cambios de conversaciones en tiempo real')
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Error en suscripción de conversaciones')
+          }
+        })
+
+      if (channel) {
+        return channel
+      }
+    }
+
+    const channelPromise = setupRealtime()
 
     // Escuchar cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
-        fetchConversations()
+        // Limpiar canal anterior si existe
+        if (channel) {
+          await supabase.removeChannel(channel)
+        }
+        // Configurar nuevo canal y recargar
+        await setupRealtime()
+        await fetchConversations()
       } else {
+        if (channel) {
+          await supabase.removeChannel(channel)
+        }
         setConversations([])
         setLoading(false)
       }
     })
 
     return () => {
-      supabase.removeChannel(channel)
+      channelPromise.then(ch => {
+        if (ch) {
+          supabase.removeChannel(ch)
+        }
+      })
       subscription.unsubscribe()
     }
   }, [])
