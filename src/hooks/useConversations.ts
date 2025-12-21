@@ -78,15 +78,19 @@ export function useConversations() {
     checkAuthAndFetch()
 
     // Suscribirse a cambios en tiempo real
-    // Filtrar por user_id del usuario autenticado
     let channel: ReturnType<typeof supabase.channel> | null = null
     
     const setupRealtime = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      if (!session) return null
+
+      // Limpiar canal anterior si existe
+      if (channel) {
+        await supabase.removeChannel(channel)
+      }
 
       channel = supabase
-        .channel('conversations_changes')
+        .channel(`conversations_changes_${session.user.id}`)
         .on(
           'postgres_changes',
           {
@@ -96,7 +100,7 @@ export function useConversations() {
             filter: `user_id=eq.${session.user.id}`
           },
           (payload) => {
-            console.log('🔄 Realtime update en conversaciones:', payload.eventType)
+            console.log('🔄 Realtime update en conversaciones:', payload.eventType, payload.new?.id)
             
             if (payload.eventType === 'INSERT') {
               // Agregar nueva conversación al inicio
@@ -152,29 +156,28 @@ export function useConversations() {
             console.log('✅ Suscrito a cambios de conversaciones en tiempo real')
           } else if (status === 'CHANNEL_ERROR') {
             console.error('❌ Error en suscripción de conversaciones')
+          } else if (status === 'TIMED_OUT') {
+            console.warn('⚠️ Timeout en suscripción de conversaciones')
+          } else if (status === 'CLOSED') {
+            console.log('ℹ️ Canal de conversaciones cerrado')
           }
         })
 
-      if (channel) {
-        return channel
-      }
+      return channel
     }
 
-    const channelPromise = setupRealtime()
+    setupRealtime()
 
     // Escuchar cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
-        // Limpiar canal anterior si existe
-        if (channel) {
-          await supabase.removeChannel(channel)
-        }
         // Configurar nuevo canal y recargar
         await setupRealtime()
         await fetchConversations()
       } else {
         if (channel) {
           await supabase.removeChannel(channel)
+          channel = null
         }
         setConversations([])
         setLoading(false)
@@ -182,11 +185,9 @@ export function useConversations() {
     })
 
     return () => {
-      channelPromise.then(ch => {
-        if (ch) {
-          supabase.removeChannel(ch)
-        }
-      })
+      if (channel) {
+        supabase.removeChannel(channel)
+      }
       subscription.unsubscribe()
     }
   }, [])

@@ -118,7 +118,7 @@ export function useMessages(conversationId: string | null) {
         },
         (payload) => {
           console.log('🔄 Realtime update en mensajes:', payload.eventType)
-          
+
           if (payload.eventType === 'INSERT') {
             // Agregar nuevo mensaje sin recargar todo
             const newMessage = payload.new as Message
@@ -155,7 +155,7 @@ export function useMessages(conversationId: string | null) {
             const deletedId = payload.old.id
             setMessages(prev => prev.filter(m => m.id !== deletedId))
           }
-          
+
           // Invalidar caché
           cacheService.remove(`messages-${conversationId}`)
         }
