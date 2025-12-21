@@ -127,12 +127,10 @@ input, textarea, select {
 
 ::-webkit-scrollbar-track {
   background: var(--color-bg-secondary);
-  border: 2px solid #000;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-text-tertiary);
-  border: 2px solid #000;
   border-radius: 4px;
 }
 
