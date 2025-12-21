@@ -100,7 +100,7 @@ export function useConversations() {
             filter: `user_id=eq.${session.user.id}`
           },
           (payload) => {
-            console.log('🔄 Realtime update en conversaciones:', payload.eventType, payload.new?.id)
+            console.log('🔄 Realtime update en conversaciones:', payload.eventType, (payload.new as Conversation)?.id)
 
             if (payload.eventType === 'INSERT') {
               // Agregar nueva conversación al inicio
