@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Send } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { ArrowLeft } from 'lucide-react'
 import type { Conversation } from '../hooks/useConversations'
 import { useMessages } from '../hooks/useMessages'
 import MessageBubble from './MessageBubble'
@@ -16,7 +16,6 @@ interface ChatPanelProps {
 
 export default function ChatPanel({ conversationId, conversation, onBack, isMobile = false }: ChatPanelProps) {
   const { messages, loading, error } = useMessages(conversationId)
-  const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -167,36 +166,6 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
             <div ref={messagesEndRef} />
           </>
         )}
-      </div>
-
-      {/* Input */}
-      <div className="message-input-container">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Próximamente: responder mensajes"
-          disabled
-          className="input"
-          style={{
-            flex: 1,
-            cursor: 'not-allowed',
-            opacity: 0.6,
-          }}
-        />
-        <button
-          type="button"
-          disabled
-          className="btn btn--primary"
-          style={{
-            minWidth: 'auto',
-            padding: 'var(--spacing-sm) var(--spacing-md)',
-            cursor: 'not-allowed',
-            opacity: 0.6,
-          }}
-        >
-          <Send size={18} />
-        </button>
       </div>
     </div>
   )
