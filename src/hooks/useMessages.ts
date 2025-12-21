@@ -90,6 +90,14 @@ export function useMessages(conversationId: string | null) {
   }
 
   useEffect(() => {
+    // Si no hay conversationId, resetear estado y salir
+    if (!conversationId) {
+      setMessages([])
+      setLoading(false)
+      setError(null)
+      return
+    }
+
     // INMEDIATAMENTE resetear mensajes y poner loading cuando cambia conversationId
     // Esto es SÍNCRONO y ocurre ANTES de cualquier operación async
     setLoading(true)
@@ -97,25 +105,29 @@ export function useMessages(conversationId: string | null) {
     setError(null)
 
     const checkAuthAndFetch = async () => {
-      // Verificar sesión
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session || !conversationId) {
+      try {
+        // Verificar sesión
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          setLoading(false)
+          return
+        }
+
+        // Invalidar caché de la conversación
+        cacheService.remove(`messages-${conversationId}`)
+
+        // Forzar fetch sin caché para la nueva conversación
+        await fetchMessages(false)
+        // Marcar como leído cuando se abre la conversación
+        await markAsRead()
+      } catch (error) {
+        console.error('Error in checkAuthAndFetch:', error)
         setLoading(false)
-        return
+        setError('Error cargando mensajes')
       }
-
-      // Invalidar caché de la conversación
-      cacheService.remove(`messages-${conversationId}`)
-
-      // Forzar fetch sin caché para la nueva conversación
-      await fetchMessages(false)
-      // Marcar como leído cuando se abre la conversación
-      await markAsRead()
     }
 
     checkAuthAndFetch()
-
-    if (!conversationId) return
 
     // Suscribirse a cambios en tiempo real
     const channel = supabase
