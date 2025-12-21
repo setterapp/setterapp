@@ -6,10 +6,9 @@ import InstagramIcon from './icons/InstagramIcon'
 interface MessageBubbleProps {
   message: Message
   platform: 'whatsapp' | 'instagram'
-  contact: string
 }
 
-export default function MessageBubble({ message, platform, contact }: MessageBubbleProps) {
+export default function MessageBubble({ message, platform }: MessageBubbleProps) {
   const isInbound = message.direction === 'inbound'
   const PlatformIcon = platform === 'whatsapp' ? WhatsAppIcon : InstagramIcon
 

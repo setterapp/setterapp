@@ -160,7 +160,6 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
                 key={message.id}
                 message={message}
                 platform={conversation.platform}
-                contact={conversation.contact}
               />
             ))}
             <div ref={messagesEndRef} />
