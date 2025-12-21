@@ -79,7 +79,7 @@ export function useConversations() {
 
     // Suscribirse a cambios en tiempo real
     let channel: ReturnType<typeof supabase.channel> | null = null
-    
+
     const setupRealtime = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return null
@@ -101,7 +101,7 @@ export function useConversations() {
           },
           (payload) => {
             console.log('🔄 Realtime update en conversaciones:', payload.eventType, payload.new?.id)
-            
+
             if (payload.eventType === 'INSERT') {
               // Agregar nueva conversación al inicio
               const newConversation = payload.new as Conversation
@@ -146,7 +146,7 @@ export function useConversations() {
               const deletedId = payload.old.id
               setConversations(prev => prev.filter(c => c.id !== deletedId))
             }
-            
+
             // Invalidar caché
             cacheService.remove('conversations')
           }

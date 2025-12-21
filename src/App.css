@@ -159,6 +159,10 @@
 
 .main-content:has(.conversations-container) {
   overflow: hidden;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .page-header {
