@@ -190,6 +190,15 @@ export function useIntegrations() {
 
     setupRealtime()
 
+    const handleResume = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      await fetchIntegrations()
+      await setupRealtime()
+    }
+
+    window.addEventListener('appsetter:supabase-resume', handleResume as EventListener)
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
         await fetchIntegrations()
@@ -210,6 +219,7 @@ export function useIntegrations() {
     })
 
     return () => {
+      window.removeEventListener('appsetter:supabase-resume', handleResume as EventListener)
       if (channelRef.current) {
         try {
           isIntentionalCloseRef.current = true

@@ -166,7 +166,17 @@ export function useMessages(conversationId: string | null) {
 
     subscribeToMessages()
 
+    const handleResume = async () => {
+      // En resume, hacemos refetch + resubscribe
+      await fetchMessages()
+      markAsRead()
+      subscribeToMessages()
+    }
+
+    window.addEventListener('appsetter:supabase-resume', handleResume as EventListener)
+
     return () => {
+      window.removeEventListener('appsetter:supabase-resume', handleResume as EventListener)
       if (channelRef.current) {
         try {
           isIntentionalCloseRef.current = true

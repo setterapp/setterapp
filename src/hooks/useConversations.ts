@@ -158,6 +158,14 @@ export function useConversations() {
 
     setupRealtime()
 
+    const handleResume = async () => {
+      // En resume, forzamos refetch + resubscribe (sin reload)
+      await fetchConversations()
+      await setupRealtime()
+    }
+
+    window.addEventListener('appsetter:supabase-resume', handleResume as EventListener)
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
         await setupRealtime()
@@ -178,6 +186,7 @@ export function useConversations() {
     })
 
     return () => {
+      window.removeEventListener('appsetter:supabase-resume', handleResume as EventListener)
       if (channelRef.current) {
         try {
           isIntentionalCloseRef.current = true

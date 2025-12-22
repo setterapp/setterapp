@@ -153,9 +153,19 @@ export function useAgents() {
       subscription = authSub
     }
 
+    const handleResume = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      await fetchAgents()
+      await setupRealtime()
+    }
+
+    window.addEventListener('appsetter:supabase-resume', handleResume as EventListener)
+
     checkAuthAndFetch()
 
     return () => {
+      window.removeEventListener('appsetter:supabase-resume', handleResume as EventListener)
       if (channelRef.current) {
         try {
           isIntentionalCloseRef.current = true
