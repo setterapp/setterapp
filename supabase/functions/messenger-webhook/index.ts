@@ -9,6 +9,13 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 console.log(`Messenger webhook function up and running!`);
 
+function safeUrlForLogs(url: URL) {
+  const u = new URL(url.toString());
+  // Avoid logging secrets/tokens (Meta verify token is sent as query param).
+  if (u.searchParams.has('hub.verify_token')) u.searchParams.set('hub.verify_token', 'REDACTED');
+  return u.toString();
+}
+
 Deno.serve(async (req: Request) => {
   // CORS
   if (req.method === 'OPTIONS') {
@@ -24,6 +31,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const url = new URL(req.url);
+    console.log(`[messenger-webhook] ${req.method} ${safeUrlForLogs(url)}`);
 
     // Webhook verification (GET)
     if (req.method === 'GET') {
@@ -32,12 +40,14 @@ Deno.serve(async (req: Request) => {
       const challenge = url.searchParams.get('hub.challenge');
 
       if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+        console.log('[messenger-webhook] ✅ verified');
         return new Response(challenge, {
           status: 200,
           headers: { 'Content-Type': 'text/plain' },
         });
       }
 
+      console.warn('[messenger-webhook] ❌ verification failed', { mode, tokenMatch: token === VERIFY_TOKEN });
       return new Response('Verification failed', { status: 403 });
     }
 
@@ -45,16 +55,24 @@ Deno.serve(async (req: Request) => {
     if (req.method === 'POST') {
       const body = await req.json().catch(() => null);
       if (!body) {
+        console.warn('[messenger-webhook] empty/invalid json body');
         return new Response(JSON.stringify({ success: true }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         });
       }
 
+      // Log a small summary (not full payload)
+      const object = body?.object;
+      const entryCount = Array.isArray(body?.entry) ? body.entry.length : 0;
+      console.log('[messenger-webhook] payload summary', { object, entryCount });
+
       // Messenger webhooks use object: 'page'
       if (body.object === 'page') {
         for (const entry of body.entry || []) {
           const pageId = String(entry.id || '');
+          const messagingCount = Array.isArray(entry?.messaging) ? entry.messaging.length : 0;
+          console.log('[messenger-webhook] entry', { pageId, messagingCount });
           // Debug opt-in: store full entry payload (best-effort)
           try {
             const userId = await getUserIdFromPageId(pageId);
@@ -179,6 +197,13 @@ async function processMessengerEvent(event: any, pageId: string) {
     const timestampInSeconds = Math.floor(timestampInMs / 1000);
     const messageId = event.message?.mid || event.message?.id || `${Date.now()}`;
     const messageText = String(event.message?.text || '');
+
+    console.log('[messenger-webhook] message', {
+      pageId,
+      senderId: senderId ? `...${senderId.slice(-6)}` : null,
+      hasText: Boolean(messageText),
+      textLen: messageText.length,
+    });
 
     const userId = await getUserIdFromPageId(pageId);
     if (!userId) return;
