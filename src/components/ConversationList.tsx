@@ -4,7 +4,6 @@ import type { Conversation } from '../hooks/useConversations'
 import { formatDate } from '../utils/date'
 import WhatsAppIcon from './icons/WhatsAppIcon'
 import InstagramIcon from './icons/InstagramIcon'
-import MessengerIcon from './icons/MessengerIcon'
 import Badge from './common/Badge'
 
 interface ConversationListProps {
@@ -64,7 +63,7 @@ export default function ConversationList({ conversations, selectedId, onSelect }
             const PlatformIcon =
               conversation.platform === 'whatsapp'
                 ? WhatsAppIcon
-                : (conversation.platform === 'messenger' ? MessengerIcon : InstagramIcon)
+                : InstagramIcon
             const isSelected = conversation.id === selectedId
             const leadStatusVariant = getLeadStatusBadgeVariant(conversation.lead_status)
             const leadStatusLabel = getLeadStatusLabel(conversation.lead_status)
@@ -103,15 +102,15 @@ function ConversationItem({
   onSelect: (id: string, event?: React.MouseEvent) => void
 }) {
   const [imageError, setImageError] = useState(false)
-  const contactPicture = (conversation as any).contact_ref?.profile_picture as string | null | undefined
+  const contactPicture = conversation.contact_ref?.profile_picture
   const profilePicture = contactPicture || conversation.contact_metadata?.profile_picture
   const username = conversation.contact_metadata?.username
   const name = conversation.contact_metadata?.name
 
   const rawContact = conversation.contact || ''
   const isNumeric = /^\d+$/.test(rawContact)
-  const alias = (conversation as any).contact_alias as string | null | undefined
-  const contactDisplayName = (conversation as any).contact_ref?.display_name as string | null | undefined
+  const alias = conversation.contact_alias
+  const contactDisplayName = conversation.contact_ref?.display_name
   const displayName =
     contactDisplayName ||
     alias ||
@@ -121,7 +120,7 @@ function ConversationItem({
       ? (isNumeric
         ? (conversation.platform === 'whatsapp'
           ? `+${rawContact}`
-          : (conversation.platform === 'messenger' ? `FB …${rawContact.slice(-6)}` : `ID …${rawContact.slice(-6)}`))
+          : `ID …${rawContact.slice(-6)}`)
         : rawContact)
       : 'Sin nombre')
 
@@ -148,7 +147,7 @@ function ConversationItem({
             border: '3px solid var(--color-border)',
             background: conversation.platform === 'whatsapp'
               ? '#a6e3a1'
-              : (conversation.platform === 'messenger' ? '#89b4fa' : '#f38ba8'),
+              : '#f38ba8',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -173,7 +172,7 @@ function ConversationItem({
           style={{
             background: conversation.platform === 'whatsapp'
               ? '#a6e3a1'
-              : (conversation.platform === 'messenger' ? '#89b4fa' : '#f38ba8')
+              : '#f38ba8'
           }}
         >
           <PlatformIcon size={20} color="#000" />
@@ -196,7 +195,7 @@ function ConversationItem({
         </p>
         {leadStatusVariant && leadStatusLabel && (
           <div style={{ marginTop: 'var(--spacing-xs)' }}>
-            <Badge variant={leadStatusVariant as any}>
+            <Badge variant={leadStatusVariant}>
               {leadStatusLabel}
             </Badge>
           </div>

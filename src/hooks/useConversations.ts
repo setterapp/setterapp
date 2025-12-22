@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 
 export interface Contact {
   id: string
-  platform: 'whatsapp' | 'instagram' | 'messenger'
+  platform: 'whatsapp' | 'instagram'
   external_id: string
   display_name?: string | null
   phone?: string | null
@@ -17,7 +17,7 @@ export interface Conversation {
   contact_alias?: string | null
   contact_id?: string | null
   contact_ref?: Contact | null
-  platform: 'whatsapp' | 'instagram' | 'messenger'
+  platform: 'whatsapp' | 'instagram'
   agent_id?: string | null
   unread_count: number
   last_message_at?: string

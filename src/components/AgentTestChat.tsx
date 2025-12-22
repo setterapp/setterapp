@@ -31,7 +31,7 @@ export default function AgentTestChat({ agent }: AgentTestChatProps) {
         content: agent.config.openingQuestion
       }])
     }
-  }, [agent.config?.openingQuestion])
+  }, [agent.config?.openingQuestion, messages.length])
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,12 +60,13 @@ export default function AgentTestChat({ agent }: AgentTestChatProps) {
         role: 'assistant',
         content: response.content
       }])
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al generar respuesta'
       console.error('Error generando respuesta:', err)
-      setError(err.message || 'Error al generar respuesta')
+      setError(message)
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Lo siento, ocurrió un error: ${err.message || 'Error desconocido'}`
+        content: `Lo siento, ocurrió un error: ${message}`
       }])
     } finally {
       setLoading(false)

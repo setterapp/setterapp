@@ -5,7 +5,6 @@ import { useMessages } from '../hooks/useMessages'
 import MessageBubble from './MessageBubble'
 import WhatsAppIcon from './icons/WhatsAppIcon'
 import InstagramIcon from './icons/InstagramIcon'
-import MessengerIcon from './icons/MessengerIcon'
 import Badge from './common/Badge'
 import { supabase } from '../lib/supabase'
 
@@ -44,7 +43,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
   const PlatformIcon =
     conversation.platform === 'whatsapp'
       ? WhatsAppIcon
-      : (conversation.platform === 'messenger' ? MessengerIcon : InstagramIcon)
+      : InstagramIcon
 
   const getLeadStatusBadgeVariant = (status?: 'cold' | 'warm' | 'hot' | null) => {
     if (!status) return null
@@ -93,7 +92,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
       ? (isNumeric
         ? (conversation.platform === 'whatsapp'
           ? `+${rawContact}`
-          : (conversation.platform === 'messenger' ? `FB …${rawContact.slice(-6)}` : `ID …${rawContact.slice(-6)}`))
+          : `ID …${rawContact.slice(-6)}`)
         : rawContact)
       : 'Sin nombre')
 
@@ -134,22 +133,6 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
               }}
             >
               <InstagramIcon size={20} color="#000" />
-            </div>
-          ) : conversation.platform === 'messenger' ? (
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: 'var(--border-radius-sm)',
-                border: '2px solid #000',
-                background: '#89b4fa',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <MessengerIcon size={20} color="#000" />
             </div>
           ) : (
             <PlatformIcon size={28} />
@@ -203,14 +186,14 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
                   fontSize: 'var(--font-size-xs)',
                   color: conversation.platform === 'whatsapp'
                     ? '#a6e3a1'
-                    : (conversation.platform === 'messenger' ? '#89b4fa' : '#f38ba8'),
+                    : '#f38ba8',
                   fontWeight: 500,
                 }}
               >
-                {conversation.platform === 'whatsapp' ? 'WhatsApp' : (conversation.platform === 'messenger' ? 'Messenger' : 'Instagram')}
+                {conversation.platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'}
               </span>
               {leadStatusVariant && leadStatusLabel && (
-                <Badge variant={leadStatusVariant as any}>
+                <Badge variant={leadStatusVariant}>
                   {leadStatusLabel}
                 </Badge>
               )}

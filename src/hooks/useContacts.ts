@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 export type Contact = {
   id: string
   user_id: string
-  platform: 'whatsapp' | 'instagram' | 'messenger'
+  platform: 'whatsapp' | 'instagram'
   external_id: string
   display_name?: string | null
   phone?: string | null

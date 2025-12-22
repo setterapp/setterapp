@@ -5,7 +5,7 @@ import Modal from './common/Modal'
 interface IntegrationModalProps {
   isOpen: boolean
   onClose: () => void
-  integrationType: 'whatsapp' | 'instagram' | 'messenger'
+  integrationType: 'whatsapp' | 'instagram'
   onConnect: (token: string, phoneNumberId?: string, businessAccountId?: string) => Promise<void>
 }
 
@@ -38,8 +38,9 @@ function IntegrationModal({ isOpen, onClose, integrationType, onConnect }: Integ
       setPhoneNumberId('')
       setBusinessAccountId('')
       onClose()
-    } catch (err: any) {
-      setError(err.message || 'Error al conectar')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al conectar'
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -60,7 +61,7 @@ function IntegrationModal({ isOpen, onClose, integrationType, onConnect }: Integ
       title={`Conectar ${
         integrationType === 'whatsapp'
           ? 'WhatsApp Business'
-          : (integrationType === 'messenger' ? 'Messenger' : 'Instagram')
+          : 'Instagram'
       }`}
     >
       <form onSubmit={handleSubmit}>
@@ -91,12 +92,12 @@ function IntegrationModal({ isOpen, onClose, integrationType, onConnect }: Integ
             value={token}
             onChange={(e) => setToken(e.target.value)}
             required
-            placeholder={integrationType === 'whatsapp' ? 'EAAxxxxxxxxxxxxx' : (integrationType === 'messenger' ? 'EAAGxxxxxxxxxxxxx' : 'IGxxxxxxxxxxxxx')}
+            placeholder={integrationType === 'whatsapp' ? 'EAAxxxxxxxxxxxxx' : 'IGxxxxxxxxxxxxx'}
           />
           <p style={{ margin: 'var(--spacing-xs) 0 0 0', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
             {integrationType === 'whatsapp'
               ? 'Token de acceso permanente de WhatsApp Business API'
-              : (integrationType === 'messenger' ? 'Token de acceso de Facebook Page (Messenger)' : 'Token de acceso de Instagram Graph API')}
+              : 'Token de acceso de Instagram Graph API'}
           </p>
         </div>
 

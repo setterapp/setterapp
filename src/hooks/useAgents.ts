@@ -25,7 +25,7 @@ export interface Agent {
   id: string
   name: string
   description: string
-  platform: 'whatsapp' | 'instagram' | 'messenger' | null
+  platform: 'whatsapp' | 'instagram' | null
   config?: AgentConfig
   created_at: string
   updated_at: string

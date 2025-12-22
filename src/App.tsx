@@ -43,11 +43,13 @@ function Layout() {
 
   // Cerrar sidebar cuando cambia la ruta en móvil
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSidebarOpen(false)
   }, [location.pathname])
 
   // Resetear botón presionado cuando cambia la ruta
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPressedButton(null)
   }, [location.pathname])
 

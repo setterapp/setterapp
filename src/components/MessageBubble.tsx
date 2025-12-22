@@ -2,16 +2,15 @@ import type { Message } from '../hooks/useMessages'
 import { formatDate } from '../utils/date'
 import WhatsAppIcon from './icons/WhatsAppIcon'
 import InstagramIcon from './icons/InstagramIcon'
-import MessengerIcon from './icons/MessengerIcon'
 
 interface MessageBubbleProps {
   message: Message
-  platform: 'whatsapp' | 'instagram' | 'messenger'
+  platform: 'whatsapp' | 'instagram'
 }
 
 export default function MessageBubble({ message, platform }: MessageBubbleProps) {
   const isInbound = message.direction === 'inbound'
-  const PlatformIcon = platform === 'whatsapp' ? WhatsAppIcon : (platform === 'messenger' ? MessengerIcon : InstagramIcon)
+  const PlatformIcon = platform === 'whatsapp' ? WhatsAppIcon : InstagramIcon
 
   return (
     <div className={`message-wrapper message-wrapper--${message.direction}`}>

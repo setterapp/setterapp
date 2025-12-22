@@ -3,9 +3,8 @@ interface LogoProps {
   variant?: 'full' | 'icon'
 }
 
-export default function Logo({ size = 32, variant = 'full' }: LogoProps) {
-  // Quickreply icon SVG - chat bubble in background color, lightning in danger color
-  const QuickReplyIcon = ({ size }: { size: number }) => (
+function QuickReplyIcon({ size }: { size: number }) {
+  return (
     <svg
       width={size}
       height={size}
@@ -40,7 +39,9 @@ export default function Logo({ size = 32, variant = 'full' }: LogoProps) {
       />
     </svg>
   )
+}
 
+export default function Logo({ size = 32, variant = 'full' }: LogoProps) {
   if (variant === 'icon') {
     return <QuickReplyIcon size={size} />
   }

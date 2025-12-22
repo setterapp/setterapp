@@ -26,19 +26,17 @@ function AuthCallback() {
           // Verificar si venimos de integraciones
           const isFromIntegrations = redirectTo.includes('/integrations') || redirectTo === '/integrations'
           const provider = new URLSearchParams(location.search).get('provider') || 'google'
-          const integrationParam = new URLSearchParams(location.search).get('integration') // 'whatsapp' | 'instagram' | 'messenger'
+          const integrationParam = new URLSearchParams(location.search).get('integration') // 'whatsapp' | 'instagram'
 
           // Si hay un provider_token y venimos de integraciones, actualizar la integración correspondiente
           if (session.provider_token && isFromIntegrations) {
             try {
-              let integrationType: 'instagram' | 'whatsapp' | 'messenger' = 'instagram'
+              let integrationType: 'instagram' | 'whatsapp' = 'instagram'
 
               if (provider === 'facebook') {
                 // Si viene el parámetro integration, usarlo; si no, asumir instagram por defecto
                 if (integrationParam === 'whatsapp') {
                   integrationType = 'whatsapp'
-                } else if (integrationParam === 'messenger') {
-                  integrationType = 'messenger'
                 } else {
                   integrationType = 'instagram'
                 }
@@ -101,28 +99,6 @@ Asegúrate de:
 1. Tener una Página de Facebook
 2. Tener una Cuenta de Instagram Business vinculada a esa Página
 3. Haber otorgado todos los permisos solicitados`)
-                  }
-                }
-                if (integrationType === 'messenger') {
-                  try {
-                    const { messengerService } = await import('../services/facebook/messenger')
-                    const pageInfo = await messengerService.getMessengerPageAccessToken()
-                    config = {
-                      page_id: pageInfo.pageId,
-                      page_access_token: pageInfo.pageAccessToken,
-                      page_name: pageInfo.pageName,
-                    }
-                    // Messenger requiere Page token para funcionar (webhook + perfil + send API)
-                    canMarkConnected = true
-                  } catch (msError: any) {
-                    canMarkConnected = false
-                    alert(`No se pudo conectar Messenger automáticamente: ${msError.message || 'Error desconocido'}.
-
-Asegúrate de:
-1. Tener una Página de Facebook (y ser admin)
-2. Haber otorgado permisos de Pages + Messenger (pages_show_list, pages_messaging, pages_manage_metadata)
-
-Tip: puedes configurarlo manualmente desde Integraciones pegando Page ID + Page Access Token.`)
                   }
                 }
 
