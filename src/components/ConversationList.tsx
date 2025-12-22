@@ -4,6 +4,7 @@ import type { Conversation } from '../hooks/useConversations'
 import { formatDate } from '../utils/date'
 import WhatsAppIcon from './icons/WhatsAppIcon'
 import InstagramIcon from './icons/InstagramIcon'
+import MessengerIcon from './icons/MessengerIcon'
 import Badge from './common/Badge'
 
 interface ConversationListProps {
@@ -60,7 +61,10 @@ export default function ConversationList({ conversations, selectedId, onSelect }
           </div>
         ) : (
           conversations.map((conversation) => {
-            const PlatformIcon = conversation.platform === 'whatsapp' ? WhatsAppIcon : InstagramIcon
+            const PlatformIcon =
+              conversation.platform === 'whatsapp'
+                ? WhatsAppIcon
+                : (conversation.platform === 'messenger' ? MessengerIcon : InstagramIcon)
             const isSelected = conversation.id === selectedId
             const leadStatusVariant = getLeadStatusBadgeVariant(conversation.lead_status)
             const leadStatusLabel = getLeadStatusLabel(conversation.lead_status)
@@ -117,7 +121,7 @@ function ConversationItem({
       ? (isNumeric
         ? (conversation.platform === 'whatsapp'
           ? `+${rawContact}`
-          : `ID …${rawContact.slice(-6)}`)
+          : (conversation.platform === 'messenger' ? `FB …${rawContact.slice(-6)}` : `ID …${rawContact.slice(-6)}`))
         : rawContact)
       : 'Sin nombre')
 
@@ -142,7 +146,9 @@ function ConversationItem({
             overflow: 'hidden',
             flexShrink: 0,
             border: '3px solid var(--color-border)',
-            background: conversation.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
+            background: conversation.platform === 'whatsapp'
+              ? '#a6e3a1'
+              : (conversation.platform === 'messenger' ? '#89b4fa' : '#f38ba8'),
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -165,7 +171,9 @@ function ConversationItem({
         <div
           className="conversation-item-icon"
           style={{
-            background: conversation.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8'
+            background: conversation.platform === 'whatsapp'
+              ? '#a6e3a1'
+              : (conversation.platform === 'messenger' ? '#89b4fa' : '#f38ba8')
           }}
         >
           <PlatformIcon size={20} color="#000" />

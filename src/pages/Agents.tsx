@@ -6,6 +6,7 @@ import Modal from '../components/common/Modal'
 import AgentTestChat from '../components/AgentTestChat'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
+import MessengerIcon from '../components/icons/MessengerIcon'
 import { formatDate, formatFullDate } from '../utils/date'
 import { Checkbox } from '../components/ui/checkbox'
 
@@ -18,7 +19,7 @@ function Agents() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    platform: '' as 'whatsapp' | 'instagram' | '',
+    platform: '' as 'whatsapp' | 'instagram' | 'messenger' | '',
     config: {} as AgentConfig,
   })
   const [currentStep, setCurrentStep] = useState(1)
@@ -36,7 +37,7 @@ function Agents() {
       const agentData = {
         name: formData.name,
         description: formData.description,
-        platform: formData.platform as 'whatsapp' | 'instagram' | null || null,
+        platform: formData.platform as 'whatsapp' | 'instagram' | 'messenger' | null || null,
         config: Object.keys(formData.config).length > 0 ? formData.config : undefined,
       }
 
@@ -85,7 +86,7 @@ function Agents() {
     }))
   }
 
-  const handleAssignPlatform = async (agentId: string, platform: 'whatsapp' | 'instagram') => {
+  const handleAssignPlatform = async (agentId: string, platform: 'whatsapp' | 'instagram' | 'messenger') => {
     try {
       await updateAgent(agentId, { platform })
     } catch (err) {
@@ -142,7 +143,7 @@ function Agents() {
               <Brain size={28} />
               Agentes de IA
             </h2>
-            <p>Crea y gestiona agentes de IA para WhatsApp e Instagram</p>
+            <p>Crea y gestiona agentes de IA para WhatsApp, Instagram y Messenger</p>
           </div>
           <button className="btn btn--primary" onClick={() => setShowForm(true)}>
             <Plus size={18} />
@@ -207,11 +208,12 @@ function Agents() {
                     id="platform"
                     className="input select"
                     value={formData.platform}
-                    onChange={(e) => setFormData({ ...formData, platform: e.target.value as 'whatsapp' | 'instagram' | '' })}
+                    onChange={(e) => setFormData({ ...formData, platform: e.target.value as 'whatsapp' | 'instagram' | 'messenger' | '' })}
                   >
                     <option value="">Sin asignar</option>
                     <option value="whatsapp">WhatsApp</option>
                     <option value="instagram">Instagram</option>
+                    <option value="messenger">Messenger</option>
                   </select>
                 </div>
               </div>
@@ -601,7 +603,9 @@ function Agents() {
                   {agent.platform ? (
                     <span
                       style={{
-                        backgroundColor: agent.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
+                        backgroundColor: agent.platform === 'whatsapp'
+                          ? '#a6e3a1'
+                          : (agent.platform === 'messenger' ? '#89b4fa' : '#f38ba8'),
                         color: '#000',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -617,6 +621,11 @@ function Agents() {
                         <>
                           <WhatsAppIcon size={14} color="#000" />
                           WhatsApp
+                        </>
+                      ) : agent.platform === 'messenger' ? (
+                        <>
+                          <MessengerIcon size={14} color="#000" />
+                          Messenger
                         </>
                       ) : (
                         <>
@@ -729,6 +738,35 @@ function Agents() {
                             >
                               <WhatsAppIcon size={16} color="#a6e3a1" />
                               Asignar WhatsApp
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleAssignPlatform(agent.id, 'messenger')
+                                setOpenMenuId(null)
+                              }}
+                              style={{
+                                width: '100%',
+                                textAlign: 'left',
+                                padding: 'var(--spacing-sm)',
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: 'var(--font-size-sm)',
+                                color: 'var(--color-text)',
+                                borderRadius: 'var(--border-radius-sm)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 'var(--spacing-sm)',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'var(--color-bg-secondary)'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent'
+                              }}
+                            >
+                              <MessengerIcon size={16} color="#89b4fa" />
+                              Asignar Messenger
                             </button>
                             <button
                               onClick={() => {

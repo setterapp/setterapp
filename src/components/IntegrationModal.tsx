@@ -5,7 +5,7 @@ import Modal from './common/Modal'
 interface IntegrationModalProps {
   isOpen: boolean
   onClose: () => void
-  integrationType: 'whatsapp' | 'instagram'
+  integrationType: 'whatsapp' | 'instagram' | 'messenger'
   onConnect: (token: string, phoneNumberId?: string, businessAccountId?: string) => Promise<void>
 }
 
@@ -54,7 +54,15 @@ function IntegrationModal({ isOpen, onClose, integrationType, onConnect }: Integ
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={`Conectar ${integrationType === 'whatsapp' ? 'WhatsApp Business' : 'Instagram'}`}>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={`Conectar ${
+        integrationType === 'whatsapp'
+          ? 'WhatsApp Business'
+          : (integrationType === 'messenger' ? 'Messenger' : 'Instagram')
+      }`}
+    >
       <form onSubmit={handleSubmit}>
         {error && (
           <div
@@ -83,12 +91,12 @@ function IntegrationModal({ isOpen, onClose, integrationType, onConnect }: Integ
             value={token}
             onChange={(e) => setToken(e.target.value)}
             required
-            placeholder={integrationType === 'whatsapp' ? 'EAAxxxxxxxxxxxxx' : 'IGxxxxxxxxxxxxx'}
+            placeholder={integrationType === 'whatsapp' ? 'EAAxxxxxxxxxxxxx' : (integrationType === 'messenger' ? 'EAAGxxxxxxxxxxxxx' : 'IGxxxxxxxxxxxxx')}
           />
           <p style={{ margin: 'var(--spacing-xs) 0 0 0', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
             {integrationType === 'whatsapp'
               ? 'Token de acceso permanente de WhatsApp Business API'
-              : 'Token de acceso de Instagram Graph API'}
+              : (integrationType === 'messenger' ? 'Token de acceso de Facebook Page (Messenger)' : 'Token de acceso de Instagram Graph API')}
           </p>
         </div>
 

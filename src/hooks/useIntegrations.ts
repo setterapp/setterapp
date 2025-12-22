@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 export interface Integration {
   id: string
   name: string
-  type: 'whatsapp' | 'instagram'
+  type: 'whatsapp' | 'instagram' | 'messenger'
   status: 'connected' | 'disconnected'
   config?: Record<string, any>
   connected_at?: string
@@ -15,6 +15,7 @@ export interface Integration {
 const DEFAULT_INTEGRATIONS = [
   { name: 'WhatsApp Business', type: 'whatsapp' as const },
   { name: 'Instagram', type: 'instagram' as const },
+  { name: 'Messenger', type: 'messenger' as const },
 ]
 
 export function useIntegrations() {

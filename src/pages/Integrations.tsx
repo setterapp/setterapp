@@ -3,9 +3,11 @@ import { Plug, Check, X, MoreVertical } from 'lucide-react'
 import { useIntegrations } from '../hooks/useIntegrations'
 import { instagramService } from '../services/facebook/instagram'
 import { whatsappService } from '../services/facebook/whatsapp'
+import { messengerService } from '../services/facebook/messenger'
 import { Switch } from '../components/ui/switch'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
+import MessengerIcon from '../components/icons/MessengerIcon'
 import { formatDate, formatFullDate } from '../utils/date'
 
 function Integrations() {
@@ -69,6 +71,12 @@ function Integrations() {
         } else {
           // Desconectar
           await handleWhatsAppDisconnect(id)
+        }
+      } else if (type === 'messenger') {
+        if (checked) {
+          await handleMessengerConnect()
+        } else {
+          await handleMessengerDisconnect(id)
         }
       } else {
         const newStatus = checked ? 'connected' : 'disconnected'
@@ -199,6 +207,48 @@ function Integrations() {
     }
   }
 
+  async function handleMessengerConnect() {
+    try {
+      await messengerService.connectMessenger()
+    } catch (error: any) {
+      console.error('Error connecting Messenger:', error)
+      alert(`Error al conectar Messenger: ${error.message || 'Error desconocido'}`)
+      refetch()
+    }
+  }
+
+  async function handleMessengerDisconnect(integrationId?: string) {
+    try {
+      if (!confirm('¿Desconectar Messenger?')) {
+        refetch()
+        return
+      }
+
+      const integration = integrationId
+        ? integrations.find(i => i.id === integrationId)
+        : integrations.find(i => i.type === 'messenger')
+
+      if (!integration) {
+        alert('No se encontró la integración de Messenger')
+        refetch()
+        return
+      }
+
+      await updateIntegration(integration.id, {
+        status: 'disconnected',
+        connected_at: undefined,
+        config: {}
+      })
+
+      await messengerService.disconnect()
+      refetch()
+    } catch (error: any) {
+      console.error('Error disconnecting Messenger:', error)
+      alert(`Error al desconectar: ${error.message || 'Error desconocido'}`)
+      refetch()
+    }
+  }
+
 
 
   return (
@@ -234,6 +284,9 @@ function Integrations() {
                 {integrations.map((integration) => {
             const isConnected = integration.status === 'connected'
             const webhookDebugEnabled = Boolean((integration.config as any)?.debug_webhooks)
+            const bg = integration.type === 'whatsapp'
+              ? '#a6e3a1'
+              : (integration.type === 'messenger' ? '#89b4fa' : '#f38ba8')
 
             return (
               <div
@@ -257,7 +310,7 @@ function Integrations() {
                       width: '48px',
                       height: '48px',
                       borderRadius: 'var(--border-radius)',
-                      background: integration.type === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
+                      background: bg,
                       border: '2px solid #000',
                       display: 'flex',
                       alignItems: 'center',
@@ -270,6 +323,9 @@ function Integrations() {
                     )}
                     {integration.type === 'instagram' && (
                       <InstagramIcon size={24} color="#000" />
+                    )}
+                    {integration.type === 'messenger' && (
+                      <MessengerIcon size={24} color="#000" />
                     )}
                   </div>
                   <div style={{ flex: 1 }}>

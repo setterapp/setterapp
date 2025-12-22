@@ -27,17 +27,19 @@ function AuthCallback() {
           // Verificar si venimos de integraciones
           const isFromIntegrations = redirectTo.includes('/integrations') || redirectTo === '/integrations'
           const provider = new URLSearchParams(location.search).get('provider') || 'google'
-          const integrationParam = new URLSearchParams(location.search).get('integration') // 'whatsapp' o 'instagram'
+          const integrationParam = new URLSearchParams(location.search).get('integration') // 'whatsapp' | 'instagram' | 'messenger'
 
           // Si hay un provider_token y venimos de integraciones, actualizar la integración correspondiente
           if (session.provider_token && isFromIntegrations) {
             try {
-              let integrationType = 'instagram'
+              let integrationType: 'instagram' | 'whatsapp' | 'messenger' = 'instagram'
 
               if (provider === 'facebook') {
                 // Si viene el parámetro integration, usarlo; si no, asumir instagram por defecto
                 if (integrationParam === 'whatsapp') {
                   integrationType = 'whatsapp'
+                } else if (integrationParam === 'messenger') {
+                  integrationType = 'messenger'
                 } else {
                   integrationType = 'instagram'
                 }
@@ -99,6 +101,23 @@ Asegúrate de:
 1. Tener una Página de Facebook
 2. Tener una Cuenta de Instagram Business vinculada a esa Página
 3. Haber otorgado todos los permisos solicitados`)
+                  }
+                }
+                if (integrationType === 'messenger') {
+                  try {
+                    const { messengerService } = await import('../services/facebook/messenger')
+                    const pageInfo = await messengerService.getMessengerPageAccessToken()
+                    config = {
+                      page_id: pageInfo.pageId,
+                      page_access_token: pageInfo.pageAccessToken,
+                      page_name: pageInfo.pageName,
+                    }
+                  } catch (msError: any) {
+                    alert(`No se pudo conectar Messenger: ${msError.message || 'Error desconocido'}.
+
+Asegúrate de:
+1. Tener una Página de Facebook
+2. Haber otorgado permisos de Pages + Messenger (pages_messaging, pages_manage_metadata)`)
                   }
                 }
 

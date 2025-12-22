@@ -7,7 +7,7 @@ type Contact = {
   id: string
   name: string
   phone: string
-  platform: 'whatsapp' | 'instagram'
+  platform: 'whatsapp' | 'instagram' | 'messenger'
   lastSeen: string
 }
 
@@ -25,6 +25,14 @@ const columns: ColumnDef<Contact>[] = [
     header: 'Plataforma',
     cell: ({ row }) => {
       const platform = row.getValue('platform') as string
+      const bg =
+        platform === 'whatsapp'
+          ? '#a6e3a1'
+          : (platform === 'messenger' ? '#89b4fa' : '#f38ba8')
+      const label =
+        platform === 'whatsapp'
+          ? 'WhatsApp'
+          : (platform === 'messenger' ? 'Messenger' : 'Instagram')
       return (
         <span
           style={{
@@ -33,10 +41,10 @@ const columns: ColumnDef<Contact>[] = [
             border: '2px solid #000',
             fontSize: 'var(--font-size-xs)',
             fontWeight: 600,
-            backgroundColor: platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
+            backgroundColor: bg,
           }}
         >
-          {platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'}
+          {label}
         </span>
       )
     },
@@ -52,7 +60,12 @@ function Contacts() {
 
   const data: Contact[] = contacts.map((c) => ({
     id: c.id,
-    name: c.display_name || (c.username ? `@${c.username}` : null) || (c.platform === 'whatsapp' ? `+${c.external_id}` : `IG …${c.external_id.slice(-6)}`),
+    name:
+      c.display_name ||
+      (c.username ? `@${c.username}` : null) ||
+      (c.platform === 'whatsapp'
+        ? `+${c.external_id}`
+        : (c.platform === 'messenger' ? `FB …${c.external_id.slice(-6)}` : `IG …${c.external_id.slice(-6)}`)),
     phone: c.phone || (c.platform === 'whatsapp' ? `+${c.external_id}` : ''),
     platform: c.platform,
     lastSeen: c.last_message_at ? new Date(c.last_message_at).toLocaleString() : '-',
@@ -66,7 +79,7 @@ function Contacts() {
             <Users size={28} />
             Contactos
           </h2>
-          <p>Gestiona tus contactos de WhatsApp e Instagram</p>
+          <p>Gestiona tus contactos de WhatsApp, Instagram y Messenger</p>
         </div>
       </div>
 
