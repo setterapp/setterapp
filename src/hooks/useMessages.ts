@@ -26,6 +26,7 @@ export function useMessages(conversationId: string | null) {
   const isIntentionalCloseRef = useRef(false)
   const fetchAbortRef = useRef<AbortController | null>(null)
   const activeFetchIdRef = useRef(0)
+  const channelKeyRef = useRef<string | null>(null)
 
   const fetchMessages = async () => {
     if (!conversationId) {
@@ -97,6 +98,11 @@ export function useMessages(conversationId: string | null) {
     markAsRead()
 
     const subscribeToMessages = () => {
+      const channelKey = `messages_changes_${conversationId}`
+      if (channelRef.current && channelKeyRef.current === channelKey) {
+        return
+      }
+
       // Si ya existe un canal, lo limpiamos antes de crear uno nuevo
       if (channelRef.current) {
         try {
@@ -110,7 +116,7 @@ export function useMessages(conversationId: string | null) {
 
       try {
         const channel = supabase
-          .channel(`messages_changes_${conversationId}_${Date.now()}`)
+          .channel(channelKey)
           .on(
             'postgres_changes',
             {
@@ -168,6 +174,7 @@ export function useMessages(conversationId: string | null) {
           })
 
         channelRef.current = channel
+        channelKeyRef.current = channelKey
       } catch (error) {
         // Reintentar después de un delay
         setTimeout(() => subscribeToMessages(), 2000)
@@ -195,6 +202,8 @@ export function useMessages(conversationId: string | null) {
           // Sin logs en producción por seguridad
         }
       }
+      channelRef.current = null
+      channelKeyRef.current = null
     }
   }, [conversationId])
 

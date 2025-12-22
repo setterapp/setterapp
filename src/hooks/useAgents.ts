@@ -39,6 +39,7 @@ export function useAgents() {
   const isIntentionalCloseRef = useRef(false)
   const fetchAbortRef = useRef<AbortController | null>(null)
   const activeFetchIdRef = useRef(0)
+  const channelKeyRef = useRef<string | null>(null)
 
   const fetchAgents = async () => {
     const fetchId = ++activeFetchIdRef.current
@@ -82,6 +83,11 @@ export function useAgents() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
 
+      const channelKey = `agents_changes_${session.user.id}`
+      if (channelRef.current && channelKeyRef.current === channelKey) {
+        return
+      }
+
       // Si ya existe un canal, lo limpiamos antes de crear uno nuevo
       if (channelRef.current) {
         try {
@@ -95,7 +101,7 @@ export function useAgents() {
 
       try {
         const channel = supabase
-          .channel(`agents_changes_${session.user.id}_${Date.now()}`)
+          .channel(channelKey)
           .on(
             'postgres_changes',
             {
@@ -127,6 +133,7 @@ export function useAgents() {
           })
 
         channelRef.current = channel
+        channelKeyRef.current = channelKey
       } catch (error) {
         setTimeout(() => setupRealtime(), 2000)
       }
@@ -184,6 +191,8 @@ export function useAgents() {
           // Sin logs en producción por seguridad
         }
       }
+      channelRef.current = null
+      channelKeyRef.current = null
       if (subscription) subscription.unsubscribe()
     }
   }, [])

@@ -169,11 +169,22 @@ export function useIntegrations() {
       }
 
       try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const userId = session?.user?.id
         const channel = supabase
-          .channel(`integrations_changes_${Date.now()}`)
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'integrations' }, () => {
-            fetchIntegrations()
-          })
+          .channel(userId ? `integrations_changes_${userId}` : `integrations_changes`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'integrations',
+              ...(userId ? { filter: `user_id=eq.${userId}` } : {}),
+            } as any,
+            () => {
+              fetchIntegrations()
+            }
+          )
           .subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
               isIntentionalCloseRef.current = false

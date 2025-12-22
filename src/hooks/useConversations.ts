@@ -26,6 +26,7 @@ export function useConversations() {
   const isIntentionalCloseRef = useRef(false)
   const fetchAbortRef = useRef<AbortController | null>(null)
   const activeFetchIdRef = useRef(0)
+  const channelKeyRef = useRef<string | null>(null)
 
   const fetchConversations = async () => {
     const fetchId = ++activeFetchIdRef.current
@@ -79,6 +80,11 @@ export function useConversations() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return null
 
+      const channelKey = `conversations_changes_${session.user.id}`
+      if (channelRef.current && channelKeyRef.current === channelKey) {
+        return channelRef.current
+      }
+
       // Si ya existe un canal, lo limpiamos antes de crear uno nuevo
       if (channelRef.current) {
         try {
@@ -92,7 +98,7 @@ export function useConversations() {
 
       try {
         const channel = supabase
-          .channel(`conversations_changes_${session.user.id}_${Date.now()}`)
+          .channel(channelKey)
           .on(
             'postgres_changes',
             {
@@ -158,6 +164,7 @@ export function useConversations() {
           })
 
         channelRef.current = channel
+        channelKeyRef.current = channelKey
         return channel
       } catch (error) {
         // Reintentar después de un delay
@@ -210,6 +217,8 @@ export function useConversations() {
           // Sin logs en producción por seguridad
         }
       }
+      channelRef.current = null
+      channelKeyRef.current = null
       subscription.unsubscribe()
     }
   }, [])
