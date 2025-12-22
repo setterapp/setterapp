@@ -3,10 +3,12 @@ import { useConversations } from '../hooks/useConversations'
 import ConversationList from '../components/ConversationList'
 import ChatPanel from '../components/ChatPanel'
 import EmptyConversation from '../components/EmptyConversation'
+import { dbg } from '../utils/debug'
 
 function Conversations() {
   const { conversations, loading, error } = useConversations()
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const [selectedConversationNonce, setSelectedConversationNonce] = useState(0)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [isFirstSelection, setIsFirstSelection] = useState(true)
 
@@ -38,8 +40,11 @@ function Conversations() {
       event.stopPropagation()
     }
 
-    // Si es la misma conversación, no hacer nada (evita recargas innecesarias)
+    dbg('log', 'selectConversation', { id, selectedConversationId })
+
+    // Si es la misma conversación, forzar refresh del panel (importante post-resume)
     if (id === selectedConversationId) {
+      setSelectedConversationNonce((n) => n + 1)
       return
     }
 
@@ -47,6 +52,7 @@ function Conversations() {
     // En algunos browsers, después de volver del background, timers pueden quedar throttled
     // y el ID nunca se setea => ChatPanel no monta => no hay fetch de mensajes.
     setSelectedConversationId(id)
+    setSelectedConversationNonce((n) => n + 1)
     if (isFirstSelection) {
       setIsFirstSelection(false)
     }
@@ -97,6 +103,7 @@ function Conversations() {
         {/* Panel de chat */}
         {selectedConversationId && selectedConversation && (
           <ChatPanel
+            key={`${selectedConversationId}:${selectedConversationNonce}`}
             conversationId={selectedConversationId}
             conversation={selectedConversation}
             onBack={isMobile ? () => setSelectedConversationId(null) : undefined}

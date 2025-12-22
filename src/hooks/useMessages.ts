@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase, resetSupabaseClient } from '../lib/supabase'
+import { dbg } from '../utils/debug'
 
 export interface Message {
   id: string
@@ -33,6 +34,7 @@ export function useMessages(conversationId: string | null) {
       return
     }
 
+    dbg('log', 'useMessages.fetchMessages start', { conversationId })
     if (fetchAbortRef.current) fetchAbortRef.current.abort()
     const controller = new AbortController()
     fetchAbortRef.current = controller
@@ -50,6 +52,7 @@ export function useMessages(conversationId: string | null) {
       if (fetchError) throw fetchError
       if (fetchAbortRef.current !== controller) return
       setMessages(data || [])
+      dbg('log', 'useMessages.fetchMessages ok', { conversationId, count: (data || []).length })
     } catch (err: any) {
       console.error('Error fetching messages:', err)
       if (fetchAbortRef.current !== controller) return
@@ -58,6 +61,7 @@ export function useMessages(conversationId: string | null) {
         : (err?.message || 'Error cargando mensajes')
       setError(msg)
       setMessages([])
+      dbg('warn', 'useMessages.fetchMessages error', { conversationId, msg })
       if (err?.name === 'AbortError') {
         await resetSupabaseClient('fetchMessages:abort')
       }
@@ -185,6 +189,7 @@ export function useMessages(conversationId: string | null) {
 
     const handleResume = async () => {
       // En resume, hacemos refetch + resubscribe
+      dbg('log', 'useMessages.handleResume', { conversationId })
       await fetchMessages()
       markAsRead()
       subscribeToMessages()
