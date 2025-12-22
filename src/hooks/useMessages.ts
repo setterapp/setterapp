@@ -61,9 +61,6 @@ export function useMessages(conversationId: string | null) {
         .eq('id', conversationId)
 
       if (updateError) throw updateError
-
-      // Invalidar caché de conversaciones para reflejar el cambio
-      cacheService.remove('conversations')
     } catch (err: any) {
       console.error('Error marking conversation as read:', err)
     }
