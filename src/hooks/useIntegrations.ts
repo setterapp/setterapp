@@ -321,23 +321,28 @@ export function useIntegrations() {
 
     window.addEventListener('appsetter:supabase-resume', handleResume as EventListener)
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-        await fetchIntegrations()
-        await setupRealtime()
-      } else {
-        if (channelRef.current) {
-          try {
-            isIntentionalCloseRef.current = true
-            supabase.removeChannel(channelRef.current)
-          } catch (error) {
-            console.error('Error removiendo canal:', error)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      // IMPORTANT: evitar async/await dentro del callback (puede causar deadlocks).
+      setTimeout(() => {
+        void (async () => {
+          if (session) {
+            await fetchIntegrations()
+            await setupRealtime()
+          } else {
+            if (channelRef.current) {
+              try {
+                isIntentionalCloseRef.current = true
+                supabase.removeChannel(channelRef.current)
+              } catch (error) {
+                console.error('Error removiendo canal:', error)
+              }
+              channelRef.current = null
+            }
+            setIntegrations([])
+            setLoading(false)
           }
-          channelRef.current = null
-        }
-        setIntegrations([])
-        setLoading(false)
-      }
+        })()
+      }, 0)
     })
 
     return () => {

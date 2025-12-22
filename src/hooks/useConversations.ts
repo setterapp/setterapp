@@ -235,23 +235,28 @@ export function useConversations() {
 
     window.addEventListener('appsetter:supabase-resume', handleResume as EventListener)
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-        await setupRealtime()
-        await fetchConversations()
-      } else {
-        if (channelRef.current) {
-          try {
-            isIntentionalCloseRef.current = true
-            await supabase.removeChannel(channelRef.current)
-          } catch (error) {
-            console.error('Error removiendo canal:', error)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      // IMPORTANT: evitar async/await dentro del callback (puede causar deadlocks).
+      setTimeout(() => {
+        void (async () => {
+          if (session) {
+            await setupRealtime()
+            await fetchConversations()
+          } else {
+            if (channelRef.current) {
+              try {
+                isIntentionalCloseRef.current = true
+                await supabase.removeChannel(channelRef.current)
+              } catch (error) {
+                console.error('Error removiendo canal:', error)
+              }
+              channelRef.current = null
+            }
+            setConversations([])
+            setLoading(false)
           }
-          channelRef.current = null
-        }
-        setConversations([])
-        setLoading(false)
-      }
+        })()
+      }, 0)
     })
 
     return () => {
