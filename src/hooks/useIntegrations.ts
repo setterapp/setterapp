@@ -151,22 +151,24 @@ export function useIntegrations() {
 
   const fetchIntegrations = async (useCache: boolean = true) => {
     try {
-      setLoading(true)
-
-      // Intentar obtener del caché primero
+      // Intentar obtener del caché primero - ANTES de poner loading
       const cacheKey = 'integrations'
       if (useCache) {
         const cached = cacheService.get<Integration[]>(cacheKey)
         if (cached) {
-          console.log('📦 Using cached integrations')
+          console.log('📦 Using cached integrations (instant)')
+          // Mostrar datos del caché inmediatamente sin loading
           setIntegrations(cached)
           setError(null)
           setLoading(false)
-          // Cargar en background para actualizar
+          // Cargar en background para actualizar (sin mostrar loading)
           fetchIntegrations(false).catch(() => {})
           return
         }
       }
+
+      // Solo mostrar loading si no hay caché
+      setLoading(true)
 
       // Obtener el usuario actual para filtrar por user_id
       const { data: { user }, error: userError } = await supabase.auth.getUser()

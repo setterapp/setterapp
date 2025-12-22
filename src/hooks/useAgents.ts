@@ -48,22 +48,24 @@ export function useAgents() {
 
   const fetchAgents = async (useCache: boolean = true) => {
     try {
-      setLoading(true)
-
-      // Intentar obtener del caché primero
+      // Intentar obtener del caché primero - ANTES de poner loading
       const cacheKey = 'agents'
       if (useCache) {
         const cached = cacheService.get<Agent[]>(cacheKey)
         if (cached) {
-          console.log('📦 Using cached agents')
+          console.log('📦 Using cached agents (instant)')
+          // Mostrar datos del caché inmediatamente sin loading
           setAgents(cached)
           setError(null)
           setLoading(false)
-          // Cargar en background para actualizar
+          // Cargar en background para actualizar (sin mostrar loading)
           fetchAgents(false).catch(() => {})
           return
         }
       }
+
+      // Solo mostrar loading si no hay caché
+      setLoading(true)
 
       // Si no hay caché o se fuerza refresh, obtener de la DB
       const { data, error: fetchError } = await supabase

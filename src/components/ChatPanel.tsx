@@ -15,7 +15,7 @@ interface ChatPanelProps {
 }
 
 export default function ChatPanel({ conversationId, conversation, onBack, isMobile = false }: ChatPanelProps) {
-  const { messages, loading, error } = useMessages(conversationId)
+  const { messages, loading, error, refetch } = useMessages(conversationId)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -146,7 +146,22 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
           </div>
         ) : error ? (
           <div className="empty-state">
-            <p style={{ color: 'var(--color-danger)' }}>Error: {error}</p>
+            <p style={{ color: 'var(--color-danger)', marginBottom: 'var(--spacing-md)' }}>Error: {error}</p>
+            <button
+              onClick={() => refetch()}
+              style={{
+                padding: 'var(--spacing-sm) var(--spacing-md)',
+                backgroundColor: 'var(--color-primary)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 'var(--border-radius-sm)',
+                cursor: 'pointer',
+                fontSize: 'var(--font-size-sm)',
+                fontWeight: 500,
+              }}
+            >
+              Reintentar
+            </button>
           </div>
         ) : messages.length === 0 ? (
           <div className="empty-state">
