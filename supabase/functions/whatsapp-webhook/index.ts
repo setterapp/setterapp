@@ -174,6 +174,32 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
 
       console.log('✅ Found user_id:', userId, 'for phoneNumberId:', phoneNumberId);
 
+      // Upsert contacto (CRM) y obtener contact_id
+      let contactId: string | null = null;
+      try {
+        const { data: upsertedContact } = await supabase
+          .from('contacts')
+          .upsert(
+            {
+              user_id: userId,
+              platform: 'whatsapp',
+              external_id: senderId,
+              display_name: contactName,
+              phone: senderId,
+              last_message_at: new Date(timestamp).toISOString(),
+              metadata: { name: contactName },
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id,platform,external_id' }
+          )
+          .select('id')
+          .single();
+
+        contactId = upsertedContact?.id || null;
+      } catch {
+        // No romper el webhook por CRM
+      }
+
       // Buscar o crear conversación
       let conversationId: string | null = null;
 
@@ -206,6 +232,7 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
           .from('conversations')
           .update({
             contact: contactName,
+            contact_id: contactId,
             contact_metadata: {
               name: contactName,
             },
@@ -223,6 +250,7 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
             platform: 'whatsapp',
             platform_conversation_id: senderId,
             platform_page_id: phoneNumberId,
+            contact_id: contactId,
             contact: contactName,
             last_message_at: new Date(timestamp).toISOString(),
             unread_count: 1,

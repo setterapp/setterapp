@@ -73,12 +73,15 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
   const leadStatusVariant = getLeadStatusBadgeVariant(conversation.lead_status)
   const leadStatusLabel = getLeadStatusLabel(conversation.lead_status)
 
+  const contact = conversation.contact_ref
   const alias = conversation.contact_alias
+  const contactDisplayName = contact?.display_name
   const username = conversation.contact_metadata?.username
   const name = conversation.contact_metadata?.name
   const rawContact = conversation.contact || ''
   const isNumeric = /^\d+$/.test(rawContact)
   const displayName =
+    contactDisplayName ||
     alias ||
     (username ? `@${username}` : null) ||
     name ||
@@ -138,16 +141,22 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
               </h3>
               <button
                 onClick={async () => {
-                  const next = window.prompt('Nombre para esta conversación', alias || (name || username || rawContact) || '')
+                  const next = window.prompt('Nombre para este contacto', (contact?.display_name || alias || name || username || rawContact) || '')
                   if (next === null) return
                   const trimmed = next.trim()
                   if (!trimmed) return
-                  if (trimmed === alias) return
                   try {
-                    await supabase
-                      .from('conversations')
-                      .update({ contact_alias: trimmed, updated_at: new Date().toISOString() })
-                      .eq('id', conversationId)
+                    if (contact?.id) {
+                      await supabase
+                        .from('contacts')
+                        .update({ display_name: trimmed, updated_at: new Date().toISOString() })
+                        .eq('id', contact.id)
+                    } else {
+                      await supabase
+                        .from('conversations')
+                        .update({ contact_alias: trimmed, updated_at: new Date().toISOString() })
+                        .eq('id', conversationId)
+                    }
                   } catch {
                     // sin logs
                   }

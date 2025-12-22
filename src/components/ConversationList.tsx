@@ -99,14 +99,17 @@ function ConversationItem({
   onSelect: (id: string, event?: React.MouseEvent) => void
 }) {
   const [imageError, setImageError] = useState(false)
-  const profilePicture = conversation.contact_metadata?.profile_picture
+  const contactPicture = (conversation as any).contact_ref?.profile_picture as string | null | undefined
+  const profilePicture = contactPicture || conversation.contact_metadata?.profile_picture
   const username = conversation.contact_metadata?.username
   const name = conversation.contact_metadata?.name
 
   const rawContact = conversation.contact || ''
   const isNumeric = /^\d+$/.test(rawContact)
   const alias = (conversation as any).contact_alias as string | null | undefined
+  const contactDisplayName = (conversation as any).contact_ref?.display_name as string | null | undefined
   const displayName =
+    contactDisplayName ||
     alias ||
     (username ? `@${username}` : null) ||
     name ||

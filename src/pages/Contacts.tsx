@@ -1,14 +1,14 @@
 import { Users } from 'lucide-react'
 import { DataTable } from '../components/ui/data-table'
 import type { ColumnDef } from '@tanstack/react-table'
+import { useContacts } from '../hooks/useContacts'
 
 type Contact = {
   id: string
   name: string
   phone: string
   platform: 'whatsapp' | 'instagram'
-  lastMessage: string
-  status: 'active' | 'inactive'
+  lastSeen: string
 }
 
 const columns: ColumnDef<Contact>[] = [
@@ -42,77 +42,22 @@ const columns: ColumnDef<Contact>[] = [
     },
   },
   {
-    accessorKey: 'lastMessage',
-    header: 'Último Mensaje',
-  },
-  {
-    accessorKey: 'status',
-    header: 'Estado',
-    cell: ({ row }) => {
-      const status = row.getValue('status') as string
-      return (
-        <span
-          style={{
-            padding: '4px 8px',
-            borderRadius: 'var(--border-radius-sm)',
-            border: '2px solid #000',
-            fontSize: 'var(--font-size-xs)',
-            fontWeight: 600,
-            backgroundColor: status === 'active' ? '#a6e3a1' : '#ccc',
-          }}
-        >
-          {status === 'active' ? 'Activo' : 'Inactivo'}
-        </span>
-      )
-    },
-  },
-]
-
-// Datos de ejemplo
-const data: Contact[] = [
-  {
-    id: '1',
-    name: 'Juan Pérez',
-    phone: '+34 612 345 678',
-    platform: 'whatsapp',
-    lastMessage: 'Hola, ¿cómo estás?',
-    status: 'active',
-  },
-  {
-    id: '2',
-    name: 'María García',
-    phone: '+34 623 456 789',
-    platform: 'instagram',
-    lastMessage: 'Gracias por tu ayuda',
-    status: 'active',
-  },
-  {
-    id: '3',
-    name: 'Pedro Martínez',
-    phone: '+34 634 567 890',
-    platform: 'whatsapp',
-    lastMessage: 'Hasta luego',
-    status: 'inactive',
-  },
-  {
-    id: '4',
-    name: 'Ana López',
-    phone: '+34 645 678 901',
-    platform: 'instagram',
-    lastMessage: 'Perfecto, nos vemos',
-    status: 'active',
-  },
-  {
-    id: '5',
-    name: 'Carlos Rodríguez',
-    phone: '+34 656 789 012',
-    platform: 'whatsapp',
-    lastMessage: 'De acuerdo',
-    status: 'inactive',
+    accessorKey: 'lastSeen',
+    header: 'Última actividad',
   },
 ]
 
 function Contacts() {
+  const { contacts, loading, error } = useContacts()
+
+  const data: Contact[] = contacts.map((c) => ({
+    id: c.id,
+    name: c.display_name || (c.username ? `@${c.username}` : null) || (c.platform === 'whatsapp' ? `+${c.external_id}` : `IG …${c.external_id.slice(-6)}`),
+    phone: c.phone || (c.platform === 'whatsapp' ? `+${c.external_id}` : ''),
+    platform: c.platform,
+    lastSeen: c.last_message_at ? new Date(c.last_message_at).toLocaleString() : '-',
+  }))
+
   return (
     <div>
       <div className="page-header">
@@ -125,7 +70,23 @@ function Contacts() {
         </div>
       </div>
 
-      <DataTable columns={columns} data={data} />
+      {loading && data.length === 0 ? (
+        <div className="card">
+          <div className="empty-state">
+            <div className="spinner" />
+            <p>Cargando contactos...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="card">
+          <div className="empty-state">
+            <h3>Error</h3>
+            <p style={{ color: 'var(--color-danger)' }}>{error}</p>
+          </div>
+        </div>
+      ) : (
+        <DataTable columns={columns} data={data} />
+      )}
     </div>
   )
 }

@@ -519,6 +519,37 @@ async function processInstagramEvent(event: any, pageId: string) {
       const displayName = userProfile?.username || userProfile?.name || senderId;
       const contactName = userProfile?.name || userProfile?.username || senderId;
 
+      // Upsert contacto (CRM) y obtener contact_id
+      let contactId: string | null = null;
+      try {
+        const { data: upsertedContact } = await supabase
+          .from('contacts')
+          .upsert(
+            {
+              user_id: userId,
+              platform: 'instagram',
+              external_id: senderId,
+              display_name: contactName,
+              username: userProfile?.username || null,
+              profile_picture: userProfile?.profile_picture || null,
+              last_message_at: new Date(timestampInMs).toISOString(),
+              metadata: userProfile ? {
+                username: userProfile.username,
+                name: userProfile.name,
+                profile_picture: userProfile.profile_picture,
+              } : {},
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id,platform,external_id' }
+          )
+          .select('id')
+          .single();
+
+        contactId = upsertedContact?.id || null;
+      } catch {
+        // No romper el webhook por CRM
+      }
+
       // Buscar o crear conversación
       let conversationId: string | null = null;
 
@@ -557,6 +588,7 @@ async function processInstagramEvent(event: any, pageId: string) {
           unread_count: (currentConv?.unread_count || 0) + 1,
           updated_at: new Date().toISOString(),
         };
+        if (contactId) updateData.contact_id = contactId;
 
         // Actualizar el nombre si tenemos información del perfil y el contacto actual es solo un ID
         if (userProfile && (currentConv?.contact === senderId || !currentConv?.contact || currentConv?.contact.match(/^\d+$/))) {
@@ -601,6 +633,7 @@ async function processInstagramEvent(event: any, pageId: string) {
             platform: 'instagram',
             platform_conversation_id: senderId,
             platform_page_id: pageId,
+            contact_id: contactId,
             contact: displayName, // Usar username o name si está disponible
             last_message_at: lastMessageDateISO,
             unread_count: 1,

@@ -1,10 +1,22 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
+export interface Contact {
+  id: string
+  platform: 'whatsapp' | 'instagram'
+  external_id: string
+  display_name?: string | null
+  phone?: string | null
+  username?: string | null
+  profile_picture?: string | null
+}
+
 export interface Conversation {
   id: string
   contact: string
   contact_alias?: string | null
+  contact_id?: string | null
+  contact_ref?: Contact | null
   platform: 'whatsapp' | 'instagram'
   agent_id?: string | null
   unread_count: number
@@ -29,6 +41,7 @@ export function useConversations() {
   const activeFetchIdRef = useRef(0)
   const channelKeyRef = useRef<string | null>(null)
   const resolveAttemptedRef = useRef<Set<string>>(new Set())
+  const refreshTimerRef = useRef<number | null>(null)
 
   const fetchConversations = async () => {
     const fetchId = ++activeFetchIdRef.current
@@ -42,7 +55,7 @@ export function useConversations() {
 
       const { data, error: fetchError } = await supabase
         .from('conversations')
-        .select('*')
+        .select('*, contact_ref:contacts(id, platform, external_id, display_name, phone, username, profile_picture)')
         .order('last_message_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
         .abortSignal(controller.signal)
@@ -139,42 +152,24 @@ export function useConversations() {
               table: 'conversations',
               filter: `user_id=eq.${session.user.id}`
             },
-            (payload) => {
-              if (payload.eventType === 'INSERT') {
-                const newConversation = payload.new as Conversation
-                setConversations(prev => {
-                  if (prev.find(c => c.id === newConversation.id)) return prev
-                  const updated = [newConversation, ...prev]
-                  return updated.sort((a, b) => {
-                    const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
-                    const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
-                    return bTime - aTime
-                  })
-                })
-              } else if (payload.eventType === 'UPDATE') {
-                const updatedConversation = payload.new as Conversation
-                setConversations(prev => {
-                  const index = prev.findIndex(c => c.id === updatedConversation.id)
-                  if (index === -1) {
-                    const updated = [updatedConversation, ...prev]
-                    return updated.sort((a, b) => {
-                      const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
-                      const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
-                      return bTime - aTime
-                    })
-                  }
-                  const updated = [...prev]
-                  updated[index] = updatedConversation
-                  return updated.sort((a, b) => {
-                    const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
-                    const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
-                    return bTime - aTime
-                  })
-                })
-              } else if (payload.eventType === 'DELETE') {
-                const deletedId = payload.old.id
-                setConversations(prev => prev.filter(c => c.id !== deletedId))
-              }
+            () => {
+              // Para mantener join con `contacts`, hacemos refetch (debounced) en cambios.
+              if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current)
+              refreshTimerRef.current = window.setTimeout(() => {
+                void fetchConversations()
+              }, 150)
+            }
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'contacts',
+              filter: `user_id=eq.${session.user.id}`
+            },
+            () => {
+              void fetchConversations()
             }
           )
           .subscribe(async (status) => {
@@ -241,6 +236,10 @@ export function useConversations() {
 
     return () => {
       window.removeEventListener('appsetter:supabase-resume', handleResume as EventListener)
+      if (refreshTimerRef.current) {
+        window.clearTimeout(refreshTimerRef.current)
+        refreshTimerRef.current = null
+      }
       if (channelRef.current) {
         try {
           isIntentionalCloseRef.current = true
