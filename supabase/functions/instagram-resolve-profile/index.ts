@@ -249,7 +249,23 @@ Deno.serve(async (req: Request) => {
     .eq('status', 'connected')
     .single();
 
-  const pageAccessToken = integration?.config?.page_access_token;
+  // Preferimos Page access token para User Profile API.
+  // Si Instagram no lo tiene (p.ej. conectada via Instagram Direct), probamos con Messenger.
+  let pageAccessToken = integration?.config?.page_access_token;
+  if (!pageAccessToken) {
+    try {
+      const { data: messengerIntegration } = await supabaseService
+        .from('integrations')
+        .select('config')
+        .eq('type', 'messenger')
+        .eq('user_id', userId)
+        .eq('status', 'connected')
+        .single();
+      pageAccessToken = messengerIntegration?.config?.page_access_token || null;
+    } catch {
+      // ignore
+    }
+  }
   const accessToken = integration?.config?.access_token;
   const instagramBusinessAccountId =
     integration?.config?.instagram_user_id || integration?.config?.instagram_business_account_id || integration?.config?.instagram_business_account_id;

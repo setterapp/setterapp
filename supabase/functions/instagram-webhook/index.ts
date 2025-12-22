@@ -143,7 +143,23 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
     const debugEnabled = Boolean(integration?.config?.debug_webhooks);
 
     // Preferir User Profile API con Page access token (IGSID -> username/name/profile_pic)
-    const pageAccessToken = integration.config?.page_access_token;
+    // Si Instagram no tiene page_access_token (p.ej. conectada via Instagram Direct),
+    // intentamos usar el Page access token de Messenger como fallback para resolver username/name.
+    let pageAccessToken = integration.config?.page_access_token;
+    if (!pageAccessToken) {
+      try {
+        const { data: messengerIntegration } = await supabase
+          .from('integrations')
+          .select('config')
+          .eq('type', 'messenger')
+          .eq('user_id', userId)
+          .eq('status', 'connected')
+          .single();
+        pageAccessToken = messengerIntegration?.config?.page_access_token || null;
+      } catch {
+        // ignore
+      }
+    }
     if (pageAccessToken) {
       try {
         const res = await fetch(

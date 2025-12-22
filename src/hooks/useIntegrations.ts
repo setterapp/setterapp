@@ -72,6 +72,11 @@ export function useIntegrations() {
         throw new Error('Usuario no autenticado')
       }
 
+      // Asegurar que existan las integraciones por defecto (incluye Messenger)
+      // Importante: antes solo se inicializaba si no había ninguna fila; eso hacía que usuarios existentes
+      // nunca vieran nuevas integraciones añadidas en el futuro.
+      await initializeIntegrations()
+
       const controller = new AbortController()
       const timeoutId = window.setTimeout(() => controller.abort(), 12000)
       const { data, error: fetchError } = await supabase
@@ -85,21 +90,8 @@ export function useIntegrations() {
 
       if (fetchError) throw fetchError
 
-      if (!data || data.length === 0) {
-        await initializeIntegrations()
-        const { data: newData, error: reloadError } = await supabase
-          .from('integrations')
-          .select('*')
-          .eq('user_id', user.id)
-          .neq('type', 'google-calendar')
-          .order('created_at', { ascending: true })
-        if (reloadError) throw reloadError
-        if (fetchId !== activeFetchIdRef.current) return
-        setIntegrations(newData || [])
-      } else {
-        if (fetchId !== activeFetchIdRef.current) return
-        setIntegrations(data)
-      }
+      if (fetchId !== activeFetchIdRef.current) return
+      setIntegrations(data || [])
     } catch (err: any) {
       if (fetchId !== activeFetchIdRef.current) return
       const msg = err?.name === 'AbortError'
