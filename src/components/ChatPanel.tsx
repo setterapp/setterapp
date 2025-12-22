@@ -72,6 +72,21 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
   const leadStatusVariant = getLeadStatusBadgeVariant(conversation.lead_status)
   const leadStatusLabel = getLeadStatusLabel(conversation.lead_status)
 
+  const username = conversation.contact_metadata?.username
+  const name = conversation.contact_metadata?.name
+  const rawContact = conversation.contact || ''
+  const isNumeric = /^\d+$/.test(rawContact)
+  const displayName =
+    (username ? `@${username}` : null) ||
+    name ||
+    (rawContact
+      ? (isNumeric
+        ? (conversation.platform === 'whatsapp'
+          ? `+${rawContact}`
+          : `ID …${rawContact.slice(-6)}`)
+        : rawContact)
+      : 'Sin nombre')
+
   return (
     <div className="chat-panel">
       {/* Header */}
@@ -115,7 +130,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
           )}
           <div style={{ flex: 1 }}>
             <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', fontWeight: 600 }}>
-              {conversation.contact || 'Sin nombre'}
+              {displayName}
             </h3>
             <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-xs)', alignItems: 'center' }}>
               <span

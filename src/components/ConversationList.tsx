@@ -100,6 +100,21 @@ function ConversationItem({
 }) {
   const [imageError, setImageError] = useState(false)
   const profilePicture = conversation.contact_metadata?.profile_picture
+  const username = conversation.contact_metadata?.username
+  const name = conversation.contact_metadata?.name
+
+  const rawContact = conversation.contact || ''
+  const isNumeric = /^\d+$/.test(rawContact)
+  const displayName =
+    (username ? `@${username}` : null) ||
+    name ||
+    (rawContact
+      ? (isNumeric
+        ? (conversation.platform === 'whatsapp'
+          ? `+${rawContact}`
+          : `ID …${rawContact.slice(-6)}`)
+        : rawContact)
+      : 'Sin nombre')
 
   return (
     <div
@@ -109,6 +124,7 @@ function ConversationItem({
         e.stopPropagation()
         onSelect(conversation.id, e)
       }}
+      title={rawContact && displayName !== rawContact ? rawContact : undefined}
     >
       {/* Mostrar foto de perfil si está disponible y no hay error, sino mostrar el icono de plataforma */}
       {profilePicture && !imageError ? (
@@ -129,7 +145,7 @@ function ConversationItem({
         >
           <img
             src={profilePicture}
-            alt={conversation.contact}
+            alt={displayName}
             style={{
               width: '100%',
               height: '100%',
@@ -154,7 +170,7 @@ function ConversationItem({
       <div className="conversation-item-content">
         <div className="conversation-item-header">
           <h4 className="conversation-item-name" style={{ fontWeight: conversation.unread_count > 0 ? 600 : 500 }}>
-            {conversation.contact || 'Sin nombre'}
+            {displayName}
           </h4>
           <p className="conversation-item-timestamp">
             {conversation.last_message_at

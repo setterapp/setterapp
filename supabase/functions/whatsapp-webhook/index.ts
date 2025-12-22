@@ -206,6 +206,9 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
           .from('conversations')
           .update({
             contact: contactName,
+            contact_metadata: {
+              name: contactName,
+            },
             last_message_at: new Date(timestamp).toISOString(),
             unread_count: (currentConv?.unread_count || 0) + 1,
             updated_at: new Date().toISOString(),
@@ -223,6 +226,9 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
             contact: contactName,
             last_message_at: new Date(timestamp).toISOString(),
             unread_count: 1,
+            contact_metadata: {
+              name: contactName,
+            },
           })
           .select('id')
           .single();
