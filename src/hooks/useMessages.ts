@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, resetSupabaseClient } from '../lib/supabase'
 
 export interface Message {
   id: string
@@ -24,6 +24,14 @@ export function useMessages(conversationId: string | null) {
   const [error, setError] = useState<string | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const isIntentionalCloseRef = useRef(false)
+  const activeFetchIdRef = useRef(0)
+
+  const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = 12000): Promise<T> => {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Timeout after ${timeoutMs}ms`)), timeoutMs)),
+    ])
+  }
 
   const fetchMessages = async () => {
     if (!conversationId) {
@@ -32,23 +40,36 @@ export function useMessages(conversationId: string | null) {
       return
     }
 
+    const fetchId = ++activeFetchIdRef.current
     try {
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true })
+      const runQuery = async () => {
+        return await supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: true })
+      }
 
+      let result = await withTimeout(runQuery(), 12000).catch(async (e) => {
+        console.warn('⚠️ fetchMessages colgado/falló. Reseteando Supabase y reintentando...', e)
+        await resetSupabaseClient('fetchMessages')
+        return await withTimeout(runQuery(), 12000)
+      })
+
+      const { data, error: fetchError } = result
       if (fetchError) throw fetchError
+      if (fetchId !== activeFetchIdRef.current) return
       setMessages(data || [])
     } catch (err: any) {
       console.error('Error fetching messages:', err)
-      setError(err.message || 'Error cargando mensajes')
+      if (fetchId !== activeFetchIdRef.current) return
+      setError(err?.message || 'Error cargando mensajes')
       setMessages([])
     } finally {
+      if (fetchId !== activeFetchIdRef.current) return
       setLoading(false)
     }
   }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, resetSupabaseClient } from '../lib/supabase'
 
 export interface AgentConfig {
   assistantName?: string
@@ -37,23 +37,44 @@ export function useAgents() {
   const [error, setError] = useState<string | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const isIntentionalCloseRef = useRef(false)
+  const activeFetchIdRef = useRef(0)
+
+  const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = 12000): Promise<T> => {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Timeout after ${timeoutMs}ms`)), timeoutMs)),
+    ])
+  }
 
   const fetchAgents = async () => {
+    const fetchId = ++activeFetchIdRef.current
     try {
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await supabase
-        .from('agents')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const runQuery = async () => {
+        return await supabase
+          .from('agents')
+          .select('*')
+          .order('created_at', { ascending: false })
+      }
 
+      let result = await withTimeout(runQuery(), 12000).catch(async (e) => {
+        console.warn('⚠️ fetchAgents colgado/falló. Reseteando Supabase y reintentando...', e)
+        await resetSupabaseClient('fetchAgents')
+        return await withTimeout(runQuery(), 12000)
+      })
+
+      const { data, error: fetchError } = result
       if (fetchError) throw fetchError
+      if (fetchId !== activeFetchIdRef.current) return
       setAgents(data || [])
     } catch (err: any) {
-      setError(err.message)
+      if (fetchId !== activeFetchIdRef.current) return
+      setError(err?.message || 'Error fetching agents')
       console.error('Error fetching agents:', err)
     } finally {
+      if (fetchId !== activeFetchIdRef.current) return
       setLoading(false)
     }
   }

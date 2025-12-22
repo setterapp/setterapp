@@ -43,6 +43,10 @@ const clientOptions = {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    // Alineado con el proyecto enecc (más estable en Safari/Chrome en background)
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'supabase.auth.token',
+    flowType: 'pkce' as const,
   },
   global: {
     // Evita requests colgados (causa típica del “se queda cargando” sin errores)

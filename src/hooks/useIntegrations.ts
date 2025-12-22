@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, resetSupabaseClient } from '../lib/supabase'
 
 export interface Integration {
   id: string
@@ -23,6 +23,14 @@ export function useIntegrations() {
   const [error, setError] = useState<string | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const isIntentionalCloseRef = useRef(false)
+  const activeFetchIdRef = useRef(0)
+
+  const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = 12000): Promise<T> => {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Timeout after ${timeoutMs}ms`)), timeoutMs)),
+    ])
+  }
 
   const initializeIntegrations = async () => {
     try {
@@ -56,41 +64,64 @@ export function useIntegrations() {
   }
 
   const fetchIntegrations = async () => {
+    const fetchId = ++activeFetchIdRef.current
     try {
       setLoading(true)
       setError(null)
 
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await withTimeout(supabase.auth.getUser(), 8000).catch(async (e) => {
+        console.warn('⚠️ getUser colgado/falló. Reseteando Supabase y reintentando...', e)
+        await resetSupabaseClient('fetchIntegrations:getUser')
+        return await withTimeout(supabase.auth.getUser(), 8000)
+      })
       if (!user) {
         throw new Error('Usuario no autenticado')
       }
 
-      const { data, error: fetchError } = await supabase
-        .from('integrations')
-        .select('*')
-        .eq('user_id', user.id)
-        .neq('type', 'google-calendar')
-        .order('created_at', { ascending: true })
-
-      if (fetchError) throw fetchError
-
-      if (!data || data.length === 0) {
-        await initializeIntegrations()
-        const { data: newData, error: reloadError } = await supabase
+      const runQuery = async () => {
+        return await supabase
           .from('integrations')
           .select('*')
           .eq('user_id', user.id)
           .neq('type', 'google-calendar')
           .order('created_at', { ascending: true })
+      }
+
+      let result = await withTimeout(runQuery(), 12000).catch(async (e) => {
+        console.warn('⚠️ fetchIntegrations colgado/falló. Reseteando Supabase y reintentando...', e)
+        await resetSupabaseClient('fetchIntegrations')
+        return await withTimeout(runQuery(), 12000)
+      })
+
+      const { data, error: fetchError } = result
+      if (fetchError) throw fetchError
+
+      if (!data || data.length === 0) {
+        await initializeIntegrations()
+        const { data: newData, error: reloadError } = await withTimeout(
+          (async () => {
+            return await supabase
+              .from('integrations')
+              .select('*')
+              .eq('user_id', user.id)
+              .neq('type', 'google-calendar')
+              .order('created_at', { ascending: true })
+          })(),
+          12000
+        )
         if (reloadError) throw reloadError
+        if (fetchId !== activeFetchIdRef.current) return
         setIntegrations(newData || [])
       } else {
+        if (fetchId !== activeFetchIdRef.current) return
         setIntegrations(data)
       }
     } catch (err: any) {
-      setError(err.message)
+      if (fetchId !== activeFetchIdRef.current) return
+      setError(err?.message || 'Error fetching integrations')
       console.error('Error fetching integrations:', err)
     } finally {
+      if (fetchId !== activeFetchIdRef.current) return
       setLoading(false)
     }
   }
