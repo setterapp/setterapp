@@ -138,7 +138,7 @@ export function useMessages(conversationId: string | null) {
 
     // Timeout de seguridad: forzar desactivación del loading después de 20 segundos máximo
     let loadingActive = true
-    let safetyTimeout: NodeJS.Timeout | null = null
+    let safetyTimeout: ReturnType<typeof setTimeout> | null = null
 
     // Fetch inicial
     const loadMessages = async () => {
