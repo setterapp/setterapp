@@ -65,31 +65,18 @@ export const useSupabaseWakeUp = () => {
           }
         }
 
-        // 1) Re-abrir realtime si el browser lo durmió
-        // (connect() es idempotente: si ya está conectado, no debería romper nada)
-        try {
-          supabase.realtime.connect()
-        } catch (e) {
-          console.warn('⚠️ No se pudo forzar supabase.realtime.connect()', e)
-        }
-
-        // 2) Asegurar sesión/token OK
+        // 1) Asegurar sesión/token OK (sin tocar manualmente el WebSocket)
         const sessionResult = await ensureSessionHealthy()
         if (!sessionResult.ok) console.warn('⚠️ Sesión no saludable en wakeUp:', sessionResult.error)
 
-        // 3) Disparar un resume normal (para refetch/resubscribe)
+        // 2) Disparar un resume normal (para refetch/resubscribe)
         dispatchResume(false)
 
-        // 4) Health-check: si está zombie, reseteamos cliente y re-disparamos resume
+        // 3) Health-check: si está zombie, intentamos recovery (sin recrear client) y re-disparamos resume
         const hc = await healthCheck()
         if (!hc.ok) {
           console.warn('🧟 Supabase parece “zombie” al volver. Reseteando cliente...', hc.error)
           await resetSupabaseClient(`resume:${reason}`)
-          try {
-            supabase.realtime.connect()
-          } catch {
-            // best-effort
-          }
           await ensureSessionHealthy()
           dispatchResume(true)
         }

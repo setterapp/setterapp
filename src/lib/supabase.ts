@@ -35,7 +35,9 @@ const clientOptions = {
       eventsPerSecond: 10,
     },
     // El worker ayuda a que el socket no muera en segundo plano
-    worker: true,
+    // NOTA: en algunos navegadores/entornos el worker puede causar flapping del WS al volver del background.
+    // Preferimos estabilidad de fetch + re-subscribe desde hooks.
+    worker: false,
     // Intentos de reconexión más agresivos
     timeout: 20000,
   },
@@ -58,24 +60,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, clientOptions
 
 /**
  * Recovery best-effort SIN recrear el cliente (evita "Multiple GoTrueClient instances").
- * Intenta destrabar realtime + sesión + canales.
+ * Evita manipular el WebSocket manualmente (puede provocar "closed before established").
  */
 export async function resetSupabaseClient(reason: string) {
-  try {
-    await supabase.removeAllChannels()
-  } catch {
-    // best-effort
-  }
-  try {
-    supabase.realtime.disconnect()
-  } catch {
-    // best-effort
-  }
-  try {
-    supabase.realtime.connect()
-  } catch {
-    // best-effort
-  }
   try {
     await supabase.auth.refreshSession()
   } catch {
