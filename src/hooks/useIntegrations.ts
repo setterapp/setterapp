@@ -22,6 +22,7 @@ export function useIntegrations() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const isIntentionalCloseRef = useRef(false)
 
   const initializeIntegrations = async () => {
     try {
@@ -142,7 +143,9 @@ export function useIntegrations() {
       // Si ya existe un canal, lo limpiamos antes de crear uno nuevo
       if (channelRef.current) {
         try {
+          isIntentionalCloseRef.current = true
           supabase.removeChannel(channelRef.current)
+          channelRef.current = null
         } catch (error) {
           console.error('Error removiendo canal anterior:', error)
         }
@@ -159,11 +162,17 @@ export function useIntegrations() {
 
             if (status === 'SUBSCRIBED') {
               console.log('✅ Canal de integraciones conectado con éxito')
+              isIntentionalCloseRef.current = false
             }
 
             if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-              console.warn('⚠️ Conexión de integraciones perdida. Intentando reconectar en 2s...')
-              setTimeout(() => setupRealtime(), 2000)
+              // Solo reconectar si NO fue un cierre intencional
+              if (!isIntentionalCloseRef.current) {
+                console.warn('⚠️ Conexión de integraciones perdida. Intentando reconectar en 2s...')
+                setTimeout(() => setupRealtime(), 2000)
+              } else {
+                console.log('🔌 Canal de integraciones cerrado intencionalmente')
+              }
             }
 
             if (status === 'TIMED_OUT') {
@@ -188,6 +197,7 @@ export function useIntegrations() {
       } else {
         if (channelRef.current) {
           try {
+            isIntentionalCloseRef.current = true
             supabase.removeChannel(channelRef.current)
           } catch (error) {
             console.error('Error removiendo canal:', error)
@@ -202,6 +212,7 @@ export function useIntegrations() {
     return () => {
       if (channelRef.current) {
         try {
+          isIntentionalCloseRef.current = true
           supabase.removeChannel(channelRef.current)
         } catch (error) {
           console.error('Error removing channel:', error)

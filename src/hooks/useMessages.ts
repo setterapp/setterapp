@@ -23,6 +23,7 @@ export function useMessages(conversationId: string | null) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const isIntentionalCloseRef = useRef(false)
 
   const fetchMessages = async () => {
     if (!conversationId) {
@@ -82,7 +83,9 @@ export function useMessages(conversationId: string | null) {
       // Si ya existe un canal, lo limpiamos antes de crear uno nuevo
       if (channelRef.current) {
         try {
+          isIntentionalCloseRef.current = true
           supabase.removeChannel(channelRef.current)
+          channelRef.current = null
         } catch (error) {
           console.error('Error removiendo canal anterior:', error)
         }
@@ -134,11 +137,17 @@ export function useMessages(conversationId: string | null) {
 
             if (status === 'SUBSCRIBED') {
               console.log('✅ Canal de mensajes conectado con éxito')
+              isIntentionalCloseRef.current = false
             }
 
             if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-              console.warn('⚠️ Conexión de mensajes perdida. Intentando reconectar en 2s...')
-              setTimeout(() => subscribeToMessages(), 2000)
+              // Solo reconectar si NO fue un cierre intencional
+              if (!isIntentionalCloseRef.current) {
+                console.warn('⚠️ Conexión de mensajes perdida. Intentando reconectar en 2s...')
+                setTimeout(() => subscribeToMessages(), 2000)
+              } else {
+                console.log('🔌 Canal de mensajes cerrado intencionalmente')
+              }
             }
 
             if (status === 'TIMED_OUT') {
@@ -160,6 +169,7 @@ export function useMessages(conversationId: string | null) {
     return () => {
       if (channelRef.current) {
         try {
+          isIntentionalCloseRef.current = true
           supabase.removeChannel(channelRef.current)
         } catch (error) {
           console.error('Error removing channel:', error)

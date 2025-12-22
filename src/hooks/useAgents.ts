@@ -36,6 +36,7 @@ export function useAgents() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const isIntentionalCloseRef = useRef(false)
 
   const fetchAgents = async () => {
     try {
@@ -67,7 +68,9 @@ export function useAgents() {
       // Si ya existe un canal, lo limpiamos antes de crear uno nuevo
       if (channelRef.current) {
         try {
+          isIntentionalCloseRef.current = true
           supabase.removeChannel(channelRef.current)
+          channelRef.current = null
         } catch (error) {
           console.error('Error removiendo canal anterior:', error)
         }
@@ -93,11 +96,17 @@ export function useAgents() {
 
             if (status === 'SUBSCRIBED') {
               console.log('✅ Canal de agentes conectado con éxito')
+              isIntentionalCloseRef.current = false
             }
 
             if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-              console.warn('⚠️ Conexión de agentes perdida. Intentando reconectar en 2s...')
-              setTimeout(() => setupRealtime(), 2000)
+              // Solo reconectar si NO fue un cierre intencional
+              if (!isIntentionalCloseRef.current) {
+                console.warn('⚠️ Conexión de agentes perdida. Intentando reconectar en 2s...')
+                setTimeout(() => setupRealtime(), 2000)
+              } else {
+                console.log('🔌 Canal de agentes cerrado intencionalmente')
+              }
             }
 
             if (status === 'TIMED_OUT') {
@@ -130,6 +139,7 @@ export function useAgents() {
         } else {
           if (channelRef.current) {
             try {
+              isIntentionalCloseRef.current = true
               supabase.removeChannel(channelRef.current)
             } catch (error) {
               console.error('Error removiendo canal:', error)
@@ -148,6 +158,7 @@ export function useAgents() {
     return () => {
       if (channelRef.current) {
         try {
+          isIntentionalCloseRef.current = true
           supabase.removeChannel(channelRef.current)
         } catch (error) {
           console.error('Error removing channel:', error)
