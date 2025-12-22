@@ -88,36 +88,10 @@ export function useMessages(conversationId: string | null) {
     setMessages([])
     setError(null)
 
+    // Simplemente hacer fetch - Supabase maneja la sesión automáticamente
     const loadMessages = async () => {
-      try {
-        // Verificar sesión con timeout
-        const sessionTimeout = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout verificando sesión')), 5000)
-        )
-
-        const sessionPromise = supabase.auth.getSession()
-
-        const { data: { session }, error: sessionError } = await Promise.race([
-          sessionPromise,
-          sessionTimeout
-        ]) as any
-
-        if (sessionError || !session) {
-          console.error('Sin sesión válida:', sessionError)
-          setLoading(false)
-          setError('Sesión expirada. Recarga la página.')
-          return
-        }
-
-        // Fetch directo sin caché
-        await fetchMessages()
-        // Marcar como leído
-        await markAsRead()
-      } catch (error) {
-        console.error('Error loading messages:', error)
-        setLoading(false)
-        setError('Error cargando mensajes. Recarga la página.')
-      }
+      await fetchMessages()
+      await markAsRead()
     }
 
     loadMessages()
