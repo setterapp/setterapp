@@ -192,52 +192,21 @@ export function useMessages(conversationId: string | null) {
       loadMessages()
     }
 
-    // Detectar AFK y forzar recarga de mensajes cuando vuelves (sin recargar página)
+    // Detectar AFK y invalidar caché cuando vuelves
     let hiddenTime: number | null = null
-    let isCurrentlyLoading = false
 
-    const handleVisibilityChange = async () => {
+    const handleVisibilityChange = () => {
       if (document.hidden) {
         // Guardar cuando se oculta
         hiddenTime = Date.now()
       } else {
         // Cuando vuelve visible después de estar oculto
         if (hiddenTime && Date.now() - hiddenTime > 5000) {
-          // Estuvo oculto más de 5 segundos - recargar mensajes
-          console.log('🔄 Recargando mensajes después de AFK')
-
-          // Verificar que no estemos ya cargando y que no esté cancelado
-          if (!isCurrentlyLoading && !signal.aborted) {
-            isCurrentlyLoading = true
-            setLoading(true)
-            setError(null)
-
-            try {
-              // Verificar sesión antes de recargar
-              const { data: { session } } = await supabase.auth.getSession()
-              if (session && !signal.aborted) {
-                await fetchMessages(signal)
-                if (!signal.aborted) {
-                  await markAsRead()
-                }
-              } else {
-                console.warn('⚠️ No hay sesión activa, no se pueden cargar mensajes')
-                setError('Sesión expirada. Por favor, recarga la página.')
-              }
-            } catch (err: any) {
-              // Ignorar errores si fue cancelado
-              if (signal.aborted || err?.name === 'AbortError') {
-                return
-              }
-              console.error('Error recargando mensajes después de AFK:', err)
-              setError(err.message || 'Error al recargar mensajes')
-            } finally {
-              if (!signal.aborted) {
-                setLoading(false)
-              }
-              isCurrentlyLoading = false
-            }
-          }
+          // Estuvo oculto más de 5 segundos - invalidar caché de mensajes
+          console.log('🔄 Detectado retorno de AFK, invalidando caché de mensajes')
+          const cacheKey = `messages_${conversationId}`
+          cacheService.remove(cacheKey)
+          // El componente se recargará automáticamente por el cambio de key en Conversations
         }
       }
     }

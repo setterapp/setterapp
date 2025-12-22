@@ -24,8 +24,14 @@ export function useConversations() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchConversations = async (useCache: boolean = true) => {
+  const fetchConversations = async (useCache: boolean = true, forceRefresh: boolean = false) => {
     try {
+      // Si se fuerza refresh, invalidar caché primero
+      if (forceRefresh) {
+        cacheService.remove('conversations')
+        useCache = false
+      }
+
       // Intentar obtener del caché primero - ANTES de poner loading
       const cacheKey = 'conversations'
       if (useCache) {
@@ -37,7 +43,7 @@ export function useConversations() {
           setError(null)
           setLoading(false)
           // Cargar en background para actualizar (sin mostrar loading)
-          fetchConversations(false).catch(() => {})
+          fetchConversations(false, false).catch(() => {})
           return
         }
       }
@@ -77,6 +83,24 @@ export function useConversations() {
     }
 
     checkAuthAndFetch()
+
+    // Detectar cuando vuelves de estar AFK y forzar recarga completa
+    let hiddenTime: number | null = null
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        hiddenTime = Date.now()
+      } else {
+        // Si estuvo oculto más de 5 segundos, forzar recarga completa
+        if (hiddenTime && Date.now() - hiddenTime > 5000) {
+          console.log('🔄 Detectado retorno de AFK en useConversations, forzando recarga completa')
+          // Invalidar caché y recargar
+          fetchConversations(false, true).catch(() => {})
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     // Suscribirse a cambios en tiempo real
     let channel: ReturnType<typeof supabase.channel> | null = null
@@ -191,6 +215,7 @@ export function useConversations() {
     })
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       if (channel) {
         supabase.removeChannel(channel)
       }

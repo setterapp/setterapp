@@ -5,10 +5,11 @@ import ChatPanel from '../components/ChatPanel'
 import EmptyConversation from '../components/EmptyConversation'
 
 function Conversations() {
-  const { conversations, loading, error } = useConversations()
+  const { conversations, loading, error, refetch } = useConversations()
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [isFirstSelection, setIsFirstSelection] = useState(true)
+  const [key, setKey] = useState(0) // Key para forzar remount del componente
 
   // Detectar cambios de tamaño de ventana para responsive
   useEffect(() => {
@@ -28,7 +29,7 @@ function Conversations() {
     }
   }, [conversations, selectedConversationId])
 
-  // Detectar cuando vuelves de estar AFK y limpiar estados inconsistentes
+  // Detectar cuando vuelves de estar AFK y forzar recarga completa
   useEffect(() => {
     let hiddenTime: number | null = null
 
@@ -36,23 +37,25 @@ function Conversations() {
       if (document.hidden) {
         hiddenTime = Date.now()
       } else {
-        // Si estuvo oculto más de 5 segundos, forzar reset de la selección para evitar estados inconsistentes
-        if (hiddenTime && Date.now() - hiddenTime > 5000 && selectedConversationId) {
-          console.log('🔄 Detectado retorno de AFK, reseteando selección de conversación')
-          // Forzar un cambio de conversación para que se recargue todo
-          const currentId = selectedConversationId
+        // Si estuvo oculto más de 5 segundos, forzar recarga completa
+        if (hiddenTime && Date.now() - hiddenTime > 5000) {
+          console.log('🔄 Detectado retorno de AFK, forzando recarga completa de conversaciones')
+          
+          // 1. Limpiar selección actual
           setSelectedConversationId(null)
-          // Restaurar después de un pequeño delay para forzar recarga completa
-          setTimeout(() => {
-            setSelectedConversationId(currentId)
-          }, 100)
+          
+          // 2. Invalidar caché y recargar conversaciones
+          refetch().catch(() => {})
+          
+          // 3. Forzar remount del componente de conversaciones cambiando la key
+          setKey(prev => prev + 1)
         }
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [selectedConversationId])
+  }, [refetch])
 
   // Manejar selección de conversación
   const handleSelectConversation = (id: string, event?: React.MouseEvent) => {
@@ -112,7 +115,7 @@ function Conversations() {
   }
 
   return (
-    <div className="conversations-container">
+    <div className="conversations-container" key={key}>
       <div className={`card conversations-card ${selectedConversationId ? 'conversations-card--expanded' : ''} ${isFirstSelection && selectedConversationId ? 'conversations-card--animating' : ''}`}>
         {/* Lista de conversaciones - ocultar en mobile cuando hay una seleccionada */}
         {(!isMobile || !selectedConversationId) && (
@@ -126,6 +129,7 @@ function Conversations() {
         {/* Panel de chat */}
         {selectedConversationId && selectedConversation && (
           <ChatPanel
+            key={`chat-${selectedConversationId}-${key}`}
             conversationId={selectedConversationId}
             conversation={selectedConversation}
             onBack={isMobile ? () => setSelectedConversationId(null) : undefined}
