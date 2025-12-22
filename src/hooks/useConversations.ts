@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
+import { setupSessionRefresh } from '../lib/supabase'
 
 export interface Conversation {
   id: string
@@ -73,28 +74,59 @@ export function useConversations() {
   }
 
   useEffect(() => {
+    // Asegurar que el refresh de sesión esté configurado
+    setupSessionRefresh()
+
     const checkAuthAndFetch = async () => {
+      // Primero intentar desde caché (instantáneo)
+      const cached = cacheService.get<Conversation[]>('conversations')
+      if (cached) {
+        console.log('📦 Using cached conversations (instant)')
+        setConversations(cached)
+        setLoading(false)
+        setError(null)
+      }
+
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         setLoading(false)
         return
       }
+
+      // Refrescar sesión si es necesario
+      try {
+        await supabase.auth.getSession()
+      } catch (err) {
+        console.warn('Error verificando sesión:', err)
+      }
+
       await fetchConversations()
     }
 
     checkAuthAndFetch()
 
-    // Detectar cuando vuelves de estar AFK y forzar recarga completa
+    // Detectar cuando vuelves de estar AFK y refrescar sesión + recargar
     let hiddenTime: number | null = null
 
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.hidden) {
         hiddenTime = Date.now()
       } else {
-        // Si estuvo oculto más de 5 segundos, forzar recarga completa
+        // Si estuvo oculto más de 5 segundos, refrescar sesión y recargar
         if (hiddenTime && Date.now() - hiddenTime > 5000) {
-          console.log('🔄 Detectado retorno de AFK en useConversations, forzando recarga completa')
-          // Invalidar caché y recargar
+          console.log('🔄 Detectado retorno de AFK, refrescando sesión y recargando conversaciones')
+          
+          // Refrescar sesión primero
+          try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+              await supabase.auth.refreshSession()
+            }
+          } catch (err) {
+            console.warn('Error refrescando sesión:', err)
+          }
+          
+          // Recargar conversaciones (usará caché primero, luego actualizará)
           fetchConversations(false, true).catch(() => {})
         }
       }

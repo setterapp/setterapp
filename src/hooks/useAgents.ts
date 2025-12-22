@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
+import { setupSessionRefresh } from '../lib/supabase'
 
 export interface AgentConfig {
   // Identidad del asistente
@@ -90,15 +91,35 @@ export function useAgents() {
   }
 
   useEffect(() => {
+    // Asegurar que el refresh de sesión esté configurado
+    setupSessionRefresh()
+
     let channel: any = null
     let subscription: any = null
 
     const checkAuthAndFetch = async () => {
+      // Primero intentar desde caché (instantáneo)
+      const cached = cacheService.get<Agent[]>('agents')
+      if (cached) {
+        console.log('📦 Using cached agents (instant)')
+        setAgents(cached)
+        setLoading(false)
+        setError(null)
+      }
+
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         setLoading(false)
         return
       }
+
+      // Refrescar sesión si es necesario
+      try {
+        await supabase.auth.getSession()
+      } catch (err) {
+        console.warn('Error verificando sesión:', err)
+      }
+
       await fetchAgents()
 
       // Suscribirse a cambios en tiempo real después de obtener la sesión

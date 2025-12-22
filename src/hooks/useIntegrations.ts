@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
+import { setupSessionRefresh } from '../lib/supabase'
 
 export interface Integration {
   id: string
@@ -218,11 +219,30 @@ export function useIntegrations() {
 
 
   useEffect(() => {
+    // Asegurar que el refresh de sesión esté configurado
+    setupSessionRefresh()
+
     const checkAuthAndFetch = async () => {
+      // Primero intentar desde caché (instantáneo)
+      const cached = cacheService.get<Integration[]>('integrations')
+      if (cached) {
+        console.log('📦 Using cached integrations (instant)')
+        setIntegrations(cached)
+        setLoading(false)
+        setError(null)
+      }
+
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         setLoading(false)
         return
+      }
+
+      // Refrescar sesión si es necesario
+      try {
+        await supabase.auth.getSession()
+      } catch (err) {
+        console.warn('Error verificando sesión:', err)
       }
 
       await fetchIntegrations()

@@ -5,11 +5,10 @@ import ChatPanel from '../components/ChatPanel'
 import EmptyConversation from '../components/EmptyConversation'
 
 function Conversations() {
-  const { conversations, loading, error, refetch } = useConversations()
+  const { conversations, loading, error } = useConversations()
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [isFirstSelection, setIsFirstSelection] = useState(true)
-  const [key, setKey] = useState(0) // Key para forzar remount del componente
 
   // Detectar cambios de tamaño de ventana para responsive
   useEffect(() => {
@@ -29,33 +28,8 @@ function Conversations() {
     }
   }, [conversations, selectedConversationId])
 
-  // Detectar cuando vuelves de estar AFK y forzar recarga completa
-  useEffect(() => {
-    let hiddenTime: number | null = null
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        hiddenTime = Date.now()
-      } else {
-        // Si estuvo oculto más de 5 segundos, forzar recarga completa
-        if (hiddenTime && Date.now() - hiddenTime > 5000) {
-          console.log('🔄 Detectado retorno de AFK, forzando recarga completa de conversaciones')
-          
-          // 1. Limpiar selección actual
-          setSelectedConversationId(null)
-          
-          // 2. Invalidar caché y recargar conversaciones
-          refetch().catch(() => {})
-          
-          // 3. Forzar remount del componente de conversaciones cambiando la key
-          setKey(prev => prev + 1)
-        }
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [refetch])
+  // El refresh de sesión y recarga se manejan en useConversations
+  // Solo necesitamos limpiar la selección si la conversación ya no existe
 
   // Manejar selección de conversación
   const handleSelectConversation = (id: string, event?: React.MouseEvent) => {
@@ -115,7 +89,7 @@ function Conversations() {
   }
 
   return (
-    <div className="conversations-container" key={key}>
+    <div className="conversations-container">
       <div className={`card conversations-card ${selectedConversationId ? 'conversations-card--expanded' : ''} ${isFirstSelection && selectedConversationId ? 'conversations-card--animating' : ''}`}>
         {/* Lista de conversaciones - ocultar en mobile cuando hay una seleccionada */}
         {(!isMobile || !selectedConversationId) && (
@@ -129,7 +103,6 @@ function Conversations() {
         {/* Panel de chat */}
         {selectedConversationId && selectedConversation && (
           <ChatPanel
-            key={`chat-${selectedConversationId}-${key}`}
             conversationId={selectedConversationId}
             conversation={selectedConversation}
             onBack={isMobile ? () => setSelectedConversationId(null) : undefined}

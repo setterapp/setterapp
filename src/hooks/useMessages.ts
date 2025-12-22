@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
+import { setupSessionRefresh } from '../lib/supabase'
 
 export interface Message {
   id: string
@@ -192,21 +193,36 @@ export function useMessages(conversationId: string | null) {
       loadMessages()
     }
 
-    // Detectar AFK y invalidar caché cuando vuelves
+    // Asegurar que el refresh de sesión esté configurado
+    setupSessionRefresh()
+
+    // Detectar AFK y refrescar sesión cuando vuelves
     let hiddenTime: number | null = null
 
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.hidden) {
         // Guardar cuando se oculta
         hiddenTime = Date.now()
       } else {
         // Cuando vuelve visible después de estar oculto
         if (hiddenTime && Date.now() - hiddenTime > 5000) {
-          // Estuvo oculto más de 5 segundos - invalidar caché de mensajes
-          console.log('🔄 Detectado retorno de AFK, invalidando caché de mensajes')
-          const cacheKey = `messages_${conversationId}`
-          cacheService.remove(cacheKey)
-          // El componente se recargará automáticamente por el cambio de key en Conversations
+          // Estuvo oculto más de 5 segundos - refrescar sesión y recargar mensajes
+          console.log('🔄 Detectado retorno de AFK, refrescando sesión y recargando mensajes')
+          
+          // Refrescar sesión primero
+          try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+              await supabase.auth.refreshSession()
+            }
+          } catch (err) {
+            console.warn('Error refrescando sesión:', err)
+          }
+          
+          // Recargar mensajes (usará caché primero si existe, luego actualizará)
+          if (!signal.aborted) {
+            await fetchMessages(signal, false).catch(() => {})
+          }
         }
       }
     }
