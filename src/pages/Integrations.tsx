@@ -373,7 +373,7 @@ function Integrations() {
                 {/* Right: Controls */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
                   {/* Webhook Debug (Instagram/Messenger, modo opt-in) */}
-                  {(integration.type === 'instagram' || integration.type === 'messenger') && isConnected && (
+                  {(integration.type === 'instagram' || integration.type === 'messenger') && (
                     <button
                       onClick={() => toggleWebhookDebug(integration.id, !webhookDebugEnabled)}
                       style={{
@@ -385,8 +385,11 @@ function Integrations() {
                         background: webhookDebugEnabled ? 'var(--color-primary)' : 'var(--color-bg)',
                         color: '#000',
                         cursor: 'pointer',
+                        opacity: isConnected ? 1 : 0.6,
                       }}
-                      title="Guarda payloads de webhooks y los envía por Realtime (solo para debug)"
+                      title={isConnected
+                        ? 'Guarda payloads de webhooks y los envía por Realtime (solo para debug)'
+                        : 'Puedes activar Debug aunque esté desconectado. Luego conecta la integración para recibir eventos.'}
                     >
                       {webhookDebugEnabled ? 'Debug ON' : 'Debug OFF'}
                     </button>

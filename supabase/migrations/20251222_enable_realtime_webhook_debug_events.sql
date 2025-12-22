@@ -11,5 +11,3 @@ BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE webhook_debug_events;
   END IF;
 END $$;
-
-
