@@ -45,6 +45,38 @@ export const useSupabaseWakeUp = () => {
           return { ok: true, session }
         }
 
+        const pingDb = async () => {
+          const controller = new AbortController()
+          const timeoutId = window.setTimeout(() => controller.abort(), 5000)
+          try {
+            const { error: pingError } = await supabase
+              .from('conversations')
+              .select('id', { head: true })
+              .limit(1)
+              .abortSignal(controller.signal)
+            if (pingError) return { ok: false, error: pingError }
+            return { ok: true }
+          } catch (e) {
+            return { ok: false, error: e }
+          } finally {
+            window.clearTimeout(timeoutId)
+          }
+        }
+
+        const maybeAutoReload = (why: string) => {
+          // Evitar loops de reload: máximo 1 por minuto
+          const key = 'appsetter:auto_reload_at'
+          const last = Number(sessionStorage.getItem(key) || '0')
+          const now2 = Date.now()
+          if (now2 - last < 60_000) {
+            console.warn(`⚠️ Auto-reload bloqueado (cooldown). Razón: ${why}`)
+            return
+          }
+          sessionStorage.setItem(key, String(now2))
+          console.warn(`🔁 Auto-reload ejecutado. Razón: ${why}`)
+          window.location.reload()
+        }
+
         const healthCheck = async () => {
           try {
             // Este ping intenta detectar el “zombie state” (fetch/socket/auth colgado)
@@ -71,6 +103,22 @@ export const useSupabaseWakeUp = () => {
 
         // 2) Disparar un resume normal (para refetch/resubscribe)
         dispatchResume(false)
+
+        // 2.5) Si volvimos de background real, verificar que REST no quedó congelado.
+        // Si está “stuck”, es indistinguible de tu síntoma (UI no dispara nada / no hay Network).
+        if (timeHidden >= 2000) {
+          const ping = await pingDb()
+          if (!ping.ok) {
+            console.warn('❄️ Ping a DB falló/timeout al volver. Intentando recovery...', ping.error)
+            await resetSupabaseClient(`resume:${reason}:ping`)
+            const ping2 = await pingDb()
+            if (!ping2.ok) {
+              // Último recurso: reload automático (equivalente al reload manual que hoy te salva)
+              maybeAutoReload('db_ping_timeout_after_resume')
+              return
+            }
+          }
+        }
 
         // 3) Health-check: si está zombie, intentamos recovery (sin recrear client) y re-disparamos resume
         const hc = await healthCheck()

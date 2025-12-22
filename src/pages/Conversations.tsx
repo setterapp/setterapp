@@ -37,12 +37,12 @@ function Conversations() {
       event.preventDefault()
       event.stopPropagation()
     }
-    
+
     // Si es la misma conversación, no hacer nada (evita recargas innecesarias)
     if (id === selectedConversationId) {
       return
     }
-    
+
     // IMPORTANTE: evitar setTimeout/requestAnimationFrame aquí.
     // En algunos browsers, después de volver del background, timers pueden quedar throttled
     // y el ID nunca se setea => ChatPanel no monta => no hay fetch de mensajes.
