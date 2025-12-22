@@ -34,12 +34,7 @@ const getRedirectUri = () => {
 }
 const INSTAGRAM_REDIRECT_URI = getRedirectUri()
 
-// Validate App ID is configured (warn if using default)
-if (!import.meta.env.VITE_INSTAGRAM_APP_ID) {
-  console.warn('⚠️ VITE_INSTAGRAM_APP_ID no está configurado, usando valor por defecto:', INSTAGRAM_APP_ID)
-  console.warn('⚠️ Para producción, configura VITE_INSTAGRAM_APP_ID en tu archivo .env')
-  console.warn('⚠️ Puedes encontrar tu App ID en Meta Developers → Settings → Basic → App ID')
-}
+// En producción evitamos logs por seguridad. Si falta configuración crítica, se lanzará error al intentar conectar.
 
 // Scopes for Instagram Business API
 const INSTAGRAM_SCOPES = [
@@ -73,46 +68,10 @@ export const instagramDirectService = {
         throw new Error('App ID de Instagram no configurado. Por favor, configura VITE_INSTAGRAM_APP_ID en tu archivo .env. Puedes encontrar tu App ID en Meta Developers → Settings → Basic → App ID')
       }
 
-      // Log which redirect URI is being used
-      const isSupabaseRedirect = actualRedirectUri.includes('supabase.co/auth/v1/callback')
-      if (isSupabaseRedirect) {
-        console.log('✅ Usando redirect URI de Supabase (Supabase manejará el callback)')
-      } else {
-        console.log('✅ Usando callback page propio para mejor control del popup')
-      }
-
-      console.log('🔗 Iniciando Instagram OAuth directo...', {
-        userId: currentSession.user.id,
-        userEmail: currentSession.user.email,
-        redirectUri: actualRedirectUri,
-        windowOrigin: window.location.origin,
-        hasEnvVar: !!import.meta.env.VITE_INSTAGRAM_REDIRECT_URI,
-        appId: INSTAGRAM_APP_ID ? `${INSTAGRAM_APP_ID.substring(0, 4)}...${INSTAGRAM_APP_ID.substring(INSTAGRAM_APP_ID.length - 4)}` : 'NO CONFIGURADO',
-        hasAppIdEnvVar: !!import.meta.env.VITE_INSTAGRAM_APP_ID
-      })
-
-      // ⚠️ IMPORTANT: Log the App ID being used
-      console.log('⚠️ APP ID QUE SE ESTÁ USANDO:', INSTAGRAM_APP_ID)
-      console.log('⚠️ Este App ID DEBE ser el mismo que aparece en Meta Developers → Settings → Basic → App ID')
-
-      // ⚠️ IMPORTANT: Log the exact redirect URI that will be sent to Facebook
-      console.log('⚠️ REDIRECT URI QUE SE ESTÁ ENVIANDO:', actualRedirectUri)
-      console.log('⚠️ Este URI DEBE estar configurado EXACTAMENTE en Meta Developers')
-      console.log('⚠️ El URI debe coincidir exactamente (protocolo, dominio, puerto, path, sin trailing slash)')
-
       // Validate redirect URI format
       try {
-        const redirectUrl = new URL(actualRedirectUri)
-        console.log('✅ Redirect URI válido:', {
-          protocol: redirectUrl.protocol,
-          host: redirectUrl.host,
-          hostname: redirectUrl.hostname,
-          port: redirectUrl.port || '(default)',
-          pathname: redirectUrl.pathname,
-          full: actualRedirectUri
-        })
+        new URL(actualRedirectUri)
       } catch (e) {
-        console.error('❌ Redirect URI inválido:', actualRedirectUri)
         throw new Error(`Redirect URI inválido: ${actualRedirectUri}`)
       }
 
@@ -133,30 +92,17 @@ export const instagramDirectService = {
       authUrl.searchParams.set('client_id', INSTAGRAM_APP_ID)
       authUrl.searchParams.set('force_reauth', 'true') // Force re-authentication
 
-      console.log('🔗 Instagram OAuth URL completa:', authUrl.toString())
-      console.log('⚠️ URL completa que se enviará a Facebook:', authUrl.toString())
-      console.log('🔍 Parámetros de la URL:', {
-        redirect_uri: authUrl.searchParams.get('redirect_uri'),
-        client_id: authUrl.searchParams.get('client_id'),
-        client_id_length: authUrl.searchParams.get('client_id')?.length || 0,
-        scope: authUrl.searchParams.get('scope')
-      })
-
       // Validate App ID format (should be numeric, typically 15-16 digits)
       if (!/^\d+$/.test(INSTAGRAM_APP_ID)) {
-        console.error('❌ App ID tiene formato inválido. Debe ser numérico.')
         throw new Error(`App ID inválido: "${INSTAGRAM_APP_ID}". El App ID debe ser numérico y coincidir con el que aparece en Meta Developers → Settings → Basic → App ID`)
       }
 
       if (INSTAGRAM_APP_ID.length < 10 || INSTAGRAM_APP_ID.length > 20) {
-        console.warn('⚠️ App ID tiene una longitud inusual:', INSTAGRAM_APP_ID.length, 'dígitos')
-        console.warn('⚠️ Los App IDs de Facebook típicamente tienen 15-16 dígitos')
+        // Longitud inusual: seguimos, pero sin logs en producción
       }
 
       // Use the auth URL directly (Business Login method)
       // No need for intermediate login URL redirect
-
-      console.log('✅ Abriendo Instagram OAuth en popup...', authUrl.toString())
 
       // Open in popup window
       const width = 600
@@ -446,7 +392,6 @@ export const instagramDirectService = {
       }
 
       const data = await response.json()
-      console.log('✅ Mensaje enviado a Instagram:', data)
       return data
     } catch (error) {
       console.error('❌ Error sending Instagram message:', error)

@@ -29,11 +29,6 @@ export const instagramService = {
         throw new Error('Debes iniciar sesión primero antes de conectar Instagram')
       }
 
-      console.log('🔗 Iniciando OAuth directo de Instagram...', {
-        userId: currentSession.user.id,
-        userEmail: currentSession.user.email
-      })
-
       // Use Instagram direct OAuth (like competitor)
       // This opens instagram.com/login in a popup window, not Facebook
       return await instagramDirectService.connectInstagram()
@@ -59,7 +54,6 @@ export const instagramService = {
       // Si no hay token, intentar refrescar la sesión
       if (!providerToken) {
         if (providerRefreshToken) {
-          console.log('🔄 Token no encontrado, refrescando sesión...')
           try {
             const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
 
@@ -161,7 +155,6 @@ export const instagramService = {
       // El token se limpiará cuando el usuario cierre sesión o expire
       return true
     } catch (error) {
-      console.log('Disconnect completed (errors ignored):', error)
       return true
     }
   }

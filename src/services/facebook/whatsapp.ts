@@ -35,11 +35,6 @@ export const whatsappService = {
         throw new Error('Debes iniciar sesión primero antes de conectar WhatsApp')
       }
 
-      console.log('🔗 Iniciando OAuth de Facebook para WhatsApp Business...', {
-        userId: currentSession.user.id,
-        userEmail: currentSession.user.email
-      })
-
       // Iniciar OAuth con Facebook
       // Supabase vinculará el token de Facebook a la sesión actual del usuario
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -61,11 +56,9 @@ export const whatsappService = {
       }
 
       if (!data.url) {
-        console.warn('⚠️ No se obtuvo URL de redirección.')
         throw new Error('No se pudo obtener la URL de autorización de Facebook')
       }
 
-      console.log('✅ Redirigiendo a Facebook OAuth para WhatsApp...')
       return data
     } catch (error) {
       console.error('❌ Error connecting WhatsApp:', error)
@@ -89,7 +82,6 @@ export const whatsappService = {
       // Si no hay token, intentar refrescar la sesión
       if (!providerToken) {
         if (providerRefreshToken) {
-          console.log('🔄 Token no encontrado, refrescando sesión...')
           try {
             const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
 
@@ -143,7 +135,6 @@ export const whatsappService = {
           .single()
 
         if (integration?.config?.phoneNumberId && integration?.config?.whatsappBusinessAccountId) {
-          console.log('✅ Usando información de WhatsApp desde la integración guardada')
           return {
             pageId: integration.config.pageId,
             whatsappBusinessAccountId: integration.config.whatsappBusinessAccountId,
@@ -153,7 +144,6 @@ export const whatsappService = {
       }
 
       // Si no está en la integración, obtener desde la API
-      console.log('📡 Obteniendo información de WhatsApp desde la API de Facebook...')
 
       // Intentar obtener WhatsApp Business Accounts directamente
       // Esto funciona con whatsapp_business_management permission
@@ -178,7 +168,6 @@ export const whatsappService = {
                     phoneNumberId: phoneNumber.id
                   }
 
-                  console.log('✅ Información obtenida directamente de WhatsApp Business API')
                   // Guardar en la integración
                   if (user) {
                     const { data: integration } = await supabase
@@ -202,7 +191,6 @@ export const whatsappService = {
           }
         }
       } catch (wabaError) {
-        console.log('⚠️ No se pudo obtener directamente, intentando método alternativo...', wabaError)
       }
 
       // Método alternativo: obtener desde páginas (requiere permisos de Pages)
@@ -349,7 +337,7 @@ export const whatsappService = {
       // El token se limpiará cuando el usuario cierre sesión o expire
       return true
     } catch (error) {
-      console.log('Disconnect completed (errors ignored):', error)
+      // Sin logs en producción por seguridad
       return true
     }
   }

@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase, resetSupabaseClient } from '../lib/supabase'
-import { supabaseRest } from '../utils/supabaseRest'
-import { dbg } from '../utils/debug'
+import { supabase } from '../lib/supabase'
 
 export interface Integration {
   id: string
@@ -26,13 +24,6 @@ export function useIntegrations() {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const isIntentionalCloseRef = useRef(false)
   const activeFetchIdRef = useRef(0)
-
-  const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = 12000): Promise<T> => {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Timeout after ${timeoutMs}ms`)), timeoutMs)),
-    ])
-  }
 
   const initializeIntegrations = async () => {
     try {
@@ -62,7 +53,7 @@ export function useIntegrations() {
         await supabase.from('integrations').insert(integration)
       }
     } catch (err) {
-      console.error('Error initializing integrations:', err)
+      // Sin logs en producción por seguridad
     }
   }
 
@@ -72,29 +63,9 @@ export function useIntegrations() {
       setLoading(true)
       setError(null)
 
-      // Usar getSession() en lugar de getUser() - más rápido y diseñado para browser
-      // Ref: https://supabase.com/docs/reference/javascript/auth-getsession
-      let user: any = null
-      try {
-        const result = await withTimeout(supabase.auth.getSession(), 2000).catch(async (e) => {
-          console.warn('⚠️ getSession colgado/falló. Reseteando Supabase y reintentando...', e)
-          await resetSupabaseClient('fetchIntegrations:getSession')
-          return await withTimeout(supabase.auth.getSession(), 2000)
-        })
-        user = result.data.session?.user
-      } catch (getUserErr) {
-        // Si falla completamente, intentar obtener del localStorage
-        dbg('warn', 'getUser failed, trying localStorage', getUserErr)
-        try {
-          const authData = localStorage.getItem('supabase.auth.token')
-          if (authData) {
-            const parsed = JSON.parse(authData)
-            user = parsed?.user ?? parsed?.currentSession?.user ?? parsed?.data?.session?.user ?? null
-          }
-        } catch {
-          // Si todo falla, throw
-        }
-      }
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) throw sessionError
+      const user = session?.user
 
       if (!user) {
         throw new Error('Usuario no autenticado')
@@ -102,100 +73,28 @@ export function useIntegrations() {
 
       const controller = new AbortController()
       const timeoutId = window.setTimeout(() => controller.abort(), 12000)
-
-      const queryPromise = supabase
+      const { data, error: fetchError } = await supabase
         .from('integrations')
         .select('*')
         .eq('user_id', user.id)
         .neq('type', 'google-calendar')
         .order('created_at', { ascending: true })
         .abortSignal(controller.signal)
-
-      let result: any
-      try {
-        result = await Promise.race([
-          queryPromise,
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('supabase-js timeout (pre-fetch hang)')), 1000)),
-        ]).catch(async (e) => {
-          dbg('warn', 'useIntegrations fallback REST', e)
-          const fallbackController = new AbortController()
-          const fallbackTimeoutId = window.setTimeout(() => fallbackController.abort(), 8000)
-          try {
-            let accessToken: string | null = null
-            try {
-              const authData = localStorage.getItem('supabase.auth.token')
-              if (authData) {
-                const parsed = JSON.parse(authData)
-                accessToken = parsed?.access_token ??
-                             parsed?.currentSession?.access_token ??
-                             parsed?.data?.session?.access_token ??
-                             null
-              }
-            } catch {
-              // Si falla, usaremos solo el ANON_KEY
-            }
-            const rows = await supabaseRest<any[]>(
-              `/rest/v1/integrations?select=*&user_id=eq.${user.id}&type=neq.google-calendar&order=created_at.asc`,
-              { accessToken, signal: fallbackController.signal }
-            )
-            dbg('log', 'fallback REST success (integrations)', { count: rows.length })
-            return { data: rows, error: null }
-          } catch (fallbackErr) {
-            dbg('error', 'fallback REST failed (integrations)', fallbackErr)
-            throw fallbackErr
-          } finally {
-            window.clearTimeout(fallbackTimeoutId)
-          }
-        })
-      } finally {
-        window.clearTimeout(timeoutId)
-      }
-
-      const data: any[] | null = result.data
-      const fetchError: any = result.error
+      window.clearTimeout(timeoutId)
 
       if (fetchError) throw fetchError
 
       if (!data || data.length === 0) {
         await initializeIntegrations()
-
-        // Re-fetch con fallback REST
-        const reQueryPromise = supabase
+        const { data: newData, error: reloadError } = await supabase
           .from('integrations')
           .select('*')
           .eq('user_id', user.id)
           .neq('type', 'google-calendar')
           .order('created_at', { ascending: true })
-
-        const reQueryResult = await Promise.race([
-          reQueryPromise,
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('supabase-js timeout (re-fetch)')), 1000)),
-        ]).catch(async (e) => {
-          dbg('warn', 'useIntegrations re-query fallback REST', e)
-          const fallbackController = new AbortController()
-          const fallbackTimeoutId = window.setTimeout(() => fallbackController.abort(), 8000)
-          try {
-            let accessToken: string | null = null
-            try {
-              const authData = localStorage.getItem('supabase.auth.token')
-              if (authData) {
-                const parsed = JSON.parse(authData)
-                accessToken = parsed?.access_token ?? null
-              }
-            } catch {}
-            const rows = await supabaseRest<any[]>(
-              `/rest/v1/integrations?select=*&user_id=eq.${user.id}&type=neq.google-calendar&order=created_at.asc`,
-              { accessToken, signal: fallbackController.signal }
-            )
-            return { data: rows, error: null }
-          } finally {
-            window.clearTimeout(fallbackTimeoutId)
-          }
-        })
-
-        if (reQueryResult.error) throw reQueryResult.error
+        if (reloadError) throw reloadError
         if (fetchId !== activeFetchIdRef.current) return
-        setIntegrations(reQueryResult.data || [])
+        setIntegrations(newData || [])
       } else {
         if (fetchId !== activeFetchIdRef.current) return
         setIntegrations(data)
@@ -206,10 +105,6 @@ export function useIntegrations() {
         ? 'Timeout cargando integraciones'
         : (err?.message || 'Error fetching integrations')
       setError(msg)
-      console.error('Error fetching integrations:', err)
-      if (err?.name === 'AbortError') {
-        await resetSupabaseClient('fetchIntegrations:abort')
-      }
     } finally {
       if (fetchId !== activeFetchIdRef.current) return
       setLoading(false)
@@ -269,7 +164,7 @@ export function useIntegrations() {
           supabase.removeChannel(channelRef.current)
           channelRef.current = null
         } catch (error) {
-          console.error('Error removiendo canal anterior:', error)
+          // Sin logs en producción por seguridad
         }
       }
 
@@ -280,32 +175,25 @@ export function useIntegrations() {
             fetchIntegrations()
           })
           .subscribe(async (status) => {
-            console.log(`📡 Estado del canal de integraciones: ${status}`)
-
             if (status === 'SUBSCRIBED') {
-              console.log('✅ Canal de integraciones conectado con éxito')
               isIntentionalCloseRef.current = false
             }
 
             if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
               // Solo reconectar si NO fue un cierre intencional
               if (!isIntentionalCloseRef.current) {
-                console.warn('⚠️ Conexión de integraciones perdida. Intentando reconectar en 2s...')
                 setTimeout(() => setupRealtime(), 2000)
               } else {
-                console.log('🔌 Canal de integraciones cerrado intencionalmente')
               }
             }
 
             if (status === 'TIMED_OUT') {
-              console.warn('⏱️ Timeout en canal de integraciones. Reintentando...')
               setTimeout(() => setupRealtime(), 2000)
             }
           })
 
         channelRef.current = channel
       } catch (error) {
-        console.error('❌ Error creando canal de integraciones:', error)
         setTimeout(() => setupRealtime(), 2000)
       }
     }
@@ -334,7 +222,7 @@ export function useIntegrations() {
                 isIntentionalCloseRef.current = true
                 supabase.removeChannel(channelRef.current)
               } catch (error) {
-                console.error('Error removiendo canal:', error)
+                // Sin logs en producción por seguridad
               }
               channelRef.current = null
             }
@@ -352,7 +240,7 @@ export function useIntegrations() {
           isIntentionalCloseRef.current = true
           supabase.removeChannel(channelRef.current)
         } catch (error) {
-          console.error('Error removing channel:', error)
+          // Sin logs en producción por seguridad
         }
       }
       subscription.unsubscribe()

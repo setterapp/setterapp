@@ -40,7 +40,6 @@ export const googleCalendarService = {
       // Si data.url existe, el navegador será redirigido automáticamente
       // Si no hay URL, puede que ya esté autenticado pero sin los scopes correctos
       if (!data.url) {
-        console.warn('No se obtuvo URL de redirección. Puede que necesites cerrar sesión y volver a conectar.')
       }
 
       return data
@@ -69,7 +68,6 @@ export const googleCalendarService = {
       // Si no hay token, intentar refrescar la sesión automáticamente
       if (!providerToken) {
         if (providerRefreshToken) {
-          console.log('🔄 Google Calendar: Token no encontrado, refrescando automáticamente...')
           try {
             // Forzar refresco de la sesión
             const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
@@ -103,7 +101,6 @@ export const googleCalendarService = {
             } else if (refreshedSession?.provider_token) {
               session = refreshedSession
               providerToken = refreshedSession.provider_token
-              console.log('✅ Google Calendar: Token refrescado exitosamente')
             } else {
               throw new Error('No hay token de acceso de Google después del refresco. Por favor, reconecta Google Calendar desde la página de Integraciones.')
             }
@@ -124,7 +121,6 @@ export const googleCalendarService = {
 
           if (integrations && integrations.length > 0) {
             // Google Calendar está conectado pero no hay tokens - iniciar OAuth automáticamente
-            console.log('🔄 Google Calendar conectado pero sin tokens. Iniciando OAuth automático...')
             const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
               provider: 'google',
               options: {
@@ -295,7 +291,6 @@ export const googleCalendarService = {
 
         if (response.status === 401 || response.status === 403) {
           // Token expirado o sin permisos - intentar refrescar automáticamente
-          console.log('🔄 Token expirado o sin permisos, intentando refrescar...')
           try {
             // Intentar refrescar hasta 2 veces con delay
             let refreshedSession = null
@@ -317,8 +312,6 @@ export const googleCalendarService = {
               console.error('No se pudo refrescar el token después de varios intentos')
               throw new Error('El token de Google Calendar ha expirado. Por favor, reconecta Google Calendar desde la página de Integraciones.')
             }
-
-            console.log('✅ Token refrescado, reintentando petición...')
 
             // Reintentar con el nuevo token
             const retryResponse = await fetch(
@@ -344,7 +337,6 @@ export const googleCalendarService = {
             }
 
             const retryData = await retryResponse.json()
-            console.log('✅ Eventos obtenidos después de refrescar token')
             return retryData.items || []
           } catch (refreshErr: any) {
             console.error('Error al refrescar token:', refreshErr)
@@ -404,16 +396,13 @@ export const googleCalendarService = {
             // Google puede devolver 200 (éxito) o 400 (token inválido/expirado)
             // Ambos casos son aceptables para nosotros
             if (revokeResponse.status === 200 || revokeResponse.status === 400) {
-              console.log('Token revoked or already invalid (OK)')
             }
           } catch (revokeError) {
             // Ignorar errores de red - no es crítico
-            console.log('Could not revoke token (non-critical):', revokeError)
           }
         }
       } catch (error) {
         // Ignorar errores completamente - no es crítico para la desconexión
-        console.log('Token revocation skipped (non-critical):', error)
       }
 
       // La desconexión real se hace actualizando el estado en la base de datos
@@ -421,7 +410,6 @@ export const googleCalendarService = {
       return true
     } catch (error) {
       // Siempre retornar true - la desconexión en DB es lo importante
-      console.log('Disconnect completed (errors ignored):', error)
       return true
     }
   }

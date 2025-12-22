@@ -20,7 +20,6 @@ function Integrations() {
     // Pequeño delay para asegurar que el callback haya terminado de actualizar la DB
     const timer = setTimeout(() => {
       if (!loading) {
-        console.log('🔄 Recargando integraciones después del callback...')
         refetch()
       }
     }, 1000)
@@ -104,7 +103,6 @@ function Integrations() {
 
         // Refresh integrations and show success
         await refetch()
-        console.log('✅ Instagram conectado exitosamente')
 
         // Ensure we're on the integrations page (in case user navigated away)
         navigate('/integrations', { replace: true })

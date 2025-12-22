@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase, resetSupabaseClient } from '../lib/supabase'
-import { supabaseRest } from '../utils/supabaseRest'
-import { dbg } from '../utils/debug'
+import { supabase } from '../lib/supabase'
 
 export interface Conversation {
   id: string
@@ -39,58 +37,12 @@ export function useConversations() {
       setLoading(true)
       setError(null)
 
-      dbg('log', 'useConversations.fetchConversations start')
-
-      const queryPromise = supabase
+      const { data, error: fetchError } = await supabase
         .from('conversations')
         .select('*')
         .order('last_message_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
         .abortSignal(controller.signal)
-
-      const result = await Promise.race([
-        queryPromise,
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('supabase-js timeout (pre-fetch hang)')), 1000)),
-      ]).catch(async (e) => {
-        dbg('warn', 'useConversations fallback REST', e)
-        // Crear nuevo AbortController para el fallback (el anterior puede estar abortado)
-        const fallbackController = new AbortController()
-        const fallbackTimeoutId = window.setTimeout(() => fallbackController.abort(), 8000)
-        try {
-          // NO usar supabase.auth.getSession() porque también puede estar colgado
-          // En su lugar, obtener el token directamente del localStorage
-          let accessToken: string | null = null
-          try {
-            const authData = localStorage.getItem('supabase.auth.token')
-            dbg('log', 'fallback REST localStorage raw', authData ? 'exists' : 'null')
-            if (authData) {
-              const parsed = JSON.parse(authData)
-              dbg('log', 'fallback REST parsed keys', Object.keys(parsed))
-              // Intentar múltiples formatos de supabase-js
-              accessToken = parsed?.access_token ??
-                           parsed?.currentSession?.access_token ??
-                           parsed?.data?.session?.access_token ??
-                           null
-            }
-          } catch (parseErr) {
-            dbg('error', 'fallback REST localStorage parse error', parseErr)
-          }
-          dbg('log', 'fallback REST accessToken', accessToken ? 'found' : 'null')
-          const rows = await supabaseRest<any[]>(
-            `/rest/v1/conversations?select=*&order=last_message_at.desc.nullslast,created_at.desc`,
-            { accessToken, signal: fallbackController.signal }
-          )
-          dbg('log', 'fallback REST success', { count: rows.length })
-          return { data: rows, error: null }
-        } catch (fallbackErr) {
-          dbg('error', 'fallback REST failed', fallbackErr)
-          throw fallbackErr
-        } finally {
-          window.clearTimeout(fallbackTimeoutId)
-        }
-      })
-
-      const { data, error: fetchError } = result as any
       if (fetchError) throw fetchError
       if (fetchId !== activeFetchIdRef.current) return
       setConversations(data || [])
@@ -100,10 +52,6 @@ export function useConversations() {
         ? 'Timeout cargando conversaciones'
         : (err?.message || 'Error fetching conversations')
       setError(msg)
-      console.error('Error fetching conversations:', err)
-      if (err?.name === 'AbortError') {
-        await resetSupabaseClient('fetchConversations:abort')
-      }
     } finally {
       window.clearTimeout(timeoutId)
       if (fetchId === activeFetchIdRef.current) {
@@ -138,7 +86,7 @@ export function useConversations() {
           await supabase.removeChannel(channelRef.current)
           channelRef.current = null
         } catch (error) {
-          console.error('Error removiendo canal anterior:', error)
+          // Sin logs en producción por seguridad
         }
       }
 
@@ -192,25 +140,19 @@ export function useConversations() {
             }
           )
           .subscribe(async (status) => {
-            console.log(`📡 Estado del canal de conversaciones: ${status}`)
-
             if (status === 'SUBSCRIBED') {
-              console.log('✅ Canal de conversaciones conectado con éxito')
               isIntentionalCloseRef.current = false
             }
 
             if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
               // Solo reconectar si NO fue un cierre intencional
               if (!isIntentionalCloseRef.current) {
-                console.warn('⚠️ Conexión de conversaciones perdida. Intentando reconectar en 2s...')
                 setTimeout(() => setupRealtime(), 2000)
               } else {
-                console.log('🔌 Canal de conversaciones cerrado intencionalmente')
               }
             }
 
             if (status === 'TIMED_OUT') {
-              console.warn('⏱️ Timeout en canal de conversaciones. Reintentando...')
               setTimeout(() => setupRealtime(), 2000)
             }
           })
@@ -218,7 +160,6 @@ export function useConversations() {
         channelRef.current = channel
         return channel
       } catch (error) {
-        console.error('❌ Error creando canal de conversaciones:', error)
         // Reintentar después de un delay
         setTimeout(() => setupRealtime(), 2000)
         return null
@@ -248,7 +189,7 @@ export function useConversations() {
                 isIntentionalCloseRef.current = true
                 await supabase.removeChannel(channelRef.current)
               } catch (error) {
-                console.error('Error removiendo canal:', error)
+                // Sin logs en producción por seguridad
               }
               channelRef.current = null
             }
@@ -266,7 +207,7 @@ export function useConversations() {
           isIntentionalCloseRef.current = true
           supabase.removeChannel(channelRef.current)
         } catch (error) {
-          console.error('Error removing channel:', error)
+          // Sin logs en producción por seguridad
         }
       }
       subscription.unsubscribe()

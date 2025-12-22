@@ -15,7 +15,6 @@ function AuthCallback() {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
         if (sessionError) {
-          console.error('Error en callback:', sessionError)
           setError(sessionError.message)
           setTimeout(() => navigate('/login'), 3000)
           return
@@ -25,24 +24,10 @@ function AuthCallback() {
           // Obtener redirectTo una sola vez
           const redirectTo = new URLSearchParams(location.search).get('redirect_to') || '/analytics'
 
-          console.log('✅ Sesión obtenida en callback:', {
-            userId: session.user.id,
-            hasProviderToken: !!session.provider_token,
-            redirectTo
-          })
-
           // Verificar si venimos de integraciones
           const isFromIntegrations = redirectTo.includes('/integrations') || redirectTo === '/integrations'
           const provider = new URLSearchParams(location.search).get('provider') || 'google'
           const integrationParam = new URLSearchParams(location.search).get('integration') // 'whatsapp' o 'instagram'
-
-          console.log('📋 Información del callback:', {
-            provider,
-            integrationParam,
-            isFromIntegrations,
-            hasProviderToken: !!session.provider_token,
-            userId: session.user.id
-          })
 
           // Si hay un provider_token y venimos de integraciones, actualizar la integración correspondiente
           if (session.provider_token && isFromIntegrations) {
@@ -53,10 +38,8 @@ function AuthCallback() {
                 // Si viene el parámetro integration, usarlo; si no, asumir instagram por defecto
                 if (integrationParam === 'whatsapp') {
                   integrationType = 'whatsapp'
-                  console.log('🔍 Buscando integración de WhatsApp para usuario:', session.user.id)
                 } else {
                   integrationType = 'instagram'
-                  console.log('🔍 Buscando integración de Instagram para usuario:', session.user.id)
                 }
               }
 
@@ -68,19 +51,15 @@ function AuthCallback() {
                 .eq('user_id', session.user.id)
                 .limit(1)
 
-              console.log('Resultado de búsqueda:', { integrations, intError })
-
               if (intError) {
-                console.error('❌ Error al buscar integración:', intError)
+                // Evitar logs en producción por seguridad
               } else if (integrations && integrations.length > 0) {
                 const integration = integrations[0]
-                console.log('📝 Integración encontrada:', integration)
 
                 // Si es WhatsApp, obtener información de la cuenta de WhatsApp Business
                 let config: Record<string, any> = {}
                 if (integrationType === 'whatsapp') {
                   try {
-                    console.log('📱 Obteniendo información de WhatsApp Business...')
                     const { whatsappService } = await import('../services/facebook/whatsapp')
                     const whatsappInfo = await whatsappService.getWhatsAppBusinessAccount()
 
@@ -90,16 +69,14 @@ function AuthCallback() {
                       phoneNumberId: whatsappInfo.phoneNumberId,
                     }
 
-                    console.log('✅ Información de WhatsApp Business obtenida:', config)
                   } catch (whatsappError: any) {
-                    console.error('⚠️ Error al obtener información de WhatsApp Business:', whatsappError)
                     // Continuar con la conexión aunque falle la obtención de info
                     // El usuario puede configurarlo después
                   }
                 }
 
                 // Actualizar a "connected" cuando viene del flujo de OAuth
-                const { data: updated, error: updateError } = await supabase
+                const { error: updateError } = await supabase
                   .from('integrations')
                   .update({
                     status: 'connected',
@@ -112,31 +89,19 @@ function AuthCallback() {
                   .single()
 
                 if (updateError) {
-                  console.error('❌ Error al actualizar integración:', updateError)
-                } else {
-                    const integrationName = integrationType === 'instagram'
-                      ? 'Instagram'
-                      : 'WhatsApp'
-                    console.log(`✅ ${integrationName} actualizado a "connected":`, updated)
+                  // Evitar logs en producción por seguridad
                 }
-                  } else {
-                    const integrationName = integrationType === 'instagram'
-                      ? 'Instagram'
-                      : 'WhatsApp'
-                    console.warn(`⚠️ No se encontró integración de ${integrationName}`)
-                  }
+              }
             } catch (err) {
-              console.error('❌ Error en el proceso de actualización:', err)
+              // Evitar logs en producción por seguridad
             }
           } else {
-            console.log('ℹ️ No es un callback de OAuth de integraciones')
           }
 
           // Esperar un momento para que se complete la actualización antes de redirigir
           await new Promise(resolve => setTimeout(resolve, 500))
 
           // Redirigir según el parámetro redirect_to o por defecto a /analytics
-          console.log('🔄 Redirigiendo a:', redirectTo)
           navigate(redirectTo)
         } else {
           // Si no hay sesión, esperar un momento y verificar de nuevo
@@ -153,7 +118,6 @@ function AuthCallback() {
           }, 1000)
         }
       } catch (err: any) {
-        console.error('Error en callback:', err)
         setError(err.message || 'Error desconocido')
         setTimeout(() => navigate('/login'), 3000)
       }

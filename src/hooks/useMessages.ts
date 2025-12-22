@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase, resetSupabaseClient } from '../lib/supabase'
-import { dbg } from '../utils/debug'
-import { supabaseRest } from '../utils/supabaseRest'
+import { supabase } from '../lib/supabase'
 
 export interface Message {
   id: string
@@ -37,7 +35,6 @@ export function useMessages(conversationId: string | null) {
     }
 
     const fetchId = ++activeFetchIdRef.current
-    dbg('log', 'useMessages.fetchMessages start', { conversationId })
     if (fetchAbortRef.current) fetchAbortRef.current.abort()
     const controller = new AbortController()
     fetchAbortRef.current = controller
@@ -46,74 +43,22 @@ export function useMessages(conversationId: string | null) {
       setLoading(true)
       setError(null)
 
-      const queryPromise = supabase
+      const { data, error: fetchError } = await supabase
         .from('messages')
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
         .abortSignal(controller.signal)
-
-      // Si supabase-js se cuelga antes de llamar fetch (bug post-resume),
-      // hacemos fallback a REST directo.
-      const result = await Promise.race([
-        queryPromise,
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('supabase-js timeout (pre-fetch hang)')), 1000)),
-      ]).catch(async (e) => {
-        dbg('warn', 'useMessages fallback REST', e)
-        // Crear nuevo AbortController para el fallback (el anterior puede estar abortado)
-        const fallbackController = new AbortController()
-        const fallbackTimeoutId = window.setTimeout(() => fallbackController.abort(), 8000)
-        try {
-          // NO usar supabase.auth.getSession() porque también puede estar colgado
-          // En su lugar, obtener el token directamente del localStorage
-          let accessToken: string | null = null
-          try {
-            const authData = localStorage.getItem('supabase.auth.token')
-            dbg('log', 'fallback REST localStorage raw', authData ? 'exists' : 'null')
-            if (authData) {
-              const parsed = JSON.parse(authData)
-              dbg('log', 'fallback REST parsed keys', Object.keys(parsed))
-              // Intentar múltiples formatos de supabase-js
-              accessToken = parsed?.access_token ??
-                           parsed?.currentSession?.access_token ??
-                           parsed?.data?.session?.access_token ??
-                           null
-            }
-          } catch (parseErr) {
-            dbg('error', 'fallback REST localStorage parse error', parseErr)
-          }
-          dbg('log', 'fallback REST accessToken', accessToken ? 'found' : 'null')
-          const rows = await supabaseRest<any[]>(
-            `/rest/v1/messages?select=*&conversation_id=eq.${encodeURIComponent(conversationId)}&order=created_at.asc`,
-            { accessToken, signal: fallbackController.signal }
-          )
-          dbg('log', 'fallback REST success', { count: rows.length })
-          return { data: rows, error: null }
-        } catch (fallbackErr) {
-          dbg('error', 'fallback REST failed', fallbackErr)
-          throw fallbackErr
-        } finally {
-          window.clearTimeout(fallbackTimeoutId)
-        }
-      })
-
-      const { data, error: fetchError } = result as any
       if (fetchError) throw fetchError
       if (fetchId !== activeFetchIdRef.current) return
       setMessages(data || [])
-      dbg('log', 'useMessages.fetchMessages ok', { conversationId, count: (data || []).length })
     } catch (err: any) {
-      console.error('Error fetching messages:', err)
       if (fetchId !== activeFetchIdRef.current) return
       const msg = err?.name === 'AbortError'
         ? 'Timeout cargando mensajes'
         : (err?.message || 'Error cargando mensajes')
       setError(msg)
       setMessages([])
-      dbg('warn', 'useMessages.fetchMessages error', { conversationId, msg })
-      if (err?.name === 'AbortError') {
-        await resetSupabaseClient('fetchMessages:abort')
-      }
     } finally {
       window.clearTimeout(timeoutId)
       if (fetchId === activeFetchIdRef.current) {
@@ -136,7 +81,7 @@ export function useMessages(conversationId: string | null) {
 
       if (updateError) throw updateError
     } catch (err: any) {
-      console.error('Error marking conversation as read:', err)
+      // Sin logs en producción por seguridad
     }
   }
 
@@ -159,7 +104,7 @@ export function useMessages(conversationId: string | null) {
           supabase.removeChannel(channelRef.current)
           channelRef.current = null
         } catch (error) {
-          console.error('Error removiendo canal anterior:', error)
+          // Sin logs en producción por seguridad
         }
       }
 
@@ -205,32 +150,25 @@ export function useMessages(conversationId: string | null) {
             }
           )
           .subscribe(async (status) => {
-            console.log(`📡 Estado del canal de mensajes: ${status}`)
-
             if (status === 'SUBSCRIBED') {
-              console.log('✅ Canal de mensajes conectado con éxito')
               isIntentionalCloseRef.current = false
             }
 
             if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
               // Solo reconectar si NO fue un cierre intencional
               if (!isIntentionalCloseRef.current) {
-                console.warn('⚠️ Conexión de mensajes perdida. Intentando reconectar en 2s...')
                 setTimeout(() => subscribeToMessages(), 2000)
               } else {
-                console.log('🔌 Canal de mensajes cerrado intencionalmente')
               }
             }
 
             if (status === 'TIMED_OUT') {
-              console.warn('⏱️ Timeout en canal de mensajes. Reintentando...')
               setTimeout(() => subscribeToMessages(), 2000)
             }
           })
 
         channelRef.current = channel
       } catch (error) {
-        console.error('❌ Error creando canal de mensajes:', error)
         // Reintentar después de un delay
         setTimeout(() => subscribeToMessages(), 2000)
       }
@@ -240,7 +178,6 @@ export function useMessages(conversationId: string | null) {
 
     const handleResume = async () => {
       // En resume, hacemos refetch + resubscribe
-      dbg('log', 'useMessages.handleResume', { conversationId })
       await fetchMessages()
       markAsRead()
       subscribeToMessages()
@@ -255,7 +192,7 @@ export function useMessages(conversationId: string | null) {
           isIntentionalCloseRef.current = true
           supabase.removeChannel(channelRef.current)
         } catch (error) {
-          console.error('Error removing channel:', error)
+          // Sin logs en producción por seguridad
         }
       }
     }

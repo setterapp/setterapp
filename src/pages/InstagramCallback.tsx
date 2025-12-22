@@ -76,43 +76,27 @@ function InstagramCallback() {
         const storedUserId = localStorage.getItem('instagram_oauth_user_id')
 
         if (!state || state !== storedState) {
-          console.error('❌ Invalid state parameter')
           setError('Solicitud inválida. Por favor, intenta de nuevo.')
           setTimeout(() => navigate('/integrations'), 5000)
           return
         }
 
         if (!code) {
-          console.error('❌ No authorization code received')
           setError('No se recibió código de autorización')
           setTimeout(() => navigate('/integrations'), 5000)
           return
         }
 
         if (!storedUserId) {
-          console.error('❌ No user ID found in session')
           setError('Sesión no encontrada. Por favor, inicia sesión de nuevo.')
           setTimeout(() => navigate('/login'), 5000)
           return
         }
 
-        console.log('✅ Instagram callback recibido:', {
-          code: code.substring(0, 20) + '...',
-          state,
-          userId: storedUserId
-        })
-
         // Exchange code for access token
-        console.log('🔄 Intercambiando código por token...')
         const tokenData = await instagramDirectService.exchangeCodeForToken(code)
 
-        console.log('✅ Token obtenido:', {
-          access_token: tokenData.access_token ? '***' : 'none',
-          user_id: tokenData.user_id
-        })
-
         // Store access token in user's integration
-        console.log('💾 Guardando token en integración...')
         await instagramDirectService.storeAccessToken(
           storedUserId,
           tokenData.access_token,
@@ -126,12 +110,9 @@ function InstagramCallback() {
         localStorage.removeItem('instagram_oauth_state')
         localStorage.removeItem('instagram_oauth_user_id')
 
-        console.log('✅ Instagram conectado exitosamente')
-
         // Redirect to integrations page
         navigate('/integrations')
       } catch (err: any) {
-        console.error('❌ Error en Instagram callback:', err)
         setError(err.message || 'Error al completar la conexión con Instagram')
         setTimeout(() => navigate('/integrations'), 5000)
       }

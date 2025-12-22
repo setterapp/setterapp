@@ -3,7 +3,6 @@ import { useConversations } from '../hooks/useConversations'
 import ConversationList from '../components/ConversationList'
 import ChatPanel from '../components/ChatPanel'
 import EmptyConversation from '../components/EmptyConversation'
-import { dbg } from '../utils/debug'
 
 function Conversations() {
   const { conversations, loading, error } = useConversations()
@@ -24,7 +23,6 @@ function Conversations() {
     if (selectedConversationId && conversations.length > 0) {
       const exists = conversations.some(c => c.id === selectedConversationId)
       if (!exists) {
-        console.log('⚠️ Conversación seleccionada ya no existe, limpiando selección')
         setSelectedConversationId(null)
       }
     }
@@ -39,8 +37,6 @@ function Conversations() {
       event.preventDefault()
       event.stopPropagation()
     }
-
-    dbg('log', 'selectConversation', { id, selectedConversationId })
 
     // Si es la misma conversación, forzar refresh del panel (importante post-resume)
     if (id === selectedConversationId) {
