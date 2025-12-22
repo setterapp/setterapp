@@ -74,10 +74,10 @@ export function useIntegrations() {
       // Intentar obtener user con timeout, pero si falla, obtenerlo del localStorage
       let user: any = null
       try {
-        const result = await withTimeout(supabase.auth.getUser(), 8000).catch(async (e) => {
+        const result = await withTimeout(supabase.auth.getUser(), 2000).catch(async (e) => {
           console.warn('⚠️ getUser colgado/falló. Reseteando Supabase y reintentando...', e)
           await resetSupabaseClient('fetchIntegrations:getUser')
-          return await withTimeout(supabase.auth.getUser(), 8000)
+          return await withTimeout(supabase.auth.getUser(), 2000)
         })
         user = result.data.user
       } catch (getUserErr) {
