@@ -43,5 +43,3 @@ export async function supabaseRest<T>(
   if (res.status === 204) return undefined as T
   return (await res.json()) as T
 }
-
-
