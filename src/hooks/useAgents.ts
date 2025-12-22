@@ -35,6 +35,7 @@ export function useAgents() {
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   const fetchAgents = async () => {
     try {
@@ -57,7 +58,6 @@ export function useAgents() {
   }
 
   useEffect(() => {
-    const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
     let subscription: any = null
 
     const setupRealtime = async () => {

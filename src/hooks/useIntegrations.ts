@@ -21,6 +21,7 @@ export function useIntegrations() {
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   const initializeIntegrations = async () => {
     try {
@@ -136,8 +137,6 @@ export function useIntegrations() {
     }
 
     checkAuthAndFetch()
-
-    const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
     const setupRealtime = async () => {
       // Si ya existe un canal, lo limpiamos antes de crear uno nuevo

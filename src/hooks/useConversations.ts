@@ -22,6 +22,7 @@ export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   const fetchConversations = async () => {
     try {
@@ -55,8 +56,6 @@ export function useConversations() {
     }
 
     checkAuthAndFetch()
-
-    const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
     const setupRealtime = async () => {
       const { data: { session } } = await supabase.auth.getSession()
