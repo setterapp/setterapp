@@ -10,14 +10,7 @@ function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // IMPORTANT: detectSessionInUrl is disabled (see `src/lib/supabase.ts`).
-        // So we must manually exchange the OAuth `code` for a session here.
-        const params = new URLSearchParams(location.search)
-        const code = params.get('code')
-        if (code) {
-          await supabase.auth.exchangeCodeForSession(code)
-        }
-
+        // Supabase procesa automáticamente el código de la URL (detectSessionInUrl=true en esta ruta)
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
         if (sessionError) {
