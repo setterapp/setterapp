@@ -88,13 +88,23 @@ export function useMessages(conversationId: string | null) {
     setMessages([])
     setError(null)
 
-    // Simplemente hacer fetch - Supabase maneja la sesión automáticamente
+    // Fetch inicial
     const loadMessages = async () => {
       await fetchMessages()
       await markAsRead()
     }
 
     loadMessages()
+
+    // Manejar visibilidad del tab para reconectar después de AFK
+    const handleVisibilityChange = () => {
+      if (!document.hidden && conversationId) {
+        console.log('Tab visible - recargando mensajes')
+        fetchMessages()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     // Suscribirse a cambios en tiempo real (no bloquea el fetch)
     let channel: ReturnType<typeof supabase.channel> | null = null
@@ -163,6 +173,7 @@ export function useMessages(conversationId: string | null) {
     }
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       if (channel) {
         try {
           supabase.removeChannel(channel)
