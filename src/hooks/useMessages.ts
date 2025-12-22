@@ -33,11 +33,18 @@ export function useMessages(conversationId: string | null) {
     try {
       setLoading(true)
 
-      const { data, error: fetchError } = await supabase
+      // Timeout de 10 segundos
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout al cargar mensajes')), 10000)
+      )
+
+      const fetchPromise = supabase
         .from('messages')
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
+
+      const { data, error: fetchError } = await Promise.race([fetchPromise, timeoutPromise]) as any
 
       if (fetchError) throw fetchError
 
@@ -45,7 +52,8 @@ export function useMessages(conversationId: string | null) {
       setError(null)
     } catch (err: any) {
       console.error('Error fetching messages:', err)
-      setError(err.message)
+      setError(err.message || 'Error cargando mensajes')
+      setMessages([])
     } finally {
       setLoading(false)
     }
@@ -82,9 +90,22 @@ export function useMessages(conversationId: string | null) {
 
     const loadMessages = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
+        // Verificar sesión con timeout
+        const sessionTimeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout verificando sesión')), 5000)
+        )
+
+        const sessionPromise = supabase.auth.getSession()
+
+        const { data: { session }, error: sessionError } = await Promise.race([
+          sessionPromise,
+          sessionTimeout
+        ]) as any
+
+        if (sessionError || !session) {
+          console.error('Sin sesión válida:', sessionError)
           setLoading(false)
+          setError('Sesión expirada. Recarga la página.')
           return
         }
 
@@ -95,7 +116,7 @@ export function useMessages(conversationId: string | null) {
       } catch (error) {
         console.error('Error loading messages:', error)
         setLoading(false)
-        setError('Error cargando mensajes')
+        setError('Error cargando mensajes. Recarga la página.')
       }
     }
 
