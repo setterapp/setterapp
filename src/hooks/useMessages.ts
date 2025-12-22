@@ -62,12 +62,28 @@ export function useMessages(conversationId: string | null) {
         const fallbackController = new AbortController()
         const fallbackTimeoutId = window.setTimeout(() => fallbackController.abort(), 8000)
         try {
-          const { data: { session } } = await supabase.auth.getSession()
+          // NO usar supabase.auth.getSession() porque también puede estar colgado
+          // En su lugar, obtener el token directamente del localStorage
+          let accessToken: string | null = null
+          try {
+            const authData = localStorage.getItem('supabase.auth.token')
+            if (authData) {
+              const parsed = JSON.parse(authData)
+              accessToken = parsed?.currentSession?.access_token ?? null
+            }
+          } catch {
+            // Si falla, usaremos solo el ANON_KEY
+          }
+          dbg('log', 'fallback REST accessToken', accessToken ? 'found' : 'null')
           const rows = await supabaseRest<any[]>(
             `/rest/v1/messages?select=*&conversation_id=eq.${encodeURIComponent(conversationId)}&order=created_at.asc`,
-            { accessToken: session?.access_token, signal: fallbackController.signal }
+            { accessToken, signal: fallbackController.signal }
           )
+          dbg('log', 'fallback REST success', { count: rows.length })
           return { data: rows, error: null }
+        } catch (fallbackErr) {
+          dbg('error', 'fallback REST failed', fallbackErr)
+          throw fallbackErr
         } finally {
           window.clearTimeout(fallbackTimeoutId)
         }
