@@ -58,12 +58,19 @@ export function useMessages(conversationId: string | null) {
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('supabase-js timeout (pre-fetch hang)')), 2500)),
       ]).catch(async (e) => {
         dbg('warn', 'useMessages fallback REST', e)
-        const { data: { session } } = await supabase.auth.getSession()
-        const rows = await supabaseRest<any[]>(
-          `/rest/v1/messages?select=*&conversation_id=eq.${encodeURIComponent(conversationId)}&order=created_at.asc`,
-          { accessToken: session?.access_token, signal: controller.signal }
-        )
-        return { data: rows, error: null }
+        // Crear nuevo AbortController para el fallback (el anterior puede estar abortado)
+        const fallbackController = new AbortController()
+        const fallbackTimeoutId = window.setTimeout(() => fallbackController.abort(), 8000)
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          const rows = await supabaseRest<any[]>(
+            `/rest/v1/messages?select=*&conversation_id=eq.${encodeURIComponent(conversationId)}&order=created_at.asc`,
+            { accessToken: session?.access_token, signal: fallbackController.signal }
+          )
+          return { data: rows, error: null }
+        } finally {
+          window.clearTimeout(fallbackTimeoutId)
+        }
       })
 
       const { data, error: fetchError } = result as any
