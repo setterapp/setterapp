@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { cacheService } from '../services/cache'
 
 export interface Conversation {
   id: string
@@ -24,24 +23,9 @@ export function useConversations() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchConversations = async (useCache: boolean = true) => {
+  const fetchConversations = async () => {
     try {
       setLoading(true)
-
-      // Intentar obtener del caché primero
-      const cacheKey = 'conversations'
-      if (useCache) {
-        const cached = cacheService.get<Conversation[]>(cacheKey)
-        if (cached) {
-          console.log('📦 Using cached conversations')
-          setConversations(cached)
-          setError(null)
-          setLoading(false)
-          // Cargar en background para actualizar
-          fetchConversations(false).catch(() => {})
-          return
-        }
-      }
 
       const { data, error: fetchError } = await supabase
         .from('conversations')
@@ -51,12 +35,8 @@ export function useConversations() {
 
       if (fetchError) throw fetchError
 
-      const conversationsData = data || []
-      setConversations(conversationsData)
+      setConversations(data || [])
       setError(null)
-
-      // Guardar en caché (2 minutos - las conversaciones cambian más frecuentemente)
-      cacheService.set(cacheKey, conversationsData, 2 * 60 * 1000)
     } catch (err: any) {
       setError(err.message)
       console.error('Error fetching conversations:', err)
@@ -146,9 +126,6 @@ export function useConversations() {
               const deletedId = payload.old.id
               setConversations(prev => prev.filter(c => c.id !== deletedId))
             }
-
-            // Invalidar caché
-            cacheService.remove('conversations')
           }
         )
         .subscribe((status) => {

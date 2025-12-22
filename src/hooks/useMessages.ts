@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { cacheService } from '../services/cache'
 
 export interface Message {
   id: string
@@ -24,7 +23,7 @@ export function useMessages(conversationId: string | null) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchMessages = async (useCache: boolean = true) => {
+  const fetchMessages = async () => {
     if (!conversationId) {
       setMessages([])
       setLoading(false)
@@ -32,46 +31,22 @@ export function useMessages(conversationId: string | null) {
     }
 
     try {
-      console.log('🔍 fetchMessages INICIO para:', conversationId, 'useCache:', useCache)
       setLoading(true)
 
-      // Intentar obtener del caché primero
-      const cacheKey = `messages-${conversationId}`
-      if (useCache) {
-        const cached = cacheService.get<Message[]>(cacheKey)
-        if (cached) {
-          console.log('📦 Using cached messages for conversation:', conversationId)
-          setMessages(cached)
-          setError(null)
-          setLoading(false)
-          // Cargar en background para actualizar
-          fetchMessages(false).catch(() => {})
-          return
-        }
-      }
-
-      console.log('🌐 Haciendo fetch de Supabase para:', conversationId)
       const { data, error: fetchError } = await supabase
         .from('messages')
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
 
-      console.log('✅ Fetch completado para:', conversationId, 'mensajes:', data?.length || 0)
-
       if (fetchError) throw fetchError
 
-      const messagesData = data || []
-      setMessages(messagesData)
+      setMessages(data || [])
       setError(null)
-
-      // Guardar en caché (1 minuto - los mensajes cambian frecuentemente)
-      cacheService.set(cacheKey, messagesData, 1 * 60 * 1000)
     } catch (err: any) {
-      console.error('❌ Error fetching messages:', err)
+      console.error('Error fetching messages:', err)
       setError(err.message)
     } finally {
-      console.log('🏁 fetchMessages FIN para:', conversationId, 'loading=false')
       setLoading(false)
     }
   }
@@ -104,35 +79,30 @@ export function useMessages(conversationId: string | null) {
     }
 
     // INMEDIATAMENTE resetear mensajes y poner loading cuando cambia conversationId
-    // Esto es SÍNCRONO y ocurre ANTES de cualquier operación async
     setLoading(true)
     setMessages([])
     setError(null)
 
-    const checkAuthAndFetch = async () => {
+    const loadMessages = async () => {
       try {
-        // Verificar sesión
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) {
           setLoading(false)
           return
         }
 
-        // Invalidar caché de la conversación
-        cacheService.remove(`messages-${conversationId}`)
-
-        // Forzar fetch sin caché para la nueva conversación
-        await fetchMessages(false)
-        // Marcar como leído cuando se abre la conversación
+        // Fetch directo sin caché
+        await fetchMessages()
+        // Marcar como leído
         await markAsRead()
       } catch (error) {
-        console.error('Error in checkAuthAndFetch:', error)
+        console.error('Error loading messages:', error)
         setLoading(false)
         setError('Error cargando mensajes')
       }
     }
 
-    checkAuthAndFetch()
+    loadMessages()
 
     // Suscribirse a cambios en tiempo real (no bloquea el fetch)
     let channel: ReturnType<typeof supabase.channel> | null = null
@@ -187,9 +157,6 @@ export function useMessages(conversationId: string | null) {
               const deletedId = payload.old.id
               setMessages(prev => prev.filter(m => m.id !== deletedId))
             }
-
-            // Invalidar caché
-            cacheService.remove(`messages-${conversationId}`)
           }
         )
         .subscribe((status) => {
