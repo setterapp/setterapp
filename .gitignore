@@ -16,6 +16,10 @@ dist-ssr
 .env
 .env.local
 .env.production
+.env.messenger.local
+
+# Local-only test secrets
+test-messenger-webhook.local.sh
 
 # MCP configuration (contains sensitive credentials)
 .mcp.json
