@@ -96,11 +96,20 @@ export function useMessages(conversationId: string | null) {
 
     loadMessages()
 
-    // Manejar visibilidad del tab para reconectar después de AFK
+    // Detectar AFK y forzar recarga cuando vuelves
+    let hiddenTime: number | null = null
+
     const handleVisibilityChange = () => {
-      if (!document.hidden && conversationId) {
-        console.log('Tab visible - recargando mensajes')
-        fetchMessages()
+      if (document.hidden) {
+        // Guardar cuando se oculta
+        hiddenTime = Date.now()
+      } else {
+        // Cuando vuelve visible
+        if (hiddenTime && Date.now() - hiddenTime > 10000) {
+          // Estuvo oculto más de 10 segundos - recargar página
+          console.log('Recargando página después de AFK')
+          window.location.reload()
+        }
       }
     }
 
