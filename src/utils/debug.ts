@@ -39,6 +39,29 @@ export function installGlobalDebugHooks() {
     const ce = e as CustomEvent<any>
     dbg('log', 'event appsetter:supabase-resume', ce.detail)
   })
+
+  const describeTarget = (t: EventTarget | null) => {
+    if (!(t instanceof Element)) return String(t)
+    const id = t.id ? `#${t.id}` : ''
+    const cls = t.className && typeof t.className === 'string'
+      ? `.${t.className.split(' ').filter(Boolean).slice(0, 3).join('.')}`
+      : ''
+    return `${t.tagName.toLowerCase()}${id}${cls}`
+  }
+
+  const onPointerDown = (e: PointerEvent) => {
+    dbg('log', `pointerdown ${e.button}`, {
+      target: describeTarget(e.target),
+      path0: describeTarget((e.composedPath?.() ?? [])[0] as any),
+    })
+  }
+  const onClick = (e: MouseEvent) => {
+    dbg('log', 'click', { target: describeTarget(e.target) })
+  }
+
+  // Capture phase para detectar overlays que “se comen” los clicks
+  document.addEventListener('pointerdown', onPointerDown, true)
+  document.addEventListener('click', onClick, true)
 }
 
 

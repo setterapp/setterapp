@@ -19,6 +19,7 @@ import PublicRoute from './components/PublicRoute'
 import Logo from './components/Logo'
 import { useSupabaseWakeUp } from './hooks/useSupabaseWakeUp'
 import './App.css'
+import { dbg } from './utils/debug'
 
 function Layout() {
   const { t } = useTranslation()
@@ -41,6 +42,10 @@ function Layout() {
   // Cerrar sidebar cuando cambia la ruta en móvil
   useEffect(() => {
     setSidebarOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    dbg('log', 'route', location.pathname)
   }, [location.pathname])
 
   // Resetear botón presionado cuando cambia la ruta
