@@ -36,8 +36,9 @@ export function useIntegrations() {
 
   const initializeIntegrations = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
+      const user = session.user
 
       const { data: existing } = await supabase
         .from('integrations')
@@ -71,15 +72,16 @@ export function useIntegrations() {
       setLoading(true)
       setError(null)
 
-      // Intentar obtener user con timeout, pero si falla, obtenerlo del localStorage
+      // Usar getSession() en lugar de getUser() - más rápido y diseñado para browser
+      // Ref: https://supabase.com/docs/reference/javascript/auth-getsession
       let user: any = null
       try {
-        const result = await withTimeout(supabase.auth.getUser(), 2000).catch(async (e) => {
-          console.warn('⚠️ getUser colgado/falló. Reseteando Supabase y reintentando...', e)
-          await resetSupabaseClient('fetchIntegrations:getUser')
-          return await withTimeout(supabase.auth.getUser(), 2000)
+        const result = await withTimeout(supabase.auth.getSession(), 2000).catch(async (e) => {
+          console.warn('⚠️ getSession colgado/falló. Reseteando Supabase y reintentando...', e)
+          await resetSupabaseClient('fetchIntegrations:getSession')
+          return await withTimeout(supabase.auth.getSession(), 2000)
         })
-        user = result.data.user
+        user = result.data.session?.user
       } catch (getUserErr) {
         // Si falla completamente, intentar obtener del localStorage
         dbg('warn', 'getUser failed, trying localStorage', getUserErr)
@@ -216,8 +218,9 @@ export function useIntegrations() {
 
   const updateIntegration = async (id: string, updates: Partial<Integration>) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Usuario no autenticado')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) throw new Error('Usuario no autenticado')
+      const user = session.user
 
       const updateData: any = { ...updates }
       if (updates.status === 'connected' && !updates.connected_at) {

@@ -240,8 +240,9 @@ export function useAgents() {
 
   const createAgent = async (agent: Omit<Agent, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('User not authenticated')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) throw new Error('User not authenticated')
+      const user = session.user
 
       const { data, error: insertError } = await supabase
         .from('agents')
