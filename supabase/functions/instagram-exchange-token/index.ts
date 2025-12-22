@@ -3,23 +3,25 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const INSTAGRAM_APP_ID = Deno.env.get('INSTAGRAM_APP_ID') || '';
 const INSTAGRAM_APP_SECRET = Deno.env.get('INSTAGRAM_APP_SECRET') || '';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
+};
+
 Deno.serve(async (req: Request) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
+      headers: corsHeaders,
     });
   }
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -31,7 +33,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: 'Code is required' }),
         {
           status: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
@@ -42,12 +44,12 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: 'Instagram credentials not configured' }),
         {
           status: 500,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
 
-    // Exchange code for access token
+    // 1) Exchange code for short-lived token
     const response = await fetch('https://api.instagram.com/oauth/access_token', {
       method: 'POST',
       headers: {
@@ -72,26 +74,51 @@ Deno.serve(async (req: Request) => {
         }),
         {
           status: response.status,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
 
     const data = await response.json();
 
+    // 2) Exchange short-lived token for long-lived token (improves expiry issues)
+    let finalAccessToken = data.access_token;
+    let expiresIn: number | null = null;
+    let tokenType: string | null = null;
+
+    try {
+      const longLived = await fetch(
+        `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(INSTAGRAM_APP_SECRET)}&access_token=${encodeURIComponent(data.access_token)}`,
+        { method: 'GET' }
+      );
+
+      if (longLived.ok) {
+        const ll = await longLived.json();
+        if (ll?.access_token) {
+          finalAccessToken = ll.access_token;
+          expiresIn = typeof ll.expires_in === 'number' ? ll.expires_in : null;
+          tokenType = ll.token_type || null;
+        }
+      } else {
+        const t = await longLived.text();
+        console.warn('⚠️ Could not exchange to long-lived token:', t);
+      }
+    } catch (e) {
+      console.warn('⚠️ Long-lived exchange failed:', e);
+    }
+
     // Return token data
     return new Response(
       JSON.stringify({
-        access_token: data.access_token,
+        access_token: finalAccessToken,
         user_id: data.user_id || null,
         username: data.username || null,
+        expires_in: expiresIn,
+        token_type: tokenType,
       }),
       {
         status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error: any) {
@@ -102,7 +129,7 @@ Deno.serve(async (req: Request) => {
       }),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }

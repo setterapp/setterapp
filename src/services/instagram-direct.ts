@@ -249,6 +249,8 @@ export const instagramDirectService = {
           access_token: data.access_token,
           user_id: data.user_id || null,
           username: data.username || null,
+          expires_in: data.expires_in || null,
+          token_type: data.token_type || null,
         }
       }
 
@@ -286,6 +288,9 @@ export const instagramDirectService = {
           access_token: accessToken,
           instagram_user_id: userData.user_id,
           instagram_username: userData.username,
+          // Guardar expiry si viene (token long-lived)
+          expires_at: userData.expires_in ? (Math.floor(Date.now() / 1000) + Number(userData.expires_in)) : null,
+          token_type: userData.token_type || null,
         },
       }
 

@@ -95,6 +95,8 @@ function Integrations() {
           {
             user_id: tokenData.user_id,
             username: tokenData.username,
+            expires_in: tokenData.expires_in,
+            token_type: tokenData.token_type,
           }
         )
 
