@@ -17,20 +17,72 @@ function Conversations() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  // Limpiar selección si la conversación ya no existe
+  useEffect(() => {
+    if (selectedConversationId && conversations.length > 0) {
+      const exists = conversations.some(c => c.id === selectedConversationId)
+      if (!exists) {
+        console.log('⚠️ Conversación seleccionada ya no existe, limpiando selección')
+        setSelectedConversationId(null)
+      }
+    }
+  }, [conversations, selectedConversationId])
+
+  // Detectar cuando vuelves de estar AFK y limpiar estados inconsistentes
+  useEffect(() => {
+    let hiddenTime: number | null = null
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        hiddenTime = Date.now()
+      } else {
+        // Si estuvo oculto más de 5 segundos, forzar reset de la selección para evitar estados inconsistentes
+        if (hiddenTime && Date.now() - hiddenTime > 5000 && selectedConversationId) {
+          console.log('🔄 Detectado retorno de AFK, reseteando selección de conversación')
+          // Forzar un cambio de conversación para que se recargue todo
+          const currentId = selectedConversationId
+          setSelectedConversationId(null)
+          // Restaurar después de un pequeño delay para forzar recarga completa
+          setTimeout(() => {
+            setSelectedConversationId(currentId)
+          }, 100)
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [selectedConversationId])
+
   // Manejar selección de conversación
   const handleSelectConversation = (id: string, event?: React.MouseEvent) => {
     if (event) {
       event.preventDefault()
       event.stopPropagation()
     }
-    setSelectedConversationId(id)
-    if (isFirstSelection) {
-      setIsFirstSelection(false)
+    
+    // Si es la misma conversación, no hacer nada (evita recargas innecesarias)
+    if (id === selectedConversationId) {
+      return
     }
-    // Prevenir scroll de la página principal
-    if (window.scrollY > 0) {
-      window.scrollTo({ top: 0, behavior: 'instant' })
-    }
+    
+    // Forzar reset completo cambiando primero a null y luego al nuevo ID
+    // Esto asegura que el hook useMessages se reinicie completamente
+    setSelectedConversationId(null)
+    
+    // Usar requestAnimationFrame para asegurar que el DOM se actualice
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        setSelectedConversationId(id)
+        if (isFirstSelection) {
+          setIsFirstSelection(false)
+        }
+        // Prevenir scroll de la página principal
+        if (window.scrollY > 0) {
+          window.scrollTo({ top: 0, behavior: 'instant' })
+        }
+      }, 50)
+    })
   }
 
   // Encontrar la conversación seleccionada

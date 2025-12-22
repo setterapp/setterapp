@@ -23,7 +23,7 @@ export function useMessages(conversationId: string | null) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchMessages = async () => {
+  const fetchMessages = async (): Promise<void> => {
     if (!conversationId) {
       setMessages([])
       setLoading(false)
@@ -31,12 +31,18 @@ export function useMessages(conversationId: string | null) {
     }
 
     try {
-      setLoading(true)
+      // Verificar sesión antes de hacer la petición
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !session) {
+        throw new Error('Sesión expirada. Por favor, recarga la página.')
+      }
 
-      // Timeout de 10 segundos
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout al cargar mensajes')), 10000)
-      )
+      // Timeout de 15 segundos (aumentado para conexiones lentas)
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Timeout al cargar mensajes. Verifica tu conexión.'))
+        }, 15000)
+      })
 
       const fetchPromise = supabase
         .from('messages')
@@ -44,7 +50,10 @@ export function useMessages(conversationId: string | null) {
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
 
-      const { data, error: fetchError } = await Promise.race([fetchPromise, timeoutPromise]) as any
+      const { data, error: fetchError } = await Promise.race([
+        fetchPromise,
+        timeoutPromise
+      ]) as { data: Message[] | null; error: any }
 
       if (fetchError) throw fetchError
 
@@ -54,8 +63,6 @@ export function useMessages(conversationId: string | null) {
       console.error('Error fetching messages:', err)
       setError(err.message || 'Error cargando mensajes')
       setMessages([])
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -90,25 +97,57 @@ export function useMessages(conversationId: string | null) {
 
     // Fetch inicial
     const loadMessages = async () => {
-      await fetchMessages()
-      await markAsRead()
+      try {
+        await fetchMessages()
+        await markAsRead()
+      } catch (err) {
+        console.error('Error loading messages:', err)
+      } finally {
+        // Asegurar que el loading se desactive después de intentar cargar
+        setLoading(false)
+      }
     }
 
     loadMessages()
 
-    // Detectar AFK y forzar recarga cuando vuelves
+    // Detectar AFK y forzar recarga de mensajes cuando vuelves (sin recargar página)
     let hiddenTime: number | null = null
+    let isCurrentlyLoading = false
 
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.hidden) {
         // Guardar cuando se oculta
         hiddenTime = Date.now()
       } else {
-        // Cuando vuelve visible
-        if (hiddenTime && Date.now() - hiddenTime > 10000) {
-          // Estuvo oculto más de 10 segundos - recargar página
-          console.log('Recargando página después de AFK')
-          window.location.reload()
+        // Cuando vuelve visible después de estar oculto
+        if (hiddenTime && Date.now() - hiddenTime > 5000) {
+          // Estuvo oculto más de 5 segundos - recargar mensajes
+          console.log('🔄 Recargando mensajes después de AFK')
+          
+          // Verificar que no estemos ya cargando
+          if (!isCurrentlyLoading) {
+            isCurrentlyLoading = true
+            setLoading(true)
+            setError(null)
+            
+            try {
+              // Verificar sesión antes de recargar
+              const { data: { session } } = await supabase.auth.getSession()
+              if (session) {
+                await fetchMessages()
+                await markAsRead()
+              } else {
+                console.warn('⚠️ No hay sesión activa, no se pueden cargar mensajes')
+                setError('Sesión expirada. Por favor, recarga la página.')
+              }
+            } catch (err: any) {
+              console.error('Error recargando mensajes después de AFK:', err)
+              setError(err.message || 'Error al recargar mensajes')
+            } finally {
+              setLoading(false)
+              isCurrentlyLoading = false
+            }
+          }
         }
       }
     }
@@ -118,68 +157,96 @@ export function useMessages(conversationId: string | null) {
     // Suscribirse a cambios en tiempo real (no bloquea el fetch)
     let channel: ReturnType<typeof supabase.channel> | null = null
 
-    try {
-      channel = supabase
-        .channel(`messages_changes_${conversationId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'messages',
-            filter: `conversation_id=eq.${conversationId}`
-          },
-          (payload) => {
-            console.log('🔄 Realtime update en mensajes:', payload.eventType)
+    const setupRealtime = async () => {
+      // Limpiar canal anterior si existe
+      if (channel) {
+        try {
+          await supabase.removeChannel(channel)
+        } catch (error) {
+          console.error('Error removing previous channel:', error)
+        }
+      }
 
-            if (payload.eventType === 'INSERT') {
-              // Agregar nuevo mensaje sin recargar todo
-              const newMessage = payload.new as Message
-              setMessages(prev => {
-                // Evitar duplicados
-                if (prev.find(m => m.id === newMessage.id)) {
-                  return prev
-                }
-                // Agregar al final y ordenar por created_at
-                const updated = [...prev, newMessage]
-                return updated.sort((a, b) => {
-                  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-                })
-              })
-            } else if (payload.eventType === 'UPDATE') {
-              // Actualizar mensaje existente
-              const updatedMessage = payload.new as Message
-              setMessages(prev => {
-                const index = prev.findIndex(m => m.id === updatedMessage.id)
-                if (index === -1) {
-                  // Si no existe, agregarlo
-                  const updated = [...prev, updatedMessage]
+      try {
+        channel = supabase
+          .channel(`messages_changes_${conversationId}_${Date.now()}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'messages',
+              filter: `conversation_id=eq.${conversationId}`
+            },
+            (payload) => {
+              console.log('🔄 Realtime update en mensajes:', payload.eventType)
+
+              if (payload.eventType === 'INSERT') {
+                // Agregar nuevo mensaje sin recargar todo
+                const newMessage = payload.new as Message
+                setMessages(prev => {
+                  // Evitar duplicados
+                  if (prev.find(m => m.id === newMessage.id)) {
+                    return prev
+                  }
+                  // Agregar al final y ordenar por created_at
+                  const updated = [...prev, newMessage]
                   return updated.sort((a, b) => {
                     return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
                   })
-                }
-                // Actualizar
-                const updated = [...prev]
-                updated[index] = updatedMessage
-                return updated
-              })
-            } else if (payload.eventType === 'DELETE') {
-              // Eliminar mensaje
-              const deletedId = payload.old.id
-              setMessages(prev => prev.filter(m => m.id !== deletedId))
+                })
+              } else if (payload.eventType === 'UPDATE') {
+                // Actualizar mensaje existente
+                const updatedMessage = payload.new as Message
+                setMessages(prev => {
+                  const index = prev.findIndex(m => m.id === updatedMessage.id)
+                  if (index === -1) {
+                    // Si no existe, agregarlo
+                    const updated = [...prev, updatedMessage]
+                    return updated.sort((a, b) => {
+                      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                    })
+                  }
+                  // Actualizar
+                  const updated = [...prev]
+                  updated[index] = updatedMessage
+                  return updated
+                })
+              } else if (payload.eventType === 'DELETE') {
+                // Eliminar mensaje
+                const deletedId = payload.old.id
+                setMessages(prev => prev.filter(m => m.id !== deletedId))
+              }
             }
-          }
-        )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('✅ Suscrito a cambios de mensajes en tiempo real para conversación:', conversationId)
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('❌ Error en suscripción de mensajes (no afecta carga inicial)')
-          }
-        })
-    } catch (error) {
-      console.error('❌ Error creando canal de mensajes (no afecta carga inicial):', error)
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('✅ Suscrito a cambios de mensajes en tiempo real para conversación:', conversationId)
+            } else if (status === 'CHANNEL_ERROR') {
+              console.error('❌ Error en suscripción de mensajes')
+              // Intentar reconectar después de un delay
+              setTimeout(() => {
+                setupRealtime()
+              }, 2000)
+            } else if (status === 'TIMED_OUT') {
+              console.warn('⚠️ Timeout en suscripción de mensajes, reintentando...')
+              setTimeout(() => {
+                setupRealtime()
+              }, 2000)
+            } else if (status === 'CLOSED') {
+              console.log('ℹ️ Canal de mensajes cerrado')
+            }
+          })
+      } catch (error) {
+        console.error('❌ Error creando canal de mensajes:', error)
+        // Reintentar después de un delay
+        setTimeout(() => {
+          setupRealtime()
+        }, 2000)
+      }
     }
+
+    setupRealtime()
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
