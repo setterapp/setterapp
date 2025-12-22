@@ -364,7 +364,8 @@ input, textarea, select {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  background: var(--color-bg-secondary);
+  /* Fondo azul (mismo tono que el "seleccionado" de botones, un poco más oscuro) */
+  background: var(--color-primary-hover);
   min-height: 0;
 }
 
