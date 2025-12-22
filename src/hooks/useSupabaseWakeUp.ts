@@ -46,19 +46,23 @@ export const useSupabaseWakeUp = () => {
         }
 
         const healthCheck = async () => {
-          // Este ping intenta detectar el “zombie state” (fetch/socket/auth colgado)
-          const { data: { user }, error: userError } = await supabase.auth.getUser()
-          if (userError) return { ok: false, error: userError }
-          if (!user) return { ok: true, skipped: true }
+          try {
+            // Este ping intenta detectar el “zombie state” (fetch/socket/auth colgado)
+            const { data: { user }, error: userError } = await supabase.auth.getUser()
+            if (userError) return { ok: false, error: userError }
+            if (!user) return { ok: true, skipped: true }
 
-          const { error: pingError } = await supabase
-            .from('conversations')
-            .select('id', { head: true, count: 'exact' })
-            .eq('user_id', user.id)
-            .limit(1)
+            const { error: pingError } = await supabase
+              .from('conversations')
+              .select('id', { head: true, count: 'exact' })
+              .eq('user_id', user.id)
+              .limit(1)
 
-          if (pingError) return { ok: false, error: pingError }
-          return { ok: true }
+            if (pingError) return { ok: false, error: pingError }
+            return { ok: true }
+          } catch (e) {
+            return { ok: false, error: e }
+          }
         }
 
         // 1) Re-abrir realtime si el browser lo durmió

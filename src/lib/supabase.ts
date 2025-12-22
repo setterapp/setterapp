@@ -7,6 +7,28 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env file.')
 }
 
+const DEFAULT_FETCH_TIMEOUT_MS = 15000
+
+function createTimedFetch(timeoutMs: number): typeof fetch {
+  return async (input: RequestInfo | URL, init?: RequestInit) => {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+    // Encadenar abort externo si llega un signal
+    const externalSignal = init?.signal
+    if (externalSignal) {
+      if (externalSignal.aborted) controller.abort()
+      else externalSignal.addEventListener('abort', () => controller.abort(), { once: true })
+    }
+
+    try {
+      return await fetch(input, { ...(init ?? {}), signal: controller.signal })
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  }
+}
+
 const clientOptions = {
   realtime: {
     params: {
@@ -22,7 +44,11 @@ const clientOptions = {
     autoRefreshToken: true,
     detectSessionInUrl: true,
   },
-} as const
+  global: {
+    // Evita requests colgados (causa típica del “se queda cargando” sin errores)
+    fetch: createTimedFetch(DEFAULT_FETCH_TIMEOUT_MS),
+  },
+}
 
 function createSupabaseClient(): SupabaseClient {
   return createClient(supabaseUrl, supabaseAnonKey, clientOptions)
