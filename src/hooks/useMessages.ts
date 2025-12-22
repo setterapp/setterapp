@@ -32,6 +32,7 @@ export function useMessages(conversationId: string | null) {
     }
 
     try {
+      console.log('🔍 fetchMessages INICIO para:', conversationId, 'useCache:', useCache)
       setLoading(true)
 
       // Intentar obtener del caché primero
@@ -49,11 +50,14 @@ export function useMessages(conversationId: string | null) {
         }
       }
 
+      console.log('🌐 Haciendo fetch de Supabase para:', conversationId)
       const { data, error: fetchError } = await supabase
         .from('messages')
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
+
+      console.log('✅ Fetch completado para:', conversationId, 'mensajes:', data?.length || 0)
 
       if (fetchError) throw fetchError
 
@@ -64,9 +68,10 @@ export function useMessages(conversationId: string | null) {
       // Guardar en caché (1 minuto - los mensajes cambian frecuentemente)
       cacheService.set(cacheKey, messagesData, 1 * 60 * 1000)
     } catch (err: any) {
+      console.error('❌ Error fetching messages:', err)
       setError(err.message)
-      console.error('Error fetching messages:', err)
     } finally {
+      console.log('🏁 fetchMessages FIN para:', conversationId, 'loading=false')
       setLoading(false)
     }
   }
