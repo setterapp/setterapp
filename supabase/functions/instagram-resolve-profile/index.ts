@@ -18,6 +18,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
 };
 
+class TokenInvalidError extends Error {
+  constructor(message: string = 'Token invalid or expired') {
+    super(message);
+    this.name = 'TokenInvalidError';
+  }
+}
+
 async function getAuthedUserId(req: Request): Promise<string | null> {
   const authHeader = req.headers.get('Authorization') || '';
   if (!authHeader.toLowerCase().startsWith('bearer ')) return null;
@@ -30,6 +37,25 @@ async function getAuthedUserId(req: Request): Promise<string | null> {
   const { data, error } = await supabaseAuth.auth.getUser();
   if (error) return null;
   return data.user?.id ?? null;
+}
+
+async function refreshInstagramLongLivedToken(accessToken: string): Promise<{ access_token: string; expires_in?: number; token_type?: string } | null> {
+  try {
+    const res = await fetch(
+      `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(accessToken)}`,
+      { method: 'GET' }
+    );
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || data.error) return null;
+    if (!data.access_token) return null;
+    return {
+      access_token: data.access_token,
+      expires_in: typeof data.expires_in === 'number' ? data.expires_in : undefined,
+      token_type: typeof data.token_type === 'string' ? data.token_type : undefined,
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function getInstagramUserProfile(params: {
@@ -54,12 +80,12 @@ async function getInstagramUserProfile(params: {
           profile_picture: data.profile_pic ?? null,
         };
       }
-      if (data?.error?.code === 190 || data?.error?.code === '190') return null;
+      if (data?.error?.code === 190 || data?.error?.code === '190') throw new TokenInvalidError();
     } else {
       const text = await direct.text();
       try {
         const parsed = JSON.parse(text);
-        if (parsed?.error?.code === 190 || parsed?.error?.code === '190') return null;
+        if (parsed?.error?.code === 190 || parsed?.error?.code === '190') throw new TokenInvalidError();
       } catch {
         // ignore
       }
@@ -97,7 +123,7 @@ async function getInstagramUserProfile(params: {
               profile_picture: pData.profile_pic ?? participant.profile_pic ?? null,
             };
           }
-          if (pData?.error?.code === 190 || pData?.error?.code === '190') return null;
+          if (pData?.error?.code === 190 || pData?.error?.code === '190') throw new TokenInvalidError();
         }
       } catch {
         // ignore
@@ -210,14 +236,55 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  const profile = await getInstagramUserProfile({
-    accessToken,
-    instagramBusinessAccountId,
-    senderId,
-  });
+  let tokenToUse = accessToken as string;
+  let profile: { name?: string | null; username?: string | null; profile_picture?: string | null } | null = null;
+  let tokenWasRefreshed = false;
+  let tokenInvalid = false;
+
+  try {
+    profile = await getInstagramUserProfile({
+      accessToken: tokenToUse,
+      instagramBusinessAccountId,
+      senderId,
+    });
+  } catch (e: any) {
+    if (e?.name === 'TokenInvalidError') {
+      tokenInvalid = true;
+      const refreshed = await refreshInstagramLongLivedToken(tokenToUse);
+      if (refreshed?.access_token) {
+        tokenWasRefreshed = true;
+        tokenToUse = refreshed.access_token;
+        // Persistimos el token refrescado para próximas llamadas
+        await supabaseService
+          .from('integrations')
+          .update({
+            config: {
+              ...(integration?.config || {}),
+              access_token: refreshed.access_token,
+              expires_at: refreshed.expires_in ? (Math.floor(Date.now() / 1000) + refreshed.expires_in) : (integration?.config?.expires_at ?? null),
+              token_type: refreshed.token_type ?? (integration?.config?.token_type ?? null),
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('type', 'instagram')
+          .eq('user_id', userId);
+
+        try {
+          profile = await getInstagramUserProfile({
+            accessToken: tokenToUse,
+            instagramBusinessAccountId,
+            senderId,
+          });
+          tokenInvalid = false;
+        } catch (e2: any) {
+          if (e2?.name === 'TokenInvalidError') tokenInvalid = true;
+        }
+      }
+    }
+  }
 
   if (!profile || (!profile.username && !profile.name)) {
-    return new Response(JSON.stringify({ ok: false, updated: false }), {
+    return new Response(JSON.stringify({ ok: false, updated: false, needs_reconnect: tokenInvalid, token_refreshed: tokenWasRefreshed }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
