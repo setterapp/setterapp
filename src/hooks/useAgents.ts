@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase, resetSupabaseClient } from '../lib/supabase'
+import { supabaseRest } from '../utils/supabaseRest'
+import { dbg } from '../utils/debug'
 
 export interface AgentConfig {
   assistantName?: string
@@ -48,11 +50,48 @@ export function useAgents() {
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await supabase
+      const queryPromise = supabase
         .from('agents')
         .select('*')
         .order('created_at', { ascending: false })
         .abortSignal(controller.signal)
+
+      const result = await Promise.race([
+        queryPromise,
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('supabase-js timeout (pre-fetch hang)')), 1000)),
+      ]).catch(async (e) => {
+        dbg('warn', 'useAgents fallback REST', e)
+        const fallbackController = new AbortController()
+        const fallbackTimeoutId = window.setTimeout(() => fallbackController.abort(), 8000)
+        try {
+          let accessToken: string | null = null
+          try {
+            const authData = localStorage.getItem('supabase.auth.token')
+            if (authData) {
+              const parsed = JSON.parse(authData)
+              accessToken = parsed?.access_token ??
+                           parsed?.currentSession?.access_token ??
+                           parsed?.data?.session?.access_token ??
+                           null
+            }
+          } catch {
+            // Si falla, usaremos solo el ANON_KEY
+          }
+          const rows = await supabaseRest<any[]>(
+            `/rest/v1/agents?select=*&order=created_at.desc`,
+            { accessToken, signal: fallbackController.signal }
+          )
+          dbg('log', 'fallback REST success (agents)', { count: rows.length })
+          return { data: rows, error: null }
+        } catch (fallbackErr) {
+          dbg('error', 'fallback REST failed (agents)', fallbackErr)
+          throw fallbackErr
+        } finally {
+          window.clearTimeout(fallbackTimeoutId)
+        }
+      })
+
+      const { data, error: fetchError } = result as any
       if (fetchError) throw fetchError
       if (fetchAbortRef.current !== controller) return
       setAgents(data || [])

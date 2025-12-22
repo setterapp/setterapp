@@ -48,7 +48,7 @@ export function useConversations() {
 
       const result = await Promise.race([
         queryPromise,
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('supabase-js timeout (pre-fetch hang)')), 2500)),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('supabase-js timeout (pre-fetch hang)')), 1000)),
       ]).catch(async (e) => {
         dbg('warn', 'useConversations fallback REST', e)
         // Crear nuevo AbortController para el fallback (el anterior puede estar abortado)

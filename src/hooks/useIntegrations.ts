@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase, resetSupabaseClient } from '../lib/supabase'
+import { supabaseRest } from '../utils/supabaseRest'
+import { dbg } from '../utils/debug'
 
 export interface Integration {
   id: string
@@ -81,23 +83,56 @@ export function useIntegrations() {
       const controller = new AbortController()
       const timeoutId = window.setTimeout(() => controller.abort(), 12000)
 
-      let data: any[] | null = null
-      let fetchError: any = null
+      const queryPromise = supabase
+        .from('integrations')
+        .select('*')
+        .eq('user_id', user.id)
+        .neq('type', 'google-calendar')
+        .order('created_at', { ascending: true })
+        .abortSignal(controller.signal)
+
+      let result: any
       try {
-        const res = await supabase
-          .from('integrations')
-          .select('*')
-          .eq('user_id', user.id)
-          .neq('type', 'google-calendar')
-          .order('created_at', { ascending: true })
-          .abortSignal(controller.signal)
-        data = res.data
-        fetchError = res.error
-      } catch (e) {
-        fetchError = e
+        result = await Promise.race([
+          queryPromise,
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('supabase-js timeout (pre-fetch hang)')), 1000)),
+        ]).catch(async (e) => {
+          dbg('warn', 'useIntegrations fallback REST', e)
+          const fallbackController = new AbortController()
+          const fallbackTimeoutId = window.setTimeout(() => fallbackController.abort(), 8000)
+          try {
+            let accessToken: string | null = null
+            try {
+              const authData = localStorage.getItem('supabase.auth.token')
+              if (authData) {
+                const parsed = JSON.parse(authData)
+                accessToken = parsed?.access_token ??
+                             parsed?.currentSession?.access_token ??
+                             parsed?.data?.session?.access_token ??
+                             null
+              }
+            } catch {
+              // Si falla, usaremos solo el ANON_KEY
+            }
+            const rows = await supabaseRest<any[]>(
+              `/rest/v1/integrations?select=*&user_id=eq.${user.id}&type=neq.google-calendar&order=created_at.asc`,
+              { accessToken, signal: fallbackController.signal }
+            )
+            dbg('log', 'fallback REST success (integrations)', { count: rows.length })
+            return { data: rows, error: null }
+          } catch (fallbackErr) {
+            dbg('error', 'fallback REST failed (integrations)', fallbackErr)
+            throw fallbackErr
+          } finally {
+            window.clearTimeout(fallbackTimeoutId)
+          }
+        })
       } finally {
         window.clearTimeout(timeoutId)
       }
+
+      const data: any[] | null = result.data
+      const fetchError: any = result.error
 
       if (fetchError) throw fetchError
 
