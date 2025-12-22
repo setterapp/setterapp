@@ -372,8 +372,8 @@ function Integrations() {
 
                 {/* Right: Controls */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                  {/* Webhook Debug (solo Instagram, modo opt-in) */}
-                  {integration.type === 'instagram' && isConnected && (
+                  {/* Webhook Debug (Instagram/Messenger, modo opt-in) */}
+                  {(integration.type === 'instagram' || integration.type === 'messenger') && isConnected && (
                     <button
                       onClick={() => toggleWebhookDebug(integration.id, !webhookDebugEnabled)}
                       style={{

@@ -55,6 +55,34 @@ Deno.serve(async (req: Request) => {
       if (body.object === 'page') {
         for (const entry of body.entry || []) {
           const pageId = String(entry.id || '');
+          // Debug opt-in: store full entry payload (best-effort)
+          try {
+            const userId = await getUserIdFromPageId(pageId);
+            if (userId) {
+              const { data: dbgIntegration } = await supabase
+                .from('integrations')
+                .select('config')
+                .eq('type', 'messenger')
+                .eq('user_id', userId)
+                .eq('status', 'connected')
+                .single();
+              const debugEnabled = Boolean(dbgIntegration?.config?.debug_webhooks);
+              if (debugEnabled) {
+                await supabase
+                  .from('webhook_debug_events')
+                  .insert({
+                    user_id: userId,
+                    platform: 'messenger',
+                    payload: {
+                      pageId,
+                      entry,
+                    },
+                  });
+              }
+            }
+          } catch {
+            // ignore debug failures
+          }
           const events = Array.isArray(entry.messaging) ? entry.messaging : [];
           for (const event of events) {
             await processMessengerEvent(event, pageId);
