@@ -222,14 +222,6 @@ function Integrations() {
 
   async function handleMessengerManualConfig(integrationId: string) {
     try {
-      const pageId = window.prompt('Facebook Page ID (requerido)', '')
-      if (pageId === null) return
-      const trimmedPageId = pageId.trim()
-      if (!trimmedPageId) {
-        alert('Page ID es requerido')
-        return
-      }
-
       const pageAccessToken = window.prompt('Facebook Page Access Token (requerido)', '')
       if (pageAccessToken === null) return
       const trimmedToken = pageAccessToken.trim()
@@ -238,11 +230,41 @@ function Integrations() {
         return
       }
 
+      // Intentar detectar automáticamente Page ID + name desde el token (Page access token => /me devuelve la Page)
+      let inferredPageId: string | null = null
+      let inferredPageName: string | null = null
+      try {
+        const res = await fetch(
+          `https://graph.facebook.com/v24.0/me?fields=id,name&access_token=${encodeURIComponent(trimmedToken)}`
+        )
+        const data = await res.json().catch(() => null)
+        if (res.ok && data && !data.error && data.id) {
+          inferredPageId = String(data.id)
+          inferredPageName = data.name ? String(data.name) : null
+        }
+      } catch {
+        // ignore
+      }
+
+      // Si no pudimos inferir el Page ID, pedirlo manualmente
+      let finalPageId = inferredPageId
+      if (!finalPageId) {
+        const pageId = window.prompt('Facebook Page ID (requerido)', '')
+        if (pageId === null) return
+        const trimmedPageId = pageId.trim()
+        if (!trimmedPageId) {
+          alert('Page ID es requerido')
+          return
+        }
+        finalPageId = trimmedPageId
+      }
+
       await updateIntegration(integrationId, {
         status: 'connected',
         config: {
-          page_id: trimmedPageId,
+          page_id: finalPageId,
           page_access_token: trimmedToken,
+          ...(inferredPageName ? { page_name: inferredPageName } : {}),
         }
       } as any)
       await refetch()
