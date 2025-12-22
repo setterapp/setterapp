@@ -60,6 +60,7 @@ function AuthCallback() {
 
                 // Si es WhatsApp, obtener información de la cuenta de WhatsApp Business
                 let config: Record<string, any> = {}
+                let canMarkConnected = true
                 if (integrationType === 'whatsapp') {
                   try {
                     const { whatsappService } = await import('../services/facebook/whatsapp')
@@ -112,12 +113,17 @@ Asegúrate de:
                       page_access_token: pageInfo.pageAccessToken,
                       page_name: pageInfo.pageName,
                     }
+                    // Messenger requiere Page token para funcionar (webhook + perfil + send API)
+                    canMarkConnected = true
                   } catch (msError: any) {
-                    alert(`No se pudo conectar Messenger: ${msError.message || 'Error desconocido'}.
+                    canMarkConnected = false
+                    alert(`No se pudo conectar Messenger automáticamente: ${msError.message || 'Error desconocido'}.
 
 Asegúrate de:
-1. Tener una Página de Facebook
-2. Haber otorgado permisos de Pages + Messenger (pages_messaging, pages_manage_metadata)`)
+1. Tener una Página de Facebook (y ser admin)
+2. Haber otorgado permisos de Pages + Messenger (pages_show_list, pages_messaging, pages_manage_metadata)
+
+Tip: puedes configurarlo manualmente desde Integraciones pegando Page ID + Page Access Token.`)
                   }
                 }
 
@@ -125,8 +131,8 @@ Asegúrate de:
                 const { error: updateError } = await supabase
                   .from('integrations')
                   .update({
-                    status: 'connected',
-                    connected_at: new Date().toISOString(),
+                    status: canMarkConnected ? 'connected' : 'disconnected',
+                    connected_at: canMarkConnected ? new Date().toISOString() : null,
                     // Merge para no pisar flags (p.ej. debug_webhooks)
                     config: Object.keys(config).length > 0 ? { ...(integration.config || {}), ...config } : undefined
                   })

@@ -220,6 +220,39 @@ function Integrations() {
     }
   }
 
+  async function handleMessengerManualConfig(integrationId: string) {
+    try {
+      const pageId = window.prompt('Facebook Page ID (requerido)', '')
+      if (pageId === null) return
+      const trimmedPageId = pageId.trim()
+      if (!trimmedPageId) {
+        alert('Page ID es requerido')
+        return
+      }
+
+      const pageAccessToken = window.prompt('Facebook Page Access Token (requerido)', '')
+      if (pageAccessToken === null) return
+      const trimmedToken = pageAccessToken.trim()
+      if (!trimmedToken) {
+        alert('Page Access Token es requerido')
+        return
+      }
+
+      await updateIntegration(integrationId, {
+        status: 'connected',
+        config: {
+          page_id: trimmedPageId,
+          page_access_token: trimmedToken,
+        }
+      } as any)
+      await refetch()
+      alert('✅ Messenger configurado. Ahora configura el Webhook en Meta Developers para empezar a recibir mensajes.')
+    } catch (e: any) {
+      alert(`No se pudo guardar la configuración: ${e?.message || 'Error desconocido'}`)
+      await refetch()
+    }
+  }
+
 
 
   return (
@@ -427,36 +460,71 @@ function Integrations() {
                             Desconectar
                           </button>
                         ) : (
-                          <button
-                            onClick={() => {
-                              // WhatsApp e Instagram usan OAuth automático, no modal de tokens
-                              handleToggle(integration.id, integration.type, true)
-                              setOpenMenuId(null)
-                            }}
-                            style={{
-                              width: '100%',
-                              textAlign: 'left',
-                              padding: 'var(--spacing-sm)',
-                              background: 'transparent',
-                              border: 'none',
-                              cursor: 'pointer',
-                              fontSize: 'var(--font-size-sm)',
-                              color: 'var(--color-text)',
-                              borderRadius: 'var(--border-radius-sm)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 'var(--spacing-sm)',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'var(--color-bg-secondary)'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'transparent'
-                            }}
-                          >
-                            <Check size={16} />
-                            Conectar
-                          </button>
+                          <>
+                            <button
+                              onClick={() => {
+                                // WhatsApp / Instagram / Messenger usan OAuth automático
+                                handleToggle(integration.id, integration.type, true)
+                                setOpenMenuId(null)
+                              }}
+                              style={{
+                                width: '100%',
+                                textAlign: 'left',
+                                padding: 'var(--spacing-sm)',
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: 'var(--font-size-sm)',
+                                color: 'var(--color-text)',
+                                borderRadius: 'var(--border-radius-sm)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 'var(--spacing-sm)',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'var(--color-bg-secondary)'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent'
+                              }}
+                            >
+                              <Check size={16} />
+                              Conectar
+                            </button>
+                            {/* Fallback manual para Messenger (útil si Facebook OAuth no devuelve Page tokens/scopes) */}
+                            {integration.type === 'messenger' && (
+                              <button
+                                onClick={() => {
+                                  handleMessengerManualConfig(integration.id)
+                                  setOpenMenuId(null)
+                                }}
+                                style={{
+                                  width: '100%',
+                                  textAlign: 'left',
+                                  padding: 'var(--spacing-sm)',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontSize: 'var(--font-size-sm)',
+                                  color: 'var(--color-text)',
+                                  borderRadius: 'var(--border-radius-sm)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 'var(--spacing-sm)',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'var(--color-bg-secondary)'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent'
+                                }}
+                                title="Configura Page ID + Page Access Token manualmente"
+                              >
+                                <Check size={16} />
+                                Configurar manualmente
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     )}
