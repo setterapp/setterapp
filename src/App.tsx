@@ -17,6 +17,7 @@ import InstagramCallback from './pages/InstagramCallback'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import Logo from './components/Logo'
+import { useSupabaseWakeUp } from './hooks/useSupabaseWakeUp'
 import './App.css'
 
 function Layout() {
@@ -24,6 +25,9 @@ function Layout() {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [pressedButton, setPressedButton] = useState<string | null>(null)
+
+  // Hook global para "despertar" Supabase cuando el usuario vuelve a la pestaña
+  useSupabaseWakeUp()
 
   const navItems = [
     { path: '/analytics', label: t('navigation.analytics'), icon: BarChart3 },

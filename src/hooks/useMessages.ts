@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 export interface Message {
@@ -22,6 +22,7 @@ export function useMessages(conversationId: string | null) {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   const fetchMessages = async () => {
     if (!conversationId) {
@@ -77,58 +78,89 @@ export function useMessages(conversationId: string | null) {
     fetchMessages()
     markAsRead()
 
-    let channel: ReturnType<typeof supabase.channel> | null = null
+    const subscribeToMessages = () => {
+      // Si ya existe un canal, lo limpiamos antes de crear uno nuevo
+      if (channelRef.current) {
+        try {
+          supabase.removeChannel(channelRef.current)
+        } catch (error) {
+          console.error('Error removiendo canal anterior:', error)
+        }
+      }
 
-    try {
-      channel = supabase
-        .channel(`messages_changes_${conversationId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'messages',
-            filter: `conversation_id=eq.${conversationId}`
-          },
-          (payload) => {
-            if (payload.eventType === 'INSERT') {
-              const newMessage = payload.new as Message
-              setMessages(prev => {
-                if (prev.find(m => m.id === newMessage.id)) return prev
-                const updated = [...prev, newMessage]
-                return updated.sort((a, b) => {
-                  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-                })
-              })
-            } else if (payload.eventType === 'UPDATE') {
-              const updatedMessage = payload.new as Message
-              setMessages(prev => {
-                const index = prev.findIndex(m => m.id === updatedMessage.id)
-                if (index === -1) {
-                  const updated = [...prev, updatedMessage]
+      try {
+        const channel = supabase
+          .channel(`messages_changes_${conversationId}_${Date.now()}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'messages',
+              filter: `conversation_id=eq.${conversationId}`
+            },
+            (payload) => {
+              if (payload.eventType === 'INSERT') {
+                const newMessage = payload.new as Message
+                setMessages(prev => {
+                  if (prev.find(m => m.id === newMessage.id)) return prev
+                  const updated = [...prev, newMessage]
                   return updated.sort((a, b) => {
                     return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
                   })
-                }
-                const updated = [...prev]
-                updated[index] = updatedMessage
-                return updated
-              })
-            } else if (payload.eventType === 'DELETE') {
-              const deletedId = payload.old.id
-              setMessages(prev => prev.filter(m => m.id !== deletedId))
+                })
+              } else if (payload.eventType === 'UPDATE') {
+                const updatedMessage = payload.new as Message
+                setMessages(prev => {
+                  const index = prev.findIndex(m => m.id === updatedMessage.id)
+                  if (index === -1) {
+                    const updated = [...prev, updatedMessage]
+                    return updated.sort((a, b) => {
+                      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                    })
+                  }
+                  const updated = [...prev]
+                  updated[index] = updatedMessage
+                  return updated
+                })
+              } else if (payload.eventType === 'DELETE') {
+                const deletedId = payload.old.id
+                setMessages(prev => prev.filter(m => m.id !== deletedId))
+              }
             }
-          }
-        )
-        .subscribe()
-    } catch (error) {
-      console.error('Error creando canal de mensajes:', error)
+          )
+          .subscribe(async (status) => {
+            console.log(`📡 Estado del canal de mensajes: ${status}`)
+
+            if (status === 'SUBSCRIBED') {
+              console.log('✅ Canal de mensajes conectado con éxito')
+            }
+
+            if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+              console.warn('⚠️ Conexión de mensajes perdida. Intentando reconectar en 2s...')
+              setTimeout(() => subscribeToMessages(), 2000)
+            }
+
+            if (status === 'TIMED_OUT') {
+              console.warn('⏱️ Timeout en canal de mensajes. Reintentando...')
+              setTimeout(() => subscribeToMessages(), 2000)
+            }
+          })
+
+        channelRef.current = channel
+      } catch (error) {
+        console.error('❌ Error creando canal de mensajes:', error)
+        // Reintentar después de un delay
+        setTimeout(() => subscribeToMessages(), 2000)
+      }
     }
 
+    subscribeToMessages()
+
     return () => {
-      if (channel) {
+      if (channelRef.current) {
         try {
-          supabase.removeChannel(channel)
+          supabase.removeChannel(channelRef.current)
         } catch (error) {
           console.error('Error removing channel:', error)
         }

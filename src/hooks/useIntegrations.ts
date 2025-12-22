@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 export interface Integration {
@@ -137,24 +137,77 @@ export function useIntegrations() {
 
     checkAuthAndFetch()
 
-    const channel = supabase
-      .channel('integrations_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'integrations' }, () => {
-        fetchIntegrations()
-      })
-      .subscribe()
+    const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+
+    const setupRealtime = async () => {
+      // Si ya existe un canal, lo limpiamos antes de crear uno nuevo
+      if (channelRef.current) {
+        try {
+          supabase.removeChannel(channelRef.current)
+        } catch (error) {
+          console.error('Error removiendo canal anterior:', error)
+        }
+      }
+
+      try {
+        const channel = supabase
+          .channel(`integrations_changes_${Date.now()}`)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'integrations' }, () => {
+            fetchIntegrations()
+          })
+          .subscribe(async (status) => {
+            console.log(`📡 Estado del canal de integraciones: ${status}`)
+
+            if (status === 'SUBSCRIBED') {
+              console.log('✅ Canal de integraciones conectado con éxito')
+            }
+
+            if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+              console.warn('⚠️ Conexión de integraciones perdida. Intentando reconectar en 2s...')
+              setTimeout(() => setupRealtime(), 2000)
+            }
+
+            if (status === 'TIMED_OUT') {
+              console.warn('⏱️ Timeout en canal de integraciones. Reintentando...')
+              setTimeout(() => setupRealtime(), 2000)
+            }
+          })
+
+        channelRef.current = channel
+      } catch (error) {
+        console.error('❌ Error creando canal de integraciones:', error)
+        setTimeout(() => setupRealtime(), 2000)
+      }
+    }
+
+    setupRealtime()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
         await fetchIntegrations()
+        await setupRealtime()
       } else {
+        if (channelRef.current) {
+          try {
+            supabase.removeChannel(channelRef.current)
+          } catch (error) {
+            console.error('Error removiendo canal:', error)
+          }
+          channelRef.current = null
+        }
         setIntegrations([])
         setLoading(false)
       }
     })
 
     return () => {
-      supabase.removeChannel(channel)
+      if (channelRef.current) {
+        try {
+          supabase.removeChannel(channelRef.current)
+        } catch (error) {
+          console.error('Error removing channel:', error)
+        }
+      }
       subscription.unsubscribe()
     }
   }, [])

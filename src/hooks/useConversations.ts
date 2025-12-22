@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 export interface Conversation {
@@ -56,67 +56,96 @@ export function useConversations() {
 
     checkAuthAndFetch()
 
-    let channel: ReturnType<typeof supabase.channel> | null = null
+    const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
     const setupRealtime = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return null
 
-      if (channel) {
-        await supabase.removeChannel(channel)
+      // Si ya existe un canal, lo limpiamos antes de crear uno nuevo
+      if (channelRef.current) {
+        try {
+          await supabase.removeChannel(channelRef.current)
+        } catch (error) {
+          console.error('Error removiendo canal anterior:', error)
+        }
       }
 
-      channel = supabase
-        .channel(`conversations_changes_${session.user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'conversations',
-            filter: `user_id=eq.${session.user.id}`
-          },
-          (payload) => {
-            if (payload.eventType === 'INSERT') {
-              const newConversation = payload.new as Conversation
-              setConversations(prev => {
-                if (prev.find(c => c.id === newConversation.id)) return prev
-                const updated = [newConversation, ...prev]
-                return updated.sort((a, b) => {
-                  const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
-                  const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
-                  return bTime - aTime
-                })
-              })
-            } else if (payload.eventType === 'UPDATE') {
-              const updatedConversation = payload.new as Conversation
-              setConversations(prev => {
-                const index = prev.findIndex(c => c.id === updatedConversation.id)
-                if (index === -1) {
-                  const updated = [updatedConversation, ...prev]
+      try {
+        const channel = supabase
+          .channel(`conversations_changes_${session.user.id}_${Date.now()}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'conversations',
+              filter: `user_id=eq.${session.user.id}`
+            },
+            (payload) => {
+              if (payload.eventType === 'INSERT') {
+                const newConversation = payload.new as Conversation
+                setConversations(prev => {
+                  if (prev.find(c => c.id === newConversation.id)) return prev
+                  const updated = [newConversation, ...prev]
                   return updated.sort((a, b) => {
                     const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
                     const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
                     return bTime - aTime
                   })
-                }
-                const updated = [...prev]
-                updated[index] = updatedConversation
-                return updated.sort((a, b) => {
-                  const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
-                  const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
-                  return bTime - aTime
                 })
-              })
-            } else if (payload.eventType === 'DELETE') {
-              const deletedId = payload.old.id
-              setConversations(prev => prev.filter(c => c.id !== deletedId))
+              } else if (payload.eventType === 'UPDATE') {
+                const updatedConversation = payload.new as Conversation
+                setConversations(prev => {
+                  const index = prev.findIndex(c => c.id === updatedConversation.id)
+                  if (index === -1) {
+                    const updated = [updatedConversation, ...prev]
+                    return updated.sort((a, b) => {
+                      const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
+                      const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
+                      return bTime - aTime
+                    })
+                  }
+                  const updated = [...prev]
+                  updated[index] = updatedConversation
+                  return updated.sort((a, b) => {
+                    const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
+                    const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
+                    return bTime - aTime
+                  })
+                })
+              } else if (payload.eventType === 'DELETE') {
+                const deletedId = payload.old.id
+                setConversations(prev => prev.filter(c => c.id !== deletedId))
+              }
             }
-          }
-        )
-        .subscribe()
+          )
+          .subscribe(async (status) => {
+            console.log(`📡 Estado del canal de conversaciones: ${status}`)
 
-      return channel
+            if (status === 'SUBSCRIBED') {
+              console.log('✅ Canal de conversaciones conectado con éxito')
+            }
+
+            if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+              console.warn('⚠️ Conexión de conversaciones perdida. Intentando reconectar en 2s...')
+              setTimeout(() => setupRealtime(), 2000)
+            }
+
+            if (status === 'TIMED_OUT') {
+              console.warn('⏱️ Timeout en canal de conversaciones. Reintentando...')
+              setTimeout(() => setupRealtime(), 2000)
+            }
+          })
+
+        channelRef.current = channel
+        return channel
+      } catch (error) {
+        console.error('❌ Error creando canal de conversaciones:', error)
+        // Reintentar después de un delay
+        setTimeout(() => setupRealtime(), 2000)
+        return null
+      }
     }
 
     setupRealtime()
@@ -126,9 +155,13 @@ export function useConversations() {
         await setupRealtime()
         await fetchConversations()
       } else {
-        if (channel) {
-          await supabase.removeChannel(channel)
-          channel = null
+        if (channelRef.current) {
+          try {
+            await supabase.removeChannel(channelRef.current)
+          } catch (error) {
+            console.error('Error removiendo canal:', error)
+          }
+          channelRef.current = null
         }
         setConversations([])
         setLoading(false)
@@ -136,8 +169,12 @@ export function useConversations() {
     })
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel)
+      if (channelRef.current) {
+        try {
+          supabase.removeChannel(channelRef.current)
+        } catch (error) {
+          console.error('Error removing channel:', error)
+        }
       }
       subscription.unsubscribe()
     }

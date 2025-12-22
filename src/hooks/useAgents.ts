@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 export interface AgentConfig {
@@ -57,8 +57,61 @@ export function useAgents() {
   }
 
   useEffect(() => {
-    let channel: any = null
+    const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
     let subscription: any = null
+
+    const setupRealtime = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      // Si ya existe un canal, lo limpiamos antes de crear uno nuevo
+      if (channelRef.current) {
+        try {
+          supabase.removeChannel(channelRef.current)
+        } catch (error) {
+          console.error('Error removiendo canal anterior:', error)
+        }
+      }
+
+      try {
+        const channel = supabase
+          .channel(`agents_changes_${session.user.id}_${Date.now()}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'agents',
+              filter: `user_id=eq.${session.user.id}`
+            },
+            () => {
+              fetchAgents()
+            }
+          )
+          .subscribe(async (status) => {
+            console.log(`📡 Estado del canal de agentes: ${status}`)
+
+            if (status === 'SUBSCRIBED') {
+              console.log('✅ Canal de agentes conectado con éxito')
+            }
+
+            if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+              console.warn('⚠️ Conexión de agentes perdida. Intentando reconectar en 2s...')
+              setTimeout(() => setupRealtime(), 2000)
+            }
+
+            if (status === 'TIMED_OUT') {
+              console.warn('⏱️ Timeout en canal de agentes. Reintentando...')
+              setTimeout(() => setupRealtime(), 2000)
+            }
+          })
+
+        channelRef.current = channel
+      } catch (error) {
+        console.error('❌ Error creando canal de agentes:', error)
+        setTimeout(() => setupRealtime(), 2000)
+      }
+    }
 
     const checkAuthAndFetch = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -68,27 +121,21 @@ export function useAgents() {
       }
 
       await fetchAgents()
-
-      channel = supabase
-        .channel('agents_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'agents',
-            filter: `user_id=eq.${session.user.id}`
-          },
-          () => {
-            fetchAgents()
-          }
-        )
-        .subscribe()
+      await setupRealtime()
 
       const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((_event, newSession) => {
         if (newSession) {
           fetchAgents()
+          setupRealtime()
         } else {
+          if (channelRef.current) {
+            try {
+              supabase.removeChannel(channelRef.current)
+            } catch (error) {
+              console.error('Error removiendo canal:', error)
+            }
+            channelRef.current = null
+          }
           setAgents([])
           setLoading(false)
         }
@@ -99,7 +146,13 @@ export function useAgents() {
     checkAuthAndFetch()
 
     return () => {
-      if (channel) supabase.removeChannel(channel)
+      if (channelRef.current) {
+        try {
+          supabase.removeChannel(channelRef.current)
+        } catch (error) {
+          console.error('Error removing channel:', error)
+        }
+      }
       if (subscription) subscription.unsubscribe()
     }
   }, [])
