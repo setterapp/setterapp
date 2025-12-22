@@ -112,11 +112,13 @@ export const useSupabaseWakeUp = () => {
         // Si está “stuck”, es indistinguible de tu síntoma (UI no dispara nada / no hay Network).
         if (timeHidden >= 2000) {
           const ping = await pingDb()
+          dbg('log', 'pingDb after resume', ping)
           if (!ping.ok) {
             console.warn('❄️ Ping a DB falló/timeout al volver. Intentando recovery...', ping.error)
             dbg('warn', 'pingDb failed; running resetSupabaseClient', ping.error)
             await resetSupabaseClient(`resume:${reason}:ping`)
             const ping2 = await pingDb()
+            dbg('log', 'pingDb after recovery', ping2)
             if (!ping2.ok) {
               // Último recurso: reload automático (equivalente al reload manual que hoy te salva)
               dbg('error', 'pingDb failed after recovery -> auto reload', ping2.error)

@@ -9,8 +9,23 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 const DEFAULT_FETCH_TIMEOUT_MS = 15000
 
+function isDebugEnabled() {
+  try {
+    return localStorage.getItem('appsetter_debug') === '1'
+  } catch {
+    return false
+  }
+}
+
 function createTimedFetch(timeoutMs: number): typeof fetch {
   return async (input: RequestInfo | URL, init?: RequestInit) => {
+    const debug = isDebugEnabled()
+    const url = typeof input === 'string'
+      ? input
+      : (input instanceof URL ? input.toString() : (input as Request).url)
+    const method = init?.method || (input instanceof Request ? input.method : 'GET')
+    const start = debug ? performance.now() : 0
+
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
@@ -22,7 +37,25 @@ function createTimedFetch(timeoutMs: number): typeof fetch {
     }
 
     try {
-      return await fetch(input, { ...(init ?? {}), signal: controller.signal })
+      if (debug) {
+        // eslint-disable-next-line no-console
+        console.log('[appsetter][fetch] ->', method, url)
+      }
+      const res = await fetch(input, { ...(init ?? {}), signal: controller.signal })
+      if (debug) {
+        const ms = Math.round(performance.now() - start)
+        // eslint-disable-next-line no-console
+        console.log('[appsetter][fetch] <-', res.status, method, url, `${ms}ms`)
+      }
+      return res
+    } catch (e: any) {
+      if (debug) {
+        const ms = Math.round(performance.now() - start)
+        const name = e?.name || 'Error'
+        // eslint-disable-next-line no-console
+        console.warn('[appsetter][fetch] !!', name, method, url, `${ms}ms`, e)
+      }
+      throw e
     } finally {
       clearTimeout(timeoutId)
     }
