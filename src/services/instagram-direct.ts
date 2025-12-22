@@ -83,8 +83,8 @@ export const instagramDirectService = {
       localStorage.setItem('instagram_oauth_user_id', currentSession.user.id)
 
       // Build Instagram OAuth URL (direct Instagram OAuth)
-      // Using Instagram's direct OAuth endpoint as provided in the setup link
-      const authUrl = new URL('https://api.instagram.com/oauth/authorize')
+      // Use instagram.com OAuth authorize (matches the URL you shared)
+      const authUrl = new URL('https://www.instagram.com/oauth/authorize')
       authUrl.searchParams.set('redirect_uri', actualRedirectUri)
       authUrl.searchParams.set('response_type', 'code')
       authUrl.searchParams.set('scope', INSTAGRAM_SCOPES.join(','))

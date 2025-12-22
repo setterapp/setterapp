@@ -92,38 +92,9 @@ function Integrations() {
 
   async function handleInstagramConnect() {
     try {
-      // Para Instagram Messaging + User Profile API necesitamos token de Page (Meta Graph),
-      // así que usamos Facebook OAuth (como WhatsApp).
-      const { supabase } = await import('../lib/supabase')
-      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !currentSession) {
-        throw new Error('Debes iniciar sesión primero antes de conectar Instagram')
-      }
-
-      const IG_SCOPES = [
-        'instagram_basic',
-        'instagram_manage_messages',
-        'pages_manage_metadata',
-        'pages_read_engagement',
-        'pages_show_list',
-      ]
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          scopes: IG_SCOPES.join(','),
-          redirectTo: `${window.location.origin}/auth/callback?redirect_to=/integrations&provider=facebook&integration=instagram`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-          skipBrowserRedirect: false,
-        }
-      })
-
-      if (error) throw error
-      if (!data.url) throw new Error('No se pudo obtener la URL de autorización de Facebook')
-      return data
+      // Volver al flujo original: login directo de Instagram (popup) + callback /auth/instagram/callback
+      // Esto usa el endpoint de Instagram OAuth y NO Facebook OAuth.
+      await instagramService.connectInstagram()
     } catch (error: any) {
       console.error('Error connecting Instagram:', error)
       alert(`Error al conectar Instagram: ${error.message || 'Error desconocido'}`)
