@@ -458,6 +458,33 @@ async function processInstagramEvent(event: any, pageId: string) {
 
       console.log('✅ Found user_id:', userId, 'for pageId:', pageId);
 
+      // Debug opt-in: guardar el payload completo del evento en DB para verlo en la consola del navegador via Realtime
+      try {
+        const { data: dbgIntegration } = await supabase
+          .from('integrations')
+          .select('config')
+          .eq('type', 'instagram')
+          .eq('user_id', userId)
+          .eq('status', 'connected')
+          .single();
+
+        const debugEnabled = Boolean(dbgIntegration?.config?.debug_webhooks);
+        if (debugEnabled) {
+          await supabase
+            .from('webhook_debug_events')
+            .insert({
+              user_id: userId,
+              platform: 'instagram',
+              payload: {
+                pageId,
+                event,
+              }
+            });
+        }
+      } catch (e) {
+        // No romper el webhook por debug
+      }
+
       // Obtener perfil del usuario de Instagram (nombre, username, foto)
       console.log('📸 Obteniendo perfil de Instagram para:', senderId);
       const userProfile = await getInstagramUserProfile(userId, senderId);

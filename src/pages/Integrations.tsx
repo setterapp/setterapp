@@ -14,6 +14,17 @@ function Integrations() {
   const { integrations, loading, error, updateIntegration, refetch } = useIntegrations()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
+  const toggleWebhookDebug = async (integrationId: string, enabled: boolean) => {
+    const integration = integrations.find(i => i.id === integrationId)
+    if (!integration) return
+    await updateIntegration(integrationId, {
+      config: {
+        ...(integration.config || {}),
+        debug_webhooks: enabled,
+      }
+    } as any)
+  }
+
 
   // Recargar datos cuando se monta el componente (útil después del callback de OAuth)
   useEffect(() => {
@@ -226,6 +237,7 @@ function Integrations() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
                 {integrations.map((integration) => {
             const isConnected = integration.status === 'connected'
+            const webhookDebugEnabled = Boolean((integration.config as any)?.debug_webhooks)
 
             return (
               <div
@@ -282,6 +294,26 @@ function Integrations() {
 
                 {/* Right: Controls */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                  {/* Webhook Debug (solo Instagram, modo opt-in) */}
+                  {integration.type === 'instagram' && isConnected && (
+                    <button
+                      onClick={() => toggleWebhookDebug(integration.id, !webhookDebugEnabled)}
+                      style={{
+                        fontSize: 'var(--font-size-xs)',
+                        fontWeight: 600,
+                        padding: '6px 10px',
+                        borderRadius: 'var(--border-radius-sm)',
+                        border: '2px solid #000',
+                        background: webhookDebugEnabled ? 'var(--color-primary)' : 'var(--color-bg)',
+                        color: '#000',
+                        cursor: 'pointer',
+                      }}
+                      title="Guarda payloads de webhooks y los envía por Realtime (solo para debug)"
+                    >
+                      {webhookDebugEnabled ? 'Debug ON' : 'Debug OFF'}
+                    </button>
+                  )}
+
                   {/* Active Label */}
                   {isConnected && (
                     <span

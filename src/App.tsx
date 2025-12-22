@@ -18,6 +18,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import Logo from './components/Logo'
 import { useSupabaseWakeUp } from './hooks/useSupabaseWakeUp'
+import { useWebhookDebug } from './hooks/useWebhookDebug'
 import './App.css'
 
 function Layout() {
@@ -28,6 +29,8 @@ function Layout() {
 
   // Hook global para "despertar" Supabase cuando el usuario vuelve a la pestaña
   useSupabaseWakeUp()
+  // Hook opcional de debug para imprimir payloads de webhooks en consola (opt-in)
+  useWebhookDebug()
 
   const navItems = [
     { path: '/analytics', label: t('navigation.analytics'), icon: BarChart3 },
