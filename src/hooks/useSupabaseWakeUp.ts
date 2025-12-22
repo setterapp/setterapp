@@ -81,9 +81,21 @@ export const useSupabaseWakeUp = () => {
 
         const healthCheck = async () => {
           try {
-            // Este ping intenta detectar el “zombie state” (fetch/socket/auth colgado)
-            const { data: { user }, error: userError } = await supabase.auth.getUser()
-            if (userError) return { ok: false, error: userError }
+            // Este ping intenta detectar el "zombie state" (fetch/socket/auth colgado)
+            // Con timeout agresivo porque puede colgarse post-resume
+            const getUserPromise = supabase.auth.getUser()
+            const userResult = await Promise.race([
+              getUserPromise,
+              new Promise<{ data: { user: null }, error: any }>((_, reject) =>
+                setTimeout(() => reject(new Error('getUser timeout in healthCheck')), 2000)
+              )
+            ]).catch((e) => {
+              dbg('warn', 'healthCheck getUser timeout, skipping', e)
+              return { data: { user: null }, error: null }
+            })
+
+            if (userResult.error) return { ok: false, error: userResult.error }
+            const user = userResult.data.user
             if (!user) return { ok: true, skipped: true }
 
             const { error: pingError } = await supabase
