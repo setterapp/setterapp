@@ -116,7 +116,8 @@ Deno.serve(async (req: Request) => {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        // Supabase client envía headers extra (p.ej. x-client-info) -> deben estar permitidos en preflight
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
       },
     });
   }
