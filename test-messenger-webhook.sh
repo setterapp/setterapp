@@ -23,10 +23,16 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 # Load local secrets (NOT committed). Create one of these files locally:
+# - .env (already gitignored in this repo)
 # - .env.messenger.local (KEY=VALUE lines)
 # - test-messenger-webhook.local.sh (exports)
 if [[ -z "${PAGE_ACCESS_TOKEN}" ]]; then
-  if [[ -f ".env.messenger.local" ]]; then
+  if [[ -f ".env" ]]; then
+    # shellcheck disable=SC1091
+    set -a
+    source ".env"
+    set +a
+  elif [[ -f ".env.messenger.local" ]]; then
     # shellcheck disable=SC1091
     set -a
     source ".env.messenger.local"
