@@ -60,12 +60,18 @@ export function useConversations() {
           let accessToken: string | null = null
           try {
             const authData = localStorage.getItem('supabase.auth.token')
+            dbg('log', 'fallback REST localStorage raw', authData ? 'exists' : 'null')
             if (authData) {
               const parsed = JSON.parse(authData)
-              accessToken = parsed?.currentSession?.access_token ?? null
+              dbg('log', 'fallback REST parsed keys', Object.keys(parsed))
+              // Intentar múltiples formatos de supabase-js
+              accessToken = parsed?.access_token ??
+                           parsed?.currentSession?.access_token ??
+                           parsed?.data?.session?.access_token ??
+                           null
             }
-          } catch {
-            // Si falla, usaremos solo el ANON_KEY
+          } catch (parseErr) {
+            dbg('error', 'fallback REST localStorage parse error', parseErr)
           }
           dbg('log', 'fallback REST accessToken', accessToken ? 'found' : 'null')
           const rows = await supabaseRest<any[]>(
