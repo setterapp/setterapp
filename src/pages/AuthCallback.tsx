@@ -96,7 +96,8 @@ function AuthCallback() {
                   .update({
                     status: 'connected',
                     connected_at: new Date().toISOString(),
-                    config: Object.keys(config).length > 0 ? config : undefined
+                    // Merge para no pisar flags (p.ej. debug_webhooks)
+                    config: Object.keys(config).length > 0 ? { ...(integration.config || {}), ...config } : undefined
                   })
                   .eq('id', integration.id)
                   .eq('user_id', session.user.id)

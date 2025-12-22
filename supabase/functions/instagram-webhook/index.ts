@@ -141,6 +141,37 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
     }
 
     const debugEnabled = Boolean(integration?.config?.debug_webhooks);
+
+    // Preferir User Profile API con Page access token (IGSID -> username/name/profile_pic)
+    const pageAccessToken = integration.config?.page_access_token;
+    if (pageAccessToken) {
+      try {
+        const res = await fetch(
+          `https://graph.facebook.com/v24.0/${senderId}?fields=name,username,profile_pic&access_token=${encodeURIComponent(pageAccessToken)}`,
+          { method: 'GET' }
+        );
+        const data = await res.json().catch(() => null);
+        if (res.ok && data && !data.error) {
+          return {
+            name: data.name || null,
+            username: data.username || null,
+            profile_picture: data.profile_pic || null,
+          };
+        }
+        if (debugEnabled && data?.error) {
+          console.warn('⚠️ User Profile API error:', {
+            message: data.error?.message,
+            code: data.error?.code,
+            subcode: data.error?.error_subcode,
+            fbtrace_id: data.error?.fbtrace_id,
+          });
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // Fallback legacy (tokens antiguos)
     const accessToken = integration.config?.access_token;
     if (!accessToken) {
       if (debugEnabled) console.warn('⚠️ No hay access token disponible para obtener perfil');
