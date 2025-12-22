@@ -84,9 +84,21 @@ function AuthCallback() {
                       instagram_business_account_id: igInfo.instagramBusinessAccountId,
                       instagram_username: igInfo.instagramUsername,
                     }
+                    console.log('✅ Instagram Page Access Token obtenido correctamente:', {
+                      page_id: igInfo.pageId,
+                      instagram_business_account_id: igInfo.instagramBusinessAccountId,
+                      instagram_username: igInfo.instagramUsername,
+                    })
                   } catch (igError: any) {
+                    console.error('❌ Error obteniendo Instagram Page Access Token:', igError.message || igError)
                     // Si no podemos obtener page token, igual dejamos la integración conectada.
                     // El usuario puede reconectar con permisos correctos luego.
+                    alert(`No se pudo conectar Instagram: ${igError.message || 'Error desconocido'}.
+
+Asegúrate de:
+1. Tener una Página de Facebook
+2. Tener una Cuenta de Instagram Business vinculada a esa Página
+3. Haber otorgado todos los permisos solicitados`)
                   }
                 }
 

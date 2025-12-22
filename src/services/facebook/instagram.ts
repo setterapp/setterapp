@@ -173,16 +173,31 @@ export const instagramService = {
     )
 
     if (!res.ok) {
-      throw new Error('No se pudieron obtener páginas de Facebook (Graph)')
+      const errorData = await res.json().catch(() => null)
+      console.error('❌ Graph API error:', errorData)
+      throw new Error(`No se pudieron obtener páginas de Facebook: ${errorData?.error?.message || res.statusText}`)
     }
 
     const data = await res.json()
     const pages = Array.isArray(data?.data) ? data.data : []
+
+    console.log('📄 Páginas encontradas:', pages.length)
+    if (pages.length === 0) {
+      throw new Error('No tienes páginas de Facebook. Crea una página en facebook.com/pages/create')
+    }
+
     const page = pages.find((p: any) => p?.instagram_business_account?.id && p?.access_token)
 
     if (!page) {
-      throw new Error('No se encontró una Página con Instagram Business conectado (o falta access_token de página).')
+      const pageNames = pages.map((p: any) => p?.name || 'Sin nombre').join(', ')
+      throw new Error(`Ninguna de tus ${pages.length} página(s) de Facebook [${pageNames}] tiene una Cuenta de Instagram Business vinculada. Ve a la configuración de tu página en Facebook para vincular tu cuenta de Instagram Business.`)
     }
+
+    console.log('✅ Página con Instagram encontrada:', {
+      page_name: page.name,
+      page_id: page.id,
+      instagram_username: page.instagram_business_account.username
+    })
 
     return {
       pageId: page.id as string,
