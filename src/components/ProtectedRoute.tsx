@@ -26,7 +26,20 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
       setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    const handleResume = () => {
+      // Revalidar sesión al volver (si auth se queda zombie, esto ayuda a destrabar UI)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setUser(session?.user ?? null)
+        setLoading(false)
+      })
+    }
+
+    window.addEventListener('appsetter:supabase-resume', handleResume as EventListener)
+
+    return () => {
+      window.removeEventListener('appsetter:supabase-resume', handleResume as EventListener)
+      subscription.unsubscribe()
+    }
   }, [])
 
   if (loading) {

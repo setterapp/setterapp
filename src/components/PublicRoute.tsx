@@ -30,7 +30,19 @@ function PublicRoute({ children }: PublicRouteProps) {
       setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    const handleResume = () => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setUser(session?.user ?? null)
+        setLoading(false)
+      })
+    }
+
+    window.addEventListener('appsetter:supabase-resume', handleResume as EventListener)
+
+    return () => {
+      window.removeEventListener('appsetter:supabase-resume', handleResume as EventListener)
+      subscription.unsubscribe()
+    }
   }, [])
 
   if (loading) {

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, resetSupabaseClient } from '../lib/supabase'
 
 /**
  * Hook global para "despertar" Supabase cuando el usuario vuelve a la pestaña
@@ -23,6 +23,44 @@ export const useSupabaseWakeUp = () => {
       console.log(`🔄 WakeUp Supabase (${reason}) después de ${Math.round(timeHidden / 1000)}s`)
 
       try {
+        const dispatchResume = (didResetClient: boolean) => {
+          window.dispatchEvent(
+            new CustomEvent('appsetter:supabase-resume', {
+              detail: { reason, timeHiddenMs: timeHidden, didResetClient },
+            })
+          )
+        }
+
+        const ensureSessionHealthy = async () => {
+          const { data: { session }, error } = await supabase.auth.getSession()
+          if (error) return { ok: false, error }
+          if (!session) return { ok: true, session: null }
+
+          const expiresAtMs = (session.expires_at ?? 0) * 1000
+          const msToExpire = expiresAtMs ? expiresAtMs - Date.now() : Number.POSITIVE_INFINITY
+          if (!expiresAtMs || msToExpire < 2 * 60 * 1000) {
+            const { error: refreshError } = await supabase.auth.refreshSession()
+            if (refreshError) return { ok: false, error: refreshError }
+          }
+          return { ok: true, session }
+        }
+
+        const healthCheck = async () => {
+          // Este ping intenta detectar el “zombie state” (fetch/socket/auth colgado)
+          const { data: { user }, error: userError } = await supabase.auth.getUser()
+          if (userError) return { ok: false, error: userError }
+          if (!user) return { ok: true, skipped: true }
+
+          const { error: pingError } = await supabase
+            .from('conversations')
+            .select('id', { head: true, count: 'exact' })
+            .eq('user_id', user.id)
+            .limit(1)
+
+          if (pingError) return { ok: false, error: pingError }
+          return { ok: true }
+        }
+
         // 1) Re-abrir realtime si el browser lo durmió
         // (connect() es idempotente: si ya está conectado, no debería romper nada)
         try {
@@ -31,26 +69,26 @@ export const useSupabaseWakeUp = () => {
           console.warn('⚠️ No se pudo forzar supabase.realtime.connect()', e)
         }
 
-        // 2) Asegurar que el token es válido (pero sin spamear refresh)
-        const { data: { session }, error } = await supabase.auth.getSession()
-        if (error) {
-          console.error('❌ Error al obtener sesión en wakeUp:', error)
-        } else if (session) {
-          const expiresAtMs = (session.expires_at ?? 0) * 1000
-          const msToExpire = expiresAtMs ? expiresAtMs - Date.now() : Number.POSITIVE_INFINITY
-          // Si expira pronto (o no tenemos expires_at por algún motivo), refrescamos
-          if (!expiresAtMs || msToExpire < 2 * 60 * 1000) {
-            const { error: refreshError } = await supabase.auth.refreshSession()
-            if (refreshError) console.error('❌ Error al refrescar sesión:', refreshError)
-          }
-        }
+        // 2) Asegurar sesión/token OK
+        const sessionResult = await ensureSessionHealthy()
+        if (!sessionResult.ok) console.warn('⚠️ Sesión no saludable en wakeUp:', sessionResult.error)
 
-        // 3) Disparar un evento global para que los hooks hagan refetch + resubscribe
-        window.dispatchEvent(
-          new CustomEvent('appsetter:supabase-resume', {
-            detail: { reason, timeHiddenMs: timeHidden },
-          })
-        )
+        // 3) Disparar un resume normal (para refetch/resubscribe)
+        dispatchResume(false)
+
+        // 4) Health-check: si está zombie, reseteamos cliente y re-disparamos resume
+        const hc = await healthCheck()
+        if (!hc.ok) {
+          console.warn('🧟 Supabase parece “zombie” al volver. Reseteando cliente...', hc.error)
+          await resetSupabaseClient(`resume:${reason}`)
+          try {
+            supabase.realtime.connect()
+          } catch {
+            // best-effort
+          }
+          await ensureSessionHealthy()
+          dispatchResume(true)
+        }
       } catch (err) {
         console.error('❌ Error en useSupabaseWakeUp:', err)
       } finally {
