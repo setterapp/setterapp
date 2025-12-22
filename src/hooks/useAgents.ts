@@ -40,8 +40,10 @@ export function useAgents() {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const isIntentionalCloseRef = useRef(false)
   const fetchAbortRef = useRef<AbortController | null>(null)
+  const activeFetchIdRef = useRef(0)
 
   const fetchAgents = async () => {
+    const fetchId = ++activeFetchIdRef.current
     if (fetchAbortRef.current) fetchAbortRef.current.abort()
     const controller = new AbortController()
     fetchAbortRef.current = controller
@@ -93,10 +95,10 @@ export function useAgents() {
 
       const { data, error: fetchError } = result as any
       if (fetchError) throw fetchError
-      if (fetchAbortRef.current !== controller) return
+      if (fetchId !== activeFetchIdRef.current) return
       setAgents(data || [])
     } catch (err: any) {
-      if (fetchAbortRef.current !== controller) return
+      if (fetchId !== activeFetchIdRef.current) return
       const msg = err?.name === 'AbortError'
         ? 'Timeout cargando agentes'
         : (err?.message || 'Error fetching agents')
@@ -107,10 +109,12 @@ export function useAgents() {
       }
     } finally {
       window.clearTimeout(timeoutId)
+      if (fetchId === activeFetchIdRef.current) {
+        setLoading(false)
+      }
       if (fetchAbortRef.current === controller) {
         fetchAbortRef.current = null
       }
-      setLoading(false)
     }
   }
 

@@ -27,6 +27,7 @@ export function useMessages(conversationId: string | null) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const isIntentionalCloseRef = useRef(false)
   const fetchAbortRef = useRef<AbortController | null>(null)
+  const activeFetchIdRef = useRef(0)
 
   const fetchMessages = async () => {
     if (!conversationId) {
@@ -35,6 +36,7 @@ export function useMessages(conversationId: string | null) {
       return
     }
 
+    const fetchId = ++activeFetchIdRef.current
     dbg('log', 'useMessages.fetchMessages start', { conversationId })
     if (fetchAbortRef.current) fetchAbortRef.current.abort()
     const controller = new AbortController()
@@ -97,12 +99,12 @@ export function useMessages(conversationId: string | null) {
 
       const { data, error: fetchError } = result as any
       if (fetchError) throw fetchError
-      if (fetchAbortRef.current !== controller) return
+      if (fetchId !== activeFetchIdRef.current) return
       setMessages(data || [])
       dbg('log', 'useMessages.fetchMessages ok', { conversationId, count: (data || []).length })
     } catch (err: any) {
       console.error('Error fetching messages:', err)
-      if (fetchAbortRef.current !== controller) return
+      if (fetchId !== activeFetchIdRef.current) return
       const msg = err?.name === 'AbortError'
         ? 'Timeout cargando mensajes'
         : (err?.message || 'Error cargando mensajes')
@@ -114,10 +116,12 @@ export function useMessages(conversationId: string | null) {
       }
     } finally {
       window.clearTimeout(timeoutId)
+      if (fetchId === activeFetchIdRef.current) {
+        setLoading(false)
+      }
       if (fetchAbortRef.current === controller) {
         fetchAbortRef.current = null
       }
-      setLoading(false)
     }
   }
 
