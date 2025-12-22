@@ -11,11 +11,15 @@ set -euo pipefail
 #
 # Optional:
 #   export WEBHOOK_URL="https://afqbakvvfpebnxzjewsk.supabase.co/functions/v1/messenger-webhook"
+#   export SEND_TO_PSID="123..."            # recipient PSID (required to send a real message)
+#   export SEND_TEXT="hola desde setterapp" # optional
 
 PAGE_ID="${PAGE_ID:-966649996531120}"
 PAGE_ACCESS_TOKEN="${PAGE_ACCESS_TOKEN:-}"
 VERIFY_TOKEN="${VERIFY_TOKEN:-appsetter_messenger_verify_2025_12_22_9fH2kL7qT3mV6wX1rZ8cN4pA}"
 WEBHOOK_URL="${WEBHOOK_URL:-https://afqbakvvfpebnxzjewsk.supabase.co/functions/v1/messenger-webhook}"
+SEND_TO_PSID="${SEND_TO_PSID:-}"
+SEND_TEXT="${SEND_TEXT:-hello from test script}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -48,6 +52,8 @@ PAGE_ID="${PAGE_ID:-966649996531120}"
 PAGE_ACCESS_TOKEN="${PAGE_ACCESS_TOKEN:-}"
 VERIFY_TOKEN="${VERIFY_TOKEN:-appsetter_messenger_verify_2025_12_22_9fH2kL7qT3mV6wX1rZ8cN4pA}"
 WEBHOOK_URL="${WEBHOOK_URL:-https://afqbakvvfpebnxzjewsk.supabase.co/functions/v1/messenger-webhook}"
+SEND_TO_PSID="${SEND_TO_PSID:-}"
+SEND_TEXT="${SEND_TEXT:-hello from test script}"
 
 echo -e "${YELLOW}Messenger Webhook Test${NC}"
 echo "Webhook URL: ${WEBHOOK_URL}"
@@ -141,6 +147,41 @@ echo -e "${GREEN}OK${NC}: webhook POST returned 200"
 echo "Response:"
 cat /tmp/messenger_post_body.txt || true
 echo ""
+
+echo -e "${YELLOW}5) (Optional) Sending a real Messenger message via Send API${NC}"
+if [[ -z "${SEND_TO_PSID}" ]]; then
+  echo "Skipped: set SEND_TO_PSID to actually send a message."
+  echo "Example:"
+  echo "  export SEND_TO_PSID=\"<PSID>\""
+  echo "  export SEND_TEXT=\"hola\""
+  echo ""
+  echo "Note: Messenger can only message users who have interacted with the Page (or are test users during dev)."
+else
+  SEND_PAYLOAD="$(python3 - <<PY
+import json
+print(json.dumps({
+  "recipient": {"id": "${SEND_TO_PSID}"},
+  "messaging_type": "RESPONSE",
+  "message": {"text": "${SEND_TEXT}"}
+}))
+PY
+)"
+  SEND_STATUS="$(curl -sS -o /tmp/messenger_send_body.txt -w "%{http_code}" \
+    -X POST "https://graph.facebook.com/v24.0/${PAGE_ID}/messages" \
+    -H "Content-Type: application/json" \
+    --data "$SEND_PAYLOAD" \
+    -G --data-urlencode "access_token=${PAGE_ACCESS_TOKEN}" || true)"
+
+  if [[ "$SEND_STATUS" != "200" ]]; then
+    echo -e "${RED}FAIL${NC}: Send API returned HTTP $SEND_STATUS"
+    cat /tmp/messenger_send_body.txt || true
+    exit 1
+  fi
+
+  echo -e "${GREEN}OK${NC}: message sent"
+  cat /tmp/messenger_send_body.txt || true
+  echo ""
+fi
 
 echo -e "${GREEN}Done.${NC}"
 
