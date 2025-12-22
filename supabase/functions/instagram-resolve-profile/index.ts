@@ -11,6 +11,13 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const supabaseService = createClient(supabaseUrl, supabaseServiceKey);
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  // Supabase client envía headers extra (p.ej. x-client-info / apikey) -> deben estar permitidos en preflight
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
+};
+
 async function getAuthedUserId(req: Request): Promise<string | null> {
   const authHeader = req.headers.get('Authorization') || '';
   if (!authHeader.toLowerCase().startsWith('bearer ')) return null;
@@ -113,19 +120,14 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        // Supabase client envía headers extra (p.ej. x-client-info) -> deben estar permitidos en preflight
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
-      },
+      headers: corsHeaders,
     });
   }
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -133,7 +135,7 @@ Deno.serve(async (req: Request) => {
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -148,7 +150,7 @@ Deno.serve(async (req: Request) => {
   if (!conversationId) {
     return new Response(JSON.stringify({ error: 'Missing conversationId' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -162,21 +164,21 @@ Deno.serve(async (req: Request) => {
   if (convError || !conv) {
     return new Response(JSON.stringify({ error: 'Conversation not found' }), {
       status: 404,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
   if (conv.user_id !== userId) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), {
       status: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
   if (conv.platform !== 'instagram') {
     return new Response(JSON.stringify({ error: 'Not an instagram conversation' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -184,7 +186,7 @@ Deno.serve(async (req: Request) => {
   if (!senderId) {
     return new Response(JSON.stringify({ error: 'Missing platform_conversation_id' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -204,7 +206,7 @@ Deno.serve(async (req: Request) => {
   if (!accessToken || !instagramBusinessAccountId) {
     return new Response(JSON.stringify({ error: 'Instagram integration not configured' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -217,7 +219,7 @@ Deno.serve(async (req: Request) => {
   if (!profile || (!profile.username && !profile.name)) {
     return new Response(JSON.stringify({ ok: false, updated: false }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -242,13 +244,13 @@ Deno.serve(async (req: Request) => {
   if (updateError) {
     return new Response(JSON.stringify({ error: 'Failed to update' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
   return new Response(JSON.stringify({ ok: true, updated: true, conversation: updated }), {
     status: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 });
 
