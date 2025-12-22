@@ -26,15 +26,16 @@ export function useConversations() {
   const [error, setError] = useState<string | null>(null)
 
   const fetchConversations = async (useCache: boolean = true, forceRefresh: boolean = false) => {
+    const cacheKey = 'conversations' // Definir al inicio para que esté disponible en todo el scope
+    
     try {
       // Si se fuerza refresh, invalidar caché primero
       if (forceRefresh) {
-        cacheService.remove('conversations')
+        cacheService.remove(cacheKey)
         useCache = false
       }
 
       // Intentar obtener del caché primero - ANTES de poner loading
-      const cacheKey = 'conversations'
       if (useCache) {
         const cached = cacheService.get<Conversation[]>(cacheKey)
         if (cached) {
