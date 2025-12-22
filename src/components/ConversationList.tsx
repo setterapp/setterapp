@@ -105,7 +105,9 @@ function ConversationItem({
 
   const rawContact = conversation.contact || ''
   const isNumeric = /^\d+$/.test(rawContact)
+  const alias = (conversation as any).contact_alias as string | null | undefined
   const displayName =
+    alias ||
     (username ? `@${username}` : null) ||
     name ||
     (rawContact

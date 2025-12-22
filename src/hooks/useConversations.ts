@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 export interface Conversation {
   id: string
   contact: string
+  contact_alias?: string | null
   platform: 'whatsapp' | 'instagram'
   agent_id?: string | null
   unread_count: number

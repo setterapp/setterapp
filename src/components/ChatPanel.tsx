@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Pencil } from 'lucide-react'
 import type { Conversation } from '../hooks/useConversations'
 import { useMessages } from '../hooks/useMessages'
 import MessageBubble from './MessageBubble'
 import WhatsAppIcon from './icons/WhatsAppIcon'
 import InstagramIcon from './icons/InstagramIcon'
 import Badge from './common/Badge'
+import { supabase } from '../lib/supabase'
 
 interface ChatPanelProps {
   conversationId: string
@@ -72,11 +73,13 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
   const leadStatusVariant = getLeadStatusBadgeVariant(conversation.lead_status)
   const leadStatusLabel = getLeadStatusLabel(conversation.lead_status)
 
+  const alias = conversation.contact_alias
   const username = conversation.contact_metadata?.username
   const name = conversation.contact_metadata?.name
   const rawContact = conversation.contact || ''
   const isNumeric = /^\d+$/.test(rawContact)
   const displayName =
+    alias ||
     (username ? `@${username}` : null) ||
     name ||
     (rawContact
@@ -129,9 +132,42 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
             <PlatformIcon size={28} />
           )}
           <div style={{ flex: 1 }}>
-            <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', fontWeight: 600 }}>
-              {displayName}
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+              <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', fontWeight: 600 }}>
+                {displayName}
+              </h3>
+              <button
+                onClick={async () => {
+                  const next = window.prompt('Nombre para esta conversación', alias || (name || username || rawContact) || '')
+                  if (next === null) return
+                  const trimmed = next.trim()
+                  if (!trimmed) return
+                  if (trimmed === alias) return
+                  try {
+                    await supabase
+                      .from('conversations')
+                      .update({ contact_alias: trimmed, updated_at: new Date().toISOString() })
+                      .eq('id', conversationId)
+                  } catch {
+                    // sin logs
+                  }
+                }}
+                className="btn-icon"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  color: 'var(--color-text-secondary)',
+                }}
+                title="Renombrar contacto"
+                aria-label="Renombrar contacto"
+              >
+                <Pencil size={16} />
+              </button>
+            </div>
             <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-xs)', alignItems: 'center' }}>
               <span
                 style={{
