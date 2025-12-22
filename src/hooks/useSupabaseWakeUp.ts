@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { supabase, resetSupabaseClient } from '../lib/supabase'
+import { dbg } from '../utils/debug'
 
 /**
  * Hook global para "despertar" Supabase cuando el usuario vuelve a la pestaña
@@ -21,6 +22,7 @@ export const useSupabaseWakeUp = () => {
 
       const timeHidden = hiddenTimeRef.current ? now - hiddenTimeRef.current : 0
       console.log(`🔄 WakeUp Supabase (${reason}) después de ${Math.round(timeHidden / 1000)}s`)
+      dbg('log', `wakeUp(${reason})`, { timeHiddenMs: timeHidden })
 
       try {
         const dispatchResume = (didResetClient: boolean) => {
@@ -100,9 +102,11 @@ export const useSupabaseWakeUp = () => {
         // 1) Asegurar sesión/token OK (sin tocar manualmente el WebSocket)
         const sessionResult = await ensureSessionHealthy()
         if (!sessionResult.ok) console.warn('⚠️ Sesión no saludable en wakeUp:', sessionResult.error)
+        dbg('log', 'ensureSessionHealthy result', sessionResult)
 
         // 2) Disparar un resume normal (para refetch/resubscribe)
         dispatchResume(false)
+        dbg('log', 'dispatchResume(false)')
 
         // 2.5) Si volvimos de background real, verificar que REST no quedó congelado.
         // Si está “stuck”, es indistinguible de tu síntoma (UI no dispara nada / no hay Network).
@@ -110,10 +114,12 @@ export const useSupabaseWakeUp = () => {
           const ping = await pingDb()
           if (!ping.ok) {
             console.warn('❄️ Ping a DB falló/timeout al volver. Intentando recovery...', ping.error)
+            dbg('warn', 'pingDb failed; running resetSupabaseClient', ping.error)
             await resetSupabaseClient(`resume:${reason}:ping`)
             const ping2 = await pingDb()
             if (!ping2.ok) {
               // Último recurso: reload automático (equivalente al reload manual que hoy te salva)
+              dbg('error', 'pingDb failed after recovery -> auto reload', ping2.error)
               maybeAutoReload('db_ping_timeout_after_resume')
               return
             }
