@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Plug, Check, X, MoreVertical } from 'lucide-react'
 import { useIntegrations } from '../hooks/useIntegrations'
 import { instagramService } from '../services/facebook/instagram'
@@ -10,7 +9,6 @@ import InstagramIcon from '../components/icons/InstagramIcon'
 import { formatDate, formatFullDate } from '../utils/date'
 
 function Integrations() {
-  const navigate = useNavigate()
   const { integrations, loading, error, updateIntegration, refetch } = useIntegrations()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
@@ -86,40 +84,38 @@ function Integrations() {
 
   async function handleInstagramConnect() {
     try {
-      const { instagramDirectService } = await import('../services/instagram-direct')
-      const result = await instagramDirectService.connectInstagram()
-
-      if (result.code) {
-        // Process the code from popup
-        const storedUserId = localStorage.getItem('instagram_oauth_user_id')
-        if (!storedUserId) {
-          throw new Error('Sesión no encontrada')
-        }
-
-        // Exchange code for token
-        const tokenData = await instagramDirectService.exchangeCodeForToken(result.code)
-
-        // Store token in integration
-        await instagramDirectService.storeAccessToken(
-          storedUserId,
-          tokenData.access_token,
-          {
-            user_id: tokenData.user_id,
-            username: tokenData.username,
-            expires_in: tokenData.expires_in,
-            token_type: tokenData.token_type,
-          }
-        )
-
-        localStorage.removeItem('instagram_oauth_state')
-        localStorage.removeItem('instagram_oauth_user_id')
-
-        // Refresh integrations and show success
-        await refetch()
-
-        // Ensure we're on the integrations page (in case user navigated away)
-        navigate('/integrations', { replace: true })
+      // Para Instagram Messaging + User Profile API necesitamos token de Page (Meta Graph),
+      // así que usamos Facebook OAuth (como WhatsApp).
+      const { supabase } = await import('../lib/supabase')
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !currentSession) {
+        throw new Error('Debes iniciar sesión primero antes de conectar Instagram')
       }
+
+      const IG_SCOPES = [
+        'instagram_basic',
+        'instagram_manage_messages',
+        'pages_manage_metadata',
+        'pages_read_engagement',
+        'pages_show_list',
+      ]
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'facebook',
+        options: {
+          scopes: IG_SCOPES.join(','),
+          redirectTo: `${window.location.origin}/auth/callback?redirect_to=/integrations&provider=facebook&integration=instagram`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+          skipBrowserRedirect: false,
+        }
+      })
+
+      if (error) throw error
+      if (!data.url) throw new Error('No se pudo obtener la URL de autorización de Facebook')
+      return data
     } catch (error: any) {
       console.error('Error connecting Instagram:', error)
       alert(`Error al conectar Instagram: ${error.message || 'Error desconocido'}`)

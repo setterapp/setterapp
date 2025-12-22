@@ -158,4 +158,37 @@ export const instagramService = {
       return true
     }
   }
+
+  ,
+
+  /**
+   * Get a Page access token + Instagram Business Account linked to that Page.
+   * Needed for Instagram Messaging + User Profile API.
+   */
+  async getInstagramPageAccessToken() {
+    const { accessToken } = await this.getAccessToken()
+
+    const res = await fetch(
+      `https://graph.facebook.com/v24.0/me/accounts?fields=id,name,access_token,instagram_business_account{id,username}&access_token=${encodeURIComponent(accessToken)}`
+    )
+
+    if (!res.ok) {
+      throw new Error('No se pudieron obtener páginas de Facebook (Graph)')
+    }
+
+    const data = await res.json()
+    const pages = Array.isArray(data?.data) ? data.data : []
+    const page = pages.find((p: any) => p?.instagram_business_account?.id && p?.access_token)
+
+    if (!page) {
+      throw new Error('No se encontró una Página con Instagram Business conectado (o falta access_token de página).')
+    }
+
+    return {
+      pageId: page.id as string,
+      pageAccessToken: page.access_token as string,
+      instagramBusinessAccountId: page.instagram_business_account.id as string,
+      instagramUsername: page.instagram_business_account.username as string | undefined,
+    }
+  }
 }

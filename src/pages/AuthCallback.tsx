@@ -74,6 +74,21 @@ function AuthCallback() {
                     // El usuario puede configurarlo después
                   }
                 }
+                if (integrationType === 'instagram') {
+                  try {
+                    const { instagramService } = await import('../services/facebook/instagram')
+                    const igInfo = await instagramService.getInstagramPageAccessToken()
+                    config = {
+                      page_id: igInfo.pageId,
+                      page_access_token: igInfo.pageAccessToken,
+                      instagram_business_account_id: igInfo.instagramBusinessAccountId,
+                      instagram_username: igInfo.instagramUsername,
+                    }
+                  } catch (igError: any) {
+                    // Si no podemos obtener page token, igual dejamos la integración conectada.
+                    // El usuario puede reconectar con permisos correctos luego.
+                  }
+                }
 
                 // Actualizar a "connected" cuando viene del flujo de OAuth
                 const { error: updateError } = await supabase

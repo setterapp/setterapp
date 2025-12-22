@@ -58,6 +58,30 @@ async function refreshInstagramLongLivedToken(accessToken: string): Promise<{ ac
   }
 }
 
+async function getInstagramUserProfileViaUserProfileApi(params: {
+  senderId: string;
+  pageAccessToken: string;
+}): Promise<{ name?: string | null; username?: string | null; profile_picture?: string | null } | null> {
+  const { senderId, pageAccessToken } = params;
+  try {
+    // User Profile API (IGSID -> name/username/profile_pic)
+    // https://developers.facebook.com/docs/messenger-platform/instagram/features/user-profile/
+    const res = await fetch(
+      `https://graph.facebook.com/v24.0/${senderId}?fields=name,username,profile_pic&access_token=${encodeURIComponent(pageAccessToken)}`,
+      { method: 'GET' }
+    );
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || data.error) return null;
+    return {
+      name: data.name ?? null,
+      username: data.username ?? null,
+      profile_picture: data.profile_pic ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function getInstagramUserProfile(params: {
   accessToken: string;
   instagramBusinessAccountId: string;
@@ -183,7 +207,7 @@ Deno.serve(async (req: Request) => {
   // Leer conversación
   const { data: conv, error: convError } = await supabaseService
     .from('conversations')
-    .select('id, user_id, platform, platform_conversation_id, contact, contact_metadata')
+    .select('id, user_id, platform, platform_conversation_id, contact, contact_metadata, contact_id, last_message_at')
     .eq('id', conversationId)
     .single();
 
@@ -225,9 +249,42 @@ Deno.serve(async (req: Request) => {
     .eq('status', 'connected')
     .single();
 
+  const pageAccessToken = integration?.config?.page_access_token;
   const accessToken = integration?.config?.access_token;
   const instagramBusinessAccountId =
-    integration?.config?.instagram_user_id || integration?.config?.instagram_business_account_id;
+    integration?.config?.instagram_user_id || integration?.config?.instagram_business_account_id || integration?.config?.instagram_business_account_id;
+
+  // Preferimos Page access token (User Profile API). Si no existe, usamos fallback legacy.
+  if (pageAccessToken) {
+    const profile = await getInstagramUserProfileViaUserProfileApi({
+      senderId,
+      pageAccessToken,
+    });
+    if (profile) {
+      // Persistir también en contacts si existe contact_id en conv (best-effort)
+      if (conv.contact_id) {
+        try {
+          await supabaseService
+            .from('contacts')
+            .update({
+              username: profile.username ?? null,
+              profile_picture: profile.profile_picture ?? null,
+              display_name: profile.name ?? profile.username ?? null,
+              last_message_at: conv.last_message_at ?? null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', conv.contact_id);
+        } catch {
+          // ignore
+        }
+      }
+      return new Response(JSON.stringify({ ok: true, updated: false, profile }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    // si no devuelve perfil, seguimos a la lógica existente (por si tu token/page no tiene permisos o no hay consentimiento)
+  }
 
   if (!accessToken || !instagramBusinessAccountId) {
     return new Response(JSON.stringify({ error: 'Instagram integration not configured' }), {
