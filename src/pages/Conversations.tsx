@@ -43,23 +43,17 @@ function Conversations() {
       return
     }
     
-    // Forzar reset completo cambiando primero a null y luego al nuevo ID
-    // Esto asegura que el hook useMessages se reinicie completamente
-    setSelectedConversationId(null)
-    
-    // Usar requestAnimationFrame para asegurar que el DOM se actualice
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        setSelectedConversationId(id)
-        if (isFirstSelection) {
-          setIsFirstSelection(false)
-        }
-        // Prevenir scroll de la página principal
-        if (window.scrollY > 0) {
-          window.scrollTo({ top: 0, behavior: 'instant' })
-        }
-      }, 50)
-    })
+    // IMPORTANTE: evitar setTimeout/requestAnimationFrame aquí.
+    // En algunos browsers, después de volver del background, timers pueden quedar throttled
+    // y el ID nunca se setea => ChatPanel no monta => no hay fetch de mensajes.
+    setSelectedConversationId(id)
+    if (isFirstSelection) {
+      setIsFirstSelection(false)
+    }
+    // Prevenir scroll de la página principal
+    if (window.scrollY > 0) {
+      window.scrollTo({ top: 0, behavior: 'instant' })
+    }
   }
 
   // Encontrar la conversación seleccionada
