@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { cacheService } from '../services/cache'
-import { setupSessionRefresh } from '../lib/supabase'
 
 export interface Message {
   id: string
@@ -25,7 +23,7 @@ export function useMessages(conversationId: string | null) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchMessages = async (signal?: AbortSignal, useCache: boolean = true): Promise<void> => {
+  const fetchMessages = async () => {
     if (!conversationId) {
       setMessages([])
       setLoading(false)
@@ -33,104 +31,23 @@ export function useMessages(conversationId: string | null) {
     }
 
     try {
-      const cacheKey = `messages_${conversationId}`
-      
-      // SIEMPRE intentar caché primero (es instantáneo)
-      if (useCache && !signal?.aborted) {
-        const cached = cacheService.get<Message[]>(cacheKey)
-        if (cached && cached.length > 0) {
-          console.log(`📦 Using cached messages for conversation ${conversationId} (instant)`)
-          setMessages(cached)
-          setError(null)
-          // Cargar en background para actualizar (sin mostrar loading)
-          fetchMessages(signal, false).catch(() => {})
-          return
-        }
-      }
+      setLoading(true)
+      setError(null)
 
-      // Si no hay caché, verificar y refrescar sesión PRIMERO
-      let session = null
-      try {
-        const sessionResult = await supabase.auth.getSession()
-        session = sessionResult.data.session
-        
-        // Si hay sesión, intentar refrescarla
-        if (session) {
-          try {
-            await supabase.auth.refreshSession()
-          } catch (refreshErr) {
-            console.warn('No se pudo refrescar sesión, continuando con sesión actual:', refreshErr)
-          }
-        } else {
-          throw new Error('No hay sesión activa')
-        }
-      } catch (sessionErr: any) {
-        console.error('Error con sesión:', sessionErr)
-        // Intentar usar caché como fallback
-        const cached = cacheService.get<Message[]>(cacheKey)
-        if (cached && cached.length > 0) {
-          console.log(`📦 Usando caché como fallback (sesión no disponible)`)
-          setMessages(cached)
-          setError(null)
-          return
-        }
-        throw new Error('Sesión expirada. Por favor, recarga la página.')
-      }
-
-      // Verificar si la petición fue cancelada
-      if (signal?.aborted) {
-        return
-      }
-
-      // Timeout de 15 segundos
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Timeout al cargar mensajes. Verifica tu conexión.'))
-        }, 15000)
-      })
-
-      const fetchPromise = supabase
+      const { data, error: fetchError } = await supabase
         .from('messages')
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
 
-      const { data, error: fetchError } = await Promise.race([
-        fetchPromise,
-        timeoutPromise
-      ]) as { data: Message[] | null; error: any }
-
-      // Verificar si la petición fue cancelada después de la race
-      if (signal?.aborted) {
-        return
-      }
-
       if (fetchError) throw fetchError
-
-      const messagesData = data || []
-      setMessages(messagesData)
-      // Guardar en caché (5 minutos)
-      cacheService.set(cacheKey, messagesData, 5 * 60 * 1000)
-      setError(null)
+      setMessages(data || [])
     } catch (err: any) {
-      // Ignorar errores si la petición fue cancelada
-      if (signal?.aborted || err.name === 'AbortError') {
-        return
-      }
       console.error('Error fetching messages:', err)
-      
-      // Como último recurso, intentar usar caché
-      const cacheKey = `messages_${conversationId}`
-      const cached = cacheService.get<Message[]>(cacheKey)
-      if (cached && cached.length > 0) {
-        console.log(`📦 Usando caché como último recurso después de error`)
-        setMessages(cached)
-        setError(null)
-        return
-      }
-      
       setError(err.message || 'Error cargando mensajes')
       setMessages([])
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -150,11 +67,6 @@ export function useMessages(conversationId: string | null) {
   }
 
   useEffect(() => {
-    // AbortController para cancelar peticiones anteriores
-    const abortController = new AbortController()
-    const signal = abortController.signal
-
-    // Si no hay conversationId, resetear estado y salir
     if (!conversationId) {
       setMessages([])
       setLoading(false)
@@ -162,221 +74,58 @@ export function useMessages(conversationId: string | null) {
       return
     }
 
-    // INMEDIATAMENTE resetear mensajes cuando cambia conversationId
-    // NO poner loading todavía - primero intentar caché
-    setMessages([])
-    setError(null)
+    fetchMessages()
+    markAsRead()
 
-    // Intentar cargar desde caché primero
-    const cacheKey = `messages_${conversationId}`
-    const cached = cacheService.get<Message[]>(cacheKey)
-
-    // Timeout de seguridad: forzar desactivación del loading después de 20 segundos máximo
-    let loadingActive = true
-    let safetyTimeout: ReturnType<typeof setTimeout> | null = null
-
-    // Fetch inicial
-    const loadMessages = async () => {
-      try {
-        await fetchMessages(signal, false) // Sin caché porque ya lo verificamos arriba
-
-        // Verificar si fue cancelado antes de marcar como leído
-        if (!signal.aborted) {
-          await markAsRead()
-        }
-      } catch (err) {
-        // Ignorar errores si la petición fue cancelada
-        if (signal.aborted || (err as any)?.name === 'AbortError') {
-          return
-        }
-        console.error('Error loading messages:', err)
-        setError(err instanceof Error ? err.message : 'Error cargando mensajes')
-      } finally {
-        // Asegurar que el loading se desactive después de intentar cargar
-        if (!signal.aborted) {
-          loadingActive = false
-          if (safetyTimeout) {
-            clearTimeout(safetyTimeout)
-          }
-          setLoading(false)
-        }
-      }
-    }
-
-    // Si hay caché, mostrarlo inmediatamente y cargar en background
-    if (cached) {
-      console.log(`📦 Using cached messages for conversation ${conversationId} (instant)`)
-      setMessages(cached)
-      setLoading(false)
-      // Cargar en background para actualizar (sin mostrar loading)
-      loadMessages().catch(() => {})
-    } else {
-      // Solo mostrar loading si no hay caché
-      setLoading(true)
-
-      // Configurar timeout de seguridad solo si no hay caché
-      safetyTimeout = setTimeout(() => {
-        if (loadingActive) {
-          console.warn('⚠️ Timeout de seguridad: desactivando loading después de 20 segundos')
-          setLoading(false)
-          setError('La carga está tardando demasiado. Por favor, intenta nuevamente.')
-          loadingActive = false
-        }
-      }, 20000)
-
-      loadMessages()
-    }
-
-    // Asegurar que el refresh de sesión esté configurado
-    setupSessionRefresh()
-
-    // Detectar AFK y refrescar sesión cuando vuelves
-    let hiddenTime: number | null = null
-
-    const handleVisibilityChange = async () => {
-      if (document.hidden) {
-        // Guardar cuando se oculta
-        hiddenTime = Date.now()
-      } else {
-        // Cuando vuelve visible después de estar oculto
-        if (hiddenTime && Date.now() - hiddenTime > 5000) {
-          // Estuvo oculto más de 5 segundos - refrescar sesión y recargar mensajes
-          console.log('🔄 Detectado retorno de AFK, refrescando sesión y recargando mensajes')
-          
-          // Refrescar sesión primero
-          try {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (session) {
-              await supabase.auth.refreshSession()
-            }
-          } catch (err) {
-            console.warn('Error refrescando sesión:', err)
-          }
-          
-          // Recargar mensajes (usará caché primero si existe, luego actualizará)
-          if (!signal.aborted) {
-            await fetchMessages(signal, false).catch(() => {})
-          }
-        }
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    // Suscribirse a cambios en tiempo real (no bloquea el fetch)
     let channel: ReturnType<typeof supabase.channel> | null = null
 
-    const setupRealtime = async () => {
-      // Limpiar canal anterior si existe
-      if (channel) {
-        try {
-          await supabase.removeChannel(channel)
-        } catch (error) {
-          console.error('Error removing previous channel:', error)
-        }
-      }
-
-      try {
-        channel = supabase
-          .channel(`messages_changes_${conversationId}_${Date.now()}`)
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'messages',
-              filter: `conversation_id=eq.${conversationId}`
-            },
-            (payload) => {
-              console.log('🔄 Realtime update en mensajes:', payload.eventType)
-
-              if (payload.eventType === 'INSERT') {
-                // Agregar nuevo mensaje sin recargar todo
-                const newMessage = payload.new as Message
-                setMessages(prev => {
-                  // Evitar duplicados
-                  if (prev.find(m => m.id === newMessage.id)) {
-                    return prev
-                  }
-                  // Agregar al final y ordenar por created_at
-                  const updated = [...prev, newMessage]
-                  const sorted = updated.sort((a, b) => {
+    try {
+      channel = supabase
+        .channel(`messages_changes_${conversationId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'messages',
+            filter: `conversation_id=eq.${conversationId}`
+          },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              const newMessage = payload.new as Message
+              setMessages(prev => {
+                if (prev.find(m => m.id === newMessage.id)) return prev
+                const updated = [...prev, newMessage]
+                return updated.sort((a, b) => {
+                  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                })
+              })
+            } else if (payload.eventType === 'UPDATE') {
+              const updatedMessage = payload.new as Message
+              setMessages(prev => {
+                const index = prev.findIndex(m => m.id === updatedMessage.id)
+                if (index === -1) {
+                  const updated = [...prev, updatedMessage]
+                  return updated.sort((a, b) => {
                     return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
                   })
-                  // Actualizar caché
-                  cacheService.set(`messages_${conversationId}`, sorted, 5 * 60 * 1000)
-                  return sorted
-                })
-              } else if (payload.eventType === 'UPDATE') {
-                // Actualizar mensaje existente
-                const updatedMessage = payload.new as Message
-                setMessages(prev => {
-                  const index = prev.findIndex(m => m.id === updatedMessage.id)
-                  let updated: Message[]
-                  if (index === -1) {
-                    // Si no existe, agregarlo
-                    updated = [...prev, updatedMessage]
-                  } else {
-                    // Actualizar
-                    updated = [...prev]
-                    updated[index] = updatedMessage
-                  }
-                  const sorted = updated.sort((a, b) => {
-                    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-                  })
-                  // Actualizar caché
-                  cacheService.set(`messages_${conversationId}`, sorted, 5 * 60 * 1000)
-                  return sorted
-                })
-              } else if (payload.eventType === 'DELETE') {
-                // Eliminar mensaje
-                const deletedId = payload.old.id
-                setMessages(prev => {
-                  const updated = prev.filter(m => m.id !== deletedId)
-                  // Actualizar caché
-                  cacheService.set(`messages_${conversationId}`, updated, 5 * 60 * 1000)
-                  return updated
-                })
-              }
+                }
+                const updated = [...prev]
+                updated[index] = updatedMessage
+                return updated
+              })
+            } else if (payload.eventType === 'DELETE') {
+              const deletedId = payload.old.id
+              setMessages(prev => prev.filter(m => m.id !== deletedId))
             }
-          )
-          .subscribe((status) => {
-            if (status === 'SUBSCRIBED') {
-              console.log('✅ Suscrito a cambios de mensajes en tiempo real para conversación:', conversationId)
-            } else if (status === 'CHANNEL_ERROR') {
-              console.error('❌ Error en suscripción de mensajes')
-              // Intentar reconectar después de un delay
-              setTimeout(() => {
-                setupRealtime()
-              }, 2000)
-            } else if (status === 'TIMED_OUT') {
-              console.warn('⚠️ Timeout en suscripción de mensajes, reintentando...')
-              setTimeout(() => {
-                setupRealtime()
-              }, 2000)
-            } else if (status === 'CLOSED') {
-              console.log('ℹ️ Canal de mensajes cerrado')
-            }
-          })
-      } catch (error) {
-        console.error('❌ Error creando canal de mensajes:', error)
-        // Reintentar después de un delay
-        setTimeout(() => {
-          setupRealtime()
-        }, 2000)
-      }
+          }
+        )
+        .subscribe()
+    } catch (error) {
+      console.error('Error creando canal de mensajes:', error)
     }
 
-    setupRealtime()
-
-    // Cleanup: cancelar petición si cambia conversationId o se desmonta el componente
     return () => {
-      abortController.abort()
-      if (safetyTimeout) {
-        clearTimeout(safetyTimeout)
-      }
-      loadingActive = false
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
       if (channel) {
         try {
           supabase.removeChannel(channel)
@@ -387,30 +136,11 @@ export function useMessages(conversationId: string | null) {
     }
   }, [conversationId])
 
-  const refetch = async () => {
-    if (!conversationId) return
-
-    setError(null)
-    // Invalidar caché antes de refetch
-    cacheService.remove(`messages_${conversationId}`)
-    setLoading(true)
-
-    try {
-      await fetchMessages(undefined, false) // Forzar recarga sin caché
-      await markAsRead()
-    } catch (err) {
-      console.error('Error en refetch:', err)
-      setError(err instanceof Error ? err.message : 'Error al recargar mensajes')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return {
     messages,
     loading,
     error,
-    refetch,
+    refetch: fetchMessages,
     markAsRead,
   }
 }
