@@ -136,13 +136,14 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
       .single();
 
     if (error || !integration) {
-      console.warn('⚠️ No se encontró integración de Instagram para obtener perfil');
+      // Sin logs por defecto (seguridad)
       return null;
     }
 
+    const debugEnabled = Boolean(integration?.config?.debug_webhooks);
     const accessToken = integration.config?.access_token;
     if (!accessToken) {
-      console.warn('⚠️ No hay access token disponible para obtener perfil');
+      if (debugEnabled) console.warn('⚠️ No hay access token disponible para obtener perfil');
       return null;
     }
 
@@ -181,14 +182,19 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
       if (response.ok) {
         const data = await response.json();
         if (data.error) {
-          console.log('⚠️ Error en respuesta directa:', data.error);
-          // Si el token ha expirado, no intentar más métodos
+          if (debugEnabled) console.log('⚠️ Error en respuesta directa:', data.error);
+          // Meta usa code=190 para token inválido/expirado/revocado/no parseable o tipo incorrecto.
           if (data.error.code === 190 || data.error.code === '190') {
-            console.warn('⚠️ Token expirado, no se puede obtener perfil');
+            if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado (code 190). No se puede obtener perfil.', {
+              message: data.error?.message,
+              code: data.error?.code,
+              subcode: data.error?.error_subcode,
+              fbtrace_id: data.error?.fbtrace_id,
+            });
             return null;
           }
         } else {
-          console.log('✅ Perfil obtenido directamente:', data);
+          if (debugEnabled) console.log('✅ Perfil obtenido directamente:', data);
           return {
             name: data.name || null,
             username: data.username || null,
@@ -197,12 +203,17 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         }
       } else {
         const errorText = await response.text();
-        console.log('⚠️ Primer intento falló:', errorText);
+        if (debugEnabled) console.log('⚠️ Primer intento falló:', errorText);
         // Verificar si es error de token expirado
         try {
           const errorData = JSON.parse(errorText);
           if (errorData.error?.code === 190 || errorData.error?.code === '190') {
-            console.warn('⚠️ Token expirado, no se puede obtener perfil');
+            if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado (code 190). No se puede obtener perfil.', {
+              message: errorData.error?.message,
+              code: errorData.error?.code,
+              subcode: errorData.error?.error_subcode,
+              fbtrace_id: errorData.error?.fbtrace_id,
+            });
             return null;
           }
         } catch (e) {
@@ -224,14 +235,19 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
       if (response.ok) {
         const data = await response.json();
         if (data.error) {
-          console.log('⚠️ Error en respuesta de Facebook:', data.error);
-          // Si el token ha expirado, no intentar más métodos
+          if (debugEnabled) console.log('⚠️ Error en respuesta de Facebook:', data.error);
+          // code 190 => token inválido/expirado/revocado/no parseable/tipo incorrecto
           if (data.error.code === 190 || data.error.code === '190') {
-            console.warn('⚠️ Token expirado, no se puede obtener perfil');
+            if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado (code 190). No se puede obtener perfil.', {
+              message: data.error?.message,
+              code: data.error?.code,
+              subcode: data.error?.error_subcode,
+              fbtrace_id: data.error?.fbtrace_id,
+            });
             return null;
           }
         } else {
-          console.log('✅ Perfil obtenido desde Facebook:', data);
+          if (debugEnabled) console.log('✅ Perfil obtenido desde Facebook:', data);
           return {
             name: data.name || null,
             username: data.username || null,
@@ -240,12 +256,17 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         }
       } else {
         const errorText = await response.text();
-        console.log('⚠️ Segundo intento falló:', errorText);
+        if (debugEnabled) console.log('⚠️ Segundo intento falló:', errorText);
         // Verificar si es error de token expirado
         try {
           const errorData = JSON.parse(errorText);
           if (errorData.error?.code === 190 || errorData.error?.code === '190') {
-            console.warn('⚠️ Token expirado, no se puede obtener perfil');
+            if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado (code 190). No se puede obtener perfil.', {
+              message: errorData.error?.message,
+              code: errorData.error?.code,
+              subcode: errorData.error?.error_subcode,
+              fbtrace_id: errorData.error?.fbtrace_id,
+            });
             return null;
           }
         } catch (e) {
@@ -268,7 +289,7 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
 
       if (convResponse.ok) {
         const convData = await convResponse.json();
-        console.log('📋 Conversaciones obtenidas:', convData);
+        if (debugEnabled) console.log('📋 Conversaciones obtenidas:', convData);
 
         // Buscar la conversación que contiene este senderId
         if (convData.data && convData.data.length > 0) {
@@ -276,7 +297,7 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
             if (conversation.participants?.data) {
               const participant = conversation.participants.data.find((p: any) => p.id === senderId);
               if (participant) {
-                console.log('✅ Participante encontrado:', participant);
+                if (debugEnabled) console.log('✅ Participante encontrado:', participant);
                 // Intentar obtener el perfil completo del participante
                 const participantResponse = await fetch(
                   `https://graph.facebook.com/v21.0/${participant.id}?fields=id,username,name,profile_pic&access_token=${accessToken}`,
@@ -311,17 +332,17 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         }
       } else {
         const errorText = await convResponse.text();
-        console.log('⚠️ Error obteniendo conversaciones:', errorText);
+        if (debugEnabled) console.log('⚠️ Error obteniendo conversaciones:', errorText);
       }
 
-      console.warn('⚠️ No se pudo obtener perfil de Instagram después de todos los intentos');
+      if (debugEnabled) console.warn('⚠️ No se pudo obtener perfil de Instagram después de todos los intentos');
       return null;
     } catch (error) {
-      console.warn('⚠️ Error al obtener perfil de Instagram:', error);
+      if (debugEnabled) console.warn('⚠️ Error al obtener perfil de Instagram:', error);
       return null;
     }
   } catch (error) {
-    console.error('❌ Error getting Instagram user profile:', error);
+    // Sin logs por defecto (seguridad)
     return null;
   }
 }
