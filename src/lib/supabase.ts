@@ -20,7 +20,12 @@ const clientOptions = {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
+    // IMPORTANT:
+    // We have a non-Supabase OAuth callback at `/auth/instagram/callback` which includes `?code=...`.
+    // If detectSessionInUrl=true, Supabase tries to exchange that Instagram code as if it were a Supabase OAuth code,
+    // causing 404/flow_state errors and breaking the Instagram direct OAuth flow.
+    // We instead handle Supabase OAuth exchange manually in `/auth/callback`.
+    detectSessionInUrl: false,
     // Alineado con el proyecto enecc (más estable en Safari/Chrome en background)
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     storageKey: 'supabase.auth.token',
