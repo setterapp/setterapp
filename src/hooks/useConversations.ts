@@ -52,6 +52,41 @@ export function useConversations() {
       // Solo mostrar loading si no hay caché
       setLoading(true)
 
+      // Verificar y refrescar sesión PRIMERO
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          try {
+            await supabase.auth.refreshSession()
+          } catch (refreshErr) {
+            console.warn('No se pudo refrescar sesión, continuando:', refreshErr)
+          }
+        } else {
+          // Si no hay sesión, intentar usar caché como fallback
+          const cached = cacheService.get<Conversation[]>(cacheKey)
+          if (cached) {
+            console.log('📦 Usando caché como fallback (sesión no disponible)')
+            setConversations(cached)
+            setError(null)
+            setLoading(false)
+            return
+          }
+          throw new Error('No hay sesión activa')
+        }
+      } catch (sessionErr: any) {
+        console.error('Error con sesión:', sessionErr)
+        // Intentar usar caché como fallback
+        const cached = cacheService.get<Conversation[]>(cacheKey)
+        if (cached) {
+          console.log('📦 Usando caché como fallback después de error de sesión')
+          setConversations(cached)
+          setError(null)
+          setLoading(false)
+          return
+        }
+        throw new Error('Sesión expirada. Por favor, recarga la página.')
+      }
+
       const { data, error: fetchError } = await supabase
         .from('conversations')
         .select('*')
@@ -66,8 +101,19 @@ export function useConversations() {
       cacheService.set(cacheKey, conversationsData, 2 * 60 * 1000)
       setError(null)
     } catch (err: any) {
-      setError(err.message)
       console.error('Error fetching conversations:', err)
+      
+      // Como último recurso, intentar usar caché
+      const cached = cacheService.get<Conversation[]>(cacheKey)
+      if (cached) {
+        console.log('📦 Usando caché como último recurso después de error')
+        setConversations(cached)
+        setError(null)
+        setLoading(false)
+        return
+      }
+      
+      setError(err.message)
     } finally {
       setLoading(false)
     }

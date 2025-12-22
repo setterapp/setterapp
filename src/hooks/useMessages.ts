@@ -33,13 +33,13 @@ export function useMessages(conversationId: string | null) {
     }
 
     try {
-      // Intentar obtener del caché primero - ANTES de hacer la petición
       const cacheKey = `messages_${conversationId}`
+      
+      // SIEMPRE intentar caché primero (es instantáneo)
       if (useCache && !signal?.aborted) {
         const cached = cacheService.get<Message[]>(cacheKey)
-        if (cached) {
+        if (cached && cached.length > 0) {
           console.log(`📦 Using cached messages for conversation ${conversationId} (instant)`)
-          // Mostrar datos del caché inmediatamente
           setMessages(cached)
           setError(null)
           // Cargar en background para actualizar (sin mostrar loading)
@@ -48,9 +48,32 @@ export function useMessages(conversationId: string | null) {
         }
       }
 
-      // Verificar sesión antes de hacer la petición
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session) {
+      // Si no hay caché, verificar y refrescar sesión PRIMERO
+      let session = null
+      try {
+        const sessionResult = await supabase.auth.getSession()
+        session = sessionResult.data.session
+        
+        // Si hay sesión, intentar refrescarla
+        if (session) {
+          try {
+            await supabase.auth.refreshSession()
+          } catch (refreshErr) {
+            console.warn('No se pudo refrescar sesión, continuando con sesión actual:', refreshErr)
+          }
+        } else {
+          throw new Error('No hay sesión activa')
+        }
+      } catch (sessionErr: any) {
+        console.error('Error con sesión:', sessionErr)
+        // Intentar usar caché como fallback
+        const cached = cacheService.get<Message[]>(cacheKey)
+        if (cached && cached.length > 0) {
+          console.log(`📦 Usando caché como fallback (sesión no disponible)`)
+          setMessages(cached)
+          setError(null)
+          return
+        }
         throw new Error('Sesión expirada. Por favor, recarga la página.')
       }
 
@@ -59,11 +82,11 @@ export function useMessages(conversationId: string | null) {
         return
       }
 
-      // Timeout de 10 segundos (reducido para detectar problemas más rápido)
+      // Timeout de 15 segundos
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
           reject(new Error('Timeout al cargar mensajes. Verifica tu conexión.'))
-        }, 10000)
+        }, 15000)
       })
 
       const fetchPromise = supabase
@@ -95,6 +118,17 @@ export function useMessages(conversationId: string | null) {
         return
       }
       console.error('Error fetching messages:', err)
+      
+      // Como último recurso, intentar usar caché
+      const cacheKey = `messages_${conversationId}`
+      const cached = cacheService.get<Message[]>(cacheKey)
+      if (cached && cached.length > 0) {
+        console.log(`📦 Usando caché como último recurso después de error`)
+        setMessages(cached)
+        setError(null)
+        return
+      }
+      
       setError(err.message || 'Error cargando mensajes')
       setMessages([])
     }
