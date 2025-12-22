@@ -27,6 +27,7 @@ export function useConversations() {
   const fetchAbortRef = useRef<AbortController | null>(null)
   const activeFetchIdRef = useRef(0)
   const channelKeyRef = useRef<string | null>(null)
+  const resolveAttemptedRef = useRef<Set<string>>(new Set())
 
   const fetchConversations = async () => {
     const fetchId = ++activeFetchIdRef.current
@@ -46,7 +47,37 @@ export function useConversations() {
         .abortSignal(controller.signal)
       if (fetchError) throw fetchError
       if (fetchId !== activeFetchIdRef.current) return
-      setConversations(data || [])
+      const list = (data || []) as Conversation[]
+      setConversations(list)
+
+      // Best-effort: si hay conversaciones de Instagram con "ID numérico", intentamos resolver @username/name
+      // Requiere la Edge Function `instagram-resolve-profile` desplegada (verify-jwt=true).
+      void (async () => {
+        const candidates = list
+          .filter(c =>
+            c.platform === 'instagram' &&
+            !c.contact_metadata?.username &&
+            !c.contact_metadata?.name &&
+            /^\d+$/.test(c.contact || '')
+          )
+          .slice(0, 10)
+
+        for (const c of candidates) {
+          if (resolveAttemptedRef.current.has(c.id)) continue
+          resolveAttemptedRef.current.add(c.id)
+          try {
+            const { data: resolved } = await supabase.functions.invoke('instagram-resolve-profile', {
+              body: { conversationId: c.id },
+            })
+            const updatedConv = (resolved as any)?.conversation as Conversation | undefined
+            if (updatedConv?.id) {
+              setConversations(prev => prev.map(x => (x.id === updatedConv.id ? updatedConv : x)))
+            }
+          } catch {
+            // sin logs
+          }
+        }
+      })()
     } catch (err: any) {
       if (fetchId !== activeFetchIdRef.current) return
       const msg = err?.name === 'AbortError'

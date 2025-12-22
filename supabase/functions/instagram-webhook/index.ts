@@ -256,7 +256,8 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
       // Método 3: Intentar obtener información a través del endpoint de conversaciones
       // Buscar conversaciones que incluyan este senderId como participante
       const convResponse = await fetch(
-        `https://graph.instagram.com/v21.0/${instagramBusinessAccountId}/conversations?fields=participants&access_token=${accessToken}`,
+        // Nota: endpoints de Messaging/Business van por graph.facebook.com (no graph.instagram.com)
+        `https://graph.facebook.com/v21.0/${instagramBusinessAccountId}/conversations?fields=participants&access_token=${accessToken}`,
         {
           method: 'GET',
           headers: {
@@ -278,7 +279,7 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
                 console.log('✅ Participante encontrado:', participant);
                 // Intentar obtener el perfil completo del participante
                 const participantResponse = await fetch(
-                  `https://graph.instagram.com/v21.0/${participant.id}?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
+                  `https://graph.facebook.com/v21.0/${participant.id}?fields=id,username,name,profile_pic&access_token=${accessToken}`,
                   {
                     method: 'GET',
                     headers: {
@@ -293,7 +294,7 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
                     return {
                       name: participantData.name || participant.name || null,
                       username: participantData.username || participant.username || null,
-                      profile_picture: participantData.profile_picture_url || participant.profile_pic || null,
+                      profile_picture: participantData.profile_pic || participant.profile_pic || null,
                     };
                   }
                 }
