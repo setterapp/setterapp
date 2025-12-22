@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -54,27 +54,34 @@ const clientOptions = {
   },
 }
 
-function createSupabaseClient(): SupabaseClient {
-  return createClient(supabaseUrl, supabaseAnonKey, clientOptions)
-}
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, clientOptions)
 
-// Importers reciben un "live binding": si reseteamos el cliente, todos verán el nuevo.
-export let supabase: SupabaseClient = createSupabaseClient()
-
+/**
+ * Recovery best-effort SIN recrear el cliente (evita "Multiple GoTrueClient instances").
+ * Intenta destrabar realtime + sesión + canales.
+ */
 export async function resetSupabaseClient(reason: string) {
-  const oldClient = supabase
   try {
-    await oldClient.removeAllChannels()
+    await supabase.removeAllChannels()
   } catch {
     // best-effort
   }
   try {
-    oldClient.realtime.disconnect()
+    supabase.realtime.disconnect()
+  } catch {
+    // best-effort
+  }
+  try {
+    supabase.realtime.connect()
+  } catch {
+    // best-effort
+  }
+  try {
+    await supabase.auth.refreshSession()
   } catch {
     // best-effort
   }
 
-  supabase = createSupabaseClient()
-  console.warn(`♻️ Supabase client reseteado (${reason})`)
+  console.warn(`♻️ Supabase recovery ejecutado (${reason})`)
   return supabase
 }

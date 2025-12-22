@@ -24,14 +24,7 @@ export function useMessages(conversationId: string | null) {
   const [error, setError] = useState<string | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const isIntentionalCloseRef = useRef(false)
-  const activeFetchIdRef = useRef(0)
-
-  const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = 12000): Promise<T> => {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Timeout after ${timeoutMs}ms`)), timeoutMs)),
-    ])
-  }
+  const fetchAbortRef = useRef<AbortController | null>(null)
 
   const fetchMessages = async () => {
     if (!conversationId) {
@@ -40,36 +33,39 @@ export function useMessages(conversationId: string | null) {
       return
     }
 
-    const fetchId = ++activeFetchIdRef.current
+    if (fetchAbortRef.current) fetchAbortRef.current.abort()
+    const controller = new AbortController()
+    fetchAbortRef.current = controller
+    const timeoutId = window.setTimeout(() => controller.abort(), 12000)
     try {
       setLoading(true)
       setError(null)
 
-      const runQuery = async () => {
-        return await supabase
-          .from('messages')
-          .select('*')
-          .eq('conversation_id', conversationId)
-          .order('created_at', { ascending: true })
-      }
-
-      let result = await withTimeout(runQuery(), 12000).catch(async (e) => {
-        console.warn('⚠️ fetchMessages colgado/falló. Reseteando Supabase y reintentando...', e)
-        await resetSupabaseClient('fetchMessages')
-        return await withTimeout(runQuery(), 12000)
-      })
-
-      const { data, error: fetchError } = result
+      const { data, error: fetchError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true })
+        .abortSignal(controller.signal)
       if (fetchError) throw fetchError
-      if (fetchId !== activeFetchIdRef.current) return
+      if (fetchAbortRef.current !== controller) return
       setMessages(data || [])
     } catch (err: any) {
       console.error('Error fetching messages:', err)
-      if (fetchId !== activeFetchIdRef.current) return
-      setError(err?.message || 'Error cargando mensajes')
+      if (fetchAbortRef.current !== controller) return
+      const msg = err?.name === 'AbortError'
+        ? 'Timeout cargando mensajes'
+        : (err?.message || 'Error cargando mensajes')
+      setError(msg)
       setMessages([])
+      if (err?.name === 'AbortError') {
+        await resetSupabaseClient('fetchMessages:abort')
+      }
     } finally {
-      if (fetchId !== activeFetchIdRef.current) return
+      window.clearTimeout(timeoutId)
+      if (fetchAbortRef.current === controller) {
+        fetchAbortRef.current = null
+      }
       setLoading(false)
     }
   }

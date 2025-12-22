@@ -78,22 +78,27 @@ export function useIntegrations() {
         throw new Error('Usuario no autenticado')
       }
 
-      const runQuery = async () => {
-        return await supabase
+      const controller = new AbortController()
+      const timeoutId = window.setTimeout(() => controller.abort(), 12000)
+
+      let data: any[] | null = null
+      let fetchError: any = null
+      try {
+        const res = await supabase
           .from('integrations')
           .select('*')
           .eq('user_id', user.id)
           .neq('type', 'google-calendar')
           .order('created_at', { ascending: true })
+          .abortSignal(controller.signal)
+        data = res.data
+        fetchError = res.error
+      } catch (e) {
+        fetchError = e
+      } finally {
+        window.clearTimeout(timeoutId)
       }
 
-      let result = await withTimeout(runQuery(), 12000).catch(async (e) => {
-        console.warn('⚠️ fetchIntegrations colgado/falló. Reseteando Supabase y reintentando...', e)
-        await resetSupabaseClient('fetchIntegrations')
-        return await withTimeout(runQuery(), 12000)
-      })
-
-      const { data, error: fetchError } = result
       if (fetchError) throw fetchError
 
       if (!data || data.length === 0) {
@@ -118,8 +123,14 @@ export function useIntegrations() {
       }
     } catch (err: any) {
       if (fetchId !== activeFetchIdRef.current) return
-      setError(err?.message || 'Error fetching integrations')
+      const msg = err?.name === 'AbortError'
+        ? 'Timeout cargando integraciones'
+        : (err?.message || 'Error fetching integrations')
+      setError(msg)
       console.error('Error fetching integrations:', err)
+      if (err?.name === 'AbortError') {
+        await resetSupabaseClient('fetchIntegrations:abort')
+      }
     } finally {
       if (fetchId !== activeFetchIdRef.current) return
       setLoading(false)
