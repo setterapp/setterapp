@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase, resetSupabaseClient } from '../lib/supabase'
 import { dbg } from '../utils/debug'
+import { supabaseRest } from '../utils/supabaseRest'
 
 export interface Message {
   id: string
@@ -43,12 +44,29 @@ export function useMessages(conversationId: string | null) {
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await supabase
+      const queryPromise = supabase
         .from('messages')
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
         .abortSignal(controller.signal)
+
+      // Si supabase-js se cuelga antes de llamar fetch (bug post-resume),
+      // hacemos fallback a REST directo.
+      const result = await Promise.race([
+        queryPromise,
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('supabase-js timeout (pre-fetch hang)')), 2500)),
+      ]).catch(async (e) => {
+        dbg('warn', 'useMessages fallback REST', e)
+        const { data: { session } } = await supabase.auth.getSession()
+        const rows = await supabaseRest<any[]>(
+          `/rest/v1/messages?select=*&conversation_id=eq.${encodeURIComponent(conversationId)}&order=created_at.asc`,
+          { accessToken: session?.access_token, signal: controller.signal }
+        )
+        return { data: rows, error: null }
+      })
+
+      const { data, error: fetchError } = result as any
       if (fetchError) throw fetchError
       if (fetchAbortRef.current !== controller) return
       setMessages(data || [])

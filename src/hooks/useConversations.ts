@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase, resetSupabaseClient } from '../lib/supabase'
+import { supabaseRest } from '../utils/supabaseRest'
+import { dbg } from '../utils/debug'
 
 export interface Conversation {
   id: string
@@ -35,12 +37,29 @@ export function useConversations() {
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await supabase
+      dbg('log', 'useConversations.fetchConversations start')
+
+      const queryPromise = supabase
         .from('conversations')
         .select('*')
         .order('last_message_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
         .abortSignal(controller.signal)
+
+      const result = await Promise.race([
+        queryPromise,
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('supabase-js timeout (pre-fetch hang)')), 2500)),
+      ]).catch(async (e) => {
+        dbg('warn', 'useConversations fallback REST', e)
+        const { data: { session } } = await supabase.auth.getSession()
+        const rows = await supabaseRest<any[]>(
+          `/rest/v1/conversations?select=*&order=last_message_at.desc.nullslast,created_at.desc`,
+          { accessToken: session?.access_token, signal: controller.signal }
+        )
+        return { data: rows, error: null }
+      })
+
+      const { data, error: fetchError } = result as any
       if (fetchError) throw fetchError
       if (fetchAbortRef.current !== controller) return
       setConversations(data || [])

@@ -7,6 +7,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env file.')
 }
 
+// Exportado para fallback REST cuando supabase-js se queda colgado post-resume
+export const SUPABASE_URL = supabaseUrl
+export const SUPABASE_ANON_KEY = supabaseAnonKey
+
 const DEFAULT_FETCH_TIMEOUT_MS = 15000
 
 function isDebugEnabled() {
