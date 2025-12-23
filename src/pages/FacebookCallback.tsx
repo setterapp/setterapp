@@ -50,15 +50,10 @@ function FacebookCallback() {
           return
         }
 
-        console.log('🔵 Intercambiando código de Facebook por Page Access Token...')
 
         // Exchange code for Page Access Token
         const pageData = await facebookOAuthService.exchangeCodeForPageToken(code)
 
-        console.log('✅ Page Access Token obtenido:', {
-          pageId: pageData.pageId,
-          instagramUsername: pageData.instagramUsername
-        })
 
         // Create Facebook integration with Page Access Token
         await facebookOAuthService.createFacebookIntegration(storedUserId, pageData)
@@ -67,7 +62,6 @@ function FacebookCallback() {
         localStorage.removeItem('facebook_oauth_state')
         localStorage.removeItem('facebook_oauth_user_id')
 
-        console.log('✅ Integración de Facebook completada')
 
         // If we're in a popup, notify parent and close
         if (isPopup) {

@@ -14,16 +14,6 @@ function Integrations() {
   const { integrations, loading, error, updateIntegration, refetch } = useIntegrations()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
-  const toggleWebhookDebug = async (integrationId: string, enabled: boolean) => {
-    const integration = integrations.find(i => i.id === integrationId)
-    if (!integration) return
-    await updateIntegration(integrationId, {
-      config: {
-        ...(integration.config || {}),
-        debug_webhooks: enabled,
-      }
-    } as any)
-  }
 
 
   // Recargar datos cuando se monta el componente (útil después del callback de OAuth)
@@ -256,7 +246,6 @@ function Integrations() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
                 {integrations.map((integration) => {
             const isConnected = integration.status === 'connected'
-            const webhookDebugEnabled = Boolean((integration.config as any)?.debug_webhooks)
             const bg = integration.type === 'whatsapp'
               ? '#a6e3a1'
               : integration.type === 'facebook'
@@ -321,29 +310,6 @@ function Integrations() {
 
                 {/* Right: Controls */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                  {/* Webhook Debug (Instagram/Messenger, modo opt-in) */}
-                  {integration.type === 'instagram' && (
-                    <button
-                      onClick={() => toggleWebhookDebug(integration.id, !webhookDebugEnabled)}
-                      style={{
-                        fontSize: 'var(--font-size-xs)',
-                        fontWeight: 600,
-                        padding: '6px 10px',
-                        borderRadius: 'var(--border-radius-sm)',
-                        border: '2px solid #000',
-                        background: webhookDebugEnabled ? 'var(--color-primary)' : 'var(--color-bg)',
-                        color: '#000',
-                        cursor: 'pointer',
-                        opacity: isConnected ? 1 : 0.6,
-                      }}
-                      title={isConnected
-                        ? 'Guarda payloads de webhooks y los envía por Realtime (solo para debug)'
-                        : 'Puedes activar Debug aunque esté desconectado. Luego conecta la integración para recibir eventos.'}
-                    >
-                      {webhookDebugEnabled ? 'Debug ON' : 'Debug OFF'}
-                    </button>
-                  )}
-
                   {/* Active Label */}
                   {isConnected && (
                     <span

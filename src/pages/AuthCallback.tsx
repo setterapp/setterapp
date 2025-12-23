@@ -84,11 +84,6 @@ function AuthCallback() {
                       instagram_business_account_id: igInfo.instagramBusinessAccountId,
                       instagram_username: igInfo.instagramUsername,
                     }
-                    console.log('✅ Instagram Page Access Token obtenido correctamente:', {
-                      page_id: igInfo.pageId,
-                      instagram_business_account_id: igInfo.instagramBusinessAccountId,
-                      instagram_username: igInfo.instagramUsername,
-                    })
                   } catch (igError: any) {
                     console.error('❌ Error obteniendo Instagram Page Access Token:', igError.message || igError)
                     // Si no podemos obtener page token, igual dejamos la integración conectada.

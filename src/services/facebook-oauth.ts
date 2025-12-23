@@ -77,7 +77,6 @@ export const facebookOAuthService = {
       authUrl.searchParams.set('scope', FACEBOOK_SCOPES.join(','))
       authUrl.searchParams.set('response_type', 'code')
 
-      console.log('🔵 Abriendo Facebook OAuth:', authUrl.toString())
 
       // Abrir en popup
       const width = 600
@@ -272,7 +271,6 @@ export const facebookOAuthService = {
           throw updateError
         }
 
-        console.log('✅ Integración de Facebook actualizada')
         return existingIntegration.id
       } else {
         // Crear nueva integración de Facebook
@@ -298,7 +296,6 @@ export const facebookOAuthService = {
           throw insertError
         }
 
-        console.log('✅ Nueva integración de Facebook creada')
         return newIntegration.id
       }
     } catch (error) {

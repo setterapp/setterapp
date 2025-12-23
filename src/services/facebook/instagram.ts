@@ -181,7 +181,6 @@ export const instagramService = {
     const data = await res.json()
     const pages = Array.isArray(data?.data) ? data.data : []
 
-    console.log('📄 Páginas encontradas:', pages.length)
     if (pages.length === 0) {
       throw new Error('No tienes páginas de Facebook. Crea una página en facebook.com/pages/create')
     }
@@ -193,11 +192,6 @@ export const instagramService = {
       throw new Error(`Ninguna de tus ${pages.length} página(s) de Facebook [${pageNames}] tiene una Cuenta de Instagram Business vinculada. Ve a la configuración de tu página en Facebook para vincular tu cuenta de Instagram Business.`)
     }
 
-    console.log('✅ Página con Instagram encontrada:', {
-      page_name: page.name,
-      page_id: page.id,
-      instagram_username: page.instagram_business_account.username
-    })
 
     return {
       pageId: page.id as string,
