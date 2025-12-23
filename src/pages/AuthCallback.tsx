@@ -28,6 +28,15 @@ function AuthCallback() {
           const provider = new URLSearchParams(location.search).get('provider') || 'google'
           const integrationParam = new URLSearchParams(location.search).get('integration') // 'whatsapp' | 'instagram' | 'google-calendar'
 
+          console.log('🔍 AUTH CALLBACK DEBUG:', {
+            redirectTo,
+            isFromIntegrations,
+            provider,
+            integrationParam,
+            hasProviderToken: !!session.provider_token,
+            url: window.location.href
+          })
+
           // Si hay un provider_token y venimos de integraciones, actualizar la integración correspondiente
           if (session.provider_token && isFromIntegrations) {
             try {
@@ -46,6 +55,8 @@ function AuthCallback() {
                   integrationType = 'instagram'
                 }
               }
+
+              console.log('📝 Detected integration type:', integrationType)
 
               // Buscar la integración correspondiente
               const { data: integrations, error: intError } = await supabase
@@ -141,7 +152,13 @@ Asegúrate de:
                 }
 
                 // Actualizar a "connected" cuando viene del flujo de OAuth
-                const { error: updateError } = await supabase
+                console.log('🔄 Updating integration to connected...', {
+                  integrationId: integration.id,
+                  type: integrationType,
+                  canMarkConnected
+                })
+
+                const { data: updatedData, error: updateError } = await supabase
                   .from('integrations')
                   .update({
                     status: canMarkConnected ? 'connected' : 'disconnected',
@@ -155,7 +172,9 @@ Asegúrate de:
                   .single()
 
                 if (updateError) {
-                  // Evitar logs en producción por seguridad
+                  console.error('❌ Error updating integration:', updateError)
+                } else {
+                  console.log('✅ Integration updated successfully:', updatedData)
                 }
               }
             } catch (err) {
