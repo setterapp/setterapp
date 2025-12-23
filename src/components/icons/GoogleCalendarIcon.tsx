@@ -3,7 +3,7 @@ interface GoogleCalendarIconProps {
   color?: string
 }
 
-export default function GoogleCalendarIcon({ size = 24, color = '#fff' }: GoogleCalendarIconProps) {
+export default function GoogleCalendarIcon({ size = 24, color = '#000' }: GoogleCalendarIconProps) {
   return (
     <svg
       width={size}
@@ -12,31 +12,32 @@ export default function GoogleCalendarIcon({ size = 24, color = '#fff' }: Google
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Calendar body - filled */}
+      {/* Calendar outline */}
       <rect
         x="4"
-        y="6"
+        y="5"
         width="16"
-        height="15"
+        height="16"
         rx="2"
-        fill={color}
+        stroke={color}
+        strokeWidth="2.5"
+        fill="none"
       />
-      {/* Top bar - darker */}
-      <rect
-        x="4"
-        y="6"
-        width="16"
-        height="4"
-        rx="2"
-        fill={color}
-        opacity="0.8"
+      {/* Top bar */}
+      <line
+        x1="4"
+        y1="9"
+        x2="20"
+        y2="9"
+        stroke={color}
+        strokeWidth="2.5"
       />
       {/* Calendar rings */}
       <rect
         x="7"
         y="3"
         width="2"
-        height="5"
+        height="4"
         rx="1"
         fill={color}
       />
@@ -44,17 +45,22 @@ export default function GoogleCalendarIcon({ size = 24, color = '#fff' }: Google
         x="15"
         y="3"
         width="2"
-        height="5"
+        height="4"
         rx="1"
         fill={color}
       />
-      {/* Grid dots - using darker color for contrast */}
-      <circle cx="8" cy="13" r="1.5" fill="#4285F4" />
-      <circle cx="12" cy="13" r="1.5" fill="#4285F4" />
-      <circle cx="16" cy="13" r="1.5" fill="#4285F4" />
-      <circle cx="8" cy="17" r="1.5" fill="#4285F4" />
-      <circle cx="12" cy="17" r="1.5" fill="#4285F4" />
-      <circle cx="16" cy="17" r="1.5" fill="#4285F4" />
+      {/* Date number "31" */}
+      <text
+        x="12"
+        y="17"
+        fontFamily="Arial, sans-serif"
+        fontSize="8"
+        fontWeight="bold"
+        fill={color}
+        textAnchor="middle"
+      >
+        31
+      </text>
     </svg>
   )
 }

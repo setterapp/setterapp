@@ -381,7 +381,7 @@ function Integrations() {
                       <FacebookIcon size={24} color="#000" />
                     )}
                     {integration.type === 'google-calendar' && (
-                      <GoogleCalendarIcon size={24} color="#fff" />
+                      <GoogleCalendarIcon size={24} color="#000" />
                     )}
                   </div>
                   <div style={{ flex: 1 }}>

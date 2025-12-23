@@ -26,14 +26,17 @@ function AuthCallback() {
           // Verificar si venimos de integraciones
           const isFromIntegrations = redirectTo.includes('/integrations') || redirectTo === '/integrations'
           const provider = new URLSearchParams(location.search).get('provider') || 'google'
-          const integrationParam = new URLSearchParams(location.search).get('integration') // 'whatsapp' | 'instagram'
+          const integrationParam = new URLSearchParams(location.search).get('integration') // 'whatsapp' | 'instagram' | 'google-calendar'
 
           // Si hay un provider_token y venimos de integraciones, actualizar la integración correspondiente
           if (session.provider_token && isFromIntegrations) {
             try {
               let integrationType: 'instagram' | 'whatsapp' | 'google-calendar' = 'instagram'
 
-              if (provider === 'google') {
+              // Primero revisar si hay integrationParam explícito
+              if (integrationParam === 'google-calendar') {
+                integrationType = 'google-calendar'
+              } else if (provider === 'google') {
                 integrationType = 'google-calendar'
               } else if (provider === 'facebook') {
                 // Si viene el parámetro integration, usarlo; si no, asumir instagram por defecto
