@@ -498,22 +498,32 @@ async function processInstagramEvent(event: any, pageId: string) {
       const recipientId = event.recipient?.id;
       // Instagram puede enviar timestamp en milisegundos o segundos
       // Si es mayor que 1e12, está en milisegundos
-      const rawTimestamp = event.timestamp;
+      // Algunos payloads pueden no incluir timestamp o venir como string
+      const rawTimestamp = (typeof event.timestamp === 'number' && Number.isFinite(event.timestamp))
+        ? event.timestamp
+        : (typeof event.timestamp === 'string' && event.timestamp.trim() !== '' && Number.isFinite(Number(event.timestamp)) ? Number(event.timestamp) : null);
+
+      const safeIso = (ms: number) => {
+        const d = new Date(ms);
+        return Number.isFinite(d.getTime()) ? d.toISOString() : null;
+      };
 
       // Determinar si está en milisegundos o segundos
       // Los timestamps en milisegundos son típicamente > 1e12 (año 2001)
       // Los timestamps en segundos son típicamente < 1e10 (año 2286)
-      let timestampInMs: number;
-      let timestampInSeconds: number;
+      let timestampInMs: number = Date.now();
+      let timestampInSeconds: number = Math.floor(Date.now() / 1000);
 
-      if (rawTimestamp > 1e12) {
-        // Está en milisegundos
-        timestampInMs = rawTimestamp;
-        timestampInSeconds = Math.floor(rawTimestamp / 1000);
-      } else {
-        // Está en segundos
-        timestampInSeconds = rawTimestamp;
-        timestampInMs = rawTimestamp * 1000;
+      if (rawTimestamp !== null) {
+        if (rawTimestamp > 1e12) {
+          // Está en milisegundos
+          timestampInMs = rawTimestamp;
+          timestampInSeconds = Math.floor(rawTimestamp / 1000);
+        } else {
+          // Está en segundos
+          timestampInSeconds = rawTimestamp;
+          timestampInMs = rawTimestamp * 1000;
+        }
       }
 
       // Validar que el timestamp sea razonable (entre 2000 y 2100)
@@ -526,7 +536,7 @@ async function processInstagramEvent(event: any, pageId: string) {
           rawTimestamp,
           timestampInMs,
           timestampInSeconds,
-          dateFromTimestamp: dateFromTimestamp.toISOString(),
+          dateFromTimestamp: safeIso(timestampInMs),
           year,
           isValidDate
         });
@@ -536,7 +546,7 @@ async function processInstagramEvent(event: any, pageId: string) {
         console.log('⚠️ Using current timestamp as fallback:', {
           timestampInMs,
           timestampInSeconds,
-          date: new Date(timestampInMs).toISOString()
+          date: safeIso(timestampInMs)
         });
       }
 
@@ -556,7 +566,7 @@ async function processInstagramEvent(event: any, pageId: string) {
         rawTimestamp,
         timestampInSeconds,
         timestampInMs,
-        dateFromTimestamp: new Date(timestampInMs).toISOString(),
+        dateFromTimestamp: safeIso(timestampInMs),
         messageId,
         messageText,
         pageId
