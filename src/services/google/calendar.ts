@@ -50,106 +50,44 @@ export const googleCalendarService = {
   },
 
   /**
-   * Get the current Google access token from Supabase session
-   * Refreshes the token if needed - ahora más robusto y silencioso
-   * Si no hay tokens, verifica si la integración está conectada en DB y ofrece reconectar
+   * Get the current Google access token from database (config field in integrations table)
+   * Refreshes the token if needed using the refresh token
+   * Los tokens NO se persisten en la sesión de Supabase, debemos guardarlos en DB
    */
   async getAccessToken() {
     try {
-      let { data: { session }, error } = await supabase.auth.getSession()
+      const { data: { session }, error } = await supabase.auth.getSession()
 
       if (error) throw error
       if (!session) throw new Error('No active session')
 
-      // Get the provider token (Google access token)
-      let providerToken = session.provider_token
-      const providerRefreshToken = session.provider_refresh_token
+      // Obtener la integración de Google Calendar de la base de datos
+      const { data: integration, error: integrationError } = await supabase
+        .from('integrations')
+        .select('*')
+        .eq('type', 'google-calendar')
+        .eq('user_id', session.user.id)
+        .eq('status', 'connected')
+        .limit(1)
+        .single()
 
-      // Si no hay token, intentar refrescar la sesión automáticamente
-      if (!providerToken) {
-        if (providerRefreshToken) {
-          try {
-            // Forzar refresco de la sesión
-            const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
-
-            if (refreshError) {
-              console.error('Error refreshing session:', refreshError)
-              // No lanzar error inmediatamente - intentar una vez más
-              // A veces el refresh necesita un pequeño delay
-              await new Promise(resolve => setTimeout(resolve, 500))
-              const { data: { session: retrySession }, error: retryError } = await supabase.auth.refreshSession()
-
-              if (retryError || !retrySession?.provider_token) {
-                // Verificar si la integración está marcada como conectada en DB
-                const { data: integrations } = await supabase
-                  .from('integrations')
-                  .select('*')
-                  .eq('type', 'google-calendar')
-                  .eq('status', 'connected')
-                  .eq('user_id', session.user.id)
-                  .limit(1)
-
-                if (integrations && integrations.length > 0) {
-                  throw new Error('Google Calendar está conectado pero los tokens expiraron. Por favor, reconecta desde la página de Integraciones.')
-                } else {
-                  throw new Error('No se pudo refrescar el token. Por favor, reconecta Google Calendar.')
-                }
-              }
-
-              session = retrySession
-              providerToken = retrySession.provider_token
-            } else if (refreshedSession?.provider_token) {
-              session = refreshedSession
-              providerToken = refreshedSession.provider_token
-            } else {
-              throw new Error('No hay token de acceso de Google después del refresco. Por favor, reconecta Google Calendar desde la página de Integraciones.')
-            }
-          } catch (refreshErr: any) {
-            console.error('Error al refrescar token:', refreshErr)
-            throw new Error(refreshErr.message || 'No se pudo obtener el token de Google. Por favor, reconecta Google Calendar.')
-          }
-        } else {
-          // No hay ni token ni refresh_token
-          // Verificar si la integración está marcada como conectada en DB
-          const { data: integrations } = await supabase
-            .from('integrations')
-            .select('*')
-            .eq('type', 'google-calendar')
-            .eq('status', 'connected')
-            .eq('user_id', session.user.id)
-            .limit(1)
-
-          if (integrations && integrations.length > 0) {
-            // Google Calendar está conectado pero no hay tokens - iniciar OAuth automáticamente
-            const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
-              provider: 'google',
-              options: {
-                scopes: CALENDAR_SCOPES.join(' '),
-                redirectTo: `${window.location.origin}/auth/callback?redirect_to=${encodeURIComponent(window.location.pathname)}&provider=google`,
-                queryParams: {
-                  access_type: 'offline',
-                  prompt: 'consent',
-                }
-              }
-            })
-
-            if (oauthError) {
-              throw new Error('Google Calendar está conectado pero los tokens no están disponibles. Por favor, reconecta desde la página de Integraciones.')
-            }
-
-            if (data.url) {
-              // Redirigir automáticamente a Google OAuth
-              window.location.href = data.url
-              // Retornar un error temporal mientras se redirige
-              throw new Error('Redirigiendo a Google para restaurar la conexión...')
-            } else {
-              throw new Error('Google Calendar está conectado pero los tokens no están disponibles. Por favor, reconecta desde la página de Integraciones.')
-            }
-          } else {
-            throw new Error('No hay token de acceso de Google. Por favor, reconecta Google Calendar desde la página de Integraciones.')
-          }
-        }
+      if (integrationError || !integration) {
+        throw new Error('Google Calendar no está conectado. Por favor, reconecta desde la página de Integraciones.')
       }
+
+      // Obtener tokens del config
+      let providerToken = integration.config?.provider_token
+      const providerRefreshToken = integration.config?.provider_refresh_token
+
+      // Si no hay token, pedir reconexión
+      if (!providerToken) {
+        throw new Error('No hay token de acceso de Google. Por favor, reconecta Google Calendar desde la página de Integraciones.')
+      }
+
+      // NOTA: Para implementar refresh automático de tokens, se necesitaría una Edge Function
+      // en Supabase que maneje el client_secret de forma segura. Por ahora, si el token expira,
+      // el usuario deberá reconectar (los tokens de Google duran 1 hora típicamente).
+      // El refresh_token se guarda para futuras implementaciones.
 
       return {
         accessToken: providerToken,
@@ -178,7 +116,12 @@ export const googleCalendarService = {
       )
 
       if (!response.ok) {
-        throw new Error('Failed to fetch calendars')
+        const errorData = await response.json().catch(() => ({}))
+        // Si el token expiró (401), sugerir reconexión
+        if (response.status === 401) {
+          throw new Error('El token de Google Calendar expiró. Por favor, reconecta desde la página de Integraciones.')
+        }
+        throw new Error(`Failed to fetch calendars: ${errorData.error?.message || 'Unknown error'}`)
       }
 
       const data = await response.json()
@@ -289,59 +232,13 @@ export const googleCalendarService = {
         const errorData = await response.json().catch(() => ({}))
         console.error('Error fetching events:', response.status, errorData)
 
-        if (response.status === 401 || response.status === 403) {
-          // Token expirado o sin permisos - intentar refrescar automáticamente
-          try {
-            // Intentar refrescar hasta 2 veces con delay
-            let refreshedSession = null
+        // Si el token expiró o sin permisos, sugerir reconexión
+        if (response.status === 401) {
+          throw new Error('El token de Google Calendar expiró. Por favor, reconecta desde la página de Integraciones.')
+        }
 
-            for (let attempt = 0; attempt < 2; attempt++) {
-              if (attempt > 0) {
-                await new Promise(resolve => setTimeout(resolve, 1000))
-              }
-
-              const { data: { session }, error } = await supabase.auth.refreshSession()
-
-              if (!error && session?.provider_token) {
-                refreshedSession = session
-                break
-              }
-            }
-
-            if (!refreshedSession?.provider_token) {
-              console.error('No se pudo refrescar el token después de varios intentos')
-              throw new Error('El token de Google Calendar ha expirado. Por favor, reconecta Google Calendar desde la página de Integraciones.')
-            }
-
-            // Reintentar con el nuevo token
-            const retryResponse = await fetch(
-              `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?${params}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${refreshedSession.provider_token}`,
-                  'Content-Type': 'application/json'
-                }
-              }
-            )
-
-            if (!retryResponse.ok) {
-              const retryErrorData = await retryResponse.json().catch(() => ({}))
-              console.error('Error después de refrescar:', retryResponse.status, retryErrorData)
-
-              // Si sigue fallando después de refrescar, puede ser un problema de permisos
-              if (retryResponse.status === 403) {
-                throw new Error('No tienes permisos para acceder a Google Calendar. Por favor, reconecta Google Calendar desde la página de Integraciones.')
-              }
-
-              throw new Error(`Error al obtener eventos: ${retryErrorData.error?.message || 'Error desconocido'}`)
-            }
-
-            const retryData = await retryResponse.json()
-            return retryData.items || []
-          } catch (refreshErr: any) {
-            console.error('Error al refrescar token:', refreshErr)
-            throw new Error(refreshErr.message || 'Error al refrescar el token de Google Calendar')
-          }
+        if (response.status === 403) {
+          throw new Error('No tienes permisos para acceder a Google Calendar. Por favor, reconecta desde la página de Integraciones.')
         }
 
         throw new Error(`Error al obtener eventos: ${errorData.error?.message || 'Error desconocido'}`)
@@ -356,25 +253,25 @@ export const googleCalendarService = {
 
   /**
    * Check if user has Google Calendar connected
-   * Verifica tanto los tokens de la sesión como el estado en la base de datos
+   * Verifica que exista la integración en DB con tokens guardados en config
    */
   async isConnected() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) return false
 
-      // Primero verificar el estado en la base de datos
+      // Verificar el estado en la base de datos y que tenga tokens guardados
       const { data: integration } = await supabase
         .from('integrations')
-        .select('status')
+        .select('status, config')
         .eq('type', 'google-calendar')
         .eq('user_id', session.user.id)
         .eq('status', 'connected')
         .limit(1)
         .single()
 
-      // Si está marcado como conectado en DB Y tiene tokens, está conectado
-      return !!integration && !!(session.provider_token || session.provider_refresh_token)
+      // Está conectado si tiene la integración marcada como connected Y tiene tokens en config
+      return !!integration && !!(integration.config?.provider_token || integration.config?.provider_refresh_token)
     } catch (error) {
       return false
     }

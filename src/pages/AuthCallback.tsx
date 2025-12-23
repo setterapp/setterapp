@@ -11,7 +11,24 @@ function AuthCallback() {
     const handleAuthCallback = async () => {
       try {
         // Supabase procesa automáticamente el código de la URL (detectSessionInUrl=true en esta ruta)
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        // IMPORTANTE: Usar setSession() en lugar de getSession() para procesar el hash/code de OAuth
+        // Primero intentamos procesar el callback si hay código en la URL
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        const searchParams = new URLSearchParams(window.location.search)
+
+        let session = null
+        let sessionError = null
+
+        // Si hay parámetros de OAuth en la URL (hash o search), esperar a que Supabase los procese
+        if (hashParams.has('access_token') || searchParams.has('code')) {
+          // Dar tiempo a Supabase para procesar el callback automáticamente
+          await new Promise(resolve => setTimeout(resolve, 500))
+        }
+
+        // Ahora obtener la sesión
+        const sessionResult = await supabase.auth.getSession()
+        session = sessionResult.data.session
+        sessionError = sessionResult.error
 
         if (sessionError) {
           setError(sessionError.message)
@@ -51,11 +68,16 @@ function AuthCallback() {
               let config: Record<string, any> = {}
 
               if (integrationType === 'google-calendar') {
-                // Google Calendar no necesita configuración adicional
-                // Los tokens se manejan a través de Supabase Auth (provider_token y provider_refresh_token)
+                // IMPORTANTE: Guardar los tokens porque Supabase NO los persiste automáticamente
+                // Los provider_token y provider_refresh_token solo están disponibles en la sesión inicial
+                // Después de un refresh, desaparecen. Por eso los guardamos en config.
                 config = {
                   connected_via: 'supabase_oauth',
-                  scopes: ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/calendar.events']
+                  scopes: ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/calendar.events'],
+                  provider_token: session.provider_token,
+                  provider_refresh_token: session.provider_refresh_token,
+                  token_expires_at: new Date(Date.now() + 3600 * 1000).toISOString(), // Google tokens típicamente duran 1 hora
+                  last_token_refresh: new Date().toISOString()
                 }
               } else if (integrationType === 'whatsapp') {
                 try {
