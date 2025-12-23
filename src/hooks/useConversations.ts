@@ -165,6 +165,23 @@ export function useConversations() {
             {
               event: '*',
               schema: 'public',
+              table: 'messages',
+              filter: `user_id=eq.${session.user.id}`
+            },
+            () => {
+              // Fallback: si por algún motivo no llega el update de `conversations`,
+              // al menos refrescamos la lista cuando entra/sale un mensaje.
+              if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current)
+              refreshTimerRef.current = window.setTimeout(() => {
+                void fetchConversations()
+              }, 150)
+            }
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
               table: 'contacts',
               filter: `user_id=eq.${session.user.id}`
             },

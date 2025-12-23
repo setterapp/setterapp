@@ -11,6 +11,12 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 console.log(`Instagram webhook function up and running!`);
 
+function extractPlatformMessageId(event: any): string | null {
+  const msg = event?.message ?? event?.value?.message ?? event?.value?.messages?.[0] ?? null;
+  const id = msg?.mid ?? msg?.id ?? event?.message_id ?? event?.mid ?? null;
+  return typeof id === 'string' && id.trim() !== '' ? id : null;
+}
+
 Deno.serve(async (req: Request) => {
   // Manejar CORS
   if (req.method === 'OPTIONS') {
@@ -62,6 +68,10 @@ Deno.serve(async (req: Request) => {
 
       // Instagram puede enviar eventos con object: 'instagram' o 'page'
       if (body.object === 'instagram' || body.object === 'page') {
+        // Dedupe por-request: Instagram/Meta puede mandar el mismo mensaje en varios formatos
+        // (entry.messaging + entry.changes[field=messages] + entry.messages), o reenviar por retries.
+        const processedMessageIds = new Set<string>();
+
         for (const entry of body.entry || []) {
           const pageId = entry.id;
           console.log('📨 Processing entry with pageId:', pageId);
@@ -70,6 +80,14 @@ Deno.serve(async (req: Request) => {
           if (entry.messaging) {
             console.log('📨 Found messaging events:', entry.messaging.length);
             for (const event of entry.messaging) {
+              const mid = extractPlatformMessageId(event);
+              if (mid) {
+                if (processedMessageIds.has(mid)) {
+                  console.log('🔁 Duplicate message (messaging) ignored:', mid);
+                  continue;
+                }
+                processedMessageIds.add(mid);
+              }
               await processInstagramEvent(event, pageId);
             }
           }
@@ -81,6 +99,14 @@ Deno.serve(async (req: Request) => {
               // Si el change es de tipo messaging, procesarlo
               if (change.field === 'messages' && change.value) {
                 console.log('📨 Processing messaging change:', change.value);
+                const mid = extractPlatformMessageId(change.value);
+                if (mid) {
+                  if (processedMessageIds.has(mid)) {
+                    console.log('🔁 Duplicate message (changes) ignored:', mid);
+                    continue;
+                  }
+                  processedMessageIds.add(mid);
+                }
                 await processInstagramEvent(change.value, pageId);
               } else {
                 await processInstagramChange(change, pageId);
@@ -92,6 +118,15 @@ Deno.serve(async (req: Request) => {
           if (entry.messages) {
             console.log('📨 Found messages directly in entry:', entry.messages.length);
             for (const message of entry.messages) {
+              const mid = extractPlatformMessageId({ message });
+              if (mid) {
+                if (processedMessageIds.has(mid)) {
+                  console.log('🔁 Duplicate message (entry.messages) ignored:', mid);
+                  continue;
+                }
+                processedMessageIds.add(mid);
+              }
+              // Best-effort mapping: algunos payloads no traen sender/recipient en esta forma
               await processInstagramEvent({ message }, pageId);
             }
           }
@@ -662,9 +697,11 @@ async function processInstagramEvent(event: any, pageId: string) {
         .eq('user_id', userId)
         .eq('platform', 'instagram')
         .eq('platform_conversation_id', senderId)
-        .single();
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (findError && findError.code !== 'PGRST116') {
+      if (findError) {
         console.error('❌ Error finding conversation:', findError);
       }
 
@@ -769,20 +806,26 @@ async function processInstagramEvent(event: any, pageId: string) {
 
         const { data: savedMessage, error: messageError } = await supabase
           .from('messages')
-          .insert({
-            conversation_id: conversationId,
-            user_id: userId,
-            platform_message_id: messageId,
-            content: messageText,
-            direction: 'inbound',
-            message_type: 'text',
-            metadata: {
-              sender_id: senderId,
-              recipient_id: recipientId,
-              timestamp: timestampInSeconds,
-              raw_timestamp: rawTimestamp,
+          .upsert(
+            {
+              conversation_id: conversationId,
+              user_id: userId,
+              platform_message_id: messageId,
+              content: messageText,
+              direction: 'inbound',
+              message_type: 'text',
+              metadata: {
+                sender_id: senderId,
+                recipient_id: recipientId,
+                timestamp: timestampInSeconds,
+                raw_timestamp: rawTimestamp,
+              },
             },
-          })
+            {
+              onConflict: 'user_id,platform_message_id',
+              ignoreDuplicates: true,
+            }
+          )
           .select('id')
           .single();
 
@@ -1103,19 +1146,25 @@ async function generateAndSendAutoReply(
     // 6. Guardar mensaje enviado en la BD
     const { error: messageError } = await supabase
       .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        user_id: userId,
-        platform_message_id: sendResult.message_id || sendResult.id,
-        content: aiResponse,
-        direction: 'outbound',
-        message_type: 'text',
-        metadata: {
-          generated_by: 'ai',
-          agent_id: agent.id,
-          model: 'gpt-4o-mini'
+      .upsert(
+        {
+          conversation_id: conversationId,
+          user_id: userId,
+          platform_message_id: sendResult.message_id || sendResult.id,
+          content: aiResponse,
+          direction: 'outbound',
+          message_type: 'text',
+          metadata: {
+            generated_by: 'ai',
+            agent_id: agent.id,
+            model: 'gpt-4o-mini'
+          },
         },
-      });
+        {
+          onConflict: 'user_id,platform_message_id',
+          ignoreDuplicates: true,
+        }
+      );
 
     if (messageError) {
       console.error('❌ Error guardando mensaje enviado:', messageError);
