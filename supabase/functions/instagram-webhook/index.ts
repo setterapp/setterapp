@@ -1,15 +1,20 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const VERIFY_TOKEN = Deno.env.get('INSTAGRAM_WEBHOOK_VERIFY_TOKEN') || 'd368c7bd78882ba8aae97e480701363127efee4d7f2a2ed79c124fb123d088ec';
+// Security: Require all secrets to be configured via environment variables
+const VERIFY_TOKEN = Deno.env.get('INSTAGRAM_WEBHOOK_VERIFY_TOKEN');
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? '';
 
+if (!VERIFY_TOKEN) {
+  console.error('❌ INSTAGRAM_WEBHOOK_VERIFY_TOKEN must be configured');
+}
+
 // Crear cliente de Supabase con service role key para operaciones administrativas
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-console.log(`Instagram webhook function up and running!`);
+console.log(`Instagram webhook function initialized`);
 
 function extractPlatformMessageId(event: any): string | null {
   const msg = event?.message ?? event?.value?.message ?? event?.value?.messages?.[0] ?? null;
@@ -94,7 +99,7 @@ Deno.serve(async (req: Request) => {
             for (const change of entry.changes) {
               // Si el change es de tipo messaging, procesarlo
               if (change.field === 'messages' && change.value) {
-                console.log('📨 Processing messaging change:', change.value);
+                console.log('📨 Processing messaging change');
                 const mid = extractPlatformMessageId(change.value);
                 if (mid) {
                   if (processedMessageIds.has(mid)) {
@@ -129,7 +134,7 @@ Deno.serve(async (req: Request) => {
         }
       } else {
         console.warn('⚠️ Unknown event object type:', body.object);
-        console.warn('⚠️ Full body:', JSON.stringify(body, null, 2));
+        // Security: Never log full payload in production
       }
 
       // Responder 200 OK a Instagram para confirmar recepción
@@ -591,15 +596,10 @@ async function processInstagramEvent(event: any, pageId: string) {
       const messageId = message.mid || message.id;
       const messageText = message.text || '';
 
-      console.log('📩 Message details:', {
-        senderId,
-        recipientId,
-        rawTimestamp,
-        timestampInSeconds,
-        timestampInMs,
-        dateFromTimestamp: safeIso(timestampInMs),
+      // Security: Log only metadata, never message content
+      console.log('📩 Message received:', {
         messageId,
-        messageText,
+        timestamp: safeIso(timestampInMs),
         pageId
       });
 
@@ -643,9 +643,9 @@ async function processInstagramEvent(event: any, pageId: string) {
       // Getting Instagram profile...
       const userProfile = await getInstagramUserProfile(userId, senderId);
       if (userProfile) {
-        console.log('✅ Perfil obtenido:', userProfile);
+        console.log('✅ Profile fetched successfully');
       } else {
-        console.log('⚠️ No se pudo obtener perfil, se usará senderId como nombre');
+        console.log('⚠️ Profile not available, using ID as fallback');
       }
 
       // Determinar el nombre a mostrar (username > name > senderId)
@@ -794,10 +794,7 @@ async function processInstagramEvent(event: any, pageId: string) {
       if (conversationId && messageText) {
         console.log('💾 Saving message to database:', {
           conversationId,
-          userId,
-          messageId,
-          messageText,
-          senderId
+          messageId
         });
 
         const { data: savedMessage, error: messageError } = await supabase
@@ -1086,7 +1083,7 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
     }
 
     const data = await response.json();
-    console.log('✅ Mensaje enviado a Instagram:', data);
+    console.log('✅ Message sent to Instagram successfully');
     return data;
   } catch (error) {
     console.error('❌ Error sending Instagram message:', error);
@@ -1129,7 +1126,7 @@ async function generateAndSendAutoReply(
       return;
     }
 
-    console.log('✅ Respuesta generada:', aiResponse);
+    console.log('✅ AI response generated successfully');
 
     // 5. Enviar respuesta a Instagram
     const sendResult = await sendInstagramMessage(userId, recipientId, aiResponse);

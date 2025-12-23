@@ -1,15 +1,20 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const VERIFY_TOKEN = Deno.env.get('WHATSAPP_WEBHOOK_VERIFY_TOKEN') || 'whatsapp_verify_token_change_me';
+// Security: Require all secrets to be configured via environment variables
+const VERIFY_TOKEN = Deno.env.get('WHATSAPP_WEBHOOK_VERIFY_TOKEN');
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? '';
 
+if (!VERIFY_TOKEN) {
+  console.error('❌ WHATSAPP_WEBHOOK_VERIFY_TOKEN must be configured');
+}
+
 // Crear cliente de Supabase con service role key para operaciones administrativas
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-console.log(`WhatsApp webhook function up and running!`);
+console.log(`WhatsApp webhook function initialized`);
 
 Deno.serve(async (req: Request) => {
   // Manejar CORS
@@ -33,8 +38,7 @@ Deno.serve(async (req: Request) => {
       const token = url.searchParams.get('hub.verify_token');
       const challenge = url.searchParams.get('hub.challenge');
 
-      console.log('Webhook verification request:', { mode, token, challenge });
-      console.log('Expected token:', VERIFY_TOKEN);
+      console.log('Webhook verification request received');
 
       if (mode === 'subscribe' && token === VERIFY_TOKEN) {
         console.log('✅ Webhook verified successfully');
@@ -43,12 +47,7 @@ Deno.serve(async (req: Request) => {
           headers: { 'Content-Type': 'text/plain' },
         });
       } else {
-        console.error('❌ Webhook verification failed:', {
-          mode,
-          receivedToken: token,
-          expectedToken: VERIFY_TOKEN,
-          tokensMatch: token === VERIFY_TOKEN
-        });
+        console.error('❌ Webhook verification failed');
         return new Response('Verification failed', { status: 403 });
       }
     }
@@ -56,7 +55,7 @@ Deno.serve(async (req: Request) => {
     // Recibir eventos del webhook (POST request)
     if (req.method === 'POST') {
       const body = await req.json();
-      console.log('📨 WhatsApp webhook event received:', JSON.stringify(body, null, 2));
+      console.log('📨 WhatsApp webhook event received');
 
       if (body.object === 'whatsapp_business_account') {
         for (const entry of body.entry || []) {
@@ -155,7 +154,7 @@ async function getUserIdFromPhoneNumberId(phoneNumberId: string): Promise<string
  */
 async function processWhatsAppEvent(event: any, value: any, phoneNumberId: string) {
   try {
-    console.log('📩 Processing WhatsApp messaging event:', JSON.stringify(event, null, 2));
+    console.log('📩 Processing WhatsApp messaging event');
 
     // Solo procesar mensajes entrantes (no outbound)
     if (event.from && event.type === 'text') {
@@ -168,11 +167,11 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
       // Obtener user_id de la integración
       const userId = await getUserIdFromPhoneNumberId(phoneNumberId);
       if (!userId) {
-        console.error('❌ Could not find user_id for phoneNumberId:', phoneNumberId);
+        console.error('❌ Could not find user_id for phoneNumberId');
         return;
       }
 
-      console.log('✅ Found user_id:', userId, 'for phoneNumberId:', phoneNumberId);
+      console.log('✅ User integration found');
 
       // Upsert contacto (CRM) y obtener contact_id
       let contactId: string | null = null;
@@ -540,7 +539,7 @@ async function sendWhatsAppMessage(userId: string, phoneNumberId: string, recipi
     }
 
     const data = await response.json();
-    console.log('✅ Mensaje enviado a WhatsApp:', data);
+    console.log('✅ Message sent to WhatsApp successfully');
     return data;
   } catch (error) {
     console.error('❌ Error sending WhatsApp message:', error);
@@ -584,7 +583,7 @@ async function generateAndSendAutoReply(
       return;
     }
 
-    console.log('✅ Respuesta generada:', aiResponse);
+    console.log('✅ AI response generated successfully');
 
     // 5. Enviar respuesta a WhatsApp
     const sendResult = await sendWhatsAppMessage(userId, phoneNumberId, recipientPhone, aiResponse);
