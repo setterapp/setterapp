@@ -356,13 +356,25 @@ export const googleCalendarService = {
 
   /**
    * Check if user has Google Calendar connected
-   * Ahora verifica también el refresh_token para considerar conectado
+   * Verifica tanto los tokens de la sesión como el estado en la base de datos
    */
   async isConnected() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      // Considerar conectado si hay token activo O refresh_token (puede refrescar)
-      return !!(session?.provider_token || session?.provider_refresh_token)
+      if (!session?.user) return false
+
+      // Primero verificar el estado en la base de datos
+      const { data: integration } = await supabase
+        .from('integrations')
+        .select('status')
+        .eq('type', 'google-calendar')
+        .eq('user_id', session.user.id)
+        .eq('status', 'connected')
+        .limit(1)
+        .single()
+
+      // Si está marcado como conectado en DB Y tiene tokens, está conectado
+      return !!integration && !!(session.provider_token || session.provider_refresh_token)
     } catch (error) {
       return false
     }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Plug, Check, X, MoreVertical, AlertTriangle, ExternalLink } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useIntegrations } from '../hooks/useIntegrations'
@@ -15,6 +16,7 @@ import { googleCalendarService } from '../services/google/calendar'
 
 function Integrations() {
   const { t } = useTranslation()
+  const location = useLocation()
   const { integrations, loading, error, updateIntegration, refetch } = useIntegrations()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [showInstagramWarning, setShowInstagramWarning] = useState(false)
@@ -26,14 +28,29 @@ function Integrations() {
 
   // Recargar datos cuando se monta el componente (útil después del callback de OAuth)
   useEffect(() => {
+    // Verificar si venimos de un callback de OAuth
+    const urlParams = new URLSearchParams(location.search)
+    const forceRefetch = urlParams.get('refetch') === 'true'
+
     // Refetch inmediato + delayed para asegurar que la DB se actualice
     refetch()
 
-    const timer = setTimeout(() => {
-      refetch()
-    }, 2000)
+    // Si venimos de callback, hacer refetch más agresivo
+    if (forceRefetch) {
+      const timers = [
+        setTimeout(() => refetch(), 1000),
+        setTimeout(() => refetch(), 3000),
+        setTimeout(() => refetch(), 5000)
+      ]
 
-    return () => clearTimeout(timer)
+      return () => timers.forEach(timer => clearTimeout(timer))
+    } else {
+      const timer = setTimeout(() => {
+        refetch()
+      }, 2000)
+
+      return () => clearTimeout(timer)
+    }
   }, []) // Solo al montar
 
   // Cerrar menú al hacer clic fuera

@@ -96,7 +96,7 @@ function AuthCallback() {
                 ? 'WhatsApp'
                 : 'Instagram'
 
-              // Usar upsert para crear o actualizar la integración de forma atómica
+              // Intentar upsert primero
               const { error: upsertError } = await supabase
                 .from('integrations')
                 .upsert({
@@ -112,7 +112,7 @@ function AuthCallback() {
                 })
 
               if (upsertError) {
-                // Si falla el upsert, intentar update manual
+                // Si falla el upsert, verificar si existe y actualizar, o crear nueva
                 const { data: existing } = await supabase
                   .from('integrations')
                   .select('*')
@@ -122,7 +122,8 @@ function AuthCallback() {
                   .single()
 
                 if (existing) {
-                  await supabase
+                  // Actualizar existente
+                  const { error: updateError } = await supabase
                     .from('integrations')
                     .update({
                       status: 'connected',
@@ -131,19 +132,43 @@ function AuthCallback() {
                     })
                     .eq('id', existing.id)
                     .eq('user_id', session.user.id)
+
+                  if (updateError) {
+                    console.error('Error updating integration:', updateError)
+                  }
+                } else {
+                  // Crear nueva integración
+                  const { error: insertError } = await supabase
+                    .from('integrations')
+                    .insert({
+                      user_id: session.user.id,
+                      type: integrationType,
+                      name: integrationName,
+                      status: 'connected',
+                      connected_at: new Date().toISOString(),
+                      config: Object.keys(config).length > 0 ? config : {}
+                    })
+
+                  if (insertError) {
+                    console.error('Error inserting integration:', insertError)
+                  }
                 }
               }
             } catch (err) {
-              // Evitar logs en producción por seguridad
+              console.error('Error processing integration callback:', err)
             }
           } else {
           }
 
-          // Esperar un momento para que se complete la actualización antes de redirigir
-          await new Promise(resolve => setTimeout(resolve, 1500))
+          // Esperar más tiempo para que se complete la actualización antes de redirigir
+          await new Promise(resolve => setTimeout(resolve, 2500))
 
           // Redirigir según el parámetro redirect_to o por defecto a /analytics
-          navigate(redirectTo)
+          // Agregar parámetro para forzar refetch si vamos a integraciones
+          const finalRedirectTo = redirectTo.includes('/integrations')
+            ? `${redirectTo}${redirectTo.includes('?') ? '&' : '?'}refetch=true&t=${Date.now()}`
+            : redirectTo
+          navigate(finalRedirectTo)
         } else {
           // Si no hay sesión, esperar un momento y verificar de nuevo
           // (a veces el intercambio del código tarda un poco)
