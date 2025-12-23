@@ -12,51 +12,49 @@ export default function GoogleCalendarIcon({ size = 24, color = '#fff' }: Google
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Calendar outline */}
+      {/* Calendar body - filled */}
       <rect
         x="4"
-        y="5"
+        y="6"
         width="16"
-        height="16"
+        height="15"
         rx="2"
-        stroke={color}
-        strokeWidth="2"
-        fill="none"
+        fill={color}
       />
-      {/* Top bar */}
-      <line
-        x1="4"
-        y1="9"
-        x2="20"
-        y2="9"
-        stroke={color}
-        strokeWidth="2"
+      {/* Top bar - darker */}
+      <rect
+        x="4"
+        y="6"
+        width="16"
+        height="4"
+        rx="2"
+        fill={color}
+        opacity="0.8"
       />
       {/* Calendar rings */}
-      <line
-        x1="8"
-        y1="3"
-        x2="8"
-        y2="7"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
+      <rect
+        x="7"
+        y="3"
+        width="2"
+        height="5"
+        rx="1"
+        fill={color}
       />
-      <line
-        x1="16"
-        y1="3"
-        x2="16"
-        y2="7"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
+      <rect
+        x="15"
+        y="3"
+        width="2"
+        height="5"
+        rx="1"
+        fill={color}
       />
-      {/* Date dots */}
-      <circle cx="8" cy="13" r="1" fill={color} />
-      <circle cx="12" cy="13" r="1" fill={color} />
-      <circle cx="16" cy="13" r="1" fill={color} />
-      <circle cx="8" cy="17" r="1" fill={color} />
-      <circle cx="12" cy="17" r="1" fill={color} />
+      {/* Grid dots - using darker color for contrast */}
+      <circle cx="8" cy="13" r="1.5" fill="#4285F4" />
+      <circle cx="12" cy="13" r="1.5" fill="#4285F4" />
+      <circle cx="16" cy="13" r="1.5" fill="#4285F4" />
+      <circle cx="8" cy="17" r="1.5" fill="#4285F4" />
+      <circle cx="12" cy="17" r="1.5" fill="#4285F4" />
+      <circle cx="16" cy="17" r="1.5" fill="#4285F4" />
     </svg>
   )
 }

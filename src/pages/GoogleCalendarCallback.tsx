@@ -43,12 +43,18 @@ function GoogleCalendarCallback() {
 
     const processGoogleCalendarIntegration = async (session: any) => {
       try {
+        console.log('🔵 Processing Google Calendar integration...')
+        console.log('Session user:', session.user.id)
+        console.log('Has provider_token:', !!session.provider_token)
+        console.log('Has provider_refresh_token:', !!session.provider_refresh_token)
+
         // Verificar que tengamos un provider_token de Google
         if (!session.provider_token) {
           throw new Error('No se recibió token de acceso de Google')
         }
 
         // Buscar la integración de Google Calendar
+        console.log('🔍 Buscando integración de Google Calendar...')
         const { data: integrations, error: findError } = await supabase
           .from('integrations')
           .select('*')
@@ -57,14 +63,16 @@ function GoogleCalendarCallback() {
           .limit(1)
 
         if (findError) {
-          console.error('Error finding integration:', findError)
+          console.error('❌ Error finding integration:', findError)
           throw new Error('Error al buscar la integración de Google Calendar')
         }
 
+        console.log('Found integrations:', integrations)
         let integration = integrations && integrations.length > 0 ? integrations[0] : null
 
         // Si no existe la integración, crearla
         if (!integration) {
+          console.log('📝 Creando nueva integración...')
           const { data: newIntegration, error: createError } = await supabase
             .from('integrations')
             .insert({
@@ -85,14 +93,16 @@ function GoogleCalendarCallback() {
             .single()
 
           if (createError) {
-            console.error('Error creating integration:', createError)
+            console.error('❌ Error creating integration:', createError)
             throw new Error('Error al crear la integración de Google Calendar')
           }
 
+          console.log('✅ Integración creada:', newIntegration)
           integration = newIntegration
         } else {
           // Si existe, actualizarla a "connected"
-          const { error: updateError } = await supabase
+          console.log('🔄 Actualizando integración existente...')
+          const { data: updatedIntegration, error: updateError } = await supabase
             .from('integrations')
             .update({
               status: 'connected',
@@ -108,17 +118,23 @@ function GoogleCalendarCallback() {
             })
             .eq('id', integration.id)
             .eq('user_id', session.user.id)
+            .select()
+            .single()
 
           if (updateError) {
-            console.error('Error updating integration:', updateError)
+            console.error('❌ Error updating integration:', updateError)
             throw new Error('Error al actualizar la integración de Google Calendar')
           }
+
+          console.log('✅ Integración actualizada:', updatedIntegration)
         }
 
         // Esperar un momento antes de redirigir para asegurar que se complete la actualización
-        await new Promise(resolve => setTimeout(resolve, 500))
+        console.log('⏳ Esperando antes de redirigir...')
+        await new Promise(resolve => setTimeout(resolve, 1000))
 
         // Redirigir a integraciones
+        console.log('🔀 Redirigiendo a /integrations')
         navigate('/integrations')
       } catch (err: any) {
         console.error('Error processing integration:', err)
