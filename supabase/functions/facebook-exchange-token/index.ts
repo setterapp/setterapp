@@ -1,7 +1,20 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const FACEBOOK_APP_ID = Deno.env.get('INSTAGRAM_APP_ID') || '1206229924794990';
-const FACEBOOK_APP_SECRET = Deno.env.get('INSTAGRAM_APP_SECRET') || '';
+// IMPORTANT:
+// The OAuth `code` is issued for a specific App ID.
+// If we exchange it with a different App ID/Secret, Graph API returns:
+// "Error validating application. Cannot get application info due to a system error."
+//
+// Prefer explicit FACEBOOK_* secrets. Fallback to INSTAGRAM_* for backwards compatibility.
+const FACEBOOK_APP_ID =
+  Deno.env.get('FACEBOOK_APP_ID') ||
+  Deno.env.get('INSTAGRAM_APP_ID') ||
+  '1206229924794990';
+
+const FACEBOOK_APP_SECRET =
+  Deno.env.get('FACEBOOK_APP_SECRET') ||
+  Deno.env.get('INSTAGRAM_APP_SECRET') ||
+  '';
 
 console.log('Facebook Exchange Token function initialized');
 
@@ -27,7 +40,14 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!FACEBOOK_APP_SECRET) {
-      console.error('❌ INSTAGRAM_APP_SECRET no está configurado');
+      console.error('❌ FACEBOOK_APP_SECRET / INSTAGRAM_APP_SECRET no está configurado');
+      return new Response(
+        JSON.stringify({ error: 'Configuración del servidor incompleta' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!/^\d+$/.test(String(FACEBOOK_APP_ID))) {
+      console.error('❌ FACEBOOK_APP_ID inválido:', FACEBOOK_APP_ID);
       return new Response(
         JSON.stringify({ error: 'Configuración del servidor incompleta' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -46,10 +66,15 @@ Deno.serve(async (req: Request) => {
     const tokenResponse = await fetch(tokenUrl.toString());
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.json();
+      const errorData = await tokenResponse.json().catch(() => ({}));
       console.error('❌ Error obteniendo User Access Token:', errorData);
       return new Response(
-        JSON.stringify({ error: errorData.error?.message || 'Error obteniendo token' }),
+        JSON.stringify({
+          error: errorData.error?.message || 'Error obteniendo token',
+          code: errorData.error?.code,
+          type: errorData.error?.type,
+          fbtrace_id: errorData.error?.fbtrace_id,
+        }),
         { status: tokenResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
