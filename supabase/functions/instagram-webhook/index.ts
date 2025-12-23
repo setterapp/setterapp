@@ -39,8 +39,8 @@ Deno.serve(async (req: Request) => {
       const token = url.searchParams.get('hub.verify_token');
       const challenge = url.searchParams.get('hub.challenge');
 
-      console.log('Webhook verification request:', { mode, token, challenge });
-      console.log('Expected token:', VERIFY_TOKEN);
+      console.log('Webhook verification request');
+      // Don't log tokens in production
 
       if (mode === 'subscribe' && token === VERIFY_TOKEN) {
         console.log('✅ Webhook verified successfully');
@@ -49,12 +49,7 @@ Deno.serve(async (req: Request) => {
           headers: { 'Content-Type': 'text/plain' },
         });
       } else {
-        console.error('❌ Webhook verification failed:', {
-          mode,
-          receivedToken: token,
-          expectedToken: VERIFY_TOKEN,
-          tokensMatch: token === VERIFY_TOKEN
-        });
+        console.error('❌ Webhook verification failed');
         return new Response('Verification failed', { status: 403 });
       }
     }
@@ -62,7 +57,8 @@ Deno.serve(async (req: Request) => {
     // Recibir eventos del webhook (POST request)
     if (req.method === 'POST') {
       const body = await req.json();
-      console.log('📨 Instagram webhook event received:', JSON.stringify(body, null, 2));
+      // Log basic info without exposing full payload
+      console.log('📨 Instagram webhook event received');
       console.log('📨 Event object type:', body.object);
       console.log('📨 Event entries:', body.entry?.length || 0);
 
@@ -74,7 +70,7 @@ Deno.serve(async (req: Request) => {
 
         for (const entry of body.entry || []) {
           const pageId = entry.id;
-          console.log('📨 Processing entry with pageId:', pageId);
+          // Processing entry...
 
           // Procesar eventos de mensajería (formato estándar)
           if (entry.messaging) {
@@ -524,7 +520,7 @@ async function getUserIdFromPageId(pageId: string): Promise<string | null> {
  */
 async function processInstagramEvent(event: any, pageId: string) {
   try {
-    console.log('📩 Processing Instagram messaging event:', JSON.stringify(event, null, 2));
+    // Processing Instagram messaging event...
 
     // Solo procesar mensajes entrantes (inbound)
     if (event.message && !event.message.is_echo) {
@@ -614,7 +610,7 @@ async function processInstagramEvent(event: any, pageId: string) {
         return;
       }
 
-      console.log('✅ Found user_id:', userId, 'for pageId:', pageId);
+      // Found user_id for pageId
 
       // Debug opt-in: guardar el payload completo del evento en DB para verlo en la consola del navegador via Realtime
       try {
@@ -644,7 +640,7 @@ async function processInstagramEvent(event: any, pageId: string) {
       }
 
       // Obtener perfil del usuario de Instagram (nombre, username, foto)
-      console.log('📸 Obteniendo perfil de Instagram para:', senderId);
+      // Getting Instagram profile...
       const userProfile = await getInstagramUserProfile(userId, senderId);
       if (userProfile) {
         console.log('✅ Perfil obtenido:', userProfile);
@@ -707,7 +703,7 @@ async function processInstagramEvent(event: any, pageId: string) {
 
       if (existingConv) {
         conversationId = existingConv.id;
-        console.log('✅ Found existing conversation:', conversationId);
+        // Found existing conversation
 
         // Actualizar last_message_at y unread_count
         // También actualizar el nombre si tenemos nueva información del perfil
@@ -737,7 +733,7 @@ async function processInstagramEvent(event: any, pageId: string) {
             name: userProfile.name,
             profile_picture: userProfile.profile_picture,
           };
-          console.log('📝 Actualizando nombre de contacto y metadata:', displayName, userProfile);
+          // Updating contact name and metadata
         } else if (userProfile) {
           // Actualizar metadata aunque el nombre ya esté actualizado
           updateData.contact_metadata = {
@@ -870,7 +866,7 @@ async function processInstagramEvent(event: any, pageId: string) {
  */
 async function processInstagramChange(change: any, pageId: string) {
   try {
-    console.log('🔄 Processing Instagram change:', change);
+      // Processing Instagram change
     // Implementa la lógica para procesar cambios si es necesario
   } catch (error) {
     console.error('Error processing Instagram change:', error);
