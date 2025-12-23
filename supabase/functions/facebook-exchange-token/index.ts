@@ -258,6 +258,96 @@ Deno.serve(async (req: Request) => {
         },
       });
 
+      // Fallback for granular permissions:
+      // Sometimes /me/accounts returns empty even when granular_scopes contains selected Page IDs.
+      // In that case, we can try to resolve the page access token by querying each target Page directly.
+      try {
+        const granularScopes: any[] = Array.isArray(debugToken?.data?.granular_scopes)
+          ? debugToken.data.granular_scopes
+          : [];
+        const targetPageIds = new Set<string>();
+        for (const gs of granularScopes) {
+          if (!gs) continue;
+          if (gs.scope !== 'pages_show_list' && gs.scope !== 'pages_read_engagement' && gs.scope !== 'pages_manage_metadata' && gs.scope !== 'pages_messaging') continue;
+          const ids: any[] = Array.isArray(gs.target_ids) ? gs.target_ids : [];
+          for (const id of ids) {
+            if (typeof id === 'string' && id.trim()) targetPageIds.add(id.trim());
+            if (typeof id === 'number') targetPageIds.add(String(id));
+          }
+        }
+
+        if (targetPageIds.size > 0) {
+          console.log('📌 Fallback: intentando resolver Page Access Token via granular target_ids:', Array.from(targetPageIds));
+
+          const candidates: any[] = [];
+          for (const pageId of targetPageIds) {
+            try {
+              const pageRes = await fetch(
+                `https://graph.facebook.com/v24.0/${pageId}?fields=id,name,access_token,instagram_business_account{id,username}&access_token=${encodeURIComponent(userAccessToken)}`,
+                { method: 'GET' }
+              );
+              const pageJson = await pageRes.json().catch(() => null);
+              if (pageRes.ok && pageJson && !pageJson.error) {
+                candidates.push(pageJson);
+              } else {
+                await logDebugEvent({
+                  userId,
+                  requestId,
+                  stage: 'granular_page_fetch_failed',
+                  payload: {
+                    page_id: pageId,
+                    http_status: pageRes.status,
+                    error: pageJson?.error?.message ?? null,
+                    code: pageJson?.error?.code ?? null,
+                    type: pageJson?.error?.type ?? null,
+                    fbtrace_id: pageJson?.error?.fbtrace_id ?? null,
+                  },
+                });
+              }
+            } catch (e: any) {
+              await logDebugEvent({
+                userId,
+                requestId,
+                stage: 'granular_page_fetch_failed',
+                payload: { page_id: pageId, error: e?.message ?? String(e) },
+              });
+            }
+          }
+
+          const pageWithInstagram = candidates.find((p: any) =>
+            p?.instagram_business_account?.id && p?.access_token
+          );
+
+          if (pageWithInstagram) {
+            await logDebugEvent({
+              userId,
+              requestId,
+              stage: 'success_via_granular_fallback',
+              payload: {
+                page_id: pageWithInstagram.id,
+                page_name: pageWithInstagram.name,
+                instagram_business_account_id: pageWithInstagram.instagram_business_account.id,
+                instagram_username: pageWithInstagram.instagram_business_account.username,
+              },
+            });
+
+            return new Response(
+              JSON.stringify({
+                pageAccessToken: pageWithInstagram.access_token,
+                pageId: pageWithInstagram.id,
+                instagramBusinessAccountId: pageWithInstagram.instagram_business_account.id,
+                instagramUsername: pageWithInstagram.instagram_business_account.username,
+                pageName: pageWithInstagram.name,
+                via: 'granular_fallback',
+              }),
+              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        }
+      } catch {
+        // ignore fallback errors, return default message below
+      }
+
       return new Response(
         JSON.stringify({
           error: 'Facebook Graph devolvió 0 páginas en /me/accounts. Esto suele ocurrir si tu usuario no tiene “Facebook access” sobre la Page (solo task access/Business Suite) o si el login no concedió permisos de Pages.',
