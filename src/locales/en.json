@@ -161,10 +161,12 @@
     "whatsapp": "WhatsApp",
     "instagram": "Instagram",
     "facebook": "Facebook",
+    "googleCalendar": "Google Calendar",
     "descriptions": {
       "instagram": "Automate responses to Instagram Direct Messages",
       "whatsapp": "Manage WhatsApp Business conversations with AI",
-      "facebook": "Get usernames and profile pictures of Instagram contacts"
+      "facebook": "Get usernames and profile pictures of Instagram contacts",
+      "google-calendar": "Sync and manage your Google Calendar events and meetings"
     },
     "modals": {
       "instagram": {
@@ -203,6 +205,20 @@
         "noteTitle": "Note:",
         "noteText": "You will be redirected to Facebook to authorize the necessary permissions.",
         "continueButton": "Continue with WhatsApp"
+      },
+      "googleCalendar": {
+        "title": "Connect Google Calendar",
+        "intro": "This integration allows you to sync and manage your Google Calendar events and meetings directly from Appsetter.",
+        "benefitsTitle": "Benefits:",
+        "benefit1": "View all your events and meetings in one place",
+        "benefit2": "Automatic synchronization with your Google account",
+        "benefit3": "Access to detailed event information, attendees, and locations",
+        "requirementsTitle": "What do you need?",
+        "requirement1": "A Google account (Gmail)",
+        "requirement2": "Access to Google Calendar",
+        "noteTitle": "Important:",
+        "noteText": "During the authorization process, make sure to grant the necessary permissions to access your calendar. These permissions are required for us to display and manage your events.",
+        "continueButton": "Continue with Google"
       }
     }
   },

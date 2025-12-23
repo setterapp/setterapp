@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 export interface Integration {
   id: string
   name: string
-  type: 'whatsapp' | 'instagram' | 'facebook'
+  type: 'whatsapp' | 'instagram' | 'facebook' | 'google-calendar'
   status: 'connected' | 'disconnected'
   config?: Record<string, any>
   connected_at?: string
@@ -16,6 +16,7 @@ const DEFAULT_INTEGRATIONS = [
   { name: 'WhatsApp Business', type: 'whatsapp' as const },
   { name: 'Instagram', type: 'instagram' as const },
   { name: 'Facebook', type: 'facebook' as const },
+  { name: 'Google Calendar', type: 'google-calendar' as const },
 ]
 
 export function useIntegrations() {
@@ -83,7 +84,6 @@ export function useIntegrations() {
         .from('integrations')
         .select('*')
         .eq('user_id', user.id)
-        .neq('type', 'google-calendar')
         .order('created_at', { ascending: true })
         .abortSignal(controller.signal)
       window.clearTimeout(timeoutId)

@@ -9,7 +9,9 @@ import { Switch } from '../components/ui/switch'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import FacebookIcon from '../components/icons/FacebookIcon'
+import GoogleCalendarIcon from '../components/icons/GoogleCalendarIcon'
 import Modal from '../components/common/Modal'
+import { googleCalendarService } from '../services/google/calendar'
 
 function Integrations() {
   const { t } = useTranslation()
@@ -18,6 +20,7 @@ function Integrations() {
   const [showInstagramWarning, setShowInstagramWarning] = useState(false)
   const [showFacebookWarning, setShowFacebookWarning] = useState(false)
   const [showWhatsAppWarning, setShowWhatsAppWarning] = useState(false)
+  const [showGoogleCalendarWarning, setShowGoogleCalendarWarning] = useState(false)
 
 
 
@@ -74,6 +77,14 @@ function Integrations() {
           // Desconectar
           await handleFacebookDisconnect(id)
         }
+      } else if (type === 'google-calendar') {
+        if (checked) {
+          // Mostrar advertencia/info antes de conectar
+          setShowGoogleCalendarWarning(true)
+        } else {
+          // Desconectar
+          await handleGoogleCalendarDisconnect(id)
+        }
       } else {
         const newStatus = checked ? 'connected' : 'disconnected'
         await updateIntegration(id, { status: newStatus })
@@ -96,6 +107,8 @@ function Integrations() {
       setShowWhatsAppWarning(true)
     } else if (integration.type === 'facebook') {
       setShowFacebookWarning(true)
+    } else if (integration.type === 'google-calendar') {
+      setShowGoogleCalendarWarning(true)
     }
   }
 
@@ -236,6 +249,50 @@ function Integrations() {
     }
   }
 
+  async function handleGoogleCalendarConnect() {
+    try {
+      await googleCalendarService.connectCalendar()
+      // El usuario será redirigido a Google OAuth
+      // Después volverá a /integrations via el callback
+    } catch (error: any) {
+      console.error('Error connecting Google Calendar:', error)
+      alert(`Error al conectar Google Calendar: ${error.message || 'Error desconocido'}`)
+      refetch() // Refetch para revertir el toggle si la conexión falló
+    }
+  }
+
+  async function handleGoogleCalendarDisconnect(integrationId?: string) {
+    try {
+      if (!confirm('¿Desconectar Google Calendar?')) {
+        refetch()
+        return
+      }
+
+      const integration = integrationId
+        ? integrations.find(i => i.id === integrationId)
+        : integrations.find(i => i.type === 'google-calendar')
+
+      if (!integration) {
+        alert('No se encontró la integración de Google Calendar')
+        refetch()
+        return
+      }
+
+      await updateIntegration(integration.id, {
+        status: 'disconnected',
+        connected_at: undefined,
+        config: {}
+      })
+
+      await googleCalendarService.disconnect()
+      refetch()
+    } catch (error: any) {
+      console.error('Error disconnecting Google Calendar:', error)
+      alert(`Error al desconectar: ${error.message || 'Error desconocido'}`)
+      refetch()
+    }
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -272,6 +329,8 @@ function Integrations() {
               ? '#a6e3a1'
               : integration.type === 'facebook'
               ? '#89b4fa'
+              : integration.type === 'google-calendar'
+              ? '#4285F4'
               : '#f38ba8'
 
             return (
@@ -320,6 +379,9 @@ function Integrations() {
                     )}
                     {integration.type === 'facebook' && (
                       <FacebookIcon size={24} color="#000" />
+                    )}
+                    {integration.type === 'google-calendar' && (
+                      <GoogleCalendarIcon size={24} color="#fff" />
                     )}
                   </div>
                   <div style={{ flex: 1 }}>
@@ -644,6 +706,66 @@ function Integrations() {
               className="btn btn--primary"
             >
               {t('integrations.modals.whatsapp.continueButton')}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de información para Google Calendar */}
+      <Modal
+        isOpen={showGoogleCalendarWarning}
+        onClose={() => setShowGoogleCalendarWarning(false)}
+        title={t('integrations.modals.googleCalendar.title')}
+      >
+        <div style={{ padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
+          <div>
+            <p style={{ margin: 0, marginBottom: 'var(--spacing-md)' }}>
+              {t('integrations.modals.googleCalendar.intro')}
+            </p>
+          </div>
+
+          <div>
+            <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
+              {t('integrations.modals.googleCalendar.benefitsTitle')}
+            </h4>
+            <ul style={{ margin: 0, paddingLeft: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+              <li>{t('integrations.modals.googleCalendar.benefit1')}</li>
+              <li>{t('integrations.modals.googleCalendar.benefit2')}</li>
+              <li>{t('integrations.modals.googleCalendar.benefit3')}</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
+              {t('integrations.modals.googleCalendar.requirementsTitle')}
+            </h4>
+            <ul style={{ margin: 0, paddingLeft: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+              <li>{t('integrations.modals.googleCalendar.requirement1')}</li>
+              <li>{t('integrations.modals.googleCalendar.requirement2')}</li>
+            </ul>
+          </div>
+
+          <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
+            <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+              <strong>{t('integrations.modals.googleCalendar.noteTitle')}</strong> {t('integrations.modals.googleCalendar.noteText')}
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end', marginTop: 'var(--spacing-md)' }}>
+            <button
+              onClick={() => setShowGoogleCalendarWarning(false)}
+              className="btn btn--secondary"
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              onClick={async () => {
+                setShowGoogleCalendarWarning(false)
+                await handleGoogleCalendarConnect()
+              }}
+              className="btn btn--primary"
+            >
+              {t('integrations.modals.googleCalendar.continueButton')}
             </button>
           </div>
         </div>

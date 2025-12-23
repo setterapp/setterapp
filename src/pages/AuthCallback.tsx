@@ -31,9 +31,11 @@ function AuthCallback() {
           // Si hay un provider_token y venimos de integraciones, actualizar la integración correspondiente
           if (session.provider_token && isFromIntegrations) {
             try {
-              let integrationType: 'instagram' | 'whatsapp' = 'instagram'
+              let integrationType: 'instagram' | 'whatsapp' | 'google-calendar' = 'instagram'
 
-              if (provider === 'facebook') {
+              if (provider === 'google') {
+                integrationType = 'google-calendar'
+              } else if (provider === 'facebook') {
                 // Si viene el parámetro integration, usarlo; si no, asumir instagram por defecto
                 if (integrationParam === 'whatsapp') {
                   integrationType = 'whatsapp'
@@ -52,13 +54,52 @@ function AuthCallback() {
 
               if (intError) {
                 // Evitar logs en producción por seguridad
-              } else if (integrations && integrations.length > 0) {
-                const integration = integrations[0]
+              }
+
+              // Si no existe la integración, crearla
+              let integration = integrations && integrations.length > 0 ? integrations[0] : null
+
+              if (!integration) {
+                // Crear integración si no existe
+                const integrationName = integrationType === 'google-calendar'
+                  ? 'Google Calendar'
+                  : integrationType === 'whatsapp'
+                  ? 'WhatsApp'
+                  : 'Instagram'
+
+                const { data: newIntegration, error: createError } = await supabase
+                  .from('integrations')
+                  .insert({
+                    user_id: session.user.id,
+                    type: integrationType,
+                    name: integrationName,
+                    status: 'disconnected',
+                    config: {}
+                  })
+                  .select()
+                  .single()
+
+                if (createError) {
+                  console.error('Error creating integration:', createError)
+                } else {
+                  integration = newIntegration
+                }
+              }
+
+              if (integration) {
 
                 // Si es WhatsApp, obtener información de la cuenta de WhatsApp Business
                 let config: Record<string, any> = {}
                 let canMarkConnected = true
-                if (integrationType === 'whatsapp') {
+
+                if (integrationType === 'google-calendar') {
+                  // Google Calendar no necesita configuración adicional
+                  // Los tokens se manejan a través de Supabase Auth (provider_token y provider_refresh_token)
+                  config = {
+                    connected_via: 'supabase_oauth',
+                    scopes: ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/calendar.events']
+                  }
+                } else if (integrationType === 'whatsapp') {
                   try {
                     const { whatsappService } = await import('../services/facebook/whatsapp')
                     const whatsappInfo = await whatsappService.getWhatsAppBusinessAccount()
@@ -73,8 +114,7 @@ function AuthCallback() {
                     // Continuar con la conexión aunque falle la obtención de info
                     // El usuario puede configurarlo después
                   }
-                }
-                if (integrationType === 'instagram') {
+                } else if (integrationType === 'instagram') {
                   try {
                     const { instagramService } = await import('../services/facebook/instagram')
                     const igInfo = await instagramService.getInstagramPageAccessToken()
