@@ -20,49 +20,6 @@ function FacebookCallback() {
         const errorParam = searchParams.get('error')
         const errorDescription = searchParams.get('error_description')
 
-        // If we're in a popup, send message to parent window and close immediately
-        // Check for popup BEFORE doing anything else
-        if (isPopup) {
-          try {
-            // Small delay to ensure message is sent
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            if (errorParam) {
-              window.opener.postMessage({
-                type: 'facebook_oauth_error',
-                error: errorDescription || errorParam
-              }, window.location.origin)
-            } else if (code) {
-              window.opener.postMessage({
-                type: 'facebook_oauth_success',
-                code: code,
-                url: window.location.href,
-                state: state
-              }, window.location.origin)
-            }
-
-            // Close popup immediately - use setTimeout to ensure message is sent first
-            setTimeout(() => {
-              window.close()
-              // Force close if still open
-              if (!window.closed) {
-                window.close()
-              }
-            }, 200)
-            return
-          } catch (e) {
-            console.error('Error sending message to parent:', e)
-            // Still try to close the popup
-            setTimeout(() => {
-              window.close()
-              if (!window.closed) {
-                window.close()
-              }
-            }, 100)
-            return
-          }
-        }
-
         // Check for errors from Facebook
         if (errorParam) {
           console.error('❌ Error from Facebook:', errorParam, errorDescription)
@@ -112,10 +69,41 @@ function FacebookCallback() {
 
         console.log('✅ Integración de Facebook completada')
 
-        // Redirect to integrations page
+        // If we're in a popup, notify parent and close
+        if (isPopup) {
+          try {
+            window.opener?.postMessage({
+              type: 'facebook_oauth_success',
+              code,
+              url: window.location.href,
+              state,
+              completed: true,
+            }, window.location.origin)
+          } catch {
+            // ignore
+          }
+          setTimeout(() => window.close(), 200)
+          return
+        }
+
+        // Redirect to integrations page (non-popup)
         navigate('/integrations')
       } catch (err: any) {
         console.error('❌ Error in Facebook callback:', err)
+        // If we're in a popup, report the error to opener
+        if (isPopup) {
+          try {
+            window.opener?.postMessage({
+              type: 'facebook_oauth_error',
+              error: err?.message || 'Error al completar la conexión con Facebook',
+            }, window.location.origin)
+          } catch {
+            // ignore
+          }
+          setTimeout(() => window.close(), 200)
+          return
+        }
+
         setError(err.message || 'Error al completar la conexión con Facebook')
         setTimeout(() => navigate('/integrations'), 5000)
       }
