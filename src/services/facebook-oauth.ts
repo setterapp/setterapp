@@ -6,7 +6,15 @@ import { supabase } from '../lib/supabase'
  * que necesitamos para la User Profile API (obtener usernames de leads)
  */
 
-const FACEBOOK_APP_ID = import.meta.env.VITE_INSTAGRAM_APP_ID || '1206229924794990'
+const normalizeAppId = (v?: string) => {
+  if (!v) return ''
+  const trimmed = v.trim()
+  // Some environments may provide values wrapped in quotes
+  return trimmed.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1').trim()
+}
+
+// Prefer explicit Facebook App ID, fallback to Instagram App ID for backwards compatibility
+const FACEBOOK_APP_ID = normalizeAppId(import.meta.env.VITE_FACEBOOK_APP_ID || import.meta.env.VITE_INSTAGRAM_APP_ID) || '1206229924794990'
 const FACEBOOK_SCOPES = [
   'pages_show_list',
   'pages_read_engagement',
@@ -41,7 +49,10 @@ export const facebookOAuthService = {
 
       // Validar App ID
       if (!FACEBOOK_APP_ID || FACEBOOK_APP_ID.trim() === '') {
-        throw new Error('Facebook App ID no configurado')
+        throw new Error('Facebook App ID no configurado. Configura VITE_FACEBOOK_APP_ID (recomendado) o VITE_INSTAGRAM_APP_ID en tu .env / entorno.')
+      }
+      if (!/^\d+$/.test(FACEBOOK_APP_ID)) {
+        throw new Error(`Facebook App ID inválido: "${FACEBOOK_APP_ID}". Debe ser numérico (Meta Developers → Settings → Basic → App ID).`)
       }
 
       // Validar redirect URI
