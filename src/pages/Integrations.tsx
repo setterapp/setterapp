@@ -26,12 +26,12 @@ function Integrations() {
 
   // Recargar datos cuando se monta el componente (útil después del callback de OAuth)
   useEffect(() => {
-    // Pequeño delay para asegurar que el callback haya terminado de actualizar la DB
+    // Refetch inmediato + delayed para asegurar que la DB se actualice
+    refetch()
+
     const timer = setTimeout(() => {
-      if (!loading) {
-        refetch()
-      }
-    }, 1000)
+      refetch()
+    }, 2000)
 
     return () => clearTimeout(timer)
   }, []) // Solo al montar
