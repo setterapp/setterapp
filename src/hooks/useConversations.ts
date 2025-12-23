@@ -240,6 +240,7 @@ export function useConversations() {
               table: 'messages',
             },
             (payload) => {
+              console.log('[useConversations] messages event:', payload.eventType, payload)
               const uid = session.user.id
               const rowUserId = (payload.new as any)?.user_id ?? (payload.old as any)?.user_id
               if (rowUserId && rowUserId !== uid) return
@@ -248,6 +249,7 @@ export function useConversations() {
               // la agregamos sin requerir refresh manual.
               if (payload.eventType === 'INSERT') {
                 const convId = (payload.new as any)?.conversation_id as string | undefined
+                console.log('[useConversations] messages INSERT, convId:', convId)
                 if (convId) {
                   // Esperar un tick para evitar races cuando el webhook inserta conversación + mensaje.
                   setTimeout(() => { void ensureConversationLoaded(convId) }, 50)
