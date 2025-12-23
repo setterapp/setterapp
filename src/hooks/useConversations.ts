@@ -210,9 +210,21 @@ export function useConversations() {
               event: '*',
               schema: 'public',
               table: 'conversations',
-              filter: `user_id=eq.${session.user.id}`
             },
-            () => {
+            (payload) => {
+              const uid = session.user.id
+              const rowUserId = (payload.new as any)?.user_id ?? (payload.old as any)?.user_id
+              if (rowUserId && rowUserId !== uid) return
+
+              // Para INSERT de conversaciones nuevas, traemos esa conversación y la agregamos al state
+              // (esto evita depender de un refetch completo y reduce races).
+              if (payload.eventType === 'INSERT') {
+                const convId = (payload.new as any)?.id as string | undefined
+                if (convId) {
+                  setTimeout(() => { void ensureConversationLoaded(convId) }, 50)
+                }
+              }
+
               // Para mantener join con `contacts`, hacemos refetch (debounced) en cambios.
               if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current)
               refreshTimerRef.current = window.setTimeout(() => {
@@ -226,9 +238,12 @@ export function useConversations() {
               event: '*',
               schema: 'public',
               table: 'messages',
-              filter: `user_id=eq.${session.user.id}`
             },
             (payload) => {
+              const uid = session.user.id
+              const rowUserId = (payload.new as any)?.user_id ?? (payload.old as any)?.user_id
+              if (rowUserId && rowUserId !== uid) return
+
               // Si llega un mensaje para una conversación que todavía no está en la lista (nueva),
               // la agregamos sin requerir refresh manual.
               if (payload.eventType === 'INSERT') {
@@ -252,9 +267,11 @@ export function useConversations() {
               event: '*',
               schema: 'public',
               table: 'contacts',
-              filter: `user_id=eq.${session.user.id}`
             },
-            () => {
+            (payload) => {
+              const uid = session.user.id
+              const rowUserId = (payload.new as any)?.user_id ?? (payload.old as any)?.user_id
+              if (rowUserId && rowUserId !== uid) return
               void fetchConversations()
             }
           )
