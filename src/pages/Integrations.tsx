@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plug, Check, X, MoreVertical, AlertTriangle, ExternalLink } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useIntegrations } from '../hooks/useIntegrations'
 import { instagramService } from '../services/facebook/instagram'
 import { whatsappService } from '../services/facebook/whatsapp'
@@ -11,6 +12,7 @@ import FacebookIcon from '../components/icons/FacebookIcon'
 import Modal from '../components/common/Modal'
 
 function Integrations() {
+  const { t } = useTranslation()
   const { integrations, loading, error, updateIntegration, refetch } = useIntegrations()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [showInstagramWarning, setShowInstagramWarning] = useState(false)
@@ -98,16 +100,7 @@ function Integrations() {
   }
 
   const getIntegrationDescription = (type: string) => {
-    switch (type) {
-      case 'instagram':
-        return 'Automatiza respuestas a mensajes directos de Instagram'
-      case 'whatsapp':
-        return 'Gestiona conversaciones de WhatsApp Business con IA'
-      case 'facebook':
-        return 'Obtén usernames y fotos de perfil de contactos de Instagram'
-      default:
-        return ''
-    }
+    return t(`integrations.descriptions.${type}`, '')
   }
 
 
@@ -250,9 +243,9 @@ function Integrations() {
           <div>
             <h2 className="flex items-center gap-md">
               <Plug size={28} />
-              Integraciones
+              {t('integrations.title')}
             </h2>
-            <p>Conecta tus plataformas para automatizar conversaciones</p>
+            <p>{t('integrations.description')}</p>
           </div>
         </div>
       </div>
@@ -261,7 +254,7 @@ function Integrations() {
         <div className="card">
           <div className="empty-state">
             <div className="spinner"></div>
-            <p>Cargando integraciones...</p>
+            <p>{t('common.loading')}</p>
           </div>
         </div>
       ) : error ? (
@@ -352,7 +345,7 @@ function Integrations() {
                         textAlign: 'right',
                       }}
                     >
-                      Activo
+                      {t('integrations.active')}
                     </span>
                   )}
 
@@ -430,7 +423,7 @@ function Integrations() {
                             }}
                           >
                             <X size={16} />
-                            Desconectar
+                            {t('integrations.disconnect')}
                           </button>
                         ) : (
                           <>
@@ -462,7 +455,7 @@ function Integrations() {
                               }}
                             >
                               <Check size={16} />
-                              Conectar
+                              {t('integrations.connect')}
                             </button>
                           </>
                         )}
@@ -480,40 +473,34 @@ function Integrations() {
       <Modal
         isOpen={showInstagramWarning}
         onClose={() => setShowInstagramWarning(false)}
-        title="Conectar Instagram Direct"
+        title={t('integrations.modals.instagram.title')}
       >
         <div style={{ padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-md)', padding: 'var(--spacing-md)', background: '#fef3c7', border: '2px solid #f59e0b', borderRadius: 'var(--border-radius)' }}>
             <AlertTriangle size={24} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
             <div>
               <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)', color: '#92400e' }}>
-                Limitación de la API de Instagram
+                {t('integrations.modals.instagram.limitationTitle')}
               </h4>
-              <p style={{ margin: 0, color: '#78350f', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>
-                Por defecto, Instagram solo proporciona el ID numérico de los usuarios que te escriben.
-                Si deseas ver los <strong>nombres de usuario (@username)</strong> de tus leads, deberás:
-              </p>
+              <p style={{ margin: 0, color: '#78350f', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }} dangerouslySetInnerHTML={{ __html: t('integrations.modals.instagram.limitationText') }} />
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
             <div>
               <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
-                Pasos para obtener nombres de usuario:
+                {t('integrations.modals.instagram.stepsTitle')}
               </h4>
               <ol style={{ margin: 0, paddingLeft: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
-                <li>Conectar esta integración de Instagram</li>
-                <li>
-                  Después, activar también la integración de <strong>Facebook</strong> (aparece más abajo)
-                </li>
-                <li>Durante el proceso de Facebook, iniciar sesión y autorizar los permisos solicitados</li>
+                <li dangerouslySetInnerHTML={{ __html: t('integrations.modals.instagram.step1') }} />
+                <li dangerouslySetInnerHTML={{ __html: t('integrations.modals.instagram.step2') }} />
+                <li dangerouslySetInnerHTML={{ __html: t('integrations.modals.instagram.step3') }} />
               </ol>
             </div>
 
             <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
               <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                <strong>Nota:</strong> Esto es una limitación de Meta/Facebook. La integración de Facebook permite obtener
-                un "Page Access Token" que da acceso a información adicional del perfil de los usuarios.
+                <strong>{t('integrations.modals.instagram.noteTitle')}</strong> {t('integrations.modals.instagram.noteText')}
               </p>
             </div>
           </div>
@@ -523,7 +510,7 @@ function Integrations() {
               onClick={() => setShowInstagramWarning(false)}
               className="btn btn--secondary"
             >
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               onClick={async () => {
@@ -532,7 +519,7 @@ function Integrations() {
               }}
               className="btn btn--primary"
             >
-              Entendido, conectar Instagram
+              {t('integrations.modals.instagram.understood')}
             </button>
           </div>
         </div>
@@ -542,30 +529,27 @@ function Integrations() {
       <Modal
         isOpen={showFacebookWarning}
         onClose={() => setShowFacebookWarning(false)}
-        title="Conectar Facebook (Page Access Token)"
+        title={t('integrations.modals.facebook.title')}
       >
         <div style={{ padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
           <div>
-            <p style={{ margin: 0, marginBottom: 'var(--spacing-md)' }}>
-              Esta integración te permite obtener un <strong>Page Access Token</strong> de Facebook para acceder
-              a información adicional de tus contactos de Instagram (como nombres de usuario y fotos de perfil).
-            </p>
+            <p style={{ margin: 0, marginBottom: 'var(--spacing-md)' }} dangerouslySetInnerHTML={{ __html: t('integrations.modals.facebook.intro') }} />
           </div>
 
           <div>
             <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
-              ¿Qué necesitas?
+              {t('integrations.modals.facebook.requirementsTitle')}
             </h4>
             <ul style={{ margin: 0, paddingLeft: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
-              <li>Una cuenta de Facebook vinculada a tu página de Instagram Business</li>
-              <li>Permisos de administrador en la página de Facebook</li>
-              <li>La cuenta de Instagram debe ser una cuenta Business o Creator</li>
+              <li>{t('integrations.modals.facebook.requirement1')}</li>
+              <li>{t('integrations.modals.facebook.requirement2')}</li>
+              <li>{t('integrations.modals.facebook.requirement3')}</li>
             </ul>
           </div>
 
           <div>
             <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
-              Recursos útiles:
+              {t('integrations.modals.facebook.resourcesTitle')}
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
               <a
@@ -575,7 +559,7 @@ function Integrations() {
                 style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', color: 'var(--color-primary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}
               >
                 <ExternalLink size={16} />
-                Cómo convertir tu cuenta de Instagram en Business
+                {t('integrations.modals.facebook.resource1')}
               </a>
               <a
                 href="https://www.facebook.com/business/help/196240171867691"
@@ -584,15 +568,14 @@ function Integrations() {
                 style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', color: 'var(--color-primary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}
               >
                 <ExternalLink size={16} />
-                Conectar Instagram a una página de Facebook
+                {t('integrations.modals.facebook.resource2')}
               </a>
             </div>
           </div>
 
           <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
             <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-              <strong>Importante:</strong> Durante el proceso de autorización, asegúrate de seleccionar la página
-              de Facebook que está conectada a tu cuenta de Instagram Business.
+              <strong>{t('integrations.modals.facebook.importantTitle')}</strong> {t('integrations.modals.facebook.importantText')}
             </p>
           </div>
 
@@ -601,7 +584,7 @@ function Integrations() {
               onClick={() => setShowFacebookWarning(false)}
               className="btn btn--secondary"
             >
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               onClick={async () => {
@@ -610,7 +593,7 @@ function Integrations() {
               }}
               className="btn btn--primary"
             >
-              Continuar con Facebook
+              {t('integrations.modals.facebook.continueButton')}
             </button>
           </div>
         </div>
@@ -620,29 +603,29 @@ function Integrations() {
       <Modal
         isOpen={showWhatsAppWarning}
         onClose={() => setShowWhatsAppWarning(false)}
-        title="Conectar WhatsApp Business"
+        title={t('integrations.modals.whatsapp.title')}
       >
         <div style={{ padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
           <div>
             <p style={{ margin: 0, marginBottom: 'var(--spacing-md)' }}>
-              Para conectar WhatsApp Business necesitas autorizar los permisos en Facebook/Meta.
+              {t('integrations.modals.whatsapp.intro')}
             </p>
           </div>
 
           <div>
             <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
-              Requisitos:
+              {t('integrations.modals.whatsapp.requirementsTitle')}
             </h4>
             <ul style={{ margin: 0, paddingLeft: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
-              <li>Cuenta de WhatsApp Business API (no la app regular de WhatsApp Business)</li>
-              <li>Número de teléfono verificado en WhatsApp Business</li>
-              <li>Acceso a Meta Business Manager</li>
+              <li>{t('integrations.modals.whatsapp.requirement1')}</li>
+              <li>{t('integrations.modals.whatsapp.requirement2')}</li>
+              <li>{t('integrations.modals.whatsapp.requirement3')}</li>
             </ul>
           </div>
 
           <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
             <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-              <strong>Nota:</strong> Serás redirigido a Facebook para autorizar los permisos necesarios.
+              <strong>{t('integrations.modals.whatsapp.noteTitle')}</strong> {t('integrations.modals.whatsapp.noteText')}
             </p>
           </div>
 
@@ -651,7 +634,7 @@ function Integrations() {
               onClick={() => setShowWhatsAppWarning(false)}
               className="btn btn--secondary"
             >
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               onClick={async () => {
@@ -660,7 +643,7 @@ function Integrations() {
               }}
               className="btn btn--primary"
             >
-              Continuar con WhatsApp
+              {t('integrations.modals.whatsapp.continueButton')}
             </button>
           </div>
         </div>

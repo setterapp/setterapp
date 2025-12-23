@@ -152,13 +152,59 @@
   },
   "integrations": {
     "title": "Integraciones",
-    "description": "Conecta tus cuentas de WhatsApp e Instagram",
+    "description": "Conecta tus plataformas para automatizar conversaciones",
     "connect": "Conectar",
     "disconnect": "Desconectar",
     "connected": "Conectado",
     "notConnected": "No Conectado",
+    "active": "Activo",
     "whatsapp": "WhatsApp",
-    "instagram": "Instagram"
+    "instagram": "Instagram",
+    "facebook": "Facebook",
+    "descriptions": {
+      "instagram": "Automatiza respuestas a mensajes directos de Instagram",
+      "whatsapp": "Gestiona conversaciones de WhatsApp Business con IA",
+      "facebook": "Obtén usernames y fotos de perfil de contactos de Instagram"
+    },
+    "modals": {
+      "instagram": {
+        "title": "Conectar Instagram Direct",
+        "limitationTitle": "Limitación de la API de Instagram",
+        "limitationText": "Por defecto, Instagram solo proporciona el ID numérico de los usuarios que te escriben. Si deseas ver los <strong>nombres de usuario (@username)</strong> de tus leads, deberás:",
+        "stepsTitle": "Pasos para obtener nombres de usuario:",
+        "step1": "Conectar esta integración de Instagram",
+        "step2": "Después, activar también la integración de <strong>Facebook</strong> (aparece más abajo)",
+        "step3": "Durante el proceso de Facebook, iniciar sesión y autorizar los permisos solicitados",
+        "noteTitle": "Nota:",
+        "noteText": "Esto es una limitación de Meta/Facebook. La integración de Facebook permite obtener un \"Page Access Token\" que da acceso a información adicional del perfil de los usuarios.",
+        "understood": "Entendido, conectar Instagram"
+      },
+      "facebook": {
+        "title": "Conectar Facebook (Page Access Token)",
+        "intro": "Esta integración te permite obtener un <strong>Page Access Token</strong> de Facebook para acceder a información adicional de tus contactos de Instagram (como nombres de usuario y fotos de perfil).",
+        "requirementsTitle": "¿Qué necesitas?",
+        "requirement1": "Una cuenta de Facebook vinculada a tu página de Instagram Business",
+        "requirement2": "Permisos de administrador en la página de Facebook",
+        "requirement3": "La cuenta de Instagram debe ser una cuenta Business o Creator",
+        "resourcesTitle": "Recursos útiles:",
+        "resource1": "Cómo convertir tu cuenta de Instagram en Business",
+        "resource2": "Conectar Instagram a una página de Facebook",
+        "importantTitle": "Importante:",
+        "importantText": "Durante el proceso de autorización, asegúrate de seleccionar la página de Facebook que está conectada a tu cuenta de Instagram Business.",
+        "continueButton": "Continuar con Facebook"
+      },
+      "whatsapp": {
+        "title": "Conectar WhatsApp Business",
+        "intro": "Para conectar WhatsApp Business necesitas autorizar los permisos en Facebook/Meta.",
+        "requirementsTitle": "Requisitos:",
+        "requirement1": "Cuenta de WhatsApp Business API (no la app regular de WhatsApp Business)",
+        "requirement2": "Número de teléfono verificado en WhatsApp Business",
+        "requirement3": "Acceso a Meta Business Manager",
+        "noteTitle": "Nota:",
+        "noteText": "Serás redirigido a Facebook para autorizar los permisos necesarios.",
+        "continueButton": "Continuar con WhatsApp"
+      }
+    }
   },
   "conversations": {
     "title": "Conversaciones",
