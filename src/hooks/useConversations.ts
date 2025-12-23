@@ -276,11 +276,14 @@ export function useConversations() {
             }
           )
           .subscribe(async (status) => {
+            console.log('[useConversations] Realtime status:', status)
             if (status === 'SUBSCRIBED') {
               isIntentionalCloseRef.current = false
+              console.log('[useConversations] ✅ Realtime SUBSCRIBED successfully')
             }
 
             if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+              console.warn('[useConversations] ⚠️ Realtime CLOSED/ERROR:', status)
               // Solo reconectar si NO fue un cierre intencional
               if (!isIntentionalCloseRef.current) {
                 setTimeout(() => setupRealtime(), 2000)
@@ -289,6 +292,7 @@ export function useConversations() {
             }
 
             if (status === 'TIMED_OUT') {
+              console.warn('[useConversations] ⚠️ Realtime TIMED_OUT')
               setTimeout(() => setupRealtime(), 2000)
             }
           })
