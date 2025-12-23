@@ -86,12 +86,8 @@ function Integrations() {
   const handleCardClick = (integration: any, e: React.MouseEvent) => {
     e.stopPropagation()
 
-    if (integration.status === 'connected') {
-      // Si está conectado, no hacer nada (podría abrir detalles en el futuro)
-      return
-    }
-
-    // Mostrar modal de advertencia según el tipo
+    // Mostrar modal de advertencia/información según el tipo
+    // Funciona tanto para conectadas como desconectadas
     if (integration.type === 'instagram') {
       setShowInstagramWarning(true)
     } else if (integration.type === 'whatsapp') {
@@ -299,12 +295,10 @@ function Integrations() {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   transition: 'var(--transition)',
-                  cursor: isConnected ? 'default' : 'pointer',
+                  cursor: 'pointer',
                 }}
                 onMouseEnter={(e) => {
-                  if (!isConnected) {
-                    e.currentTarget.style.borderColor = 'var(--color-primary)'
-                  }
+                  e.currentTarget.style.borderColor = 'var(--color-primary)'
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.borderColor = 'var(--color-border)'
