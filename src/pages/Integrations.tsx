@@ -8,7 +8,6 @@ import { Switch } from '../components/ui/switch'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import FacebookIcon from '../components/icons/FacebookIcon'
-import { formatDate, formatFullDate } from '../utils/date'
 import Modal from '../components/common/Modal'
 
 function Integrations() {
@@ -84,13 +83,35 @@ function Integrations() {
     }
   }
 
-  const handleCardClick = (integration: any) => {
+  const handleCardClick = (integration: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+
     if (integration.status === 'connected') {
       // Si está conectado, no hacer nada (podría abrir detalles en el futuro)
       return
     }
-    // Si no está conectado, mostrar advertencia
-    handleToggle(integration.id, integration.type, true)
+
+    // Mostrar modal de advertencia según el tipo
+    if (integration.type === 'instagram') {
+      setShowInstagramWarning(true)
+    } else if (integration.type === 'whatsapp') {
+      setShowWhatsAppWarning(true)
+    } else if (integration.type === 'facebook') {
+      setShowFacebookWarning(true)
+    }
+  }
+
+  const getIntegrationDescription = (type: string) => {
+    switch (type) {
+      case 'instagram':
+        return 'Automatiza respuestas a mensajes directos de Instagram'
+      case 'whatsapp':
+        return 'Gestiona conversaciones de WhatsApp Business con IA'
+      case 'facebook':
+        return 'Obtén usernames y fotos de perfil de contactos de Instagram'
+      default:
+        return ''
+    }
   }
 
 
@@ -268,7 +289,7 @@ function Integrations() {
               <div
                 key={integration.id}
                 className="integration-card"
-                onClick={() => handleCardClick(integration)}
+                onClick={(e) => handleCardClick(integration, e)}
                 style={{
                   background: 'var(--color-bg)',
                   border: '1px solid var(--color-border)',
@@ -318,14 +339,8 @@ function Integrations() {
                     <h3 style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>
                       {integration.name}
                     </h3>
-                    <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                      {integration.updated_at && (
-                        <>Última actualización {formatDate(integration.updated_at)}</>
-                      )}
-                      {integration.created_at && integration.updated_at && ' | '}
-                      {integration.created_at && (
-                        <>Creado {formatFullDate(integration.created_at)}</>
-                      )}
+                    <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: '1.4' }}>
+                      {getIntegrationDescription(integration.type)}
                     </p>
                   </div>
                 </div>
