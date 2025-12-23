@@ -81,5 +81,3 @@ BEGIN
       UNIQUE (user_id, platform_message_id);
   END IF;
 END $$;
-
-

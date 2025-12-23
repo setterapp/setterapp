@@ -137,10 +137,8 @@ export function useConversations() {
 
   const ensureConversationLoaded = async (conversationId: string) => {
     if (!conversationId) return
-    // Si ya la tenemos, no hacemos nada (evita fetches extra)
-    const exists = conversationsRef.current.some(c => c.id === conversationId)
-    if (exists) return
     try {
+      // Siempre traer la conversación fresca desde la DB (para actualizar last_message_at, unread_count, etc.)
       const { data } = await supabase
         .from('conversations')
         .select(conversationSelect)
