@@ -79,7 +79,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
   const contact = conversation.contact_ref
   const alias = conversation.contact_alias
   const contactDisplayName = contact?.display_name
-  const username = conversation.contact_metadata?.username
+  const username = contact?.username || conversation.contact_metadata?.username
   const name = conversation.contact_metadata?.name
   const rawContact = conversation.contact || ''
   const isNumeric = /^\d+$/.test(rawContact)
@@ -95,6 +95,17 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
           : `ID …${rawContact.slice(-6)}`)
         : rawContact)
       : 'Sin nombre')
+
+  const subtitleParts: string[] = []
+  if (username && !displayName.includes(`@${username}`)) {
+    subtitleParts.push(`@${username}`)
+  }
+  if (conversation.platform === 'instagram' && (!username || username.trim() === '') && isNumeric) {
+    subtitleParts.push(`ID …${rawContact.slice(-6)}`)
+  }
+  if (conversation.platform === 'whatsapp' && isNumeric) {
+    subtitleParts.push(`+${rawContact}`)
+  }
 
   return (
     <div className="chat-panel">
@@ -180,6 +191,11 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
                 <Pencil size={16} />
               </button>
             </div>
+            {subtitleParts.length > 0 && (
+              <div style={{ marginTop: 2, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                {subtitleParts.join(' · ')}
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-xs)', alignItems: 'center' }}>
               <span
                 style={{

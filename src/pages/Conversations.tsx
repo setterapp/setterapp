@@ -5,7 +5,7 @@ import ChatPanel from '../components/ChatPanel'
 import EmptyConversation from '../components/EmptyConversation'
 
 function Conversations() {
-  const { conversations, loading, error } = useConversations()
+  const { conversations, loading, error, markConversationRead } = useConversations()
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [selectedConversationNonce, setSelectedConversationNonce] = useState(0)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -49,6 +49,8 @@ function Conversations() {
     // y el ID nunca se setea => ChatPanel no monta => no hay fetch de mensajes.
     setSelectedConversationId(id)
     setSelectedConversationNonce((n) => n + 1)
+    // UI/DB: limpiar unread_count al abrir
+    void markConversationRead(id)
     if (isFirstSelection) {
       setIsFirstSelection(false)
     }

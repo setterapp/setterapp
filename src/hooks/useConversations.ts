@@ -35,6 +35,7 @@ export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const conversationsRef = useRef<Conversation[]>([])
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const isIntentionalCloseRef = useRef(false)
   const fetchAbortRef = useRef<AbortController | null>(null)
@@ -42,6 +43,27 @@ export function useConversations() {
   const channelKeyRef = useRef<string | null>(null)
   const resolveAttemptedRef = useRef<Set<string>>(new Set())
   const refreshTimerRef = useRef<number | null>(null)
+
+  const conversationSelect = '*, contact_ref:contacts(id, platform, external_id, display_name, phone, username, profile_picture)'
+
+  const sortConversations = (list: Conversation[]) => {
+    const ts = (c: Conversation) => {
+      const s = c.last_message_at || c.created_at
+      const t = new Date(s).getTime()
+      return Number.isFinite(t) ? t : 0
+    }
+    return [...list].sort((a, b) => ts(b) - ts(a))
+  }
+
+  const upsertConversationInState = (conv: Conversation) => {
+    setConversations(prev => {
+      const idx = prev.findIndex(c => c.id === conv.id)
+      if (idx === -1) return sortConversations([conv, ...prev])
+      const next = [...prev]
+      next[idx] = conv
+      return sortConversations(next)
+    })
+  }
 
   const fetchConversations = async () => {
     const fetchId = ++activeFetchIdRef.current
@@ -55,7 +77,7 @@ export function useConversations() {
 
       const { data, error: fetchError } = await supabase
         .from('conversations')
-        .select('*, contact_ref:contacts(id, platform, external_id, display_name, phone, username, profile_picture)')
+        .select(conversationSelect)
         .order('last_message_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
         .abortSignal(controller.signal)
@@ -106,6 +128,44 @@ export function useConversations() {
       if (fetchAbortRef.current === controller) {
         fetchAbortRef.current = null
       }
+    }
+  }
+
+  useEffect(() => {
+    conversationsRef.current = conversations
+  }, [conversations])
+
+  const ensureConversationLoaded = async (conversationId: string) => {
+    if (!conversationId) return
+    // Si ya la tenemos, no hacemos nada (evita fetches extra)
+    const exists = conversationsRef.current.some(c => c.id === conversationId)
+    if (exists) return
+    try {
+      const { data } = await supabase
+        .from('conversations')
+        .select(conversationSelect)
+        .eq('id', conversationId)
+        .maybeSingle()
+      if (data) {
+        upsertConversationInState(data as Conversation)
+      }
+    } catch {
+      // sin logs
+    }
+  }
+
+  const markConversationRead = async (conversationId: string) => {
+    if (!conversationId) return
+    // UI optimista: ocultar badge inmediatamente
+    setConversations(prev => prev.map(c => (c.id === conversationId ? { ...c, unread_count: 0 } : c)))
+    // Best-effort persist
+    try {
+      await supabase
+        .from('conversations')
+        .update({ unread_count: 0, updated_at: new Date().toISOString() })
+        .eq('id', conversationId)
+    } catch {
+      // sin logs
     }
   }
 
@@ -168,7 +228,16 @@ export function useConversations() {
               table: 'messages',
               filter: `user_id=eq.${session.user.id}`
             },
-            () => {
+            (payload) => {
+              // Si llega un mensaje para una conversación que todavía no está en la lista (nueva),
+              // la agregamos sin requerir refresh manual.
+              if (payload.eventType === 'INSERT') {
+                const convId = (payload.new as any)?.conversation_id as string | undefined
+                if (convId) {
+                  // Esperar un tick para evitar races cuando el webhook inserta conversación + mensaje.
+                  setTimeout(() => { void ensureConversationLoaded(convId) }, 50)
+                }
+              }
               // Fallback: si por algún motivo no llega el update de `conversations`,
               // al menos refrescamos la lista cuando entra/sale un mensaje.
               if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current)
@@ -276,5 +345,6 @@ export function useConversations() {
     loading,
     error,
     refetch: fetchConversations,
+    markConversationRead,
   }
 }

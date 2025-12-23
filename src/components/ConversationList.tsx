@@ -104,7 +104,7 @@ function ConversationItem({
   const [imageError, setImageError] = useState(false)
   const contactPicture = conversation.contact_ref?.profile_picture
   const profilePicture = contactPicture || conversation.contact_metadata?.profile_picture
-  const username = conversation.contact_metadata?.username
+  const username = conversation.contact_ref?.username || conversation.contact_metadata?.username
   const name = conversation.contact_metadata?.name
 
   const rawContact = conversation.contact || ''
