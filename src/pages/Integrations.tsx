@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plug, Check, X, MoreVertical } from 'lucide-react'
+import { Plug, Check, X, MoreVertical, AlertTriangle, ExternalLink } from 'lucide-react'
 import { useIntegrations } from '../hooks/useIntegrations'
 import { instagramService } from '../services/facebook/instagram'
 import { whatsappService } from '../services/facebook/whatsapp'
@@ -9,10 +9,14 @@ import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import FacebookIcon from '../components/icons/FacebookIcon'
 import { formatDate, formatFullDate } from '../utils/date'
+import Modal from '../components/common/Modal'
 
 function Integrations() {
   const { integrations, loading, error, updateIntegration, refetch } = useIntegrations()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [showInstagramWarning, setShowInstagramWarning] = useState(false)
+  const [showFacebookWarning, setShowFacebookWarning] = useState(false)
+  const [showWhatsAppWarning, setShowWhatsAppWarning] = useState(false)
 
 
 
@@ -45,27 +49,26 @@ function Integrations() {
         return
       }
 
-
       if (type === 'instagram') {
         if (checked) {
-          // Conectar con OAuth de Facebook
-          await handleInstagramConnect()
+          // Mostrar advertencia antes de conectar
+          setShowInstagramWarning(true)
         } else {
           // Desconectar
           await handleInstagramDisconnect(id)
         }
       } else if (type === 'whatsapp') {
         if (checked) {
-          // Conectar con OAuth de Facebook
-          await handleWhatsAppConnect()
+          // Mostrar advertencia antes de conectar
+          setShowWhatsAppWarning(true)
         } else {
           // Desconectar
           await handleWhatsAppDisconnect(id)
         }
       } else if (type === 'facebook') {
         if (checked) {
-          // Conectar con OAuth de Facebook para obtener Page Access Token
-          await handleFacebookConnect()
+          // Mostrar advertencia antes de conectar
+          setShowFacebookWarning(true)
         } else {
           // Desconectar
           await handleFacebookDisconnect(id)
@@ -79,6 +82,15 @@ function Integrations() {
       // Recargar para revertir el estado visual si falló
       await refetch()
     }
+  }
+
+  const handleCardClick = (integration: any) => {
+    if (integration.status === 'connected') {
+      // Si está conectado, no hacer nada (podría abrir detalles en el futuro)
+      return
+    }
+    // Si no está conectado, mostrar advertencia
+    handleToggle(integration.id, integration.type, true)
   }
 
 
@@ -256,6 +268,7 @@ function Integrations() {
               <div
                 key={integration.id}
                 className="integration-card"
+                onClick={() => handleCardClick(integration)}
                 style={{
                   background: 'var(--color-bg)',
                   border: '1px solid var(--color-border)',
@@ -265,6 +278,15 @@ function Integrations() {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   transition: 'var(--transition)',
+                  cursor: isConnected ? 'default' : 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isConnected) {
+                    e.currentTarget.style.borderColor = 'var(--color-primary)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-border)'
                 }}
               >
                 {/* Left: Title and metadata */}
@@ -326,13 +348,15 @@ function Integrations() {
                   )}
 
                   {/* Toggle Switch */}
-                  <Switch
-                    checked={isConnected}
-                    onCheckedChange={(checked) => handleToggle(integration.id, integration.type, checked)}
-                  />
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Switch
+                      checked={isConnected}
+                      onCheckedChange={(checked) => handleToggle(integration.id, integration.type, checked)}
+                    />
+                  </div>
 
                   {/* Menu Icon */}
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
@@ -443,8 +467,195 @@ function Integrations() {
         </div>
       )}
 
-      {/* Modal para conectar WhatsApp/Instagram - Ya no se usa, solo OAuth automático */}
-      {/* Se mantiene por si acaso se necesita en el futuro, pero no se muestra */}
+      {/* Modal de advertencia para Instagram */}
+      <Modal
+        isOpen={showInstagramWarning}
+        onClose={() => setShowInstagramWarning(false)}
+        title="Conectar Instagram Direct"
+      >
+        <div style={{ padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-md)', padding: 'var(--spacing-md)', background: '#fef3c7', border: '2px solid #f59e0b', borderRadius: 'var(--border-radius)' }}>
+            <AlertTriangle size={24} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)', color: '#92400e' }}>
+                Limitación de la API de Instagram
+              </h4>
+              <p style={{ margin: 0, color: '#78350f', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>
+                Por defecto, Instagram solo proporciona el ID numérico de los usuarios que te escriben.
+                Si deseas ver los <strong>nombres de usuario (@username)</strong> de tus leads, deberás:
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+            <div>
+              <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
+                Pasos para obtener nombres de usuario:
+              </h4>
+              <ol style={{ margin: 0, paddingLeft: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+                <li>Conectar esta integración de Instagram</li>
+                <li>
+                  Después, activar también la integración de <strong>Facebook</strong> (aparece más abajo)
+                </li>
+                <li>Durante el proceso de Facebook, iniciar sesión y autorizar los permisos solicitados</li>
+              </ol>
+            </div>
+
+            <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
+              <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                <strong>Nota:</strong> Esto es una limitación de Meta/Facebook. La integración de Facebook permite obtener
+                un "Page Access Token" que da acceso a información adicional del perfil de los usuarios.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end', marginTop: 'var(--spacing-md)' }}>
+            <button
+              onClick={() => setShowInstagramWarning(false)}
+              className="btn btn--secondary"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={async () => {
+                setShowInstagramWarning(false)
+                await handleInstagramConnect()
+              }}
+              className="btn btn--primary"
+            >
+              Entendido, conectar Instagram
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de advertencia para Facebook */}
+      <Modal
+        isOpen={showFacebookWarning}
+        onClose={() => setShowFacebookWarning(false)}
+        title="Conectar Facebook (Page Access Token)"
+      >
+        <div style={{ padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
+          <div>
+            <p style={{ margin: 0, marginBottom: 'var(--spacing-md)' }}>
+              Esta integración te permite obtener un <strong>Page Access Token</strong> de Facebook para acceder
+              a información adicional de tus contactos de Instagram (como nombres de usuario y fotos de perfil).
+            </p>
+          </div>
+
+          <div>
+            <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
+              ¿Qué necesitas?
+            </h4>
+            <ul style={{ margin: 0, paddingLeft: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+              <li>Una cuenta de Facebook vinculada a tu página de Instagram Business</li>
+              <li>Permisos de administrador en la página de Facebook</li>
+              <li>La cuenta de Instagram debe ser una cuenta Business o Creator</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
+              Recursos útiles:
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+              <a
+                href="https://www.facebook.com/business/help/898752960195806"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', color: 'var(--color-primary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}
+              >
+                <ExternalLink size={16} />
+                Cómo convertir tu cuenta de Instagram en Business
+              </a>
+              <a
+                href="https://www.facebook.com/business/help/196240171867691"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', color: 'var(--color-primary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}
+              >
+                <ExternalLink size={16} />
+                Conectar Instagram a una página de Facebook
+              </a>
+            </div>
+          </div>
+
+          <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
+            <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+              <strong>Importante:</strong> Durante el proceso de autorización, asegúrate de seleccionar la página
+              de Facebook que está conectada a tu cuenta de Instagram Business.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end', marginTop: 'var(--spacing-md)' }}>
+            <button
+              onClick={() => setShowFacebookWarning(false)}
+              className="btn btn--secondary"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={async () => {
+                setShowFacebookWarning(false)
+                await handleFacebookConnect()
+              }}
+              className="btn btn--primary"
+            >
+              Continuar con Facebook
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de advertencia para WhatsApp */}
+      <Modal
+        isOpen={showWhatsAppWarning}
+        onClose={() => setShowWhatsAppWarning(false)}
+        title="Conectar WhatsApp Business"
+      >
+        <div style={{ padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
+          <div>
+            <p style={{ margin: 0, marginBottom: 'var(--spacing-md)' }}>
+              Para conectar WhatsApp Business necesitas autorizar los permisos en Facebook/Meta.
+            </p>
+          </div>
+
+          <div>
+            <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
+              Requisitos:
+            </h4>
+            <ul style={{ margin: 0, paddingLeft: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+              <li>Cuenta de WhatsApp Business API (no la app regular de WhatsApp Business)</li>
+              <li>Número de teléfono verificado en WhatsApp Business</li>
+              <li>Acceso a Meta Business Manager</li>
+            </ul>
+          </div>
+
+          <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
+            <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+              <strong>Nota:</strong> Serás redirigido a Facebook para autorizar los permisos necesarios.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end', marginTop: 'var(--spacing-md)' }}>
+            <button
+              onClick={() => setShowWhatsAppWarning(false)}
+              className="btn btn--secondary"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={async () => {
+                setShowWhatsAppWarning(false)
+                await handleWhatsAppConnect()
+              }}
+              className="btn btn--primary"
+            >
+              Continuar con WhatsApp
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
