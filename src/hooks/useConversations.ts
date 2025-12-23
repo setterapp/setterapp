@@ -43,6 +43,7 @@ export function useConversations() {
   const channelKeyRef = useRef<string | null>(null)
   const resolveAttemptedRef = useRef<Set<string>>(new Set())
   const refreshTimerRef = useRef<number | null>(null)
+  const pollingIntervalRef = useRef<number | null>(null)
 
   const conversationSelect = '*, contact_ref:contacts(id, platform, external_id, display_name, phone, username, profile_picture)'
 
@@ -311,6 +312,26 @@ export function useConversations() {
 
     setupRealtime()
 
+    // Polling ligero: cada 10s buscar conversaciones nuevas (fallback para cuando Realtime no envía eventos)
+    const startPolling = () => {
+      if (pollingIntervalRef.current) return
+      pollingIntervalRef.current = window.setInterval(() => {
+        // Solo hacer polling si el documento está visible (no desperdiciar requests en background)
+        if (document.visibilityState === 'visible') {
+          void fetchConversations()
+        }
+      }, 10000) // 10s
+    }
+
+    const stopPolling = () => {
+      if (pollingIntervalRef.current) {
+        window.clearInterval(pollingIntervalRef.current)
+        pollingIntervalRef.current = null
+      }
+    }
+
+    startPolling()
+
     const handleResume = async () => {
       // En resume, forzamos refetch + resubscribe (sin reload)
       await fetchConversations()
@@ -344,6 +365,7 @@ export function useConversations() {
     })
 
     return () => {
+      stopPolling()
       window.removeEventListener('appsetter:supabase-resume', handleResume as EventListener)
       if (refreshTimerRef.current) {
         window.clearTimeout(refreshTimerRef.current)
