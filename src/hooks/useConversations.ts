@@ -245,8 +245,8 @@ export function useConversations() {
               const rowUserId = (payload.new as any)?.user_id ?? (payload.old as any)?.user_id
               if (rowUserId && rowUserId !== uid) return
 
-              // Si llega un mensaje para una conversación que todavía no está en la lista (nueva),
-              // la agregamos sin requerir refresh manual.
+              // Para INSERT de mensajes: siempre refrescar la conversación afectada
+              // (para actualizar last_message_at, unread_count, etc.)
               if (payload.eventType === 'INSERT') {
                 const convId = (payload.new as any)?.conversation_id as string | undefined
                 console.log('[useConversations] messages INSERT, convId:', convId)
@@ -255,12 +255,9 @@ export function useConversations() {
                   setTimeout(() => { void ensureConversationLoaded(convId) }, 50)
                 }
               }
-              // Fallback: si por algún motivo no llega el update de `conversations`,
-              // al menos refrescamos la lista cuando entra/sale un mensaje.
-              if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current)
-              refreshTimerRef.current = window.setTimeout(() => {
-                void fetchConversations()
-              }, 150)
+              
+              // NO hacer fetchConversations() completo — demasiado costoso.
+              // ensureConversationLoaded ya actualiza la conversación específica.
             }
           )
           .on(
