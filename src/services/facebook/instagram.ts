@@ -206,4 +206,53 @@ export const instagramService = {
       instagramUsername: page.instagram_business_account.username as string | undefined,
     }
   }
+
+  ,
+
+  /**
+   * Get Instagram user profile from IGSID (Instagram Scoped ID)
+   * This is used to get username, name, profile pic, etc. from webhook sender IDs
+   *
+   * @param igsid - Instagram Scoped User ID from webhook
+   * @param pageAccessToken - Optional. If not provided, will get it automatically
+   * @returns User profile data including username
+   */
+  async getUserProfileFromIGSID(igsid: string, pageAccessToken?: string) {
+    try {
+      // If no page access token provided, get it automatically
+      let token = pageAccessToken
+      if (!token) {
+        const pageData = await this.getInstagramPageAccessToken()
+        token = pageData.pageAccessToken
+      }
+
+      // Call User Profile API
+      // https://developers.facebook.com/docs/messenger-platform/instagram/features/user-profile
+      const res = await fetch(
+        `https://graph.facebook.com/v21.0/${igsid}?fields=name,username,profile_pic,follower_count,is_verified_user,is_user_follow_business,is_business_follow_user&access_token=${encodeURIComponent(token)}`
+      )
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null)
+        console.error('❌ Error getting user profile:', errorData)
+        throw new Error(`No se pudo obtener perfil de usuario: ${errorData?.error?.message || res.statusText}`)
+      }
+
+      const profile = await res.json()
+
+      return {
+        igsid: profile.id,
+        name: profile.name,
+        username: profile.username,
+        profilePic: profile.profile_pic,
+        followerCount: profile.follower_count,
+        isVerified: profile.is_verified_user,
+        isUserFollowBusiness: profile.is_user_follow_business,
+        isBusinessFollowUser: profile.is_business_follow_user,
+      }
+    } catch (error) {
+      console.error('❌ Error in getUserProfileFromIGSID:', error)
+      throw error
+    }
+  }
 }

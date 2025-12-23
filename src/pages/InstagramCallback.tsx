@@ -106,6 +106,49 @@ function InstagramCallback() {
           }
         )
 
+        // 🔑 IMPORTANTE: Obtener Page Access Token para poder usar User Profile API
+        // Esto permite obtener usernames de los leads automáticamente
+        try {
+          const { instagramService } = await import('../services/facebook/instagram')
+          const pageData = await instagramService.getInstagramPageAccessToken()
+
+          console.log('✅ Page Access Token obtenido:', {
+            pageId: pageData.pageId,
+            instagramUsername: pageData.instagramUsername
+          })
+
+          // Actualizar la integración con el Page Access Token
+          const { supabase } = await import('../lib/supabase')
+          const { data: integration } = await supabase
+            .from('integrations')
+            .select('id, config')
+            .eq('type', 'instagram')
+            .eq('user_id', storedUserId)
+            .eq('status', 'connected')
+            .single()
+
+          if (integration) {
+            await supabase
+              .from('integrations')
+              .update({
+                config: {
+                  ...(integration.config || {}),
+                  page_access_token: pageData.pageAccessToken,
+                  page_id: pageData.pageId,
+                  instagram_business_account_id: pageData.instagramBusinessAccountId,
+                  instagram_page_username: pageData.instagramUsername,
+                }
+              })
+              .eq('id', integration.id)
+
+            console.log('✅ Page Access Token guardado en integración')
+          }
+        } catch (error) {
+          console.error('⚠️ Error obteniendo Page Access Token:', error)
+          // No fallar el flujo completo si esto falla
+          // El usuario podrá reconectar después si es necesario
+        }
+
         // Clean up local storage
         localStorage.removeItem('instagram_oauth_state')
         localStorage.removeItem('instagram_oauth_user_id')

@@ -123,9 +123,37 @@ Deno.serve(async (req: Request) => {
 
 /**
  * Obtiene el perfil de un usuario de Instagram usando la Graph API
+ * OPTIMIZACIÓN: Primero verifica cache en tabla contacts antes de hacer llamada API
  */
 async function getInstagramUserProfile(userId: string, senderId: string): Promise<{ name?: string; username?: string; profile_picture?: string } | null> {
   try {
+    // 🚀 OPTIMIZACIÓN: Primero buscar en cache (tabla contacts)
+    const { data: cachedContact } = await supabase
+      .from('contacts')
+      .select('username, display_name, profile_picture, updated_at')
+      .eq('user_id', userId)
+      .eq('platform', 'instagram')
+      .eq('external_id', senderId)
+      .single();
+
+    // Si encontramos cache reciente (< 7 días), usarlo
+    if (cachedContact && cachedContact.username) {
+      const cacheAge = Date.now() - new Date(cachedContact.updated_at).getTime();
+      const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+
+      if (cacheAge < sevenDaysInMs) {
+        console.log('✅ Username encontrado en cache:', cachedContact.username);
+        return {
+          username: cachedContact.username,
+          name: cachedContact.display_name,
+          profile_picture: cachedContact.profile_picture,
+        };
+      }
+    }
+
+    // 📡 Cache miss o expirado -> hacer llamada API
+    console.log('📡 Cache miss, obteniendo perfil desde API...');
+
     // Obtener integración de Instagram para acceder al token
     const { data: integration, error } = await supabase
       .from('integrations')
