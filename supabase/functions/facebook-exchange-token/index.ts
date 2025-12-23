@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // IMPORTANT:
 // The OAuth `code` is issued for a specific App ID.
@@ -16,7 +17,52 @@ const FACEBOOK_APP_SECRET =
   Deno.env.get('INSTAGRAM_APP_SECRET') ||
   '';
 
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+const supabaseService = (supabaseUrl && supabaseServiceKey)
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : null;
+
 console.log('Facebook Exchange Token function initialized');
+
+async function getAuthedUserId(req: Request): Promise<string | null> {
+  const authHeader = req.headers.get('Authorization') || '';
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+  if (!authHeader.toLowerCase().startsWith('bearer ')) return null;
+  try {
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data, error } = await supabaseAuth.auth.getUser();
+    if (error) return null;
+    return data.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function logDebugEvent(params: {
+  userId: string | null;
+  requestId: string;
+  stage: string;
+  payload: Record<string, any>;
+}) {
+  if (!supabaseService) return;
+  try {
+    await supabaseService
+      .from('facebook_oauth_debug_events')
+      .insert({
+        user_id: params.userId,
+        request_id: params.requestId,
+        stage: params.stage,
+        payload: params.payload,
+      });
+  } catch {
+    // never fail the flow due to debug logging
+  }
+}
 
 Deno.serve(async (req: Request) => {
   // CORS headers
@@ -30,9 +76,18 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const requestId = crypto.randomUUID();
+    const userId = await getAuthedUserId(req);
+
     const { code, redirect_uri } = await req.json();
 
     if (!code || !redirect_uri) {
+      await logDebugEvent({
+        userId,
+        requestId,
+        stage: 'bad_request',
+        payload: { has_code: Boolean(code), redirect_uri: redirect_uri ?? null },
+      });
       return new Response(
         JSON.stringify({ error: 'Se requiere code y redirect_uri' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -41,6 +96,12 @@ Deno.serve(async (req: Request) => {
 
     if (!FACEBOOK_APP_SECRET) {
       console.error('❌ FACEBOOK_APP_SECRET / INSTAGRAM_APP_SECRET no está configurado');
+      await logDebugEvent({
+        userId,
+        requestId,
+        stage: 'server_misconfigured',
+        payload: { reason: 'missing_app_secret', app_id: FACEBOOK_APP_ID },
+      });
       return new Response(
         JSON.stringify({ error: 'Configuración del servidor incompleta' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -48,11 +109,29 @@ Deno.serve(async (req: Request) => {
     }
     if (!/^\d+$/.test(String(FACEBOOK_APP_ID))) {
       console.error('❌ FACEBOOK_APP_ID inválido:', FACEBOOK_APP_ID);
+      await logDebugEvent({
+        userId,
+        requestId,
+        stage: 'server_misconfigured',
+        payload: { reason: 'invalid_app_id', app_id: FACEBOOK_APP_ID },
+      });
       return new Response(
         JSON.stringify({ error: 'Configuración del servidor incompleta' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    await logDebugEvent({
+      userId,
+      requestId,
+      stage: 'start',
+      payload: {
+        redirect_uri,
+        app_id: FACEBOOK_APP_ID,
+        has_code: true, // do not store code
+        has_auth_header: Boolean(req.headers.get('Authorization')),
+      },
+    });
 
     console.log('📘 Step 1: Intercambiando código por User Access Token...');
 
@@ -68,6 +147,18 @@ Deno.serve(async (req: Request) => {
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json().catch(() => ({}));
       console.error('❌ Error obteniendo User Access Token:', errorData);
+      await logDebugEvent({
+        userId,
+        requestId,
+        stage: 'token_exchange_error',
+        payload: {
+          http_status: tokenResponse.status,
+          error: errorData?.error?.message ?? null,
+          code: errorData?.error?.code ?? null,
+          type: errorData?.error?.type ?? null,
+          fbtrace_id: errorData?.error?.fbtrace_id ?? null,
+        },
+      });
       return new Response(
         JSON.stringify({
           error: errorData.error?.message || 'Error obteniendo token',
@@ -84,6 +175,12 @@ Deno.serve(async (req: Request) => {
 
     if (!userAccessToken) {
       console.error('❌ No se recibió access_token');
+      await logDebugEvent({
+        userId,
+        requestId,
+        stage: 'token_exchange_error',
+        payload: { error: 'missing_access_token_in_response' },
+      });
       return new Response(
         JSON.stringify({ error: 'No se recibió access token' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -141,6 +238,26 @@ Deno.serve(async (req: Request) => {
         // ignore
       }
 
+      await logDebugEvent({
+        userId,
+        requestId,
+        stage: 'no_pages',
+        payload: {
+          me,
+          permissions,
+          debug_token: debugToken?.data ? {
+            app_id: debugToken.data.app_id,
+            type: debugToken.data.type,
+            is_valid: debugToken.data.is_valid,
+            scopes: debugToken.data.scopes,
+            granular_scopes: debugToken.data.granular_scopes,
+            user_id: debugToken.data.user_id,
+            expires_at: debugToken.data.expires_at,
+            data_access_expires_at: debugToken.data.data_access_expires_at,
+          } : debugToken,
+        },
+      });
+
       return new Response(
         JSON.stringify({
           error: 'Facebook Graph devolvió 0 páginas en /me/accounts. Esto suele ocurrir si tu usuario no tiene “Facebook access” sobre la Page (solo task access/Business Suite) o si el login no concedió permisos de Pages.',
@@ -171,6 +288,12 @@ Deno.serve(async (req: Request) => {
 
     if (!pageWithInstagram) {
       const pageNames = pages.map((p: any) => p.name || 'Sin nombre').join(', ');
+      await logDebugEvent({
+        userId,
+        requestId,
+        stage: 'no_page_with_instagram',
+        payload: { pages_count: pages.length, page_names: pageNames },
+      });
       return new Response(
         JSON.stringify({
           error: `Ninguna de tus ${pages.length} página(s) [${pageNames}] tiene una Cuenta de Instagram Business vinculada. Ve a la configuración de tu página en Facebook para vincular Instagram.`
@@ -183,6 +306,18 @@ Deno.serve(async (req: Request) => {
       page_name: pageWithInstagram.name,
       page_id: pageWithInstagram.id,
       instagram_username: pageWithInstagram.instagram_business_account.username,
+    });
+
+    await logDebugEvent({
+      userId,
+      requestId,
+      stage: 'success',
+      payload: {
+        page_id: pageWithInstagram.id,
+        page_name: pageWithInstagram.name,
+        instagram_business_account_id: pageWithInstagram.instagram_business_account.id,
+        instagram_username: pageWithInstagram.instagram_business_account.username,
+      },
     });
 
     // Retornar los datos necesarios
