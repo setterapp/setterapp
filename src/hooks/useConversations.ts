@@ -238,7 +238,6 @@ export function useConversations() {
               table: 'messages',
             },
             (payload) => {
-              console.log('[useConversations] messages event:', payload.eventType, payload)
               const uid = session.user.id
               const rowUserId = (payload.new as any)?.user_id ?? (payload.old as any)?.user_id
               if (rowUserId && rowUserId !== uid) return
@@ -247,7 +246,6 @@ export function useConversations() {
               // (para actualizar last_message_at, unread_count, etc.)
               if (payload.eventType === 'INSERT') {
                 const convId = (payload.new as any)?.conversation_id as string | undefined
-                console.log('[useConversations] messages INSERT, convId:', convId)
                 if (convId) {
                   // Esperar un tick para evitar races cuando el webhook inserta conversación + mensaje.
                   setTimeout(() => { void ensureConversationLoaded(convId) }, 50)
@@ -273,23 +271,18 @@ export function useConversations() {
             }
           )
           .subscribe(async (status) => {
-            console.log('[useConversations] Realtime status:', status)
             if (status === 'SUBSCRIBED') {
               isIntentionalCloseRef.current = false
-              console.log('[useConversations] ✅ Realtime SUBSCRIBED successfully')
             }
 
             if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-              console.warn('[useConversations] ⚠️ Realtime CLOSED/ERROR:', status)
               // Solo reconectar si NO fue un cierre intencional
               if (!isIntentionalCloseRef.current) {
                 setTimeout(() => setupRealtime(), 2000)
-              } else {
               }
             }
 
             if (status === 'TIMED_OUT') {
-              console.warn('[useConversations] ⚠️ Realtime TIMED_OUT')
               setTimeout(() => setupRealtime(), 2000)
             }
           })
