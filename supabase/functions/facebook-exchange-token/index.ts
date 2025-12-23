@@ -115,9 +115,50 @@ Deno.serve(async (req: Request) => {
     console.log(`📄 ${pages.length} página(s) de Facebook encontradas`);
 
     if (pages.length === 0) {
+      // Diagnóstico extra (sin exponer tokens): permisos concedidos + debug_token
+      let permissions: any = null;
+      let debugToken: any = null;
+      let me: any = null;
+      try {
+        const meRes = await fetch(`https://graph.facebook.com/v24.0/me?fields=id,name&access_token=${encodeURIComponent(userAccessToken)}`);
+        me = await meRes.json().catch(() => null);
+      } catch {
+        // ignore
+      }
+      try {
+        const permRes = await fetch(`https://graph.facebook.com/v24.0/me/permissions?access_token=${encodeURIComponent(userAccessToken)}`);
+        permissions = await permRes.json().catch(() => null);
+      } catch {
+        // ignore
+      }
+      try {
+        const appAccessToken = `${FACEBOOK_APP_ID}|${FACEBOOK_APP_SECRET}`;
+        const dbgRes = await fetch(
+          `https://graph.facebook.com/v24.0/debug_token?input_token=${encodeURIComponent(userAccessToken)}&access_token=${encodeURIComponent(appAccessToken)}`
+        );
+        debugToken = await dbgRes.json().catch(() => null);
+      } catch {
+        // ignore
+      }
+
       return new Response(
         JSON.stringify({
-          error: 'No tienes páginas de Facebook. Crea una página en facebook.com/pages/create y vincula tu cuenta de Instagram Business.'
+          error: 'Facebook Graph devolvió 0 páginas en /me/accounts. Esto suele ocurrir si tu usuario no tiene “Facebook access” sobre la Page (solo task access/Business Suite) o si el login no concedió permisos de Pages.',
+          hint: 'Asegúrate de tener al menos una Page con “People with Facebook access” (Full control) y vuelve a autorizar. Si la Page está en Business Manager, revisa que tengas acceso directo a la Page.',
+          diagnostics: {
+            me,
+            permissions,
+            debug_token: debugToken?.data ? {
+              app_id: debugToken.data.app_id,
+              type: debugToken.data.type,
+              is_valid: debugToken.data.is_valid,
+              scopes: debugToken.data.scopes,
+              granular_scopes: debugToken.data.granular_scopes,
+              user_id: debugToken.data.user_id,
+              expires_at: debugToken.data.expires_at,
+              data_access_expires_at: debugToken.data.data_access_expires_at,
+            } : debugToken,
+          }
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
