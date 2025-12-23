@@ -3,9 +3,11 @@ import { Plug, Check, X, MoreVertical } from 'lucide-react'
 import { useIntegrations } from '../hooks/useIntegrations'
 import { instagramService } from '../services/facebook/instagram'
 import { whatsappService } from '../services/facebook/whatsapp'
+import { facebookOAuthService } from '../services/facebook-oauth'
 import { Switch } from '../components/ui/switch'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
+import FacebookIcon from '../components/icons/FacebookIcon'
 import { formatDate, formatFullDate } from '../utils/date'
 
 function Integrations() {
@@ -69,6 +71,14 @@ function Integrations() {
         } else {
           // Desconectar
           await handleWhatsAppDisconnect(id)
+        }
+      } else if (type === 'facebook') {
+        if (checked) {
+          // Conectar con OAuth de Facebook para obtener Page Access Token
+          await handleFacebookConnect()
+        } else {
+          // Desconectar
+          await handleFacebookDisconnect(id)
         }
       } else {
         const newStatus = checked ? 'connected' : 'disconnected'
@@ -170,6 +180,50 @@ function Integrations() {
     }
   }
 
+  async function handleFacebookConnect() {
+    try {
+      // Conectar con OAuth de Facebook para obtener Page Access Token
+      await facebookOAuthService.connectFacebook()
+      // El usuario será redirigido al callback después de autorizar
+      // Después volverá a /integrations
+    } catch (error: any) {
+      console.error('Error connecting Facebook:', error)
+      alert(`Error al conectar con Facebook: ${error.message || 'Error desconocido'}`)
+      refetch() // Refetch para revertir el toggle si la conexión falló
+    }
+  }
+
+  async function handleFacebookDisconnect(integrationId?: string) {
+    try {
+      if (!confirm('¿Desconectar Facebook? Esto deshabilitará la obtención automática de usernames para Instagram.')) {
+        refetch()
+        return
+      }
+
+      const integration = integrationId
+        ? integrations.find(i => i.id === integrationId)
+        : integrations.find(i => i.type === 'facebook')
+
+      if (!integration) {
+        alert('No se encontró la integración de Facebook')
+        refetch()
+        return
+      }
+
+      await updateIntegration(integration.id, {
+        status: 'disconnected',
+        connected_at: undefined,
+        config: {}
+      })
+
+      refetch()
+    } catch (error: any) {
+      console.error('Error disconnecting Facebook:', error)
+      alert(`Error al desconectar: ${error.message || 'Error desconocido'}`)
+      refetch()
+    }
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -205,6 +259,8 @@ function Integrations() {
             const webhookDebugEnabled = Boolean((integration.config as any)?.debug_webhooks)
             const bg = integration.type === 'whatsapp'
               ? '#a6e3a1'
+              : integration.type === 'facebook'
+              ? '#89b4fa'
               : '#f38ba8'
 
             return (
@@ -242,6 +298,9 @@ function Integrations() {
                     )}
                     {integration.type === 'instagram' && (
                       <InstagramIcon size={24} color="#000" />
+                    )}
+                    {integration.type === 'facebook' && (
+                      <FacebookIcon size={24} color="#000" />
                     )}
                   </div>
                   <div style={{ flex: 1 }}>

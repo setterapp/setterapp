@@ -241,19 +241,32 @@ Deno.serve(async (req: Request) => {
   }
 
   // Obtener integración para token
-  const { data: integration } = await supabaseService
+  const { data: instagramIntegration } = await supabaseService
     .from('integrations')
     .select('config')
     .eq('type', 'instagram')
     .eq('user_id', userId)
     .eq('status', 'connected')
-    .single();
+    .maybeSingle();
 
-  // Preferimos Page access token para User Profile API.
-  const pageAccessToken = integration?.config?.page_access_token;
-  const accessToken = integration?.config?.access_token;
+  const { data: facebookIntegration } = await supabaseService
+    .from('integrations')
+    .select('config')
+    .eq('type', 'facebook')
+    .eq('user_id', userId)
+    .eq('status', 'connected')
+    .maybeSingle();
+
+  // Preferimos Page access token para User Profile API (tomarlo desde Facebook integration si existe).
+  const pageAccessToken =
+    facebookIntegration?.config?.page_access_token ||
+    instagramIntegration?.config?.page_access_token;
+
+  const accessToken = instagramIntegration?.config?.access_token;
   const instagramBusinessAccountId =
-    integration?.config?.instagram_user_id || integration?.config?.instagram_business_account_id || integration?.config?.instagram_business_account_id;
+    instagramIntegration?.config?.instagram_user_id ||
+    instagramIntegration?.config?.instagram_business_account_id ||
+    facebookIntegration?.config?.instagram_business_account_id;
 
   // Preferimos Page access token (User Profile API). Si no existe, usamos fallback legacy.
   if (pageAccessToken) {
@@ -317,10 +330,10 @@ Deno.serve(async (req: Request) => {
           .from('integrations')
           .update({
             config: {
-              ...(integration?.config || {}),
+              ...(instagramIntegration?.config || {}),
               access_token: refreshed.access_token,
-              expires_at: refreshed.expires_in ? (Math.floor(Date.now() / 1000) + refreshed.expires_in) : (integration?.config?.expires_at ?? null),
-              token_type: refreshed.token_type ?? (integration?.config?.token_type ?? null),
+              expires_at: refreshed.expires_in ? (Math.floor(Date.now() / 1000) + refreshed.expires_in) : (instagramIntegration?.config?.expires_at ?? null),
+              token_type: refreshed.token_type ?? (instagramIntegration?.config?.token_type ?? null),
             },
             updated_at: new Date().toISOString(),
           })

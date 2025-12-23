@@ -154,24 +154,31 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
     // 📡 Cache miss o expirado -> hacer llamada API
     console.log('📡 Cache miss, obteniendo perfil desde API...');
 
-    // Obtener integración de Instagram para acceder al token
-    const { data: integration, error } = await supabase
+    // Obtener integración de Instagram para acceder a flags y fallback legacy
+    const { data: instagramIntegration, error: instagramError } = await supabase
       .from('integrations')
       .select('config')
       .eq('type', 'instagram')
       .eq('user_id', userId)
       .eq('status', 'connected')
-      .single();
+      .maybeSingle();
 
-    if (error || !integration) {
-      // Sin logs por defecto (seguridad)
-      return null;
-    }
+    const debugEnabled = Boolean(instagramIntegration?.config?.debug_webhooks);
 
-    const debugEnabled = Boolean(integration?.config?.debug_webhooks);
+    // Preferir Page Access Token desde la integración de Facebook (flujo recomendado)
+    // (la UI crea/actualiza una integración `type=facebook` con `page_access_token`)
+    const { data: facebookIntegration } = await supabase
+      .from('integrations')
+      .select('config')
+      .eq('type', 'facebook')
+      .eq('user_id', userId)
+      .eq('status', 'connected')
+      .maybeSingle();
 
-    // Preferir User Profile API con Page access token (IGSID -> username/name/profile_pic)
-    const pageAccessToken = integration.config?.page_access_token;
+    const pageAccessToken =
+      facebookIntegration?.config?.page_access_token ||
+      instagramIntegration?.config?.page_access_token;
+
     if (pageAccessToken) {
       try {
         const res = await fetch(
@@ -199,8 +206,13 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
       }
     }
 
-    // Fallback legacy (tokens antiguos)
-    const accessToken = integration.config?.access_token;
+    // Fallback legacy (tokens antiguos) - usar access_token de integración IG si existe
+    if (instagramError || !instagramIntegration) {
+      // Sin logs por defecto (seguridad)
+      return null;
+    }
+
+    const accessToken = instagramIntegration.config?.access_token;
     if (!accessToken) {
       if (debugEnabled) console.warn('⚠️ No hay access token disponible para obtener perfil');
       return null;
@@ -216,7 +228,7 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         .eq('type', 'instagram')
         .eq('user_id', userId)
         .eq('status', 'connected')
-        .single();
+        .maybeSingle();
 
       const instagramBusinessAccountId = integrationWithAccount?.config?.instagram_user_id ||
                                          integrationWithAccount?.config?.instagram_business_account_id;
@@ -412,11 +424,11 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
  */
 async function getUserIdFromPageId(pageId: string): Promise<string | null> {
   try {
-    // Primero intentar buscar todas las integraciones de Instagram conectadas
+    // Buscar integraciones conectadas relevantes (instagram + facebook)
     const { data: integrations, error } = await supabase
       .from('integrations')
-      .select('user_id, config')
-      .eq('type', 'instagram')
+      .select('user_id, type, config')
+      .in('type', ['instagram', 'facebook'])
       .eq('status', 'connected');
 
     if (error) {
@@ -425,7 +437,7 @@ async function getUserIdFromPageId(pageId: string): Promise<string | null> {
     }
 
     if (!integrations || integrations.length === 0) {
-      console.error('❌ No connected Instagram integrations found');
+      console.error('❌ No connected integrations found');
       return null;
     }
 
@@ -433,16 +445,37 @@ async function getUserIdFromPageId(pageId: string): Promise<string | null> {
     if (pageId) {
       for (const integration of integrations) {
         const config = integration.config || {};
-        const instagramPageId = config.instagram_page_id || config.page_id;
+        const candidateIds = new Set<string>();
+        // IDs comunes que podemos recibir en webhooks IG (dependiendo de object/formato)
+        // - page_id / pageId: Facebook Page ID
+        // - instagram_business_account_id / instagram_user_id: IG Business Account ID
+        // - instagram_page_id: algunos flows legacy lo guardan así
+        const maybeIds = [
+          config.page_id,
+          config.pageId,
+          config.instagram_page_id,
+          config.instagram_user_id,
+          config.instagram_business_account_id,
+          config.instagramBusinessAccountId,
+        ];
+        for (const v of maybeIds) {
+          if (typeof v === 'string' && v.trim() !== '') candidateIds.add(v);
+          if (typeof v === 'number') candidateIds.add(String(v));
+        }
 
-        if (instagramPageId === pageId) {
+        if (candidateIds.has(pageId)) {
           console.log('✅ Found integration matching pageId:', pageId);
           return integration.user_id;
         }
       }
     }
 
-    // Si no hay pageId o no coincide, usar la primera integración conectada
+    // Si no coincide, preferir instagram; si no hay, usar la primera conectada
+    const instagram = integrations.find((i: any) => i.type === 'instagram');
+    if (instagram) {
+      console.log('⚠️ No matching pageId found, using first connected instagram integration');
+      return instagram.user_id;
+    }
     console.log('⚠️ No matching pageId found, using first connected integration');
     return integrations[0].user_id;
   } catch (error) {

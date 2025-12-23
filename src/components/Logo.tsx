@@ -60,7 +60,3 @@ export default function Logo({ size = 32, variant = 'full' }: LogoProps) {
     </div>
   )
 }
-
-
-
-

@@ -38,12 +38,12 @@ if ! command -v supabase &> /dev/null; then
   exit 1
 fi
 
-# Ejecutar query para obtener el token
-PAGE_TOKEN=$(supabase db query "SELECT config->>'page_access_token' as token FROM integrations WHERE type = 'instagram' AND status = 'connected' ORDER BY connected_at DESC LIMIT 1;" --output json 2>/dev/null | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+# Ejecutar query para obtener el token (preferir integración Facebook; fallback a Instagram legacy)
+PAGE_TOKEN=$(supabase db query "SELECT COALESCE(MAX(CASE WHEN type = 'facebook' THEN config->>'page_access_token' END), MAX(CASE WHEN type = 'instagram' THEN config->>'page_access_token' END)) as token FROM integrations WHERE status = 'connected' AND type IN ('facebook','instagram');" --output json 2>/dev/null | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
 
 if [ -z "$PAGE_TOKEN" ] || [ "$PAGE_TOKEN" = "null" ]; then
   echo -e "${RED}❌ Error: No se encontró un Page Access Token en la base de datos${NC}"
-  echo -e "${YELLOW}💡 Asegúrate de tener una integración de Instagram conectada${NC}"
+  echo -e "${YELLOW}💡 Asegúrate de tener una integración de Facebook conectada (Page Access Token) o Instagram legacy${NC}"
   echo ""
   echo -e "${YELLOW}Usa el script test-instagram-user-profile.sh si quieres ingresar el token manualmente${NC}"
   exit 1

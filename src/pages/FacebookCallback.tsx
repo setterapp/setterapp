@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { instagramDirectService } from '../services/instagram-direct'
+import { facebookOAuthService } from '../services/facebook-oauth'
 
-function InstagramCallback() {
+function FacebookCallback() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [error, setError] = useState<string | null>(null)
@@ -12,7 +12,7 @@ function InstagramCallback() {
   })
 
   useEffect(() => {
-    const handleInstagramCallback = async () => {
+    const handleFacebookCallback = async () => {
       try {
         // Get authorization code and state from URL
         const code = searchParams.get('code')
@@ -29,12 +29,12 @@ function InstagramCallback() {
 
             if (errorParam) {
               window.opener.postMessage({
-                type: 'instagram_oauth_error',
+                type: 'facebook_oauth_error',
                 error: errorDescription || errorParam
               }, window.location.origin)
             } else if (code) {
               window.opener.postMessage({
-                type: 'instagram_oauth_success',
+                type: 'facebook_oauth_success',
                 code: code,
                 url: window.location.href,
                 state: state
@@ -63,17 +63,17 @@ function InstagramCallback() {
           }
         }
 
-        // Check for errors from Instagram
+        // Check for errors from Facebook
         if (errorParam) {
-          console.error('❌ Error from Instagram:', errorParam, errorDescription)
-          setError(errorDescription || errorParam || 'Error al autorizar con Instagram')
+          console.error('❌ Error from Facebook:', errorParam, errorDescription)
+          setError(errorDescription || errorParam || 'Error al autorizar con Facebook')
           setTimeout(() => navigate('/integrations'), 5000)
           return
         }
 
         // Verify state (CSRF protection)
-        const storedState = localStorage.getItem('instagram_oauth_state')
-        const storedUserId = localStorage.getItem('instagram_oauth_user_id')
+        const storedState = localStorage.getItem('facebook_oauth_state')
+        const storedUserId = localStorage.getItem('facebook_oauth_user_id')
 
         if (!state || state !== storedState) {
           setError('Solicitud inválida. Por favor, intenta de nuevo.')
@@ -93,32 +93,35 @@ function InstagramCallback() {
           return
         }
 
-        // Exchange code for access token
-        const tokenData = await instagramDirectService.exchangeCodeForToken(code)
+        console.log('🔵 Intercambiando código de Facebook por Page Access Token...')
 
-        // Store access token in user's integration
-        await instagramDirectService.storeAccessToken(
-          storedUserId,
-          tokenData.access_token,
-          {
-            user_id: tokenData.user_id,
-            username: tokenData.username,
-          }
-        )
+        // Exchange code for Page Access Token
+        const pageData = await facebookOAuthService.exchangeCodeForPageToken(code)
+
+        console.log('✅ Page Access Token obtenido:', {
+          pageId: pageData.pageId,
+          instagramUsername: pageData.instagramUsername
+        })
+
+        // Create Facebook integration with Page Access Token
+        await facebookOAuthService.createFacebookIntegration(storedUserId, pageData)
 
         // Clean up local storage
-        localStorage.removeItem('instagram_oauth_state')
-        localStorage.removeItem('instagram_oauth_user_id')
+        localStorage.removeItem('facebook_oauth_state')
+        localStorage.removeItem('facebook_oauth_user_id')
+
+        console.log('✅ Integración de Facebook completada')
 
         // Redirect to integrations page
         navigate('/integrations')
       } catch (err: any) {
-        setError(err.message || 'Error al completar la conexión con Instagram')
+        console.error('❌ Error in Facebook callback:', err)
+        setError(err.message || 'Error al completar la conexión con Facebook')
         setTimeout(() => navigate('/integrations'), 5000)
       }
     }
 
-    handleInstagramCallback()
+    handleFacebookCallback()
   }, [navigate, searchParams, isPopup])
 
   // If we're in a popup, don't render anything - just close it
@@ -142,10 +145,10 @@ function InstagramCallback() {
     <div style={{ padding: '2rem', textAlign: 'center' }}>
       <div className="card" style={{ maxWidth: '500px', margin: '0 auto' }}>
         <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
-        <p>Completando conexión con Instagram...</p>
+        <p>Completando conexión con Facebook...</p>
       </div>
     </div>
   )
 }
 
-export default InstagramCallback
+export default FacebookCallback
