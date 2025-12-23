@@ -23,7 +23,7 @@ export const googleCalendarService = {
         provider: 'google',
         options: {
           scopes: CALENDAR_SCOPES.join(' '),
-          redirectTo: `${window.location.origin}/auth/callback?redirect_to=/integrations`,
+          redirectTo: `${window.location.origin}/auth/google-calendar/callback`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent', // Forzar consentimiento para obtener nuevos scopes

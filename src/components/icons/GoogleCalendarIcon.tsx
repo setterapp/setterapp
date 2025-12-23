@@ -3,7 +3,7 @@ interface GoogleCalendarIconProps {
   color?: string
 }
 
-export default function GoogleCalendarIcon({ size = 24, color = 'currentColor' }: GoogleCalendarIconProps) {
+export default function GoogleCalendarIcon({ size = 24, color = '#fff' }: GoogleCalendarIconProps) {
   return (
     <svg
       width={size}
@@ -12,14 +12,51 @@ export default function GoogleCalendarIcon({ size = 24, color = 'currentColor' }
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path
-        d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
-        fill={color}
+      {/* Calendar outline */}
+      <rect
+        x="4"
+        y="5"
+        width="16"
+        height="16"
+        rx="2"
+        stroke={color}
+        strokeWidth="2"
+        fill="none"
       />
-      <path
-        d="M7 12h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2z"
-        fill={color}
+      {/* Top bar */}
+      <line
+        x1="4"
+        y1="9"
+        x2="20"
+        y2="9"
+        stroke={color}
+        strokeWidth="2"
       />
+      {/* Calendar rings */}
+      <line
+        x1="8"
+        y1="3"
+        x2="8"
+        y2="7"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="16"
+        y1="3"
+        x2="16"
+        y2="7"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      {/* Date dots */}
+      <circle cx="8" cy="13" r="1" fill={color} />
+      <circle cx="12" cy="13" r="1" fill={color} />
+      <circle cx="16" cy="13" r="1" fill={color} />
+      <circle cx="8" cy="17" r="1" fill={color} />
+      <circle cx="12" cy="17" r="1" fill={color} />
     </svg>
   )
 }
