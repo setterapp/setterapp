@@ -111,10 +111,13 @@
       "conversations": "Conversaciones",
       "responseRate": "Tasa de Respuesta",
       "messages": "Mensajes",
-      "activeAgents": "Agentes Activos"
+      "activeAgents": "Agentes Activos",
+      "todayMeetings": "Reuniones Hoy",
+      "upcomingMeetings": "Próximas Reuniones"
     },
     "activity": "Actividad (Últimos 21 días)",
     "conversationsByAgent": "Conversaciones por Agente",
+    "upcomingMeetingsList": "Próximas Reuniones",
     "empty": {
       "title": "No hay datos aún",
       "description": "Las analíticas aparecerán aquí una vez que tengas conversaciones activas"
@@ -231,10 +234,29 @@
     "empty": {
       "title": "No hay conversaciones",
       "description": "Las conversaciones aparecerán aquí"
+    },
+    "processing": {
+      "title": "Procesamiento de Leads con IA",
+      "conversation": "conversación",
+      "conversations": "conversaciones",
+      "withoutStatus": "sin estado de lead",
+      "classifyLeads": "Clasificar Leads",
+      "processing": "Procesando..."
     }
   },
   "calendar": {
     "title": "Calendario",
     "description": "Gestiona tus eventos y citas"
+  },
+  "meetings": {
+    "title": "Reuniones",
+    "upcoming": "Próximas reuniones",
+    "history": "Historial",
+    "noMeetings": "No hay reuniones programadas",
+    "meetingsWillAppear": "Las reuniones creadas por los agentes aparecerán aquí"
+  },
+  "contacts": {
+    "leadStatus": "Estado Lead",
+    "syncLeadStatus": "Sincronizar Estados"
   }
 }

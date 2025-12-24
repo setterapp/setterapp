@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   BarChart3,
   MessageSquare,
@@ -26,6 +27,7 @@ import {
 type TimeRange = 'today' | 'week' | 'month' | 'all'
 
 function Analytics() {
+  const { t } = useTranslation()
   const { conversations, loading: conversationsLoading } = useConversations()
   const { agents, loading: agentsLoading } = useAgents()
   const { integrations, loading: integrationsLoading } = useIntegrations()
@@ -332,7 +334,7 @@ function Analytics() {
 
         <div className="card">
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            Agentes Activos
+            {metrics.activeAgents}
           </h3>
           <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
             <div style={{
@@ -356,7 +358,7 @@ function Analytics() {
 
         <div className="card">
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            Reuniones Hoy
+            {t('analytics.metrics.todayMeetings')}
           </h3>
           <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
             <div style={{
@@ -380,7 +382,7 @@ function Analytics() {
 
         <div className="card">
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            Próximas Reuniones
+            {t('analytics.metrics.upcomingMeetings')}
           </h3>
           <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
             <div style={{
@@ -483,7 +485,7 @@ function Analytics() {
         <div className="card" style={{ marginTop: 'var(--spacing-md)' }}>
           <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
             <Calendar size={20} />
-            Próximas Reuniones ({metrics.upcomingMeetings})
+            {t('analytics.metrics.upcomingMeetings')} ({metrics.upcomingMeetings})
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
             {meetings
@@ -539,7 +541,7 @@ function Analytics() {
         <div className="card" style={{ marginTop: 'var(--spacing-md)' }}>
           <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
             <Users size={20} />
-            Conversaciones por Agente
+            {t('analytics.conversationsByAgent')}
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
             {metrics.conversationsByAgent.map((item, index) => (

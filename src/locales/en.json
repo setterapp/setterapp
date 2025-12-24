@@ -111,10 +111,13 @@
       "conversations": "Conversations",
       "responseRate": "Response Rate",
       "messages": "Messages",
-      "activeAgents": "Active Agents"
+      "activeAgents": "Active Agents",
+      "todayMeetings": "Today's Meetings",
+      "upcomingMeetings": "Upcoming Meetings"
     },
     "activity": "Activity (Last 21 days)",
     "conversationsByAgent": "Conversations by Agent",
+    "upcomingMeetingsList": "Upcoming Meetings",
     "empty": {
       "title": "No data yet",
       "description": "Analytics will appear here once you have active conversations"
@@ -231,10 +234,29 @@
     "empty": {
       "title": "No conversations",
       "description": "Conversations will appear here"
+    },
+    "processing": {
+      "title": "AI Lead Processing",
+      "conversation": "conversation",
+      "conversations": "conversations",
+      "withoutStatus": "without lead status",
+      "classifyLeads": "Classify Leads",
+      "processing": "Processing..."
     }
   },
   "calendar": {
     "title": "Calendar",
     "description": "Manage your events and appointments"
+  },
+  "meetings": {
+    "title": "Meetings",
+    "upcoming": "Upcoming meetings",
+    "history": "History",
+    "noMeetings": "No scheduled meetings",
+    "meetingsWillAppear": "Meetings created by agents will appear here"
+  },
+  "contacts": {
+    "leadStatus": "Lead Status",
+    "syncLeadStatus": "Sync Lead Status"
   }
 }

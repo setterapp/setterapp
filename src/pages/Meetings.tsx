@@ -1,10 +1,12 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Calendar, Clock, ExternalLink, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { useMeetings, type Meeting } from '../hooks/useMeetings'
 import Badge from '../components/common/Badge'
 import { formatDate } from '../utils/date'
 
 export default function Meetings() {
+  const { t } = useTranslation()
   const { meetings, loading, error, updateMeetingStatus } = useMeetings()
 
   // Separar reuniones en próximas y pasadas
@@ -40,7 +42,7 @@ export default function Meetings() {
     return (
       <div className="page-container">
         <div className="page-header">
-          <h1>Reuniones</h1>
+          <h1>{t('meetings.title')}</h1>
         </div>
         <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center' }}>
           <div className="spinner" />
@@ -54,7 +56,7 @@ export default function Meetings() {
     return (
       <div className="page-container">
         <div className="page-header">
-          <h1>Reuniones</h1>
+          <h1>{t('meetings.title')}</h1>
         </div>
         <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-danger)' }}>
           <p>Error: {error}</p>
@@ -78,9 +80,9 @@ export default function Meetings() {
       {meetings.length === 0 ? (
         <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center' }}>
           <Calendar size={64} style={{ opacity: 0.3, margin: '0 auto var(--spacing-md)' }} />
-          <h3 style={{ marginBottom: 'var(--spacing-sm)' }}>No hay reuniones programadas</h3>
+          <h3 style={{ marginBottom: 'var(--spacing-sm)' }}>{t('meetings.noMeetings')}</h3>
           <p style={{ color: 'var(--color-text-secondary)' }}>
-            Las reuniones creadas por los agentes aparecerán aquí
+            {t('meetings.meetingsWillAppear')}
           </p>
         </div>
       ) : (
@@ -89,7 +91,7 @@ export default function Meetings() {
           {upcomingMeetings.length > 0 && (
             <div style={{ marginBottom: 'var(--spacing-xl)' }}>
               <h2 style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--spacing-md)' }}>
-                Próximas reuniones ({upcomingMeetings.length})
+                {t('meetings.upcoming')} ({upcomingMeetings.length})
               </h2>
               <div className="card-grid">
                 {upcomingMeetings.map(meeting => (
@@ -108,7 +110,7 @@ export default function Meetings() {
           {pastMeetings.length > 0 && (
             <div>
               <h2 style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--spacing-md)' }}>
-                Historial ({pastMeetings.length})
+                {t('meetings.history')} ({pastMeetings.length})
               </h2>
               <div className="card-grid">
                 {pastMeetings.map(meeting => (

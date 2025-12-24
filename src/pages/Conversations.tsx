@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { RefreshCcw } from 'lucide-react'
 import { useConversations } from '../hooks/useConversations'
 import { processAllConversationsWithoutLeadStatus } from '../services/ai/leadStatusDetection'
@@ -7,6 +8,7 @@ import ChatPanel from '../components/ChatPanel'
 import EmptyConversation from '../components/EmptyConversation'
 
 function Conversations() {
+  const { t } = useTranslation()
   const { conversations, loading, error, markConversationRead, refetch } = useConversations()
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [selectedConversationNonce, setSelectedConversationNonce] = useState(0)
@@ -126,12 +128,12 @@ function Conversations() {
           justifyContent: 'space-between'
         }}>
           <div>
-            <h4 style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-              🤖 Procesamiento de Leads
-            </h4>
-            <p style={{ margin: 'var(--spacing-xs) 0 0 0', fontSize: 'var(--font-size-sm)' }}>
-              {conversationsWithoutStatus} conversación{conversationsWithoutStatus !== 1 ? 'es' : ''} sin estado de lead
-            </p>
+          <h4 style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            🤖 {t('conversations.processing.title')}
+          </h4>
+          <p style={{ margin: 'var(--spacing-xs) 0 0 0', fontSize: 'var(--font-size-sm)' }}>
+            {conversationsWithoutStatus} {conversationsWithoutStatus !== 1 ? t('conversations.processing.conversations') : t('conversations.processing.conversation')} {t('conversations.processing.withoutStatus')}
+          </p>
           </div>
           <button
             onClick={handleProcessLeadStatuses}
@@ -151,7 +153,7 @@ function Conversations() {
                 transformOrigin: 'center'
               } : {}}
             />
-            {processingLeadStatus ? 'Procesando...' : 'Clasificar Leads'}
+            {processingLeadStatus ? t('conversations.processing.processing') : t('conversations.processing.classifyLeads')}
           </button>
         </div>
       )}
