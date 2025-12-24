@@ -9,7 +9,7 @@ interface Message {
   timestamp: string
 }
 
-export type LeadStatus = 'cold' | 'warm' | 'hot' | 'closed'
+export type LeadStatus = 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed'
 
 interface LeadStatusResult {
   status: LeadStatus
@@ -50,11 +50,12 @@ Determina el estado del lead según estos criterios:
 - COLD (Frío): El lead no está interesado, no responde bien, da respuestas cortas negativas, o explícitamente rechaza la oferta
 - WARM (Tibio): El lead muestra cierto interés, hace preguntas, pero aún no está listo para comprometerse
 - HOT (Caliente): El lead está muy interesado, pregunta sobre precios, quiere agendar una llamada, solicita más detalles específicos, está listo para avanzar
-- CLOSED (Cerrado): El lead ya realizó la compra, agendó una reunión definitiva, o fue descalificado/rechazado de forma definitiva
+- CLOSED (Cerrado): El lead ya realizó la compra exitosamente o se comprometió definitivamente
+- NOT_CLOSED (No Cerrado): El lead fue cerrado pero no convertido (rechazado, perdió interés, eligió competencia, etc.)
 
 Responde SOLO con un objeto JSON en este formato exacto:
 {
-  "status": "cold" | "warm" | "hot" | "closed",
+  "status": "cold" | "warm" | "hot" | "closed" | "not_closed",
   "confidence": 0.0-1.0,
   "reasoning": "breve explicación de por qué elegiste este estado"
 }`
@@ -128,10 +129,21 @@ function fallbackDetection(messages: Message[]): LeadStatusResult {
   const hotKeywords = ['precio', 'costo', 'cuanto', 'reunión', 'llamada', 'agendar', 'comprar', 'contratar', 'empezar', 'si quiero', 'me interesa mucho']
   const coldKeywords = ['no gracias', 'no me interesa', 'no estoy interesado', 'no', 'después', 'más tarde', 'ocupado']
   const closedKeywords = ['listo', 'perfecto hagamos', 'cuando empezamos', 'agendado', 'confirmado', 'comprado']
+  const notClosedKeywords = ['ya no', 'cancelar', 'rechazar', 'no quiero', 'perdí interés', 'cambiar de opinión', 'no es para mí', 'otro proveedor', 'competencia']
 
   const hotCount = hotKeywords.filter(k => allText.includes(k)).length
   const coldCount = coldKeywords.filter(k => allText.includes(k)).length
   const closedCount = closedKeywords.filter(k => allText.includes(k)).length
+  const notClosedCount = notClosedKeywords.filter(k => allText.includes(k)).length
+
+  // Check for 'not_closed' first (rejection signals)
+  if (notClosedCount > 0) {
+    return {
+      status: 'not_closed',
+      confidence: Math.min(notClosedCount * 0.4, 0.95),
+      reasoning: 'El lead muestra señales claras de rechazo o pérdida de interés'
+    }
+  }
 
   if (closedCount > 0) {
     return {
@@ -182,7 +194,8 @@ export function getStatusChangeMessage(oldStatus: LeadStatus | null, newStatus: 
     cold: 'Frío ❄️',
     warm: 'Tibio 🌡️',
     hot: 'Caliente 🔥',
-    closed: 'Cerrado ✅'
+    closed: 'Cerrado ✅',
+    not_closed: 'No Cerrado ❌'
   }
 
   if (!oldStatus) {
