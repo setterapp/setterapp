@@ -16,6 +16,7 @@ import SettingsPage from './pages/Settings'
 import AuthCallback from './pages/AuthCallback'
 import InstagramCallback from './pages/InstagramCallback'
 import FacebookCallback from './pages/FacebookCallback'
+import GoogleCalendarCallback from './pages/GoogleCalendarCallback'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import Logo from './components/Logo'
@@ -138,6 +139,7 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/instagram/callback" element={<InstagramCallback />} />
         <Route path="/auth/facebook/callback" element={<FacebookCallback />} />
+        <Route path="/auth/google-calendar/callback" element={<GoogleCalendarCallback />} />
         <Route
           element={
             <ProtectedRoute>

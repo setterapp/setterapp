@@ -1,65 +1,26 @@
 import { supabase } from '../../lib/supabase'
+import { googleOAuthDirect } from './oauth-direct'
 
 /**
- * Google Calendar OAuth Service
- * Handles authentication and calendar operations
+ * Google Calendar Service
+ * Usa OAuth directo con Google (sin Supabase Auth) para evitar limitaciones con scopes sensibles
  */
-
-const CALENDAR_SCOPES = [
-  'https://www.googleapis.com/auth/calendar',
-  'https://www.googleapis.com/auth/calendar.events'
-]
 
 export const googleCalendarService = {
   /**
-   * Initiate Google OAuth flow for Calendar access
+   * Inicia el flujo OAuth directo con Google para Calendar
+   * IMPORTANTE: NO usa Supabase Auth porque Google rechaza scopes sensibles como Calendar
+   * cuando se solicitan a través de terceros
    */
   async connectCalendar() {
     try {
-      console.log('[GoogleCalendar] Starting connectCalendar flow')
+      console.log('[GoogleCalendar] Starting direct OAuth flow (without Supabase Auth)')
 
-      // Obtener la sesión actual para verificar si ya está logueado con Google
-      const { data: { session } } = await supabase.auth.getSession()
-      console.log('[GoogleCalendar] Current session:', {
-        hasSession: !!session,
-        provider: session?.user?.app_metadata?.provider,
-        hasProviderToken: !!session?.provider_token
-      })
+      // Iniciar OAuth directo con Google
+      await googleOAuthDirect.initiateOAuth()
 
-      // IMPORTANTE: Para solicitar scopes adicionales a una sesión existente de Google,
-      // debemos usar include_granted_scopes: 'true' y prompt: 'consent'.
-      // Esto permite que Google agregue los nuevos scopes sin descartar los anteriores.
-      // TAMBIÉN: usar scopes como string, no como array (Supabase espera string)
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          scopes: CALENDAR_SCOPES.join(' '),
-          redirectTo: `${window.location.origin}/auth/callback?provider=google&integration=google-calendar&redirect_to=/integrations`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent', // Forzar consentimiento para obtener refresh_token
-            include_granted_scopes: 'true' // IMPORTANTE: mantener scopes anteriores y agregar los nuevos
-          },
-          skipBrowserRedirect: false
-        }
-      })
-
-      if (error) {
-        console.error('[GoogleCalendar] Error en connectCalendar:', error)
-        throw error
-      }
-
-      console.log('[GoogleCalendar] OAuth initiated:', {
-        hasUrl: !!data.url,
-        provider: data.provider
-      })
-
-      // Si data.url existe, el navegador será redirigido automáticamente
-      if (!data.url) {
-        console.warn('[GoogleCalendar] No redirect URL returned from signInWithOAuth')
-      }
-
-      return data
+      // La función anterior redirige a Google, por lo que este código no se ejecutará
+      // hasta que el usuario vuelva del callback
     } catch (error) {
       console.error('[GoogleCalendar] Error connecting calendar:', error)
       throw error
@@ -67,9 +28,8 @@ export const googleCalendarService = {
   },
 
   /**
-   * Get the current Google access token from database (config field in integrations table)
-   * Refreshes the token if needed using the refresh token
-   * Los tokens NO se persisten en la sesión de Supabase, debemos guardarlos en DB
+   * Get the current Google access token from database
+   * Refreshes the token automatically if está expirado
    */
   async getAccessToken() {
     try {
@@ -93,22 +53,52 @@ export const googleCalendarService = {
       }
 
       // Obtener tokens del config
-      let providerToken = integration.config?.provider_token
-      const providerRefreshToken = integration.config?.provider_refresh_token
+      let accessToken = integration.config?.provider_token
+      const refreshToken = integration.config?.provider_refresh_token
+      const tokenExpiresAt = integration.config?.token_expires_at
 
       // Si no hay token, pedir reconexión
-      if (!providerToken) {
+      if (!accessToken) {
         throw new Error('No hay token de acceso de Google. Por favor, reconecta Google Calendar desde la página de Integraciones.')
       }
 
-      // NOTA: Para implementar refresh automático de tokens, se necesitaría una Edge Function
-      // en Supabase que maneje el client_secret de forma segura. Por ahora, si el token expira,
-      // el usuario deberá reconectar (los tokens de Google duran 1 hora típicamente).
-      // El refresh_token se guarda para futuras implementaciones.
+      // Verificar si el token está expirado (con 5 minutos de margen)
+      const expiresAt = tokenExpiresAt ? new Date(tokenExpiresAt) : null
+      const now = new Date()
+      const isExpired = expiresAt ? (expiresAt.getTime() - now.getTime()) < (5 * 60 * 1000) : false
+
+      if (isExpired && refreshToken) {
+        console.log('[GoogleCalendar] Access token expired, refreshing...')
+
+        try {
+          // Refrescar el token usando OAuth directo
+          const newTokens = await googleOAuthDirect.refreshAccessToken(refreshToken)
+
+          // Actualizar tokens en la base de datos
+          const updatedConfig = {
+            ...integration.config,
+            provider_token: newTokens.accessToken,
+            token_expires_at: new Date(Date.now() + (newTokens.expiresIn * 1000)).toISOString(),
+            last_token_refresh: new Date().toISOString()
+          }
+
+          await supabase
+            .from('integrations')
+            .update({ config: updatedConfig })
+            .eq('id', integration.id)
+
+          console.log('[GoogleCalendar] Token refreshed successfully')
+
+          accessToken = newTokens.accessToken
+        } catch (refreshError) {
+          console.error('[GoogleCalendar] Error refreshing token:', refreshError)
+          throw new Error('El token de Google Calendar expiró y no se pudo refrescar. Por favor, reconecta desde la página de Integraciones.')
+        }
+      }
 
       return {
-        accessToken: providerToken,
-        refreshToken: providerRefreshToken
+        accessToken,
+        refreshToken
       }
     } catch (error) {
       throw error
@@ -299,42 +289,34 @@ export const googleCalendarService = {
    */
   async disconnect() {
     try {
-      // Intentar revocar el token si existe (pero no es crítico si falla)
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.provider_token) {
-          const token = session.provider_token
+      console.log('[GoogleCalendar] Disconnecting...')
 
-          // Revocar el token usando el endpoint correcto de Google
-          // Google devuelve 200 incluso si el token ya está revocado o es inválido
-          // Un 400 puede significar que el token ya está expirado/revocado, lo cual es OK
-          try {
-            const revokeResponse = await fetch(
-              `https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token)}`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/x-www-form-urlencoded'
-                }
-              }
-            )
+      // Obtener el token de la integración para revocarlo
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        try {
+          const { data: integration } = await supabase
+            .from('integrations')
+            .select('config')
+            .eq('type', 'google-calendar')
+            .eq('user_id', session.user.id)
+            .single()
 
-            // Google puede devolver 200 (éxito) o 400 (token inválido/expirado)
-            // Ambos casos son aceptables para nosotros
-            if (revokeResponse.status === 200 || revokeResponse.status === 400) {
-            }
-          } catch (revokeError) {
-            // Ignorar errores de red - no es crítico
+          const token = integration?.config?.provider_token
+          if (token) {
+            // Revocar el token usando el servicio OAuth directo
+            await googleOAuthDirect.revokeToken(token)
+            console.log('[GoogleCalendar] Token revoked')
           }
+        } catch (error) {
+          console.log('[GoogleCalendar] Could not revoke token (non-critical):', error)
+          // No es crítico si falla la revocación
         }
-      } catch (error) {
-        // Ignorar errores completamente - no es crítico para la desconexión
       }
 
-      // La desconexión real se hace actualizando el estado en la base de datos
-      // El token se limpiará cuando el usuario cierre sesión o expire
       return true
     } catch (error) {
+      console.log('[GoogleCalendar] Disconnect error (non-critical):', error)
       // Siempre retornar true - la desconexión en DB es lo importante
       return true
     }
