@@ -29,6 +29,7 @@ export const googleCalendarService = {
       // IMPORTANTE: Para solicitar scopes adicionales a una sesión existente de Google,
       // debemos usar include_granted_scopes: 'true' y prompt: 'consent'.
       // Esto permite que Google agregue los nuevos scopes sin descartar los anteriores.
+      // TAMBIÉN: usar scopes como string, no como array (Supabase espera string)
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -38,7 +39,8 @@ export const googleCalendarService = {
             access_type: 'offline',
             prompt: 'consent', // Forzar consentimiento para obtener refresh_token
             include_granted_scopes: 'true' // IMPORTANTE: mantener scopes anteriores y agregar los nuevos
-          }
+          },
+          skipBrowserRedirect: false
         }
       })
 

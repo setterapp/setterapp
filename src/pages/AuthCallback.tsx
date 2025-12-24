@@ -10,25 +10,62 @@ function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Supabase procesa automáticamente el código de la URL (detectSessionInUrl=true en esta ruta)
-        // IMPORTANTE: Usar setSession() en lugar de getSession() para procesar el hash/code de OAuth
-        // Primero intentamos procesar el callback si hay código en la URL
+        console.log('[AuthCallback] Starting handleAuthCallback')
+
+        // IMPORTANTE: Para capturar el provider_token correctamente, necesitamos usar
+        // onAuthStateChange y escuchar el evento SIGNED_IN, no getSession()
+        // El provider_token solo está disponible en el evento SIGNED_IN inicial
+
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
         const searchParams = new URLSearchParams(window.location.search)
 
         let session = null
         let sessionError = null
 
-        // Si hay parámetros de OAuth en la URL (hash o search), esperar a que Supabase los procese
+        // Si hay parámetros de OAuth en la URL, configurar listener para SIGNED_IN
         if (hashParams.has('access_token') || searchParams.has('code')) {
-          // Dar tiempo a Supabase para procesar el callback automáticamente
-          await new Promise(resolve => setTimeout(resolve, 500))
-        }
+          console.log('[AuthCallback] OAuth params detected, waiting for SIGNED_IN event')
 
-        // Ahora obtener la sesión
-        const sessionResult = await supabase.auth.getSession()
-        session = sessionResult.data.session
-        sessionError = sessionResult.error
+          // Crear una promesa que se resuelve cuando recibimos SIGNED_IN
+          const sessionPromise = new Promise<any>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('Timeout waiting for SIGNED_IN event'))
+            }, 10000) // 10 segundos timeout
+
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, authSession) => {
+              console.log('[AuthCallback] Auth event:', event, {
+                hasSession: !!authSession,
+                hasProviderToken: !!authSession?.provider_token,
+                hasProviderRefreshToken: !!authSession?.provider_refresh_token
+              })
+
+              if (event === 'SIGNED_IN' && authSession) {
+                clearTimeout(timeout)
+                subscription.unsubscribe()
+                resolve(authSession)
+              }
+            })
+          })
+
+          try {
+            session = await sessionPromise
+            console.log('[AuthCallback] Session obtained from SIGNED_IN event:', {
+              hasProviderToken: !!session?.provider_token,
+              providerTokenLength: session?.provider_token?.length || 0
+            })
+          } catch (err) {
+            console.error('[AuthCallback] Error waiting for SIGNED_IN:', err)
+            // Fallback a getSession si falla el listener
+            const sessionResult = await supabase.auth.getSession()
+            session = sessionResult.data.session
+            sessionError = sessionResult.error
+          }
+        } else {
+          // No hay params de OAuth, usar getSession normal
+          const sessionResult = await supabase.auth.getSession()
+          session = sessionResult.data.session
+          sessionError = sessionResult.error
+        }
 
         if (sessionError) {
           setError(sessionError.message)
