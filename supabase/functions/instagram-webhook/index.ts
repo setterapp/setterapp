@@ -201,46 +201,47 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
 
     const debugEnabled = Boolean(instagramIntegration?.config?.debug_webhooks);
 
+    // FACEBOOK INTEGRATION DISABLED - Código comentado temporalmente
     // Preferir Page Access Token desde la integración de Facebook (flujo recomendado)
     // (la UI crea/actualiza una integración `type=facebook` con `page_access_token`)
-    const { data: facebookIntegration } = await supabase
-      .from('integrations')
-      .select('config')
-      .eq('type', 'facebook')
-      .eq('user_id', userId)
-      .eq('status', 'connected')
-      .maybeSingle();
-
-    const pageAccessToken =
-      facebookIntegration?.config?.page_access_token ||
-      instagramIntegration?.config?.page_access_token;
-
-    if (pageAccessToken) {
-      try {
-        const res = await fetch(
-          `https://graph.facebook.com/v24.0/${senderId}?fields=name,username,profile_pic&access_token=${encodeURIComponent(pageAccessToken)}`,
-          { method: 'GET' }
-        );
-        const data = await res.json().catch(() => null);
-        if (res.ok && data && !data.error) {
-          return {
-            name: data.name || null,
-            username: data.username || null,
-            profile_picture: data.profile_pic || null,
-          };
-        }
-        if (debugEnabled && data?.error) {
-          console.warn('⚠️ User Profile API error:', {
-            message: data.error?.message,
-            code: data.error?.code,
-            subcode: data.error?.error_subcode,
-            fbtrace_id: data.error?.fbtrace_id,
-          });
-        }
-      } catch {
-        // ignore
-      }
-    }
+    // const { data: facebookIntegration } = await supabase
+    //   .from('integrations')
+    //   .select('config')
+    //   .eq('type', 'facebook')
+    //   .eq('user_id', userId)
+    //   .eq('status', 'connected')
+    //   .maybeSingle();
+    //
+    // const pageAccessToken =
+    //   facebookIntegration?.config?.page_access_token ||
+    //   instagramIntegration?.config?.page_access_token;
+    //
+    // if (pageAccessToken) {
+    //   try {
+    //     const res = await fetch(
+    //       `https://graph.facebook.com/v24.0/${senderId}?fields=name,username,profile_pic&access_token=${encodeURIComponent(pageAccessToken)}`,
+    //       { method: 'GET' }
+    //     );
+    //     const data = await res.json().catch(() => null);
+    //     if (res.ok && data && !data.error) {
+    //       return {
+    //         name: data.name || null,
+    //         username: data.username || null,
+    //         profile_picture: data.profile_pic || null,
+    //       };
+    //     }
+    //     if (debugEnabled && data?.error) {
+    //       console.warn('⚠️ User Profile API error:', {
+    //         message: data.error?.message,
+    //         code: data.error?.code,
+    //         subcode: data.error?.error_subcode,
+    //         fbtrace_id: data.error?.fbtrace_id,
+    //       });
+    //     }
+    //   } catch {
+    //     // ignore
+    //   }
+    // }
 
     // Fallback legacy (tokens antiguos) - usar access_token de integración IG si existe
     if (instagramError || !instagramIntegration) {
@@ -639,18 +640,15 @@ async function processInstagramEvent(event: any, pageId: string) {
         // No romper el webhook por debug
       }
 
-      // Obtener perfil del usuario de Instagram (nombre, username, foto)
-      // Getting Instagram profile...
-      const userProfile = await getInstagramUserProfile(userId, senderId);
-      if (userProfile) {
-        console.log('✅ Profile fetched successfully');
-      } else {
-        console.log('⚠️ Profile not available, using ID as fallback');
-      }
+      // TEMPORARY: Skip profile fetching until app review is approved
+      // Username requires additional permissions from Meta
+      // For now, use sender ID as display name
+      const userProfile = null; // Disabled until app review
+      console.log('ℹ️ Profile fetching disabled (pending app review), using ID');
 
-      // Determinar el nombre a mostrar (username > name > senderId)
-      const displayName = userProfile?.username || userProfile?.name || senderId;
-      const contactName = userProfile?.name || userProfile?.username || senderId;
+      // Usar directamente el senderId como nombre hasta app review
+      const displayName = senderId;
+      const contactName = senderId;
 
       // Upsert contacto (CRM) y obtener contact_id
       let contactId: string | null = null;
