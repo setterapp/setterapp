@@ -5,7 +5,6 @@ import { useMessages } from '../hooks/useMessages'
 import MessageBubble from './MessageBubble'
 import WhatsAppIcon from './icons/WhatsAppIcon'
 import InstagramIcon from './icons/InstagramIcon'
-import Badge from './common/Badge'
 import { supabase } from '../lib/supabase'
 
 interface ChatPanelProps {
@@ -45,23 +44,6 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
       ? WhatsAppIcon
       : InstagramIcon
 
-  const getLeadStatusBadgeVariant = (status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null) => {
-    if (!status) return null
-    switch (status) {
-      case 'cold':
-        return 'secondary'
-      case 'warm':
-        return 'warning'
-      case 'hot':
-        return 'danger'
-      case 'closed':
-        return 'success'
-      case 'not_closed':
-        return 'danger'
-      default:
-        return null
-    }
-  }
 
   const getLeadStatusLabel = (status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null) => {
     if (!status) return null
@@ -81,7 +63,25 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
     }
   }
 
-  const leadStatusVariant = getLeadStatusBadgeVariant(conversation.lead_status)
+  const getLeadStatusBackgroundColor = (status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null) => {
+    if (!status) return null
+    switch (status) {
+      case 'cold':
+        return '#94a3b8' // secondary color
+      case 'warm':
+        return '#fbbf24' // warning color
+      case 'hot':
+        return '#ef4444' // danger color
+      case 'closed':
+        return '#22c55e' // success color
+      case 'not_closed':
+        return '#ef4444' // danger color
+      default:
+        return null
+    }
+  }
+
+  const leadStatusBackgroundColor = getLeadStatusBackgroundColor(conversation.lead_status)
   const leadStatusLabel = getLeadStatusLabel(conversation.lead_status)
 
   const contact = conversation.contact_ref
@@ -216,10 +216,23 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
               >
                 {conversation.platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'}
               </span>
-              {leadStatusVariant && leadStatusLabel && (
-                <Badge variant={leadStatusVariant}>
+              {leadStatusBackgroundColor && leadStatusLabel && (
+                <span
+                  style={{
+                    backgroundColor: leadStatusBackgroundColor,
+                    color: '#000',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '2px 6px',
+                    borderRadius: 'var(--border-radius-sm)',
+                    fontSize: 'var(--font-size-xs)',
+                    fontWeight: 600,
+                    border: '2px solid #000',
+                  }}
+                >
                   {leadStatusLabel}
-                </Badge>
+                </span>
               )}
             </div>
           </div>

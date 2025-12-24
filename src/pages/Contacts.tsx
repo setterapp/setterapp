@@ -105,9 +105,9 @@ const columns: ColumnDef<Contact>[] = [
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
-            padding: '4px 8px',
+            padding: '2px 6px',
             borderRadius: 'var(--border-radius-sm)',
-            fontSize: 'var(--font-size-sm)',
+            fontSize: 'var(--font-size-xs)',
             fontWeight: 600,
             border: '2px solid #000',
           }}
