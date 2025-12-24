@@ -55,7 +55,7 @@ export default function Logo({ size = 32, variant = 'full' }: LogoProps) {
         color: 'currentColor',
         letterSpacing: '-0.5px'
       }}>
-        AppSetter
+        setterapp.ai
       </span>
     </div>
   )

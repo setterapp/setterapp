@@ -24,7 +24,7 @@ function Landing() {
         <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
           <Logo size={48} variant="icon" />
           <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: 'var(--color-text)' }}>
-            AppSetter
+            setterapp.ai
           </span>
         </Link>
         <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -259,7 +259,7 @@ function Landing() {
               color: 'var(--color-text)',
             }}
           >
-            ¿Por qué elegir AppSetter?
+            ¿Por qué elegir setterapp.ai?
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xl)' }}>
             {[
@@ -375,7 +375,7 @@ function Landing() {
           </Link>
         </div>
         <p style={{ margin: 0, fontSize: 'var(--font-size-sm)' }}>
-          © 2024 AppSetter. Todos los derechos reservados.
+          © 2024 setterapp.ai. Todos los derechos reservados.
         </p>
       </footer>
     </div>

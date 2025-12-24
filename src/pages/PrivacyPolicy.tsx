@@ -42,7 +42,7 @@ function PrivacyPolicy() {
           <section style={{ marginBottom: 'var(--spacing-xl)' }}>
             <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>1. Información que Recopilamos</h2>
             <p>
-              En AppSetter, recopilamos y procesamos la siguiente información para brindar nuestros servicios:
+              En setterapp.ai, recopilamos y procesamos la siguiente información para brindar nuestros servicios:
             </p>
             <ul style={{ paddingLeft: 'var(--spacing-lg)', marginTop: 'var(--spacing-md)' }}>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
@@ -166,6 +166,7 @@ function PrivacyPolicy() {
 }
 
 export default PrivacyPolicy
+
 
 
 

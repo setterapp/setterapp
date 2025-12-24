@@ -9,7 +9,7 @@ interface CacheEntry<T> {
   ttl: number // Time to live in milliseconds
 }
 
-const CACHE_PREFIX = 'appsetter_cache_'
+const CACHE_PREFIX = 'setterapp_cache_'
 const DEFAULT_TTL = 5 * 60 * 1000 // 5 minutos por defecto
 
 export const cacheService = {

@@ -126,7 +126,7 @@ function Register() {
                 color: 'var(--color-text)',
               }}
             >
-              AppSetter
+              setterapp.ai
             </h1>
           </Link>
           <h2
