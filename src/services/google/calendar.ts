@@ -49,7 +49,7 @@ export const googleCalendarService = {
 
       console.log('[GoogleCalendar] OAuth initiated:', {
         hasUrl: !!data.url,
-        hasSession: !!data.session
+        provider: data.provider
       })
 
       // Si data.url existe, el navegador será redirigido automáticamente
