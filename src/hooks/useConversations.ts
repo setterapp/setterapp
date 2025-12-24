@@ -252,7 +252,7 @@ export function useConversations() {
                   setTimeout(() => { void ensureConversationLoaded(convId) }, 50)
                 }
               }
-              
+
               // NO hacer fetchConversations() completo — demasiado costoso.
               // ensureConversationLoaded ya actualiza la conversación específica.
             }

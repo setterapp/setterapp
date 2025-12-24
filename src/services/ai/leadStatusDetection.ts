@@ -204,3 +204,99 @@ export function getStatusChangeMessage(oldStatus: LeadStatus | null, newStatus: 
 
   return `Estado del lead actualizado: ${statusLabels[oldStatus]} → ${statusLabels[newStatus]}`
 }
+
+/**
+ * Procesa automáticamente todas las conversaciones sin estado de lead
+ */
+export async function processAllConversationsWithoutLeadStatus(): Promise<{
+  success: boolean
+  processed: number
+  errors: number
+  message: string
+}> {
+  try {
+    console.log('[LeadStatus] Starting bulk processing of conversations without lead status...')
+
+    const { createClient } = await import('@supabase/supabase-js')
+    const supabase = createClient(
+      import.meta.env.VITE_SUPABASE_URL,
+      import.meta.env.VITE_SUPABASE_ANON_KEY
+    )
+
+    // Obtener todas las conversaciones sin estado
+    const { data: conversations, error: fetchError } = await supabase
+      .from('conversations')
+      .select('id')
+      .is('lead_status', null)
+
+    if (fetchError) {
+      throw new Error(`Error fetching conversations: ${fetchError.message}`)
+    }
+
+    if (!conversations || conversations.length === 0) {
+      return {
+        success: true,
+        processed: 0,
+        errors: 0,
+        message: 'No conversations without lead status found'
+      }
+    }
+
+    console.log(`[LeadStatus] Found ${conversations.length} conversations to process`)
+
+    let processed = 0
+    let errors = 0
+
+    // Procesar conversaciones por lotes para no sobrecargar
+    const batchSize = 5
+    for (let i = 0; i < conversations.length; i += batchSize) {
+      const batch = conversations.slice(i, i + batchSize)
+
+      const promises = batch.map(async (conversation) => {
+        try {
+          // Llamar a la Edge Function para detectar el estado
+          const { data, error } = await supabase.functions.invoke('detect-lead-status', {
+            body: { conversationId: conversation.id }
+          })
+
+          if (error) {
+            console.error(`[LeadStatus] Error processing conversation ${conversation.id}:`, error)
+            errors++
+          } else if (data?.success) {
+            processed++
+            console.log(`[LeadStatus] Processed conversation ${conversation.id}: ${data.newStatus}`)
+          } else {
+            errors++
+          }
+        } catch (err) {
+          console.error(`[LeadStatus] Error processing conversation ${conversation.id}:`, err)
+          errors++
+        }
+      })
+
+      // Esperar a que termine el lote antes de continuar
+      await Promise.all(promises)
+
+      // Pequeña pausa entre lotes
+      if (i + batchSize < conversations.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+
+    return {
+      success: true,
+      processed,
+      errors,
+      message: `Processed ${processed} conversations with ${errors} errors`
+    }
+
+  } catch (error: any) {
+    console.error('[LeadStatus] Error in bulk processing:', error)
+    return {
+      success: false,
+      processed: 0,
+      errors: 1,
+      message: `Error: ${error.message}`
+    }
+  }
+}
