@@ -273,7 +273,7 @@ export async function autoClassifyLeadStatus(conversationId: string): Promise<{
     // Obtener mensajes recientes de la conversación
     const { data: messagesData, error: messagesError } = await supabase
       .from('messages')
-      .select('content, sender, created_at')
+      .select('content, direction, created_at')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true })
       .limit(12) // Últimos 12 mensajes para contexto
@@ -290,7 +290,7 @@ export async function autoClassifyLeadStatus(conversationId: string): Promise<{
     // Convertir a formato Message
     const messages: Message[] = messagesData.map(m => ({
       content: m.content,
-      sender: m.sender as 'agent' | 'lead',
+      sender: (m.direction === 'inbound' ? 'lead' : 'agent') as 'agent' | 'lead',
       timestamp: m.created_at
     }))
 
