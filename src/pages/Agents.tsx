@@ -161,7 +161,17 @@ function Agents() {
         }}
         title={editingAgent ? 'Editar Agente' : 'Nuevo Agente'}
       >
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '80vh' }}>
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            // Prevenir submit con Enter si no estamos en el último paso
+            if (e.key === 'Enter' && currentStep !== totalSteps && e.target instanceof HTMLInputElement) {
+              e.preventDefault()
+              nextStep()
+            }
+          }}
+          style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '80vh' }}
+        >
           {/* Form Content - Scrollable */}
           <div style={{
             flex: 1,
@@ -170,6 +180,36 @@ function Agents() {
             padding: 'var(--spacing-lg)',
             paddingBottom: 'var(--spacing-md)',
           }}>
+          {/* Progress Indicator */}
+          <div style={{
+            marginBottom: 'var(--spacing-lg)',
+            paddingBottom: 'var(--spacing-md)',
+            borderBottom: '2px solid var(--color-border)'
+          }}>
+            <p style={{
+              margin: 0,
+              fontSize: 'var(--font-size-sm)',
+              fontWeight: 600,
+              color: 'var(--color-primary)'
+            }}>
+              Paso {currentStep} de {totalSteps}
+            </p>
+            <div style={{
+              marginTop: 'var(--spacing-xs)',
+              height: '4px',
+              background: 'var(--color-bg-secondary)',
+              borderRadius: '2px',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                height: '100%',
+                background: 'var(--color-primary)',
+                width: `${(currentStep / totalSteps) * 100}%`,
+                transition: 'width 0.3s ease'
+              }} />
+            </div>
+          </div>
+
           {/* Step 1: Información Básica */}
           {currentStep === 1 && (
             <div>
@@ -472,8 +512,20 @@ function Agents() {
           {currentStep === 7 && (
             <div>
               <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
-                Generación de Reuniones
+                Generación de Reuniones (Opcional)
               </h3>
+              <div style={{
+                background: 'var(--color-bg-secondary)',
+                padding: 'var(--spacing-md)',
+                borderRadius: 'var(--border-radius)',
+                marginBottom: 'var(--spacing-lg)',
+                border: '2px solid var(--color-border)'
+              }}>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                  🎉 <strong>¡Último paso!</strong> Esta configuración es opcional. Si no deseas habilitar reuniones automáticas,
+                  puedes hacer clic en "{editingAgent ? 'Guardar Cambios' : 'Crear Agente'}" para finalizar.
+                </p>
+              </div>
               <div>
                 <div className="form-group">
                   <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer' }}>
