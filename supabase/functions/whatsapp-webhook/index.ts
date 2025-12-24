@@ -772,7 +772,7 @@ async function generateAndSendAutoReply(
                         agent
                     );
 
-                    console.log('📅 [AutoReply] Meeting creation result:', meetingResult);
+                    console.log('📅 [AutoReply] Meeting creation result:', JSON.stringify(meetingResult, null, 2));
 
                     if (meetingResult.success) {
                         // Enviar mensaje de confirmación con el link de la reunión
@@ -802,6 +802,14 @@ async function generateAndSendAutoReply(
                         console.log('✅ Reunión agendada y confirmación enviada');
                     } else {
                         // Si falló la creación, enviar mensaje explicando el problema
+                        console.error('❌ [AutoReply] Failed to create meeting:', {
+                            error: meetingResult.error,
+                            leadEmail: args.lead_email,
+                            leadName: args.lead_name,
+                            preferredDatetime: args.preferred_datetime,
+                            conversationId,
+                            userId
+                        });
                         const errorMessage = 'disculpa, hubo un problema agendando la reunión. déjame verificar y te confirmo en un momento.';
                         await sendWhatsAppMessage(userId, phoneNumberId, recipientPhone, errorMessage);
                     }
@@ -866,6 +874,17 @@ async function createMeetingForLead(
     agent: any
 ) {
     try {
+        console.log('📅 [CreateMeetingForLead] Invoking create-meeting function with:', {
+            conversationId,
+            leadName,
+            leadEmail,
+            leadPhone,
+            agentId: agent.id,
+            customDate: preferredDatetime,
+            agentName: agent.name,
+            meetingEnabled: agent.config?.enableMeetingScheduling
+        });
+
         const { data, error } = await supabase.functions.invoke('create-meeting', {
             body: {
                 conversationId,
@@ -878,14 +897,28 @@ async function createMeetingForLead(
         });
 
         if (error) {
-            console.error('❌ Error creando reunión:', error);
-            return { success: false, error };
+            console.error('❌ [CreateMeetingForLead] Error creando reunión:', {
+                error: JSON.stringify(error),
+                message: error.message,
+                context: error.context
+            });
+            return { success: false, error: error.message || JSON.stringify(error) };
         }
+
+        console.log('✅ [CreateMeetingForLead] Meeting created successfully:', {
+            meetingId: data?.meeting?.id,
+            date: data?.meeting?.date,
+            link: data?.meeting?.link
+        });
 
         return data;
     } catch (error) {
-        console.error('❌ Error llamando a create-meeting:', error);
-        return { success: false, error };
+        console.error('❌ [CreateMeetingForLead] Exception calling create-meeting:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
+        return { success: false, error: error.message };
     }
 }
 

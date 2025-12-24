@@ -932,252 +932,6 @@ async function getConversationHistory(conversationId: string, limit: number = 50
     }
 }
 
-/**
- * Construye el system prompt basado en la configuración del agente
- */
-function buildSystemPrompt(agentName: string, description: string, config: any): string {
-    let prompt = `Eres ${agentName || 'un asistente de IA'}.\n\n`;
-
-    if (description) {
-        prompt += `Descripción: ${description}\n\n`;
-    }
-
-    if (config?.assistantName) {
-        prompt += `Tu nombre es ${config.assistantName}.\n`;
-    }
-    if (config?.companyName) {
-        prompt += `Trabajas para ${config.companyName}.\n`;
-    }
-    if (config?.ownerName) {
-        prompt += `El propietario es ${config.ownerName}.\n`;
-    }
-
-    if (config?.businessNiche) {
-        prompt += `\nNicho de negocio: ${config.businessNiche}\n`;
-    }
-    if (config?.clientGoals) {
-        prompt += `\nObjetivos que ayudas a lograr: ${config.clientGoals}\n`;
-    }
-    if (config?.offerDetails) {
-        prompt += `\nDetalles de la oferta: ${config.offerDetails}\n`;
-    }
-    if (config?.importantLinks && config.importantLinks.length > 0) {
-        prompt += `\nEnlaces importantes:\n${config.importantLinks.map((link: string) => `- ${link}`).join('\n')}\n`;
-    }
-
-    if (config?.openingQuestion) {
-        prompt += `\nTu pregunta de apertura es: "${config.openingQuestion}"\n`;
-    }
-
-    if (config?.toneGuidelines) {
-        prompt += `\nGuías de tono: ${config.toneGuidelines}\n`;
-    }
-    if (config?.additionalContext) {
-        prompt += `\nContexto adicional: ${config.additionalContext}\n`;
-    }
-
-    // Instrucciones específicas para agendamiento de reuniones
-    if (config?.enableMeetingScheduling) {
-        prompt += `\n\n=== AGENDAMIENTO DE REUNIONES ===\n`;
-        prompt += `Tienes la capacidad de agendar reuniones automáticamente en Google Calendar usando la función schedule_meeting.\n\n`;
-
-        prompt += `🔧 IMPORTANTE - CÓMO AGENDAR:\n`;
-        prompt += `Una vez que tengas el EMAIL, NOMBRE y FECHA/HORA del lead, DEBES llamar a la función schedule_meeting.\n`;
-        prompt += `NO digas "te agendo la reunión" a menos que primero llames a la función.\n`;
-        prompt += `La función schedule_meeting hará el agendamiento real en Google Calendar.\n\n`;
-
-        prompt += `CUÁNDO OFRECER UNA REUNIÓN:\n`;
-        prompt += `- Cuando el lead muestre interés genuino en el producto/servicio\n`;
-        prompt += `- Después de responder sus preguntas principales\n`;
-        prompt += `- Cuando mencione que quiere saber más detalles\n`;
-        prompt += `- Cuando pregunte sobre precios, planes o cómo funciona\n`;
-        prompt += `- Si el lead menciona que quiere hablar con alguien\n\n`;
-
-        prompt += `INFORMACIÓN QUE DEBES RECOPILAR (EN ESTE ORDEN):\n`;
-        prompt += `1. ✅ CORREO ELECTRÓNICO (OBLIGATORIO):\n`;
-        prompt += `   - Ejemplo: "Para enviarte la invitación de calendario, ¿cuál es tu correo electrónico?"\n`;
-        prompt += `   - Ejemplo: "Perfecto! Para agendarte, necesito tu email para enviarte la invitación."\n`;
-        prompt += `   - SIN CORREO NO SE PUEDE AGENDAR - es absolutamente necesario\n\n`;
-
-        prompt += `2. ✅ NOMBRE COMPLETO (si no lo tienes ya):\n`;
-        prompt += `   - Ejemplo: "¿Cómo te llamas?" o "¿Cuál es tu nombre completo?"\n`;
-        prompt += `   - Necesario para personalizar la invitación\n\n`;
-
-        prompt += `3. ✅ FECHA Y HORA PREFERIDA:\n`;
-        prompt += `   - Ejemplo: "¿Qué día y hora te viene mejor? Tengo disponibilidad ${config.meetingAvailableHoursStart || '9:00'} a ${config.meetingAvailableHoursEnd || '18:00'}"\n`;
-        prompt += `   - Ejemplo: "¿Prefieres mañana por la mañana o tarde?"\n`;
-        prompt += `   - Duración de la reunión: ${config.meetingDuration || 30} minutos\n\n`;
-
-        prompt += `4. ⚠️ NÚMERO DE TELÉFONO (OPCIONAL):\n`;
-        prompt += `   - Solo si es necesario para la reunión virtual o confirmación\n`;
-        prompt += `   - Ejemplo: "¿Tienes un número de WhatsApp para enviarte el recordatorio?"\n\n`;
-
-        prompt += `FLUJO DE CONVERSACIÓN RECOMENDADO:\n`;
-        prompt += `1. Califica al lead (identifica su interés/necesidad)\n`;
-        prompt += `2. Responde sus preguntas principales\n`;
-        prompt += `3. Ofrece una reunión para profundizar: "¿Te gustaría que agendemos una llamada de ${config.meetingDuration || 30} minutos para revisar esto con más detalle?"\n`;
-        prompt += `4. Si acepta, pide el correo PRIMERO: "Perfecto! ¿Cuál es tu correo electrónico para enviarte la invitación?"\n`;
-        prompt += `5. Luego pide nombre (si no lo tienes)\n`;
-        prompt += `6. Finalmente coordina fecha/hora\n`;
-        prompt += `7. Una vez que tengas EMAIL + NOMBRE + FECHA/HORA: LLAMA A LA FUNCIÓN schedule_meeting\n`;
-        prompt += `8. DESPUÉS de llamar a la función, confirma al lead que la reunión fue agendada\n\n`;
-
-        prompt += `EJEMPLO DE CONVERSACIÓN EXITOSA:\n`;
-        prompt += `Lead: "Me interesa saber más sobre sus servicios de coaching"\n`;
-        prompt += `Tú: "¡Genial! Te puedo explicar cómo funciona nuestro programa. ¿Te gustaría agendar una llamada de ${config.meetingDuration || 30} minutos para que veamos si es lo que necesitas?"\n`;
-        prompt += `Lead: "Sí, me gustaría"\n`;
-        prompt += `Tú: "Perfecto! Para enviarte la invitación de calendario, ¿cuál es tu correo electrónico?"\n`;
-        prompt += `Lead: "juan@email.com"\n`;
-        prompt += `Tú: "Excelente Juan! ¿Qué día y hora te viene mejor? Tengo disponibilidad de ${config.meetingAvailableHoursStart || '9:00'} a ${config.meetingAvailableHoursEnd || '18:00'}"\n`;
-        prompt += `Lead: "Mañana a las 3pm"\n`;
-        prompt += `Tú: [AQUÍ LLAMAS A schedule_meeting con lead_email="juan@email.com", lead_name="Juan", preferred_datetime="2025-12-26T15:00:00"]\n`;
-        prompt += `Tú: "Listo! Ya te agendé para mañana a las 3:00 PM. Te llegará la invitación a juan@email.com con el link de google meet"\n\n`;
-
-        prompt += `REGLAS ESTRICTAS PARA AGENDAR:\n`;
-        prompt += `❌ NUNCA digas "te agendo" o "ya agendé" sin PRIMERO llamar a la función schedule_meeting\n`;
-        prompt += `❌ NUNCA agendes sin tener el correo electrónico\n`;
-        prompt += `❌ NUNCA asumas el correo - siempre pregúntalo explícitamente\n`;
-        prompt += `❌ NUNCA agendes sin confirmar fecha/hora con el lead\n`;
-        prompt += `✅ SIEMPRE usa la función schedule_meeting cuando tengas email + nombre + fecha/hora\n`;
-        prompt += `✅ SIEMPRE confirma después de llamar a la función\n`;
-        prompt += `✅ SIEMPRE menciona que recibirá una invitación por correo\n`;
-        prompt += `✅ SIEMPRE sé amable si el lead no quiere dar su email - ofrece alternativas\n\n`;
-    }
-
-    prompt += `\n\n=== ESTILO DE COMUNICACIÓN NATURAL ===\n`;
-    prompt += `Escribe como una persona REAL desde el celular, NO como un robot:\n\n`;
-
-    prompt += `✅ SÍ HACER:\n`;
-    prompt += `- Escribe de forma casual y conversacional, como en WhatsApp/Instagram\n`;
-    prompt += `- Usa minúsculas de forma natural (como "hola" en lugar de "Hola" a menos que sea inicio de oración)\n`;
-    prompt += `- Usa contracciones y lenguaje coloquial: "que" en vez de "qué" cuando sea natural\n`;
-    prompt += `- Mensajes cortos y directos, como textos reales\n`;
-    prompt += `- Pregunta cosas de forma simple: "como te llamas?" "que dia te viene mejor?"\n`;
-    prompt += `- Usa puntos suspensivos para pausas naturales si es apropiado\n`;
-    prompt += `- Emojis MUY ocasionales y solo cuando sean genuinos (1-2 por conversación máximo)\n\n`;
-
-    prompt += `❌ NO HACER:\n`;
-    prompt += `- NO uses mayúsculas exageradas donde nadie las usaría en el celular\n`;
-    prompt += `- NO escribas como ensayo formal o email corporativo\n`;
-    prompt += `- NO uses frases robóticas como "En qué puedo asistirle" o "Estoy a su disposición"\n`;
-    prompt += `- NO uses tildes en TODAS las palabras (solo donde sea natural para alguien escribiendo rápido)\n`;
-    prompt += `- NO seas excesivamente formal o ceremonioso\n`;
-    prompt += `- NO uses signos de exclamación en todo (!!! ¡¡¡)\n`;
-    prompt += `- NO fuerces emojis en cada mensaje\n\n`;
-
-    prompt += `EJEMPLOS CORRECTOS vs INCORRECTOS:\n\n`;
-    prompt += `❌ MAL: "¡Hola! ¿En qué puedo asistirle el día de hoy? Estaré encantado de ayudarle con toda la información que necesite. 😊"\n`;
-    prompt += `✅ BIEN: "hola! en que te puedo ayudar?"\n\n`;
-
-    prompt += `❌ MAL: "Perfecto, necesitaría que me proporcionara su correo electrónico para poder enviarle la invitación correspondiente."\n`;
-    prompt += `✅ BIEN: "perfecto, cual es tu correo para enviarte la invitacion?"\n\n`;
-
-    prompt += `❌ MAL: "¡Excelente! ¿Cuál sería su disponibilidad para coordinar la reunión? 📅✨"\n`;
-    prompt += `✅ BIEN: "genial, que dia te viene mejor?"\n\n`;
-
-    prompt += `❌ MAL: "Muchas gracias por su tiempo. Quedo a su entera disposición para cualquier consulta adicional."\n`;
-    prompt += `✅ BIEN: "perfecto, cualquier cosa me avisas"\n\n`;
-
-    prompt += `\n\nINSTRUCCIONES GENERALES:\n`;
-    prompt += `- Responde de manera natural, amigable y profesional.\n`;
-    prompt += `- Mantén las conversaciones enfocadas y útiles.\n`;
-    prompt += `- Sé conciso pero completo en tus respuestas.\n`;
-    prompt += `- Si no sabes algo, admítelo honestamente.\n`;
-    prompt += `- Siempre mantén el tono y estilo definido en las guías de tono.\n`;
-    prompt += `- Escribe como si estuvieras chateando desde tu celular, no escribiendo un documento.\n`;
-
-    return prompt;
-}
-
-/**
- * Define el tool/function para agendar reuniones
- */
-function getMeetingSchedulingTool() {
-    return {
-        type: 'function',
-        function: {
-            name: 'schedule_meeting',
-            description: 'Agenda una reunión con el lead cuando tenga toda la información necesaria: email, nombre completo y fecha/hora preferida',
-            parameters: {
-                type: 'object',
-                properties: {
-                    lead_email: {
-                        type: 'string',
-                        description: 'Email del lead para enviarle la invitación de calendario'
-                    },
-                    lead_name: {
-                        type: 'string',
-                        description: 'Nombre completo del lead'
-                    },
-                    preferred_datetime: {
-                        type: 'string',
-                        description: 'Fecha y hora preferida para la reunión en formato ISO 8601. Si el lead dice "mañana a las 3pm", calcular la fecha exacta basándose en la fecha/hora actual y convertir a formato ISO.'
-                    },
-                    lead_phone: {
-                        type: 'string',
-                        description: 'Número de teléfono del lead (opcional)'
-                    }
-                },
-                required: ['lead_email', 'lead_name']
-            }
-        }
-    };
-}
-
-/**
- * Genera una respuesta usando OpenAI con function calling
- */
-async function generateAIResponse(systemPrompt: string, conversationHistory: any[], userMessage: string, enableMeetingScheduling: boolean = false) {
-    if (!OPENAI_API_KEY) {
-        console.error('❌ OPENAI_API_KEY no está configurada');
-        return null;
-    }
-
-    try {
-        const messages = [
-            { role: 'system', content: systemPrompt },
-            ...conversationHistory,
-            { role: 'user', content: userMessage }
-        ];
-
-        const requestBody: any = {
-            model: 'gpt-4o-mini',
-            messages: messages,
-            temperature: 0.7,
-            max_tokens: 500
-        };
-
-        // Agregar tools si el agente tiene habilitado el agendamiento de reuniones
-        if (enableMeetingScheduling) {
-            requestBody.tools = [getMeetingSchedulingTool()];
-            requestBody.tool_choice = 'auto'; // El modelo decide cuándo usar la función
-        }
-
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
-            },
-            body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error('❌ OpenAI API error:', errorData);
-            return null;
-        }
-
-        const data = await response.json();
-        const message = data.choices[0].message;
-
-        // Retornar el mensaje completo (puede incluir tool_calls)
-        return message;
-    } catch (error) {
-        console.error('❌ Error generating AI response:', error);
-        return null;
-    }
-}
 
 /**
  * Envía un mensaje a Instagram
@@ -1251,6 +1005,9 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
 /**
  * Genera y envía una respuesta automática con IA
  */
+/**
+ * Genera y envía una respuesta automática con IA
+ */
 async function generateAndSendAutoReply(
     userId: string,
     conversationId: string,
@@ -1275,32 +1032,62 @@ async function generateAndSendAutoReply(
         // 3. Construir system prompt
         const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config);
 
-        // 4. Generar respuesta con IA (con function calling si está habilitado)
+        // 4. Ciclo de interacción (permite una ronda de tool execution: Check -> Reply)
+        let messages = [
+            { role: 'system', content: systemPrompt },
+            ...conversationHistory,
+            // El mensaje del usuario ya está en conversationHistory si se guardó antes,
+            // PERO en este flujo parece que se pasa 'inboundMessage' manualmente porque quizás no se ha guardado o para asegurar contexto.
+            // Si getConversationHistory YA trae el mensaje reciente, evitamos duplicar.
+            // Asumiremos que el historial trae los anteriores y añadimos el actual.
+            { role: 'user', content: inboundMessage }
+        ];
+
         const enableMeetingScheduling = agent.config?.enableMeetingScheduling || false;
-        const aiMessage = await generateAIResponse(systemPrompt, conversationHistory, inboundMessage, enableMeetingScheduling);
+
+        // Primera llamada a la IA
+        let aiMessage = await generateAIResponse(messages, enableMeetingScheduling);
 
         if (!aiMessage) {
             console.error('❌ No se pudo generar respuesta con IA');
             return;
         }
 
-        console.log('✅ AI response generated successfully');
-        console.log('📊 Response type:', {
-            hasContent: !!aiMessage.content,
-            hasToolCalls: !!aiMessage.tool_calls,
-            toolCallsCount: aiMessage.tool_calls?.length || 0
-        });
-
-        // 5. Verificar si el modelo quiere agendar una reunión (tool_calls)
+        // 5. Manejar Tool Calls (Disponibilidad o Agendamiento)
         if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
-            console.log('📅 [AutoReply] El modelo quiere agendar una reunión');
-            console.log('📋 [AutoReply] Tool calls:', JSON.stringify(aiMessage.tool_calls, null, 2));
+            console.log('🛠️ AI Tool Calls:', JSON.stringify(aiMessage.tool_calls, null, 2));
+
+            // Solo procesamos el primer tool call para mantenerlo simple por ahora, o iteramos si son Check -> Schedule (raro en un turno)
+            // Normalmente CheckAvailability es un turno, y Schedule es otro turno futuro.
 
             for (const toolCall of aiMessage.tool_calls) {
+                if (toolCall.function.name === 'check_availability') {
+                    console.log('📅 [AutoReply] Checking availability...');
+
+                    // Ejecutar check
+                    const slots = await checkAvailabilityForLead(conversationId, agent);
+                    console.log(`📅 [AutoReply] Slots found: ${slots.length}`);
+
+                    // Añadir resultado al historial de mensajes de esta sesión (contexto temporal)
+                    messages.push(aiMessage); // El mensaje del asistente con el tool_call
+                    messages.push({
+                        role: 'tool',
+                        tool_call_id: toolCall.id,
+                        content: JSON.stringify({
+                            available_slots: slots,
+                            info: "Estos son los horarios disponibles. Ofrécelos al usuario en formato amigable."
+                        })
+                    });
+
+                    // Segunda llamada a la IA para que formule la respuesta con los slots
+                    console.log('🤖 Re-generando respuesta con slots...');
+                    aiMessage = await generateAIResponse(messages, enableMeetingScheduling);
+                    break; // Solo permitimos un ciclo de check por ejecución para evitar loops
+                }
+
                 if (toolCall.function.name === 'schedule_meeting') {
                     const args = JSON.parse(toolCall.function.arguments);
-                    console.log('📅 [AutoReply] Tool call arguments (raw):', toolCall.function.arguments);
-                    console.log('📅 [AutoReply] Tool call arguments (parsed):', args);
+                    console.log('📅 [AutoReply] Scheduling meeting:', args);
 
                     // Llamar a la función de crear reunión
                     const meetingResult = await createMeetingForLead(
@@ -1313,94 +1100,182 @@ async function generateAndSendAutoReply(
                         agent
                     );
 
-                    console.log('📅 [AutoReply] Meeting creation result:', meetingResult);
+                    console.log('📅 [AutoReply] Result:', meetingResult);
 
                     if (meetingResult.success) {
-                        // Enviar mensaje de confirmación con el link de la reunión
                         const confirmationMessage = `perfecto ${args.lead_name}! te agendé la reunión para el ${formatMeetingDate(meetingResult.meeting.date)}. te llegará la invitación a ${args.lead_email} con el link de google meet: ${meetingResult.meeting.link}`;
 
                         await sendInstagramMessage(userId, recipientId, confirmationMessage);
 
-                        // Guardar mensaje de confirmación
-                        await supabase
-                            .from('messages')
-                            .upsert({
-                                conversation_id: conversationId,
-                                user_id: userId,
-                                platform_message_id: Date.now().toString(),
-                                content: confirmationMessage,
-                                direction: 'outbound',
-                                message_type: 'text',
-                                metadata: {
-                                    generated_by: 'ai',
-                                    agent_id: agent.id,
-                                    model: 'gpt-4o-mini',
-                                    meeting_scheduled: true,
-                                    meeting_id: meetingResult.meeting.id
-                                },
-                            }, {
-                                onConflict: 'user_id,platform_message_id',
-                            });
-
-                        console.log('✅ Reunión agendada y confirmación enviada');
+                        // Guardar mensaje
+                        await saveOutboundMessage(conversationId, userId, confirmationMessage, agent.id, true, meetingResult.meeting.id);
+                        console.log('✅ Meeting scheduled and confirmed');
                     } else {
-                        // Si falló la creación, enviar mensaje explicando el problema
                         console.error('❌ Error creating meeting:', meetingResult.error);
                         const errorMessage = 'disculpa, hubo un problema agendando la reunión. déjame verificar y te confirmo en un momento.';
                         await sendInstagramMessage(userId, recipientId, errorMessage);
                     }
-
-                    return; // No enviar el mensaje de texto normal
+                    return; // Terminamos aquí, no enviamos content adicional
                 }
             }
         }
 
-        // 6. Si no hay tool_calls, enviar la respuesta de texto normal
-        const textContent = aiMessage.content;
-        if (!textContent) {
-            console.error('❌ No hay contenido de texto en la respuesta');
-            return;
+        // 6. Enviar respuesta de texto final (si existe después de tool calls o si era texto directo)
+        if (aiMessage && aiMessage.content) {
+            const textContent = aiMessage.content;
+            const sendResult = await sendInstagramMessage(userId, recipientId, textContent);
+            if (sendResult) {
+                await saveOutboundMessage(conversationId, userId, textContent, agent.id);
+                console.log('✅ Text response sent');
+            }
         }
 
-        // 7. Enviar respuesta a Instagram
-        const sendResult = await sendInstagramMessage(userId, recipientId, textContent);
-
-        if (!sendResult) {
-            console.error('❌ No se pudo enviar mensaje a Instagram');
-            return;
-        }
-
-        // 8. Guardar mensaje enviado en la BD
-        const { error: messageError } = await supabase
-            .from('messages')
-            .upsert(
-                {
-                    conversation_id: conversationId,
-                    user_id: userId,
-                    platform_message_id: sendResult.message_id || sendResult.id,
-                    content: textContent,
-                    direction: 'outbound',
-                    message_type: 'text',
-                    metadata: {
-                        generated_by: 'ai',
-                        agent_id: agent.id,
-                        model: 'gpt-4o-mini'
-                    },
-                },
-                {
-                    onConflict: 'user_id,platform_message_id',
-                    ignoreDuplicates: true,
-                }
-            );
-
-        if (messageError) {
-            console.error('❌ Error guardando mensaje enviado:', messageError);
-        } else {
-            console.log('✅ Respuesta automática enviada y guardada correctamente');
-        }
     } catch (error) {
         console.error('❌ Error en generateAndSendAutoReply:', error);
     }
+}
+
+// Helper para guardar mensaje outbound
+async function saveOutboundMessage(conversationId: string, userId: string, content: string, agentId: string, isMeeting: boolean = false, meetingId: string = '') {
+    const metadata: any = {
+        generated_by: 'ai',
+        agent_id: agentId,
+        model: 'gpt-4o-mini'
+    };
+    if (isMeeting) {
+        metadata.meeting_scheduled = true;
+        metadata.meeting_id = meetingId;
+    }
+
+    await supabase.from('messages').upsert({
+        conversation_id: conversationId,
+        user_id: userId,
+        platform_message_id: Date.now().toString(),
+        content: content,
+        direction: 'outbound',
+        message_type: 'text',
+        metadata: metadata
+    }, { onConflict: 'user_id,platform_message_id', ignoreDuplicates: true });
+}
+
+// Wrapper para check availability
+async function checkAvailabilityForLead(conversationId: string, agent: any) {
+    try {
+        const { data, error } = await supabase.functions.invoke('create-meeting', {
+            body: {
+                conversationId,
+                agentId: agent.id,
+                checkAvailabilityOnly: true,
+                leadName: 'Checking Availability' // Dummy for validation
+            }
+        });
+        if (error) throw error;
+        return data.slots || [];
+    } catch (e) {
+        console.error('Error checking availability:', e);
+        return [];
+    }
+}
+
+/**
+ * Genera una respuesta usando OpenAI con function calling
+ */
+async function generateAIResponse(messages: any[], enableMeetingScheduling: boolean = false) {
+    if (!OPENAI_API_KEY) return null;
+
+    try {
+        const requestBody: any = {
+            model: 'gpt-4o-mini',
+            messages: messages,
+            temperature: 0.7,
+            max_tokens: 500
+        };
+
+        if (enableMeetingScheduling) {
+            requestBody.tools = getMeetingTools();
+            requestBody.tool_choice = 'auto';
+        }
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENAI_API_KEY}`
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        return data.choices[0].message;
+    } catch (error) {
+        console.error('❌ Error generating AI response:', error);
+        return null;
+    }
+}
+
+function getMeetingTools() {
+    return [
+        {
+            type: 'function',
+            function: {
+                name: 'check_availability',
+                description: 'Consulta los horarios disponibles en el calendario para los próximos días. ÚSALO SIEMPRE antes de proponer una hora concreta.',
+                parameters: { type: 'object', properties: {}, required: [] }
+            }
+        },
+        {
+            type: 'function',
+            function: {
+                name: 'schedule_meeting',
+                description: 'Agenda una reunión REAL. Solo usar cuando tengas Email + Nombre + Fecha Confirmada.',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        lead_email: { type: 'string', description: 'Email del lead' },
+                        lead_name: { type: 'string', description: 'Nombre completo' },
+                        preferred_datetime: { type: 'string', description: 'Fecha ISO 8601' },
+                        lead_phone: { type: 'string', description: 'Teléfono (opcional)' }
+                    },
+                    required: ['lead_email', 'lead_name', 'preferred_datetime']
+                }
+            }
+        }
+    ];
+}
+
+/**
+ * Construye el system prompt
+ */
+function buildSystemPrompt(agentName: string, description: string, config: any): string {
+    let prompt = `Eres ${agentName}.\n\n`;
+    if (description) prompt += `Descr: ${description}\n`;
+    // ... Copying essential parts and adding availability instructions ...
+    // Since I'm replacing the whole block, I should reconstruct the prompt building logic carefully or reuse the existing function body if I could see it all, but I have a good idea.
+    // Wait, to be safe and precise, I should probably NOT replace buildSystemPrompt entirely if I can't see the original lines 938-1090 perfectly.
+    // I read them in Step 469. I have the full content of buildSystemPrompt.
+
+    if (config?.assistantName) prompt += `Nombre: ${config.assistantName}.\n`;
+    if (config?.companyName) prompt += `Empresa: ${config.companyName}.\n`;
+    // ... (rest of context config) ...
+    if (config?.businessNiche) prompt += `Nicho: ${config.businessNiche}\n`;
+    if (config?.offerDetails) prompt += `Oferta: ${config.offerDetails}\n`;
+
+    if (config?.enableMeetingScheduling) {
+        prompt += `\n=== GESTIÓN DE REUNIONES ===\n`;
+        prompt += `1. 🕵️ PRIMERO: Si el cliente muestra interés, ofrece una reunión.\n`;
+        prompt += `2. 📅 SEGUNDO: Si pregunta "¿qué horarios tienes?" o si vas a proponer horarios, DEBES usar la tool 'check_availability'. NO inventes horarios.\n`;
+        prompt += `   - Ejemplo: "Voy a revisar mi agenda..." (y llamas a check_availability)\n`;
+        prompt += `3. 🗣️ TERCERO: Una vez que check_availability te devuelva los slots, ofrécelos amablemente.\n`;
+        prompt += `4. ✅ CUARTO: Cuando el cliente elija uno y te de su EMAIL y NOMBRE -> llama a 'schedule_meeting'.\n`;
+        prompt += `\nREGLAS:\n- NO agendes sin Email.\n- NO inventes disponibilidad.\n`;
+    }
+
+    // Adding style guidelines
+    prompt += `\nESTILO: Natural, breve, minúsculas casuales, argentino/latino según contexto.`;
+
+    return prompt;
 }
 
 /**

@@ -14,6 +14,7 @@ interface CreateMeetingRequest {
     agentId?: string
     customDate?: string // ISO string, opcional para forzar una fecha específica
     customDuration?: number // minutos, opcional para override
+    checkAvailabilityOnly?: boolean // Nuevo flag para solo consultar disponibilidad
 }
 
 serve(async (req) => {
@@ -27,20 +28,23 @@ serve(async (req) => {
         const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
         const body: CreateMeetingRequest = await req.json()
-        console.log('[CreateMeeting] Received request body:', JSON.stringify(body))
-        const { conversationId, leadName, leadEmail, leadPhone, agentId, customDate, customDuration } = body
+        const { conversationId, leadName, leadEmail, leadPhone, agentId, customDate, customDuration, checkAvailabilityOnly } = body
 
-        if (!conversationId || !leadName) {
-            console.error('[CreateMeeting] Missing required fields:', { conversationId, leadName })
+        console.log('[CreateMeeting] Request:', {
+            mode: checkAvailabilityOnly ? 'check_availability' : 'create_meeting',
+            conversationId,
+            leadName
+        })
+
+        if (!conversationId || (!leadName && !checkAvailabilityOnly)) {
+            // leadName is required for creation, but might be optional for checkAvailability if we just want slots for an agent?
+            // actually, let's keep it robust.
+            console.error('[CreateMeeting] Missing required fields')
             return new Response(
-                JSON.stringify({ error: 'conversationId and leadName are required' }),
+                JSON.stringify({ error: 'conversationId is required' }),
                 { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
         }
-
-        console.log('[CreateMeeting] Lead info:', { leadName, leadEmail, leadPhone })
-
-        console.log('[CreateMeeting] Creating meeting for conversation:', conversationId)
 
         // 1. Obtener información de la conversación
         const { data: conversation, error: convError } = await supabase
@@ -73,16 +77,7 @@ serve(async (req) => {
             }
         }
 
-        // 3. Verificar que el agente tenga configuración de reuniones habilitada
-        console.log('[CreateMeeting] Agent config:', {
-            enableMeetingScheduling: agentConfig?.enableMeetingScheduling,
-            meetingDuration: agentConfig?.meetingDuration,
-            meetingAvailableHoursStart: agentConfig?.meetingAvailableHoursStart,
-            meetingAvailableHoursEnd: agentConfig?.meetingAvailableHoursEnd
-        })
-
         if (!agentConfig?.enableMeetingScheduling) {
-            console.warn('[CreateMeeting] Meeting scheduling disabled for agent')
             return new Response(
                 JSON.stringify({
                     success: false,
@@ -92,7 +87,7 @@ serve(async (req) => {
             )
         }
 
-        // 4. Obtener integración de Google Calendar
+        // 3. Obtener token de Google Calendar
         const { data: integration, error: intError } = await supabase
             .from('integrations')
             .select('config')
@@ -101,82 +96,29 @@ serve(async (req) => {
             .eq('status', 'connected')
             .single()
 
-        if (intError || !integration) {
+        if (intError || !integration || !integration.config?.provider_token) {
             return new Response(
                 JSON.stringify({
                     success: false,
-                    error: 'Google Calendar not connected'
+                    error: 'Google Calendar not connected or missing token'
                 }),
                 { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
         }
 
-        const accessToken = integration.config?.provider_token
+        const accessToken = integration.config.provider_token
+        const calendarId = 'primary' // Simplification, usually 'primary' works
 
-        if (!accessToken) {
-            return new Response(
-                JSON.stringify({
-                    success: false,
-                    error: 'Google Calendar access token not found'
-                }),
-                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            )
-        }
-
-        // 5. Obtener el calendario primario
-        const calendarsResponse = await fetch(
-            'https://www.googleapis.com/calendar/v3/users/me/calendarList',
-            {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-            }
-        )
-
-        if (!calendarsResponse.ok) {
-            throw new Error('Failed to fetch calendars')
-        }
-
-        const calendarsData = await calendarsResponse.json()
-        const primaryCalendar = calendarsData.items?.find((cal: any) => cal.primary)
-
-        if (!primaryCalendar) {
-            throw new Error('Primary calendar not found')
-        }
-
-        const calendarId = primaryCalendar.id
-
-        // 6. Encontrar slot disponible
         const duration = customDuration || agentConfig.meetingDuration || 30
-        const bufferMinutes = agentConfig.meetingBufferMinutes || 15
+        const bufferMinutes = agentConfig.meetingBufferMinutes || 0
         const availableHoursStart = agentConfig.meetingAvailableHoursStart || '09:00'
         const availableHoursEnd = agentConfig.meetingAvailableHoursEnd || '18:00'
         const availableDays = agentConfig.meetingAvailableDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
 
-        let startTime: Date
-        let endTime: Date
-
-        if (customDate) {
-            // Usar fecha personalizada si se proporciona
-            startTime = new Date(customDate)
-
-            if (isNaN(startTime.getTime())) {
-                console.error('[CreateMeeting] Invalid date received:', customDate)
-                return new Response(
-                    JSON.stringify({
-                        success: false,
-                        error: `Invalid date format: ${customDate}`
-                    }),
-                    { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-                )
-            }
-
-            console.log('[CreateMeeting] Using custom date:', startTime.toISOString())
-            endTime = new Date(startTime.getTime() + duration * 60 * 1000)
-        } else {
-            // Buscar el próximo slot disponible
-            const slot = await findNextAvailableSlot(
+        // --- MODE: CHECK AVAILABILITY ---
+        if (checkAvailabilityOnly) {
+            console.log('[CreateMeeting] Checking availability...')
+            const slots = await findAllAvailableSlots(
                 calendarId,
                 accessToken,
                 duration,
@@ -186,54 +128,64 @@ serve(async (req) => {
                 availableDays
             )
 
+            console.log(`[CreateMeeting] Found ${slots.length} available slots`)
+
+            return new Response(
+                JSON.stringify({
+                    success: true,
+                    slots: slots
+                }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
+        // --- MODE: CREATE MEETING ---
+
+        let startTime: Date
+        let endTime: Date
+
+        if (customDate) {
+            startTime = new Date(customDate)
+            if (isNaN(startTime.getTime())) {
+                throw new Error(`Invalid date format: ${customDate}`)
+            }
+            endTime = new Date(startTime.getTime() + duration * 60 * 1000)
+            console.log('[CreateMeeting] Using provided custom date:', startTime.toISOString())
+        } else {
+            // Fallback: Find first available slot
+            const slot = await findNextAvailableSlot(
+                calendarId,
+                accessToken,
+                duration,
+                bufferMinutes,
+                availableHoursStart,
+                availableHoursEnd,
+                availableDays
+            )
             if (!slot) {
-                console.warn('[CreateMeeting] No available slots found')
                 return new Response(
-                    JSON.stringify({
-                        success: false,
-                        error: 'No available slots found in the next 7 days'
-                    }),
+                    JSON.stringify({ success: false, error: 'No available slots found' }),
                     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
                 )
             }
-
-            console.log('[CreateMeeting] Found slot:', slot)
             startTime = slot.start
             endTime = slot.end
+            console.log('[CreateMeeting] Found next available slot:', startTime.toISOString())
         }
 
-        // 7. Crear evento en Google Calendar
-        const meetingTitle = (agentConfig.meetingTitle || 'Reunión con {nombre}')
-            .replace('{nombre}', leadName)
+        // Crear evento (Google Calendar API...)
+        const meetingTitle = (agentConfig.meetingTitle || 'Reunión con {nombre}').replace('{nombre}', leadName)
+        let meetingDescription = (agentConfig.meetingDescription || 'Reunión programada automáticamente').replace('{nombre}', leadName)
 
-        let meetingDescription = (agentConfig.meetingDescription || 'Reunión programada automáticamente')
-            .replace('{nombre}', leadName)
+        if (leadEmail) meetingDescription += `\n\nEmail del lead: ${leadEmail}`
+        if (leadPhone) meetingDescription += `\nTeléfono: ${leadPhone}`
 
-        // Agregar información del lead a la descripción
-        if (leadEmail) {
-            meetingDescription += `\n\nEmail del lead: ${leadEmail}`
-        }
-        if (leadPhone) {
-            meetingDescription += `\nTeléfono: ${leadPhone}`
-        }
-
-        // Preparar lista de asistentes
         const attendees = []
-
-        // Agregar el email del lead si está disponible
-        if (leadEmail) {
-            attendees.push({ email: leadEmail })
-            console.log('[CreateMeeting] Adding lead as attendee:', leadEmail)
-        }
-
-        // Agregar el email del agente si está configurado
-        if (agentConfig.meetingEmail) {
-            attendees.push({ email: agentConfig.meetingEmail })
-            console.log('[CreateMeeting] Adding agent as attendee:', agentConfig.meetingEmail)
-        }
+        if (leadEmail) attendees.push({ email: leadEmail })
+        if (agentConfig.meetingEmail) attendees.push({ email: agentConfig.meetingEmail })
 
         const eventResponse = await fetch(
-            `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=all`,
+            `https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all`,
             {
                 method: 'POST',
                 headers: {
@@ -243,20 +195,11 @@ serve(async (req) => {
                 body: JSON.stringify({
                     summary: meetingTitle,
                     description: meetingDescription,
-                    start: {
-                        dateTime: startTime.toISOString(),
-                        timeZone: 'America/Argentina/Buenos_Aires',
-                    },
-                    end: {
-                        dateTime: endTime.toISOString(),
-                        timeZone: 'America/Argentina/Buenos_Aires',
-                    },
+                    start: { dateTime: startTime.toISOString(), timeZone: 'America/Argentina/Buenos_Aires' },
+                    end: { dateTime: endTime.toISOString(), timeZone: 'America/Argentina/Buenos_Aires' },
                     attendees: attendees.length > 0 ? attendees : undefined,
                     conferenceData: {
-                        createRequest: {
-                            requestId: `meet-${Date.now()}`,
-                            conferenceSolutionKey: { type: 'hangoutsMeet' },
-                        },
+                        createRequest: { requestId: `meet-${Date.now()}`, conferenceSolutionKey: { type: 'hangoutsMeet' } },
                     },
                     guestsCanModify: false,
                     guestsCanInviteOthers: false,
@@ -266,9 +209,9 @@ serve(async (req) => {
         )
 
         if (!eventResponse.ok) {
-            const errorData = await eventResponse.json()
-            console.error('[CreateMeeting] Google Calendar API error:', errorData)
-            throw new Error(`Failed to create event: ${JSON.stringify(errorData)}`)
+            const errBody = await eventResponse.text()
+            console.error('[CreateMeeting] GCalendar Error:', errBody)
+            throw new Error(`Failed to create event: ${eventResponse.statusText}`)
         }
 
         const event = await eventResponse.json()
@@ -276,36 +219,25 @@ serve(async (req) => {
 
         console.log('[CreateMeeting] ✅ Meeting created:', event.id)
 
-        // 8. Guardar reunión en BD (opcional, para tracking)
+        // Guardar en BD (Best effort)
         try {
-            await supabase
-                .from('meetings')
-                .insert({
-                    user_id: userId,
-                    conversation_id: conversationId,
-                    agent_id: effectiveAgentId,
-                    calendar_event_id: event.id,
-                    meeting_date: startTime.toISOString(),
-                    duration_minutes: duration,
-                    meeting_link: meetingLink,
-                    lead_name: leadName,
-                    lead_email: leadEmail || null,
-                    lead_phone: leadPhone || null,
-                    status: 'scheduled',
-                    metadata: {
-                        calendar_id: calendarId,
-                        event_summary: event.summary,
-                        agent_email: agentConfig.meetingEmail,
-                        attendees_count: attendees.length,
-                    },
-                })
-        } catch (dbError) {
-            console.error('[CreateMeeting] Error guardando reunión en BD:', dbError)
-            // No fallar si hay error en DB, la reunión ya está creada en Calendar
+            await supabase.from('meetings').insert({
+                user_id: userId,
+                conversation_id: conversationId,
+                agent_id: effectiveAgentId,
+                calendar_event_id: event.id,
+                meeting_date: startTime.toISOString(),
+                duration_minutes: duration,
+                meeting_link: meetingLink,
+                lead_name: leadName,
+                lead_email: leadEmail || null,
+                lead_phone: leadPhone || null,
+                status: 'scheduled',
+                metadata: { agent_email: agentConfig.meetingEmail }
+            })
+        } catch (e) {
+            console.error('[CreateMeeting] DB Save Error:', e)
         }
-
-        // 9. Enviar notificación al lead (llamar a la función desde el cliente)
-        // Por ahora retornamos los datos necesarios para que el cliente llame al servicio de notificaciones
 
         return new Response(
             JSON.stringify({
@@ -317,24 +249,118 @@ serve(async (req) => {
                     link: meetingLink,
                     title: meetingTitle,
                 },
-                notificationData: {
-                    leadName,
-                    meetingDate: startTime.toISOString(),
-                    meetingLink,
-                    duration,
-                    agentName,
-                },
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
+
     } catch (error) {
-        console.error('[CreateMeeting] Error:', error)
+        console.error('[CreateMeeting] Critical Error:', error)
         return new Response(
-            JSON.stringify({ error: error.message }),
+            JSON.stringify({ success: false, error: error.message }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
     }
 })
+
+async function findAllAvailableSlots(
+    calendarId: string,
+    accessToken: string,
+    duration: number,
+    bufferMinutes: number,
+    availableHoursStart: string,
+    availableHoursEnd: string,
+    availableDays: string[]
+): Promise<Array<{ start: string; end: string }>> {
+    const slots: Array<{ start: string; end: string }> = []
+
+    // Config
+    const maxDaysAhead = 5
+    const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+    const [startHour, startMinute] = availableHoursStart.split(':').map(Number)
+    const [endHour, endMinute] = availableHoursEnd.split(':').map(Number)
+
+    const now = new Date()
+    // Round up to next 30 mins for cleaner start times
+    now.setMinutes(Math.ceil(now.getMinutes() / 30) * 30, 0, 0)
+
+    for (let dayOffset = 0; dayOffset < maxDaysAhead; dayOffset++) {
+        const checkDate = new Date(now)
+        checkDate.setDate(checkDate.getDate() + dayOffset)
+
+        // Skip days not in availableDays
+        const dayName = daysOfWeek[checkDate.getDay()]
+        if (!availableDays.includes(dayName)) continue
+
+        // Define Start/End working hours for this day
+        const workStart = new Date(checkDate)
+        workStart.setHours(startHour, startMinute, 0, 0)
+
+        const workEnd = new Date(checkDate)
+        workEnd.setHours(endHour, endMinute, 0, 0)
+
+        // If today, ensure we start after NOW
+        let currentTime = new Date(workStart)
+        if (currentTime < now) {
+            currentTime = new Date(now)
+        }
+
+        // If 'now' is already past workEnd, skip today
+        if (currentTime >= workEnd) continue
+
+        // Fetch events for this day to check conflicts
+        const eventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?` +
+            `timeMin=${workStart.toISOString()}&` +
+            `timeMax=${workEnd.toISOString()}&` +
+            `singleEvents=true&` +
+            `orderBy=startTime`
+
+        const eventsRes = await fetch(eventsUrl, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        })
+
+        if (!eventsRes.ok) continue
+
+        const eventsData = await eventsRes.json()
+        const events = eventsData.items || []
+
+        // Search for slots in this day
+        while (currentTime.getTime() + duration * 60000 <= workEnd.getTime()) {
+            const slotStart = new Date(currentTime)
+            const slotEnd = new Date(currentTime.getTime() + duration * 60000)
+
+            // Check conflict
+            const hasConflict = events.some((event: any) => {
+                const evStart = new Date(event.start.dateTime || event.start.date)
+                const evEnd = new Date(event.end.dateTime || event.end.date)
+
+                // Add buffer
+                const bufferedSlotStart = new Date(slotStart.getTime() - bufferMinutes * 60000)
+                const bufferedSlotEnd = new Date(slotEnd.getTime() + bufferMinutes * 60000)
+
+                return (bufferedSlotStart < evEnd && bufferedSlotEnd > evStart)
+            })
+
+            if (!hasConflict) {
+                slots.push({
+                    start: slotStart.toISOString(),
+                    end: slotEnd.toISOString()
+                })
+                // Limit number of slots per day or total to avoid spamming
+                if (slots.length >= 15) return slots
+            }
+
+            // Increment: 30 mins or duration? Let's do 30 mins steps for flexibility
+            currentTime = new Date(currentTime.getTime() + 30 * 60000)
+        }
+    }
+
+    return slots
+}
+
+// Keep the old helper for backward compatibility if needed, using the logic from new helper or keeping as is?
+// To save tokens/space I will replace it if possible, but the prompt implies I should keeping fixing "create-meeting".
+// I'll keep the logic simple in "serve" and rely on "findAllAvailableSlots" or re-implement "findNextAvailableSlot" as a wrapper if needed.
+// Actually, findNextAvailableSlot is just findAllAvailableSlots()[0].
 
 async function findNextAvailableSlot(
     calendarId: string,
@@ -345,84 +371,9 @@ async function findNextAvailableSlot(
     availableHoursEnd: string,
     availableDays: string[]
 ): Promise<{ start: Date; end: Date } | null> {
-    const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-
-    const [startHour, startMinute] = availableHoursStart.split(':').map(Number)
-    const [endHour, endMinute] = availableHoursEnd.split(':').map(Number)
-
-    const now = new Date()
-    const maxDaysAhead = 7
-
-    for (let dayOffset = 0; dayOffset < maxDaysAhead; dayOffset++) {
-        const checkDate = new Date(now)
-        checkDate.setDate(checkDate.getDate() + dayOffset)
-        checkDate.setHours(startHour, startMinute, 0, 0)
-
-        const dayOfWeek = daysOfWeek[checkDate.getDay()]
-
-        if (!availableDays.includes(dayOfWeek)) {
-            continue
-        }
-
-        const dayStart = new Date(checkDate)
-        const dayEnd = new Date(checkDate)
-        dayEnd.setHours(endHour, endMinute, 0, 0)
-
-        if (dayOffset === 0 && dayStart < now) {
-            const minutesUntilNextSlot = Math.ceil((now.getTime() - dayStart.getTime()) / (60 * 1000))
-            dayStart.setTime(dayStart.getTime() + minutesUntilNextSlot * 60 * 1000)
-        }
-
-        const eventsResponse = await fetch(
-            `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?` +
-            `timeMin=${dayStart.toISOString()}&` +
-            `timeMax=${dayEnd.toISOString()}&` +
-            `singleEvents=true&` +
-            `orderBy=startTime`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-            }
-        )
-
-        if (!eventsResponse.ok) {
-            continue
-        }
-
-        const eventsData = await eventsResponse.json()
-        const events = eventsData.items || []
-
-        let currentTime = new Date(dayStart)
-
-        while (currentTime < dayEnd) {
-            const slotEnd = new Date(currentTime.getTime() + duration * 60 * 1000)
-
-            if (slotEnd > dayEnd) {
-                break
-            }
-
-            const hasConflict = events.some((event: any) => {
-                const eventStart = new Date(event.start.dateTime || event.start.date)
-                const eventEnd = new Date(event.end.dateTime || event.end.date)
-
-                const slotStartWithBuffer = new Date(currentTime.getTime() - bufferMinutes * 60 * 1000)
-                const slotEndWithBuffer = new Date(slotEnd.getTime() + bufferMinutes * 60 * 1000)
-
-                return (
-                    (slotStartWithBuffer < eventEnd && slotEndWithBuffer > eventStart) ||
-                    (eventStart < slotEndWithBuffer && eventEnd > slotStartWithBuffer)
-                )
-            })
-
-            if (!hasConflict) {
-                return { start: currentTime, end: slotEnd }
-            }
-
-            currentTime = new Date(currentTime.getTime() + 15 * 60 * 1000)
-        }
+    const slots = await findAllAvailableSlots(calendarId, accessToken, duration, bufferMinutes, availableHoursStart, availableHoursEnd, availableDays)
+    if (slots.length > 0) {
+        return { start: new Date(slots[0].start), end: new Date(slots[0].end) }
     }
-
     return null
 }
