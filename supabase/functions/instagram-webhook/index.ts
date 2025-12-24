@@ -1161,18 +1161,35 @@ async function saveOutboundMessage(conversationId: string, userId: string, conte
 // Wrapper para check availability
 async function checkAvailabilityForLead(conversationId: string, agent: any) {
     try {
+        const requestBody = {
+            conversationId,
+            agentId: agent.id,
+            checkAvailabilityOnly: true,
+            leadName: 'Checking Availability' // Dummy for validation
+        };
+
+        console.log('📅 [checkAvailability] INPUT:', JSON.stringify(requestBody, null, 2));
+
         const { data, error } = await supabase.functions.invoke('create-meeting', {
-            body: {
-                conversationId,
-                agentId: agent.id,
-                checkAvailabilityOnly: true,
-                leadName: 'Checking Availability' // Dummy for validation
-            }
+            body: requestBody
         });
+
+        console.log('📅 [checkAvailability] OUTPUT:', JSON.stringify({
+            success: !error,
+            slotsCount: data?.slots?.length || 0,
+            error: error?.message,
+            debug: data?.debug,
+            executionTime: data?.executionTime
+        }, null, 2));
+
+        if (data?.debug) {
+            console.log('🔍 [checkAvailability] DEBUG LOG:', JSON.stringify(data.debug, null, 2));
+        }
+
         if (error) throw error;
         return data.slots || [];
     } catch (e) {
-        console.error('Error checking availability:', e);
+        console.error('❌ [checkAvailability] Error:', e);
         return [];
     }
 }
@@ -1318,16 +1335,34 @@ async function createMeetingForLead(
     agent: any
 ) {
     try {
+        const requestBody = {
+            conversationId,
+            leadName,
+            leadEmail,
+            leadPhone,
+            agentId: agent.id,
+            customDate: preferredDatetime
+        };
+
+        console.log('📅 [createMeeting] INPUT:', JSON.stringify(requestBody, null, 2));
+
         const { data, error } = await supabase.functions.invoke('create-meeting', {
-            body: {
-                conversationId,
-                leadName,
-                leadEmail,
-                leadPhone,
-                agentId: agent.id,
-                customDate: preferredDatetime
-            }
+            body: requestBody
         });
+
+        console.log('📅 [createMeeting] OUTPUT:', JSON.stringify({
+            success: data?.success,
+            meetingId: data?.meeting?.id,
+            meetingLink: data?.meeting?.link,
+            meetingDate: data?.meeting?.date,
+            error: error?.message,
+            debug: data?.debug,
+            executionTime: data?.executionTime
+        }, null, 2));
+
+        if (data?.debug) {
+            console.log('🔍 [createMeeting] DEBUG LOG:', JSON.stringify(data.debug, null, 2));
+        }
 
         if (error) {
             console.error('❌ Error creando reunión:', error);

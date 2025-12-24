@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createLogger } from '../_shared/logger.ts'
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -22,6 +23,9 @@ serve(async (req) => {
         return new Response('ok', { headers: corsHeaders })
     }
 
+    const logger = createLogger('create-meeting')
+    const debugLog: any[] = []
+
     try {
         const supabaseUrl = Deno.env.get('SUPABASE_URL')!
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -30,23 +34,28 @@ serve(async (req) => {
         const body: CreateMeetingRequest = await req.json()
         const { conversationId, leadName, leadEmail, leadPhone, agentId, customDate, customDuration, checkAvailabilityOnly } = body
 
-        console.log('[CreateMeeting] Request:', {
+        logger.info('Request received', {
             mode: checkAvailabilityOnly ? 'check_availability' : 'create_meeting',
             conversationId,
-            leadName
+            leadName,
+            leadEmail,
+            leadPhone,
+            customDate,
+            customDuration
         })
+        debugLog.push({ step: 'REQUEST', data: body })
 
         if (!conversationId || (!leadName && !checkAvailabilityOnly)) {
-            // leadName is required for creation, but might be optional for checkAvailability if we just want slots for an agent?
-            // actually, let's keep it robust.
-            console.error('[CreateMeeting] Missing required fields')
+            logger.error('Missing required fields', { conversationId, leadName })
+            debugLog.push({ step: 'VALIDATION_ERROR', error: 'Missing required fields' })
             return new Response(
-                JSON.stringify({ error: 'conversationId is required' }),
+                JSON.stringify({ error: 'conversationId is required', debug: debugLog }),
                 { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
         }
 
         // 1. Obtener información de la conversación
+        logger.step(1, 'Loading conversation')
         const { data: conversation, error: convError } = await supabase
             .from('conversations')
             .select('user_id, platform, agent_id')
@@ -54,13 +63,19 @@ serve(async (req) => {
             .single()
 
         if (convError || !conversation) {
+            logger.error('Conversation not found', { conversationId, error: convError })
+            debugLog.push({ step: 'CONVERSATION_ERROR', error: convError })
             throw new Error('Conversation not found')
         }
 
         const userId = conversation.user_id
         const effectiveAgentId = agentId || conversation.agent_id
 
+        logger.success('Conversation loaded', { userId, agentId: effectiveAgentId })
+        debugLog.push({ step: 'CONVERSATION_LOADED', data: { userId, agentId: effectiveAgentId } })
+
         // 2. Obtener configuración del agente
+        logger.step(2, 'Loading agent configuration')
         let agentConfig: any = null
         let agentName = 'Agente'
 
@@ -74,20 +89,37 @@ serve(async (req) => {
             if (agent) {
                 agentConfig = agent.config
                 agentName = agent.name
+                logger.success('Agent loaded', { name: agentName, hasConfig: !!agentConfig })
+                debugLog.push({
+                    step: 'AGENT_LOADED',
+                    data: {
+                        name: agentName,
+                        enableMeetingScheduling: agentConfig?.enableMeetingScheduling,
+                        meetingDuration: agentConfig?.meetingDuration,
+                        meetingBufferMinutes: agentConfig?.meetingBufferMinutes,
+                        availableHoursStart: agentConfig?.meetingAvailableHoursStart,
+                        availableHoursEnd: agentConfig?.meetingAvailableHoursEnd,
+                        availableDays: agentConfig?.meetingAvailableDays
+                    }
+                })
             }
         }
 
         if (!agentConfig?.enableMeetingScheduling) {
+            logger.warn('Meeting scheduling not enabled for this agent')
+            debugLog.push({ step: 'CONFIG_ERROR', error: 'Meeting scheduling not enabled' })
             return new Response(
                 JSON.stringify({
                     success: false,
-                    error: 'Meeting scheduling not enabled for this agent'
+                    error: 'Meeting scheduling not enabled for this agent',
+                    debug: debugLog
                 }),
                 { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
         }
 
         // 3. Obtener token de Google Calendar
+        logger.step(3, 'Loading Google Calendar integration')
         const { data: integration, error: intError } = await supabase
             .from('integrations')
             .select('config')
@@ -97,17 +129,23 @@ serve(async (req) => {
             .single()
 
         if (intError || !integration || !integration.config?.provider_token) {
+            logger.error('Google Calendar not connected', { intError })
+            debugLog.push({ step: 'INTEGRATION_ERROR', error: 'Google Calendar not connected or missing token' })
             return new Response(
                 JSON.stringify({
                     success: false,
-                    error: 'Google Calendar not connected or missing token'
+                    error: 'Google Calendar not connected or missing token',
+                    debug: debugLog
                 }),
                 { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
         }
 
+        logger.success('Google Calendar integration found')
+        debugLog.push({ step: 'INTEGRATION_LOADED', data: { hasToken: !!integration.config.provider_token } })
+
         const accessToken = integration.config.provider_token
-        const calendarId = 'primary' // Simplification, usually 'primary' works
+        const calendarId = 'primary'
 
         const duration = customDuration || agentConfig.meetingDuration || 30
         const bufferMinutes = agentConfig.meetingBufferMinutes || 0
@@ -115,10 +153,24 @@ serve(async (req) => {
         const availableHoursEnd = agentConfig.meetingAvailableHoursEnd || '18:00'
         const availableDays = agentConfig.meetingAvailableDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
 
+        logger.info('Meeting configuration', {
+            duration,
+            bufferMinutes,
+            availableHoursStart,
+            availableHoursEnd,
+            availableDays
+        })
+        debugLog.push({
+            step: 'MEETING_CONFIG',
+            data: { duration, bufferMinutes, availableHoursStart, availableHoursEnd, availableDays }
+        })
+
 
         // --- MODE: CHECK AVAILABILITY ---
         if (checkAvailabilityOnly) {
-            console.log('[CreateMeeting] Step 4: Checking availability (Parallelized)...')
+            logger.step(4, 'Checking availability (Parallelized)')
+            debugLog.push({ step: 'AVAILABILITY_CHECK_START', data: { mode: 'parallel' } })
+
             try {
                 const slots = await findAllAvailableSlots(
                     calendarId,
@@ -127,29 +179,39 @@ serve(async (req) => {
                     bufferMinutes,
                     availableHoursStart,
                     availableHoursEnd,
-                    availableDays
+                    availableDays,
+                    logger,
+                    debugLog
                 )
 
-                console.log(`[CreateMeeting] Step 5: Found ${slots.length} available slots`)
+                logger.success(`Found ${slots.length} available slots`, { count: slots.length })
+                debugLog.push({ step: 'AVAILABILITY_CHECK_COMPLETE', data: { slotsFound: slots.length, slots } })
+
+                logger.summary(true, { slotsFound: slots.length })
 
                 return new Response(
                     JSON.stringify({
                         success: true,
-                        slots: slots
+                        slots: slots,
+                        debug: debugLog,
+                        executionTime: logger.getDuration()
                     }),
                     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
                 )
             } catch (err) {
-                console.error('[CreateMeeting] Error in check logic:', err)
-                // Return specific error to help diagnosis
+                logger.error('Error checking availability', { error: err.message }, err)
+                debugLog.push({ step: 'AVAILABILITY_CHECK_ERROR', error: err.message })
+                logger.summary(false, { error: err.message })
                 return new Response(
-                    JSON.stringify({ success: false, error: err.message }),
+                    JSON.stringify({ success: false, error: err.message, debug: debugLog }),
                     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
                 )
             }
         }
 
         // --- MODE: CREATE MEETING ---
+        logger.step(4, 'Scheduling meeting')
+        debugLog.push({ step: 'CREATE_MEETING_START' })
 
         let startTime: Date
         let endTime: Date
@@ -157,12 +219,17 @@ serve(async (req) => {
         if (customDate) {
             startTime = new Date(customDate)
             if (isNaN(startTime.getTime())) {
+                logger.error('Invalid date format', { customDate })
+                debugLog.push({ step: 'INVALID_DATE', error: 'Invalid date format', customDate })
                 throw new Error(`Invalid date format: ${customDate}`)
             }
             endTime = new Date(startTime.getTime() + duration * 60 * 1000)
-            console.log('[CreateMeeting] Using provided custom date:', startTime.toISOString())
+            logger.info('Using provided custom date', { startTime: startTime.toISOString() })
+            debugLog.push({ step: 'USING_CUSTOM_DATE', data: { startTime: startTime.toISOString(), endTime: endTime.toISOString() } })
         } else {
             // Fallback: Find first available slot
+            logger.info('Finding first available slot')
+            debugLog.push({ step: 'FINDING_SLOT' })
             const slots = await findAllAvailableSlots(
                 calendarId,
                 accessToken,
@@ -171,20 +238,27 @@ serve(async (req) => {
                 availableHoursStart,
                 availableHoursEnd,
                 availableDays,
+                logger,
+                debugLog,
                 3 // Reduced scope for quick check
             )
             if (slots.length === 0) {
+                logger.error('No available slots found')
+                debugLog.push({ step: 'NO_SLOTS_FOUND' })
+                logger.summary(false, { error: 'No available slots' })
                 return new Response(
-                    JSON.stringify({ success: false, error: 'No available slots found' }),
+                    JSON.stringify({ success: false, error: 'No available slots found', debug: debugLog }),
                     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
                 )
             }
             startTime = new Date(slots[0].start)
             endTime = new Date(slots[0].end)
-            console.log('[CreateMeeting] Found next available slot:', startTime.toISOString())
+            logger.success('Found next available slot', { startTime: startTime.toISOString() })
+            debugLog.push({ step: 'SLOT_FOUND', data: { startTime: startTime.toISOString(), endTime: endTime.toISOString() } })
         }
 
         // Crear evento (Google Calendar API...)
+        logger.step(5, 'Creating Google Calendar event')
         const meetingTitle = (agentConfig.meetingTitle || 'Reunión con {nombre}').replace('{nombre}', leadName)
         let meetingDescription = (agentConfig.meetingDescription || 'Reunión programada automáticamente').replace('{nombre}', leadName)
 
@@ -194,6 +268,16 @@ serve(async (req) => {
         const attendees = []
         if (leadEmail) attendees.push({ email: leadEmail })
         if (agentConfig.meetingEmail) attendees.push({ email: agentConfig.meetingEmail })
+
+        debugLog.push({
+            step: 'CREATING_CALENDAR_EVENT',
+            data: {
+                title: meetingTitle,
+                attendees: attendees.map(a => a.email),
+                start: startTime.toISOString(),
+                end: endTime.toISOString()
+            }
+        })
 
         const eventResponse = await fetch(
             `https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all`,
@@ -221,16 +305,19 @@ serve(async (req) => {
 
         if (!eventResponse.ok) {
             const errBody = await eventResponse.text()
-            console.error('[CreateMeeting] GCalendar Error:', errBody)
+            logger.error('Google Calendar API error', { status: eventResponse.status, statusText: eventResponse.statusText, body: errBody })
+            debugLog.push({ step: 'CALENDAR_API_ERROR', error: { status: eventResponse.status, body: errBody } })
             throw new Error(`Failed to create event: ${eventResponse.statusText}`)
         }
 
         const event = await eventResponse.json()
         const meetingLink = event.hangoutLink || event.htmlLink
 
-        console.log('[CreateMeeting] ✅ Meeting created:', event.id)
+        logger.success('Google Calendar event created', { eventId: event.id, meetingLink })
+        debugLog.push({ step: 'CALENDAR_EVENT_CREATED', data: { eventId: event.id, meetingLink } })
 
         // Guardar en BD (Best effort)
+        logger.step(6, 'Saving meeting to database')
         try {
             await supabase.from('meetings').insert({
                 user_id: userId,
@@ -246,9 +333,14 @@ serve(async (req) => {
                 status: 'scheduled',
                 metadata: { agent_email: agentConfig.meetingEmail }
             })
+            logger.success('Meeting saved to database')
+            debugLog.push({ step: 'DB_SAVED', success: true })
         } catch (e) {
-            console.error('[CreateMeeting] DB Save Error:', e)
+            logger.error('Database save error', { error: e.message }, e)
+            debugLog.push({ step: 'DB_SAVE_ERROR', error: e.message })
         }
+
+        logger.summary(true, { eventId: event.id, meetingLink })
 
         return new Response(
             JSON.stringify({
@@ -260,14 +352,18 @@ serve(async (req) => {
                     link: meetingLink,
                     title: meetingTitle,
                 },
+                debug: debugLog,
+                executionTime: logger.getDuration()
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
 
     } catch (error) {
-        console.error('[CreateMeeting] Critical Error:', error)
+        logger.error('Critical error in create-meeting function', { error: error.message }, error)
+        debugLog.push({ step: 'CRITICAL_ERROR', error: error.message, stack: error.stack })
+        logger.summary(false, { error: error.message })
         return new Response(
-            JSON.stringify({ success: false, error: error.message }),
+            JSON.stringify({ success: false, error: error.message, debug: debugLog, executionTime: logger.getDuration() }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
     }
@@ -281,6 +377,8 @@ async function findAllAvailableSlots(
     availableHoursStart: string,
     availableHoursEnd: string,
     availableDays: string[],
+    logger: any,
+    debugLog: any[],
     daysScope: number = 5
 ): Promise<Array<{ start: string; end: string }>> {
     const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
@@ -289,6 +387,18 @@ async function findAllAvailableSlots(
 
     const now = new Date()
     now.setMinutes(Math.ceil(now.getMinutes() / 30) * 30, 0, 0)
+
+    logger.info('Scanning availability', {
+        daysScope,
+        duration,
+        bufferMinutes,
+        startingFrom: now.toISOString(),
+        availableDays
+    })
+    debugLog.push({
+        step: 'SCANNING_AVAILABILITY',
+        data: { daysScope, duration, bufferMinutes, startingFrom: now.toISOString(), availableDays }
+    })
 
     const promises = []
 
@@ -324,13 +434,21 @@ async function findAllAvailableSlots(
             })
 
             if (!eventsRes.ok) {
-                console.error(`[CreateMeeting] Google API Error for ${checkDate.toISOString().split('T')[0]}: ${eventsRes.status} ${eventsRes.statusText}`)
+                const errorMsg = `Google API Error for ${checkDate.toISOString().split('T')[0]}: ${eventsRes.status} ${eventsRes.statusText}`
+                logger.error(errorMsg, { date: checkDate.toISOString().split('T')[0], status: eventsRes.status })
+                debugLog.push({
+                    step: 'GOOGLE_API_ERROR',
+                    error: errorMsg,
+                    date: checkDate.toISOString().split('T')[0],
+                    status: eventsRes.status
+                })
                 if (eventsRes.status === 401) throw new Error('Google Calendar Token Expired')
                 return []
             }
 
             const eventsData = await eventsRes.json()
             const events = eventsData.items || []
+            logger.debug(`Checking day ${checkDate.toISOString().split('T')[0]}`, { existingEvents: events.length })
             const daySlots = []
 
             while (currentTime.getTime() + duration * 60000 <= workEnd.getTime()) {
@@ -356,7 +474,15 @@ async function findAllAvailableSlots(
     }
 
     const results = await Promise.all(promises)
-    return results.flat().slice(0, 20) // Limit total returned slots to prevent large JSON
+    const allSlots = results.flat().slice(0, 20) // Limit total returned slots to prevent large JSON
+
+    logger.info('Availability scan complete', { totalSlots: allSlots.length, daysScanned: daysScope })
+    debugLog.push({
+        step: 'SCAN_COMPLETE',
+        data: { totalSlots: allSlots.length, daysScanned: daysScope }
+    })
+
+    return allSlots
 }
 
 async function findNextAvailableSlot(
