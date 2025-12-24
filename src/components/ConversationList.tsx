@@ -120,63 +120,61 @@ function ConversationItem({
     const hasProfilePicture = profilePicture && !imageError
 
     return (
-      <div
-        className="conversation-item-avatar"
-        style={{
-          width: '48px',
-          height: '48px',
-          borderRadius: '50%',
-          overflow: 'hidden',
-          flexShrink: 0,
-          border: '3px solid var(--color-border)',
-          background: hasProfilePicture
-            ? 'transparent'
-            : (conversation.platform === 'whatsapp'
-                ? '#a6e3a1'
-                : '#f38ba8'),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-        }}
-      >
-        {hasProfilePicture ? (
-          <img
-            src={profilePicture}
-            alt={displayName}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-            onError={() => {
-              setImageError(true)
-            }}
-          />
-        ) : (
-          // Avatar por defecto (monigote como WhatsApp)
-          <User size={24} color="#666" />
-        )}
+      <div style={{ position: 'relative', width: '48px', height: '48px' }}>
+        {/* Avatar circular */}
+        <div
+          className="conversation-item-avatar"
+          style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            overflow: 'hidden',
+            flexShrink: 0,
+            border: '3px solid var(--color-border)',
+            background: hasProfilePicture ? 'transparent' : 'var(--color-bg-secondary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {hasProfilePicture ? (
+            <img
+              src={profilePicture}
+              alt={displayName}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
+              onError={() => {
+                setImageError(true)
+              }}
+            />
+          ) : (
+            // Avatar por defecto (monigote como WhatsApp)
+            <User size={24} color="var(--color-text-secondary)" />
+          )}
+        </div>
 
-        {/* Icono de red social debajo del avatar */}
+        {/* Icono de red social abajo a la izquierda */}
         <div
           style={{
             position: 'absolute',
-            bottom: '-8px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'white',
+            bottom: '-2px',
+            left: '-2px',
+            background: conversation.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
             borderRadius: '50%',
-            padding: '2px',
-            border: '2px solid var(--color-border)',
+            padding: '4px',
+            border: '2px solid white',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             width: '20px',
             height: '20px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
           }}
         >
-          <PlatformIcon size={12} color="#666" />
+          <PlatformIcon size={12} color="white" />
         </div>
       </div>
     )
@@ -210,16 +208,23 @@ function ConversationItem({
       title={rawContact && displayName !== rawContact ? rawContact : undefined}
     >
       {/* Avatar con foto de perfil y icono de red social */}
-      <div style={{ position: 'relative', paddingBottom: '12px' }}>
-        {renderAvatar()}
-      </div>
+      {renderAvatar()}
 
       <div className="conversation-item-content">
         <div className="conversation-item-header">
-          <h4 className="conversation-item-name" style={{ fontWeight: conversation.unread_count > 0 ? 600 : 500 }}>
-            {displayName}
-          </h4>
-          <p className="conversation-item-timestamp">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', width: '100%' }}>
+            <h4 className="conversation-item-name" style={{ fontWeight: conversation.unread_count > 0 ? 600 : 500, margin: 0, flex: 1 }}>
+              {displayName}
+            </h4>
+            {leadStatusVariant && leadStatusLabel && (
+              <div style={{ fontSize: 'var(--font-size-xs)' }}>
+                <Badge variant={leadStatusVariant}>
+                  {leadStatusLabel}
+                </Badge>
+              </div>
+            )}
+          </div>
+          <p className="conversation-item-timestamp" style={{ marginTop: 'var(--spacing-xs)' }}>
             {conversation.last_message_at
               ? formatDate(conversation.last_message_at)
               : formatDate(conversation.created_at)}
@@ -228,13 +233,6 @@ function ConversationItem({
         <p className="conversation-item-message">
           Último mensaje de la conversación...
         </p>
-        {leadStatusVariant && leadStatusLabel && (
-          <div style={{ marginTop: 'var(--spacing-xs)' }}>
-            <Badge variant={leadStatusVariant}>
-              {leadStatusLabel}
-            </Badge>
-          </div>
-        )}
       </div>
 
       {conversation.unread_count > 0 && !isSelected && (
