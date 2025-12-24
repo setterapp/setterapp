@@ -69,7 +69,9 @@ export const googleOAuthDirect = {
       const codeChallenge = await generateCodeChallenge(codeVerifier)
 
       // Construir URL de autorización
-      const redirectUri = `${window.location.origin}/auth/google-calendar/callback`
+      // Usar variable de entorno para evitar problemas con www vs no-www
+      const redirectUri = import.meta.env.VITE_GOOGLE_CALENDAR_REDIRECT_URI ||
+                         `${window.location.origin}/auth/google-calendar/callback`
 
       const params = new URLSearchParams({
         client_id: clientId,
@@ -126,7 +128,8 @@ export const googleOAuthDirect = {
         throw new Error('Code verifier not found')
       }
 
-      const redirectUri = `${window.location.origin}/auth/google-calendar/callback`
+      const redirectUri = import.meta.env.VITE_GOOGLE_CALENDAR_REDIRECT_URI ||
+                         `${window.location.origin}/auth/google-calendar/callback`
 
       // Intercambiar código por tokens
       const response = await fetch(GOOGLE_TOKEN_ENDPOINT, {
