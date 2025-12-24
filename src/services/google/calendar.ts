@@ -16,9 +16,19 @@ export const googleCalendarService = {
    */
   async connectCalendar() {
     try {
-      // Siempre forzar consentimiento para asegurar que se soliciten los scopes de Calendar
-      // Esto es crítico: si el usuario ya tiene una sesión de Google sin scopes de Calendar,
-      // necesitamos forzar un nuevo consentimiento
+      console.log('[GoogleCalendar] Starting connectCalendar flow')
+
+      // Obtener la sesión actual para verificar si ya está logueado con Google
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('[GoogleCalendar] Current session:', {
+        hasSession: !!session,
+        provider: session?.user?.app_metadata?.provider,
+        hasProviderToken: !!session?.provider_token
+      })
+
+      // IMPORTANTE: Para solicitar scopes adicionales a una sesión existente de Google,
+      // debemos usar include_granted_scopes: 'true' y prompt: 'consent'.
+      // Esto permite que Google agregue los nuevos scopes sin descartar los anteriores.
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -26,25 +36,30 @@ export const googleCalendarService = {
           redirectTo: `${window.location.origin}/auth/callback?provider=google&integration=google-calendar&redirect_to=/integrations`,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent', // Forzar consentimiento para obtener nuevos scopes
-            include_granted_scopes: 'false' // No incluir scopes anteriores
+            prompt: 'consent', // Forzar consentimiento para obtener refresh_token
+            include_granted_scopes: 'true' // IMPORTANTE: mantener scopes anteriores y agregar los nuevos
           }
         }
       })
 
       if (error) {
-        console.error('Error en connectCalendar:', error)
+        console.error('[GoogleCalendar] Error en connectCalendar:', error)
         throw error
       }
 
+      console.log('[GoogleCalendar] OAuth initiated:', {
+        hasUrl: !!data.url,
+        hasSession: !!data.session
+      })
+
       // Si data.url existe, el navegador será redirigido automáticamente
-      // Si no hay URL, puede que ya esté autenticado pero sin los scopes correctos
       if (!data.url) {
+        console.warn('[GoogleCalendar] No redirect URL returned from signInWithOAuth')
       }
 
       return data
     } catch (error) {
-      console.error('Error connecting calendar:', error)
+      console.error('[GoogleCalendar] Error connecting calendar:', error)
       throw error
     }
   },

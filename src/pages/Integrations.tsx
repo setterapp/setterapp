@@ -32,20 +32,37 @@ function Integrations() {
     const urlParams = new URLSearchParams(location.search)
     const forceRefetch = urlParams.get('refetch') === 'true'
 
+    console.log('[Integrations] Component mounted', {
+      forceRefetch,
+      pathname: location.pathname,
+      search: location.search
+    })
+
     // Refetch inmediato + delayed para asegurar que la DB se actualice
     refetch()
 
     // Si venimos de callback, hacer refetch más agresivo
     if (forceRefetch) {
+      console.log('[Integrations] Force refetch enabled, scheduling multiple refetches')
       const timers = [
-        setTimeout(() => refetch(), 1000),
-        setTimeout(() => refetch(), 3000),
-        setTimeout(() => refetch(), 5000)
+        setTimeout(() => {
+          console.log('[Integrations] Refetch 1s')
+          refetch()
+        }, 1000),
+        setTimeout(() => {
+          console.log('[Integrations] Refetch 3s')
+          refetch()
+        }, 3000),
+        setTimeout(() => {
+          console.log('[Integrations] Refetch 5s')
+          refetch()
+        }, 5000)
       ]
 
       return () => timers.forEach(timer => clearTimeout(timer))
     } else {
       const timer = setTimeout(() => {
+        console.log('[Integrations] Delayed refetch')
         refetch()
       }, 2000)
 

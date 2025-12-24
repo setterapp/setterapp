@@ -45,9 +45,17 @@ function AuthCallback() {
           const provider = new URLSearchParams(location.search).get('provider') || 'google'
           const integrationParam = new URLSearchParams(location.search).get('integration') // 'whatsapp' | 'instagram' | 'google-calendar'
 
-          // Si hay un provider_token y venimos de integraciones, actualizar la integración correspondiente
-          if (session.provider_token && isFromIntegrations) {
+          // Si venimos de integraciones, intentar actualizar la integración correspondiente
+          if (isFromIntegrations) {
             try {
+              console.log('[AuthCallback] Processing integration callback', {
+                provider,
+                integrationParam,
+                hasProviderToken: !!session.provider_token,
+                hasProviderRefreshToken: !!session.provider_refresh_token,
+                providerTokenLength: session.provider_token?.length || 0
+              })
+
               let integrationType: 'instagram' | 'whatsapp' | 'google-calendar' = 'instagram'
 
               // Primero revisar si hay integrationParam explícito
@@ -71,6 +79,32 @@ function AuthCallback() {
                 // IMPORTANTE: Guardar los tokens porque Supabase NO los persiste automáticamente
                 // Los provider_token y provider_refresh_token solo están disponibles en la sesión inicial
                 // Después de un refresh, desaparecen. Por eso los guardamos en config.
+
+                // Si no hay provider_token, necesitamos esperar más o mostrar error
+                if (!session.provider_token) {
+                  console.error('[AuthCallback] No provider_token available for Google Calendar!')
+                  console.log('[AuthCallback] Session details:', {
+                    hasSession: !!session,
+                    userId: session.user?.id,
+                    provider: session.user?.app_metadata?.provider,
+                    providers: session.user?.app_metadata?.providers
+                  })
+
+                  // Intentar esperar más tiempo y verificar de nuevo
+                  await new Promise(resolve => setTimeout(resolve, 2000))
+                  const { data: { session: retrySession } } = await supabase.auth.getSession()
+
+                  if (retrySession?.provider_token) {
+                    console.log('[AuthCallback] provider_token found after retry!')
+                    session = retrySession
+                  } else {
+                    console.error('[AuthCallback] Still no provider_token after retry')
+                    alert('Error: No se pudo obtener el token de acceso de Google. Por favor, intenta desconectar y volver a conectar Google Calendar.')
+                    navigate('/integrations')
+                    return
+                  }
+                }
+
                 config = {
                   connected_via: 'supabase_oauth',
                   scopes: ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/calendar.events'],
@@ -79,6 +113,12 @@ function AuthCallback() {
                   token_expires_at: new Date(Date.now() + 3600 * 1000).toISOString(), // Google tokens típicamente duran 1 hora
                   last_token_refresh: new Date().toISOString()
                 }
+
+                console.log('[AuthCallback] Saving Google Calendar config:', {
+                  hasProviderToken: !!config.provider_token,
+                  hasRefreshToken: !!config.provider_refresh_token,
+                  tokenExpiresAt: config.token_expires_at
+                })
               } else if (integrationType === 'whatsapp') {
                 try {
                   const { whatsappService } = await import('../services/facebook/whatsapp')
@@ -119,7 +159,14 @@ function AuthCallback() {
                 : 'Instagram'
 
               // Intentar upsert primero
-              const { error: upsertError } = await supabase
+              console.log('[AuthCallback] Attempting to upsert integration:', {
+                type: integrationType,
+                name: integrationName,
+                hasConfig: Object.keys(config).length > 0,
+                configKeys: Object.keys(config)
+              })
+
+              const { data: upsertData, error: upsertError } = await supabase
                 .from('integrations')
                 .upsert({
                   user_id: session.user.id,
@@ -132,8 +179,10 @@ function AuthCallback() {
                   onConflict: 'user_id,type',
                   ignoreDuplicates: false
                 })
+                .select()
 
               if (upsertError) {
+                console.error('[AuthCallback] Upsert error:', upsertError)
                 // Si falla el upsert, verificar si existe y actualizar, o crear nueva
                 const { data: existing } = await supabase
                   .from('integrations')
@@ -175,11 +224,39 @@ function AuthCallback() {
                     console.error('Error inserting integration:', insertError)
                   }
                 }
+              } else {
+                console.log('[AuthCallback] Upsert successful!', {
+                  type: integrationType,
+                  upsertData
+                })
+              }
+
+              // Verificar que se guardó correctamente
+              const { data: savedIntegration, error: verifyError } = await supabase
+                .from('integrations')
+                .select('*')
+                .eq('type', integrationType)
+                .eq('user_id', session.user.id)
+                .single()
+
+              if (verifyError) {
+                console.error('[AuthCallback] Error verifying saved integration:', verifyError)
+              } else {
+                console.log('[AuthCallback] Integration saved successfully:', {
+                  id: savedIntegration.id,
+                  type: savedIntegration.type,
+                  status: savedIntegration.status,
+                  hasConfig: !!savedIntegration.config,
+                  configKeys: savedIntegration.config ? Object.keys(savedIntegration.config) : [],
+                  hasProviderToken: !!savedIntegration.config?.provider_token,
+                  hasRefreshToken: !!savedIntegration.config?.provider_refresh_token
+                })
               }
             } catch (err) {
-              console.error('Error processing integration callback:', err)
+              console.error('[AuthCallback] Error processing integration callback:', err)
             }
           } else {
+            console.log('[AuthCallback] Not from integrations, skipping integration save')
           }
 
           // Esperar más tiempo para que se complete la actualización antes de redirigir
