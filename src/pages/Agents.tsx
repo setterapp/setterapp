@@ -22,11 +22,18 @@ function Agents() {
     config: {} as AgentConfig,
   })
   const [currentStep, setCurrentStep] = useState(1)
+  const [isTransitioning, setIsTransitioning] = useState(false)
   const totalSteps = 7
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('[Agents] handleSubmit called, currentStep:', currentStep, 'totalSteps:', totalSteps)
+    console.log('[Agents] handleSubmit called, currentStep:', currentStep, 'totalSteps:', totalSteps, 'isTransitioning:', isTransitioning)
+
+    // Prevenir submit durante transiciones entre pasos
+    if (isTransitioning) {
+      console.log('[Agents] Currently transitioning, ignoring submit')
+      return
+    }
 
     // Solo permitir submit en el último paso
     if (currentStep !== totalSteps) {
@@ -52,6 +59,7 @@ function Agents() {
       }
       setFormData({ name: '', description: '', platform: '', config: {} })
       setCurrentStep(1)
+      setIsTransitioning(false) // Resetear flag de transición
       setShowForm(false)
     } catch (err) {
       console.error('Error saving agent:', err)
@@ -68,14 +76,22 @@ function Agents() {
     })
     setEditingAgent(agent.id)
     setCurrentStep(1) // Siempre empezar desde el primer paso
+    setIsTransitioning(false) // Resetear flag de transición
     setShowForm(true)
   }
 
   const nextStep = () => {
     console.log('[Agents] nextStep called, currentStep:', currentStep, 'totalSteps:', totalSteps)
     if (currentStep < totalSteps) {
+      setIsTransitioning(true)
       setCurrentStep(currentStep + 1)
       console.log('[Agents] Moving to step:', currentStep + 1)
+
+      // Desactivar la bandera de transición después de un breve delay
+      setTimeout(() => {
+        setIsTransitioning(false)
+        console.log('[Agents] Transition complete')
+      }, 300)
     } else {
       console.log('[Agents] Already at last step, not advancing')
     }
@@ -164,6 +180,7 @@ function Agents() {
           </div>
           <button className="btn btn--primary" onClick={() => {
             setCurrentStep(1) // Siempre empezar desde el primer paso
+            setIsTransitioning(false) // Resetear flag de transición
             setShowForm(true)
           }}>
             <Plus size={18} />
@@ -179,18 +196,12 @@ function Agents() {
           setEditingAgent(null)
           setFormData({ name: '', description: '', platform: '', config: {} })
           setCurrentStep(1)
+          setIsTransitioning(false)
         }}
         title={editingAgent ? 'Editar Agente' : 'Nuevo Agente'}
       >
         <form
           onSubmit={handleSubmit}
-          onKeyDown={(e) => {
-            // Prevenir submit con Enter si no estamos en el último paso
-            if (e.key === 'Enter' && currentStep !== totalSteps && e.target instanceof HTMLInputElement) {
-              e.preventDefault()
-              nextStep()
-            }
-          }}
           style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '80vh' }}
         >
           {/* Form Content - Scrollable */}
@@ -718,7 +729,15 @@ function Agents() {
                   <ArrowRight size={18} />
                 </button>
               ) : (
-                <button type="submit" className="btn btn--primary">
+                <button
+                  type="submit"
+                  className="btn btn--primary"
+                  disabled={isTransitioning}
+                  style={{
+                    opacity: isTransitioning ? 0.5 : 1,
+                    cursor: isTransitioning ? 'not-allowed' : 'pointer'
+                  }}
+                >
                   <Plus size={18} />
                   {editingAgent ? 'Guardar Cambios' : 'Crear Agente'}
                 </button>
