@@ -664,6 +664,7 @@ async function processInstagramEvent(event: any, pageId: string) {
               username: userProfile?.username || null,
               profile_picture: userProfile?.profile_picture || null,
               last_message_at: new Date(timestampInMs).toISOString(),
+              lead_status: 'cold', // Estado inicial para nuevos contactos
               metadata: userProfile ? {
                 username: userProfile.username,
                 name: userProfile.name,
@@ -770,6 +771,7 @@ async function processInstagramEvent(event: any, pageId: string) {
             contact: displayName, // Usar username o name si está disponible
             last_message_at: lastMessageDateISO,
             unread_count: 1,
+            lead_status: 'cold', // Estado inicial para nuevos leads
             contact_metadata: userProfile ? {
               username: userProfile.username,
               name: userProfile.name,

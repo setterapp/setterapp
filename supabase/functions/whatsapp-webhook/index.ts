@@ -186,6 +186,7 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
               display_name: contactName,
               phone: senderId,
               last_message_at: new Date(timestamp).toISOString(),
+              lead_status: 'cold', // Estado inicial para nuevos contactos
               metadata: { name: contactName },
               updated_at: new Date().toISOString(),
             },
@@ -253,6 +254,7 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
             contact: contactName,
             last_message_at: new Date(timestamp).toISOString(),
             unread_count: 1,
+            lead_status: 'cold', // Estado inicial para nuevos leads
             contact_metadata: {
               name: contactName,
             },
