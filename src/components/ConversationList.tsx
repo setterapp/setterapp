@@ -167,12 +167,12 @@ function ConversationItem({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '20px',
-            height: '20px',
+            width: '24px',
+            height: '24px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
           }}
         >
-          <PlatformIcon size={12} color="#000" />
+          <PlatformIcon size={16} color="#000" />
         </div>
       </div>
     )

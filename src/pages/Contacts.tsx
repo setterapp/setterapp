@@ -1,9 +1,7 @@
-import { useState } from 'react'
-import { Users, RefreshCw } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { DataTable } from '../components/ui/data-table'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useContacts } from '../hooks/useContacts'
-import { syncContactsLeadStatus } from '../services/ai/leadStatusDetection'
 
 type Contact = {
   id: string
@@ -128,26 +126,7 @@ const columns: ColumnDef<Contact>[] = [
 ]
 
 function Contacts() {
-  const { contacts, loading, error, refetch } = useContacts()
-  const [syncing, setSyncing] = useState(false)
-
-  const handleSyncLeadStatus = async () => {
-    setSyncing(true)
-    try {
-      const result = await syncContactsLeadStatus()
-      if (result.success) {
-        alert(`✅ ${result.message}`)
-        refetch()
-      } else {
-        alert(`❌ Error: ${result.message}`)
-      }
-    } catch (error) {
-      console.error('Error syncing lead status:', error)
-      alert('❌ Error al sincronizar estados de lead')
-    } finally {
-      setSyncing(false)
-    }
-  }
+  const { contacts, loading, error } = useContacts()
 
   const data: Contact[] = contacts.map((c) => ({
     id: c.id,
@@ -173,34 +152,6 @@ function Contacts() {
           </h2>
           <p>Gestiona tus contactos de WhatsApp e Instagram</p>
         </div>
-        <button
-          onClick={handleSyncLeadStatus}
-          disabled={syncing}
-          style={{
-            backgroundColor: '#89b4f8',
-            color: '#000',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '4px 8px',
-            borderRadius: 'var(--border-radius-sm)',
-            fontSize: 'var(--font-size-sm)',
-            fontWeight: 600,
-            border: '2px solid #000',
-            cursor: syncing ? 'not-allowed' : 'pointer',
-            opacity: syncing ? 0.6 : 1,
-          }}
-        >
-          <RefreshCw
-            size={14}
-            color="#000"
-            style={syncing ? {
-              animation: 'spin 1s linear infinite',
-              transformOrigin: 'center'
-            } : {}}
-          />
-          {syncing ? 'Sincronizando...' : 'Sincronizar Estados'}
-        </button>
       </div>
 
       {loading && data.length === 0 ? (
