@@ -1339,7 +1339,7 @@ async function generateAndSendAutoReply(
                                     meeting_id: meetingResult.meeting.id
                                 },
                             }, {
-                                onConflict: 'conversation_id,platform_message_id',
+                                onConflict: 'user_id,platform_message_id',
                             });
 
                         console.log('✅ Reunión agendada y confirmación enviada');
@@ -1388,7 +1388,7 @@ async function generateAndSendAutoReply(
                     },
                 },
                 {
-                    onConflict: 'conversation_id,platform_message_id',
+                    onConflict: 'user_id,platform_message_id',
                     ignoreDuplicates: true,
                 }
             );
