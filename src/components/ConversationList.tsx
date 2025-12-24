@@ -13,7 +13,7 @@ interface ConversationListProps {
 }
 
 export default function ConversationList({ conversations, selectedId, onSelect }: ConversationListProps) {
-  const getLeadStatusBadgeVariant = (status?: 'cold' | 'warm' | 'hot' | null) => {
+  const getLeadStatusBadgeVariant = (status?: 'cold' | 'warm' | 'hot' | 'closed' | null) => {
     if (!status) return null
     switch (status) {
       case 'cold':
@@ -22,12 +22,14 @@ export default function ConversationList({ conversations, selectedId, onSelect }
         return 'warning'
       case 'hot':
         return 'danger'
+      case 'closed':
+        return 'success'
       default:
         return null
     }
   }
 
-  const getLeadStatusLabel = (status?: 'cold' | 'warm' | 'hot' | null) => {
+  const getLeadStatusLabel = (status?: 'cold' | 'warm' | 'hot' | 'closed' | null) => {
     if (!status) return null
     switch (status) {
       case 'cold':
@@ -36,6 +38,8 @@ export default function ConversationList({ conversations, selectedId, onSelect }
         return 'Tibio'
       case 'hot':
         return 'Caliente'
+      case 'closed':
+        return 'Cerrado'
       default:
         return null
     }
@@ -97,7 +101,7 @@ function ConversationItem({
   conversation: Conversation
   PlatformIcon: React.ComponentType<{ size?: number; color?: string }>
   isSelected: boolean
-  leadStatusVariant: 'secondary' | 'warning' | 'danger' | null
+  leadStatusVariant: 'secondary' | 'warning' | 'danger' | 'success' | null
   leadStatusLabel: string | null
   onSelect: (id: string, event?: React.MouseEvent) => void
 }) {

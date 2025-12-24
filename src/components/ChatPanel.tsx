@@ -45,7 +45,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
       ? WhatsAppIcon
       : InstagramIcon
 
-  const getLeadStatusBadgeVariant = (status?: 'cold' | 'warm' | 'hot' | null) => {
+  const getLeadStatusBadgeVariant = (status?: 'cold' | 'warm' | 'hot' | 'closed' | null) => {
     if (!status) return null
     switch (status) {
       case 'cold':
@@ -54,12 +54,14 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
         return 'warning'
       case 'hot':
         return 'danger'
+      case 'closed':
+        return 'success'
       default:
         return null
     }
   }
 
-  const getLeadStatusLabel = (status?: 'cold' | 'warm' | 'hot' | null) => {
+  const getLeadStatusLabel = (status?: 'cold' | 'warm' | 'hot' | 'closed' | null) => {
     if (!status) return null
     switch (status) {
       case 'cold':
@@ -68,6 +70,8 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
         return 'Tibio'
       case 'hot':
         return 'Caliente'
+      case 'closed':
+        return 'Cerrado'
       default:
         return null
     }
