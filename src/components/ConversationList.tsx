@@ -165,7 +165,7 @@ function ConversationItem({
             background: conversation.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
             borderRadius: '50%',
             padding: '4px',
-            border: '2px solid white',
+            border: '2px solid #000',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -174,7 +174,7 @@ function ConversationItem({
             boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
           }}
         >
-          <PlatformIcon size={12} color="white" />
+          <PlatformIcon size={12} color="#000" />
         </div>
       </div>
     )

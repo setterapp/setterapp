@@ -164,16 +164,24 @@ function Contacts() {
         <button
           onClick={handleSyncLeadStatus}
           disabled={syncing}
-          className="btn btn--secondary"
           style={{
-            display: 'flex',
+            backgroundColor: '#89b4f8',
+            color: '#000',
+            display: 'inline-flex',
             alignItems: 'center',
-            gap: 'var(--spacing-sm)',
-            fontSize: 'var(--font-size-sm)'
+            gap: '6px',
+            padding: '4px 8px',
+            borderRadius: 'var(--border-radius-sm)',
+            fontSize: 'var(--font-size-sm)',
+            fontWeight: 600,
+            border: '2px solid #000',
+            cursor: syncing ? 'not-allowed' : 'pointer',
+            opacity: syncing ? 0.6 : 1,
           }}
         >
           <RefreshCw
-            size={16}
+            size={14}
+            color="#000"
             style={syncing ? {
               animation: 'spin 1s linear infinite',
               transformOrigin: 'center'
