@@ -538,9 +538,44 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
 }
 
 /**
- * Genera una respuesta usando OpenAI
+ * Define el tool/function para agendar reuniones
  */
-async function generateAIResponse(systemPrompt: string, conversationHistory: any[], userMessage: string) {
+function getMeetingSchedulingTool() {
+  return {
+    type: 'function',
+    function: {
+      name: 'schedule_meeting',
+      description: 'Agenda una reunión con el lead cuando tenga toda la información necesaria: email, nombre completo y fecha/hora preferida',
+      parameters: {
+        type: 'object',
+        properties: {
+          lead_email: {
+            type: 'string',
+            description: 'Email del lead para enviarle la invitación de calendario'
+          },
+          lead_name: {
+            type: 'string',
+            description: 'Nombre completo del lead'
+          },
+          preferred_datetime: {
+            type: 'string',
+            description: 'Fecha y hora preferida para la reunión en formato ISO 8601. Si el lead dice "mañana a las 3pm", calcular la fecha exacta basándose en la fecha/hora actual y convertir a formato ISO.'
+          },
+          lead_phone: {
+            type: 'string',
+            description: 'Número de teléfono del lead (opcional)'
+          }
+        },
+        required: ['lead_email', 'lead_name']
+      }
+    }
+  };
+}
+
+/**
+ * Genera una respuesta usando OpenAI con function calling
+ */
+async function generateAIResponse(systemPrompt: string, conversationHistory: any[], userMessage: string, enableMeetingScheduling: boolean = false) {
   if (!OPENAI_API_KEY) {
     console.error('❌ OPENAI_API_KEY no está configurada');
     return null;
@@ -553,18 +588,26 @@ async function generateAIResponse(systemPrompt: string, conversationHistory: any
       { role: 'user', content: userMessage }
     ];
 
+    const requestBody: any = {
+      model: 'gpt-4o-mini',
+      messages: messages,
+      temperature: 0.7,
+      max_tokens: 500
+    };
+
+    // Agregar tools si el agente tiene habilitado el agendamiento de reuniones
+    if (enableMeetingScheduling) {
+      requestBody.tools = [getMeetingSchedulingTool()];
+      requestBody.tool_choice = 'auto'; // El modelo decide cuándo usar la función
+    }
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: messages,
-        temperature: 0.7,
-        max_tokens: 500
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
@@ -574,7 +617,10 @@ async function generateAIResponse(systemPrompt: string, conversationHistory: any
     }
 
     const data = await response.json();
-    return data.choices[0].message.content;
+    const message = data.choices[0].message;
+
+    // Retornar el mensaje completo (puede incluir tool_calls)
+    return message;
   } catch (error) {
     console.error('❌ Error generating AI response:', error);
     return null;
@@ -679,32 +725,97 @@ async function generateAndSendAutoReply(
     // 3. Construir system prompt
     const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config);
 
-    // 4. Generar respuesta con IA
-    const aiResponse = await generateAIResponse(systemPrompt, conversationHistory, inboundMessage);
+    // 4. Generar respuesta con IA (con function calling si está habilitado)
+    const enableMeetingScheduling = agent.config?.enableMeetingScheduling || false;
+    const aiMessage = await generateAIResponse(systemPrompt, conversationHistory, inboundMessage, enableMeetingScheduling);
 
-    if (!aiResponse) {
+    if (!aiMessage) {
       console.error('❌ No se pudo generar respuesta con IA');
       return;
     }
 
     console.log('✅ AI response generated successfully');
 
-    // 5. Enviar respuesta a WhatsApp
-    const sendResult = await sendWhatsAppMessage(userId, phoneNumberId, recipientPhone, aiResponse);
+    // 5. Verificar si el modelo quiere agendar una reunión (tool_calls)
+    if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
+      console.log('📅 El modelo quiere agendar una reunión');
+
+      for (const toolCall of aiMessage.tool_calls) {
+        if (toolCall.function.name === 'schedule_meeting') {
+          const args = JSON.parse(toolCall.function.arguments);
+          console.log('📅 Parámetros de la reunión:', args);
+
+          // Llamar a la función de crear reunión
+          const meetingResult = await createMeetingForLead(
+            userId,
+            conversationId,
+            args.lead_email,
+            args.lead_name,
+            args.preferred_datetime,
+            args.lead_phone,
+            agent
+          );
+
+          if (meetingResult.success) {
+            // Enviar mensaje de confirmación con el link de la reunión
+            const confirmationMessage = `perfecto ${args.lead_name}! te agendé la reunión para el ${formatMeetingDate(meetingResult.meeting.date)}. te llegará la invitación a ${args.lead_email} con el link de google meet: ${meetingResult.meeting.link}`;
+
+            await sendWhatsAppMessage(userId, phoneNumberId, recipientPhone, confirmationMessage);
+
+            // Guardar mensaje de confirmación
+            await supabase
+              .from('messages')
+              .insert({
+                conversation_id: conversationId,
+                user_id: userId,
+                platform_message_id: Date.now().toString(),
+                content: confirmationMessage,
+                direction: 'outbound',
+                message_type: 'text',
+                metadata: {
+                  generated_by: 'ai',
+                  agent_id: agent.id,
+                  model: 'gpt-4o-mini',
+                  meeting_scheduled: true,
+                  meeting_id: meetingResult.meeting.id
+                },
+              });
+
+            console.log('✅ Reunión agendada y confirmación enviada');
+          } else {
+            // Si falló la creación, enviar mensaje explicando el problema
+            const errorMessage = 'disculpa, hubo un problema agendando la reunión. déjame verificar y te confirmo en un momento.';
+            await sendWhatsAppMessage(userId, phoneNumberId, recipientPhone, errorMessage);
+          }
+
+          return; // No enviar el mensaje de texto normal
+        }
+      }
+    }
+
+    // 6. Si no hay tool_calls, enviar la respuesta de texto normal
+    const textContent = aiMessage.content;
+    if (!textContent) {
+      console.error('❌ No hay contenido de texto en la respuesta');
+      return;
+    }
+
+    // 7. Enviar respuesta a WhatsApp
+    const sendResult = await sendWhatsAppMessage(userId, phoneNumberId, recipientPhone, textContent);
 
     if (!sendResult) {
       console.error('❌ No se pudo enviar mensaje a WhatsApp');
       return;
     }
 
-    // 6. Guardar mensaje enviado en la BD
+    // 8. Guardar mensaje enviado en la BD
     const { error: messageError } = await supabase
       .from('messages')
       .insert({
         conversation_id: conversationId,
         user_id: userId,
         platform_message_id: sendResult.messages?.[0]?.id || Date.now().toString(),
-        content: aiResponse,
+        content: textContent,
         direction: 'outbound',
         message_type: 'text',
         metadata: {
@@ -722,6 +833,59 @@ async function generateAndSendAutoReply(
   } catch (error) {
     console.error('❌ Error en generateAndSendAutoReply:', error);
   }
+}
+
+/**
+ * Crea una reunión para el lead usando la Edge Function create-meeting
+ */
+async function createMeetingForLead(
+  userId: string,
+  conversationId: string,
+  leadEmail: string,
+  leadName: string,
+  preferredDatetime: string | undefined,
+  leadPhone: string | undefined,
+  agent: any
+) {
+  try {
+    const { data, error } = await supabase.functions.invoke('create-meeting', {
+      body: {
+        conversationId,
+        leadName,
+        leadEmail,
+        leadPhone,
+        agentId: agent.id,
+        customDate: preferredDatetime
+      }
+    });
+
+    if (error) {
+      console.error('❌ Error creando reunión:', error);
+      return { success: false, error };
+    }
+
+    return data;
+  } catch (error) {
+    console.error('❌ Error llamando a create-meeting:', error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Formatea la fecha de la reunión para mostrarla al usuario
+ */
+function formatMeetingDate(isoDate: string): string {
+  const date = new Date(isoDate);
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'America/Argentina/Buenos_Aires'
+  };
+  return date.toLocaleDateString('es-AR', options);
 }
 
 /**

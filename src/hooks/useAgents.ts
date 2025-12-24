@@ -21,6 +21,7 @@ export interface AgentConfig {
   additionalContext?: string
   // Configuración de reuniones con Google Calendar
   enableMeetingScheduling?: boolean
+  meetingEmail?: string // email del agente para recibir las reuniones
   meetingDuration?: number // en minutos
   meetingTitle?: string
   meetingDescription?: string

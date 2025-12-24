@@ -575,6 +575,22 @@ function Agents() {
                 {formData.config.enableMeetingScheduling && (
                   <>
                     <div className="form-group">
+                      <label htmlFor="meetingEmail">Email para Reuniones *</label>
+                      <input
+                        id="meetingEmail"
+                        type="email"
+                        className="input"
+                        value={formData.config.meetingEmail || ''}
+                        onChange={(e) => updateConfig('meetingEmail', e.target.value)}
+                        placeholder="tu-email@ejemplo.com"
+                        required
+                      />
+                      <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)', opacity: 0.9 }}>
+                        Este es el email donde recibirás las invitaciones de las reuniones agendadas
+                      </small>
+                    </div>
+
+                    <div className="form-group">
                       <label htmlFor="meetingTitle">Título de la Reunión</label>
                       <input
                         id="meetingTitle"

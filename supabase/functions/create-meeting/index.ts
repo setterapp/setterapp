@@ -9,6 +9,8 @@ const corsHeaders = {
 interface CreateMeetingRequest {
   conversationId: string
   leadName: string
+  leadEmail?: string // email del lead para agregarlo como asistente
+  leadPhone?: string // teléfono del lead (opcional)
   agentId?: string
   customDate?: string // ISO string, opcional para forzar una fecha específica
   customDuration?: number // minutos, opcional para override
@@ -25,7 +27,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     const body: CreateMeetingRequest = await req.json()
-    const { conversationId, leadName, agentId, customDate, customDuration } = body
+    const { conversationId, leadName, leadEmail, leadPhone, agentId, customDate, customDuration } = body
 
     if (!conversationId || !leadName) {
       return new Response(
@@ -33,6 +35,8 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('[CreateMeeting] Lead info:', { leadName, leadEmail, leadPhone })
 
     console.log('[CreateMeeting] Creating meeting for conversation:', conversationId)
 
@@ -177,11 +181,34 @@ serve(async (req) => {
     const meetingTitle = (agentConfig.meetingTitle || 'Reunión con {nombre}')
       .replace('{nombre}', leadName)
 
-    const meetingDescription = (agentConfig.meetingDescription || 'Reunión programada automáticamente')
+    let meetingDescription = (agentConfig.meetingDescription || 'Reunión programada automáticamente')
       .replace('{nombre}', leadName)
 
+    // Agregar información del lead a la descripción
+    if (leadEmail) {
+      meetingDescription += `\n\nEmail del lead: ${leadEmail}`
+    }
+    if (leadPhone) {
+      meetingDescription += `\nTeléfono: ${leadPhone}`
+    }
+
+    // Preparar lista de asistentes
+    const attendees = []
+
+    // Agregar el email del lead si está disponible
+    if (leadEmail) {
+      attendees.push({ email: leadEmail })
+      console.log('[CreateMeeting] Adding lead as attendee:', leadEmail)
+    }
+
+    // Agregar el email del agente si está configurado
+    if (agentConfig.meetingEmail) {
+      attendees.push({ email: agentConfig.meetingEmail })
+      console.log('[CreateMeeting] Adding agent as attendee:', agentConfig.meetingEmail)
+    }
+
     const eventResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1`,
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=all`,
       {
         method: 'POST',
         headers: {
@@ -199,12 +226,16 @@ serve(async (req) => {
             dateTime: endTime.toISOString(),
             timeZone: 'America/Argentina/Buenos_Aires',
           },
+          attendees: attendees.length > 0 ? attendees : undefined,
           conferenceData: {
             createRequest: {
               requestId: `meet-${Date.now()}`,
               conferenceSolutionKey: { type: 'hangoutsMeet' },
             },
           },
+          guestsCanModify: false,
+          guestsCanInviteOthers: false,
+          guestsCanSeeOtherGuests: true,
         }),
       }
     )
@@ -232,10 +263,14 @@ serve(async (req) => {
           duration_minutes: duration,
           meeting_link: meetingLink,
           lead_name: leadName,
+          lead_email: leadEmail || null,
+          lead_phone: leadPhone || null,
           status: 'scheduled',
           metadata: {
             calendar_id: calendarId,
             event_summary: event.summary,
+            agent_email: agentConfig.meetingEmail,
+            attendees_count: attendees.length,
           },
         })
     } catch (dbError) {
