@@ -26,11 +26,15 @@ function Agents() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('[Agents] handleSubmit called, currentStep:', currentStep, 'totalSteps:', totalSteps)
 
     // Solo permitir submit en el último paso
     if (currentStep !== totalSteps) {
+      console.log('[Agents] Not on last step, preventing submit')
       return
     }
+
+    console.log('[Agents] On last step, proceeding with submit')
 
     try {
       const agentData = {
@@ -63,18 +67,27 @@ function Agents() {
       config: agent.config || {},
     })
     setEditingAgent(agent.id)
+    setCurrentStep(1) // Siempre empezar desde el primer paso
     setShowForm(true)
   }
 
   const nextStep = () => {
+    console.log('[Agents] nextStep called, currentStep:', currentStep, 'totalSteps:', totalSteps)
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1)
+      console.log('[Agents] Moving to step:', currentStep + 1)
+    } else {
+      console.log('[Agents] Already at last step, not advancing')
     }
   }
 
   const prevStep = () => {
+    console.log('[Agents] prevStep called, currentStep:', currentStep)
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
+      console.log('[Agents] Moving to step:', currentStep - 1)
+    } else {
+      console.log('[Agents] Already at first step, not going back')
     }
   }
 
@@ -101,6 +114,11 @@ function Agents() {
       console.error('Error deleting agent:', err)
     }
   }
+
+  // Monitorear cambios en currentStep
+  useEffect(() => {
+    console.log('[Agents] currentStep changed to:', currentStep)
+  }, [currentStep])
 
   // Cerrar menú al hacer clic fuera
   useEffect(() => {
@@ -144,7 +162,10 @@ function Agents() {
             </h2>
             <p>Crea y gestiona agentes de IA para WhatsApp e Instagram</p>
           </div>
-          <button className="btn btn--primary" onClick={() => setShowForm(true)}>
+          <button className="btn btn--primary" onClick={() => {
+            setCurrentStep(1) // Siempre empezar desde el primer paso
+            setShowForm(true)
+          }}>
             <Plus size={18} />
             Crear Agente
           </button>
