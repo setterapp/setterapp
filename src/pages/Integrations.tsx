@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Plug, Check, X, MoreVertical, AlertTriangle, ExternalLink } from 'lucide-react'
+import { Plug, Check, X, MoreVertical, AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useIntegrations } from '../hooks/useIntegrations'
 import { instagramService } from '../services/facebook/instagram'
 import { whatsappService } from '../services/facebook/whatsapp'
-import { facebookOAuthService } from '../services/facebook-oauth'
+// import { facebookOAuthService } from '../services/facebook-oauth' // COMENTADO - Facebook oculto
 import { Switch } from '../components/ui/switch'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
-import FacebookIcon from '../components/icons/FacebookIcon'
+// import FacebookIcon from '../components/icons/FacebookIcon' // COMENTADO - Facebook oculto
 import GoogleCalendarIcon from '../components/icons/GoogleCalendarIcon'
 import Modal from '../components/common/Modal'
 import { googleCalendarService } from '../services/google/calendar'
@@ -20,7 +20,7 @@ function Integrations() {
   const { integrations, loading, error, updateIntegration, refetch } = useIntegrations()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [showInstagramWarning, setShowInstagramWarning] = useState(false)
-  const [showFacebookWarning, setShowFacebookWarning] = useState(false)
+  // const [showFacebookWarning, setShowFacebookWarning] = useState(false) // COMENTADO - Facebook oculto
   const [showWhatsAppWarning, setShowWhatsAppWarning] = useState(false)
   const [showGoogleCalendarWarning, setShowGoogleCalendarWarning] = useState(false)
 
@@ -103,14 +103,14 @@ function Integrations() {
           // Desconectar
           await handleWhatsAppDisconnect(id)
         }
-      } else if (type === 'facebook') {
-        if (checked) {
-          // Mostrar advertencia antes de conectar
-          setShowFacebookWarning(true)
-        } else {
-          // Desconectar
-          await handleFacebookDisconnect(id)
-        }
+      // } else if (type === 'facebook') { // COMENTADO - Facebook oculto
+      //   if (checked) {
+      //     // Mostrar advertencia antes de conectar
+      //     // setShowFacebookWarning(true)
+      //   } else {
+      //     // Desconectar
+      //     // await handleFacebookDisconnect(id)
+      //   }
       } else if (type === 'google-calendar') {
         if (checked) {
           // Mostrar advertencia/info antes de conectar
@@ -139,8 +139,8 @@ function Integrations() {
       setShowInstagramWarning(true)
     } else if (integration.type === 'whatsapp') {
       setShowWhatsAppWarning(true)
-    } else if (integration.type === 'facebook') {
-      setShowFacebookWarning(true)
+    // } else if (integration.type === 'facebook') { // COMENTADO - Facebook oculto
+    //   // setShowFacebookWarning(true)
     } else if (integration.type === 'google-calendar') {
       setShowGoogleCalendarWarning(true)
     }
@@ -239,49 +239,49 @@ function Integrations() {
     }
   }
 
-  async function handleFacebookConnect() {
-    try {
-      // Conectar con OAuth de Facebook para obtener Page Access Token
-      await facebookOAuthService.connectFacebook()
-      // El usuario será redirigido al callback después de autorizar
-      // Después volverá a /integrations
-    } catch (error: any) {
-      console.error('Error connecting Facebook:', error)
-      alert(`Error al conectar con Facebook: ${error.message || 'Error desconocido'}`)
-      refetch() // Refetch para revertir el toggle si la conexión falló
-    }
-  }
+  // async function handleFacebookConnect() { // COMENTADO - Facebook oculto
+  //   try {
+  //     // Conectar con OAuth de Facebook para obtener Page Access Token
+  //     await facebookOAuthService.connectFacebook()
+  //     // El usuario será redirigido al callback después de autorizar
+  //     // Después volverá a /integrations
+  //   } catch (error: any) {
+  //     console.error('Error connecting Facebook:', error)
+  //     alert(`Error al conectar con Facebook: ${error.message || 'Error desconocido'}`)
+  //     refetch() // Refetch para revertir el toggle si la conexión falló
+  //   }
+  // }
 
-  async function handleFacebookDisconnect(integrationId?: string) {
-    try {
-      if (!confirm('¿Desconectar Facebook? Esto deshabilitará la obtención automática de usernames para Instagram.')) {
-        refetch()
-        return
-      }
+  // async function handleFacebookDisconnect(integrationId?: string) { // COMENTADO - Facebook oculto
+  //   try {
+  //     if (!confirm('¿Desconectar Facebook? Esto deshabilitará la obtención automática de usernames para Instagram.')) {
+  //       refetch()
+  //       return
+  //     }
 
-      const integration = integrationId
-        ? integrations.find(i => i.id === integrationId)
-        : integrations.find(i => i.type === 'facebook')
+  //     const integration = integrationId
+  //       ? integrations.find(i => i.id === integrationId)
+  //       : integrations.find(i => i.type === 'facebook')
 
-      if (!integration) {
-        alert('No se encontró la integración de Facebook')
-        refetch()
-        return
-      }
+  //     if (!integration) {
+  //       alert('No se encontró la integración de Facebook')
+  //       refetch()
+  //       return
+  //     }
 
-      await updateIntegration(integration.id, {
-        status: 'disconnected',
-        connected_at: undefined,
-        config: {}
-      })
+  //     await updateIntegration(integration.id, {
+  //       status: 'disconnected',
+  //       connected_at: undefined,
+  //       config: {}
+  //     })
 
-      refetch()
-    } catch (error: any) {
-      console.error('Error disconnecting Facebook:', error)
-      alert(`Error al desconectar: ${error.message || 'Error desconocido'}`)
-      refetch()
-    }
-  }
+  //     refetch()
+  //   } catch (error: any) {
+  //     console.error('Error disconnecting Facebook:', error)
+  //     alert(`Error al desconectar: ${error.message || 'Error desconocido'}`)
+  //     refetch()
+  //   }
+  // }
 
   async function handleGoogleCalendarConnect() {
     try {
@@ -357,7 +357,9 @@ function Integrations() {
         </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-                {integrations.map((integration) => {
+                {integrations
+                  .filter(integration => integration.type !== 'facebook') // Ocultar Facebook por ahora
+                  .map((integration) => {
             const isConnected = integration.status === 'connected'
             const bg = integration.type === 'whatsapp'
               ? '#a6e3a1'
@@ -411,9 +413,9 @@ function Integrations() {
                     {integration.type === 'instagram' && (
                       <InstagramIcon size={24} color="#000" />
                     )}
-                    {integration.type === 'facebook' && (
-                      <FacebookIcon size={24} color="#000" />
-                    )}
+                    {/* integration.type === 'facebook' && ( // COMENTADO - Facebook oculto
+                      // <FacebookIcon size={24} color="#000" />
+                    ) */}
                     {integration.type === 'google-calendar' && (
                       <GoogleCalendarIcon size={24} color="#000" />
                     )}
@@ -621,7 +623,7 @@ function Integrations() {
         </div>
       </Modal>
 
-      {/* Modal de advertencia para Facebook */}
+      {/* Modal de advertencia para Facebook - COMENTADO TEMPORALMENTE
       <Modal
         isOpen={showFacebookWarning}
         onClose={() => setShowFacebookWarning(false)}
@@ -694,6 +696,7 @@ function Integrations() {
           </div>
         </div>
       </Modal>
+      */}
 
       {/* Modal de advertencia para WhatsApp */}
       <Modal
