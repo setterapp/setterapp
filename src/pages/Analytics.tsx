@@ -15,6 +15,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { useConversations } from '../hooks/useConversations'
 import { useAgents } from '../hooks/useAgents'
 import { useIntegrations } from '../hooks/useIntegrations'
+import { useMeetings } from '../hooks/useMeetings'
 import {
   ChartContainer,
   ChartTooltip,
@@ -28,11 +29,12 @@ function Analytics() {
   const { conversations, loading: conversationsLoading } = useConversations()
   const { agents, loading: agentsLoading } = useAgents()
   const { integrations, loading: integrationsLoading } = useIntegrations()
+  const { meetings, loading: meetingsLoading } = useMeetings()
 
   const [timeRange, setTimeRange] = useState<TimeRange>('week')
   const [refreshing, setRefreshing] = useState(false)
 
-  const loading = conversationsLoading || agentsLoading || integrationsLoading
+  const loading = conversationsLoading || agentsLoading || integrationsLoading || meetingsLoading
 
   // Calcular métricas basadas en el rango de tiempo seleccionado
   const metrics = useMemo(() => {
@@ -85,6 +87,20 @@ function Analytics() {
 
     // Integraciones conectadas
     const connectedIntegrations = integrations.filter(int => int.status === 'connected').length
+
+    // Métricas de reuniones
+    const upcomingMeetings = meetings.filter(m => {
+      const meetingDate = new Date(m.meeting_date)
+      return meetingDate >= now && m.status === 'scheduled'
+    }).length
+
+    const todayMeetings = meetings.filter(m => {
+      const meetingDate = new Date(m.meeting_date)
+      const today = new Date()
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+      const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
+      return meetingDate >= todayStart && meetingDate < todayEnd && m.status === 'scheduled'
+    }).length
 
     // Conversaciones por día (últimos 21 días)
     const conversationsByDay = Array.from({ length: 21 }, (_, i) => {
@@ -144,9 +160,11 @@ function Analytics() {
       connectedIntegrations,
       conversationsByDay,
       conversationsByAgent,
-      conversationGrowth
+      conversationGrowth,
+      upcomingMeetings,
+      todayMeetings
     }
-  }, [conversations, agents, integrations, timeRange])
+  }, [conversations, agents, integrations, meetings, timeRange])
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -335,6 +353,54 @@ function Analytics() {
             </p>
           </div>
         </div>
+
+        <div className="card">
+          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            Reuniones Hoy
+          </h3>
+          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: 'var(--border-radius)',
+              background: 'rgba(166, 227, 161, 0.15)',
+              border: '2px solid #000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <Calendar size={24} color="var(--color-success)" />
+            </div>
+            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-success)' }}>
+              {metrics.todayMeetings}
+            </p>
+          </div>
+        </div>
+
+        <div className="card">
+          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            Próximas Reuniones
+          </h3>
+          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: 'var(--border-radius)',
+              background: 'rgba(249, 226, 175, 0.15)',
+              border: '2px solid #000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <Calendar size={24} color="var(--color-warning)" />
+            </div>
+            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-warning)' }}>
+              {metrics.upcomingMeetings}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Gráfico de actividad */}
@@ -411,6 +477,62 @@ function Analytics() {
           </BarChart>
         </ChartContainer>
       </div>
+
+      {/* Próximas reuniones */}
+      {metrics.upcomingMeetings > 0 && (
+        <div className="card" style={{ marginTop: 'var(--spacing-md)' }}>
+          <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
+            <Calendar size={20} />
+            Próximas Reuniones ({metrics.upcomingMeetings})
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+            {meetings
+              .filter(m => {
+                const meetingDate = new Date(m.meeting_date)
+                return meetingDate >= new Date() && m.status === 'scheduled'
+              })
+              .sort((a, b) => new Date(a.meeting_date).getTime() - new Date(b.meeting_date).getTime())
+              .slice(0, 5) // Mostrar máximo 5 reuniones
+              .map(meeting => (
+                <div key={meeting.id} className="flex items-center justify-between" style={{ padding: 'var(--spacing-sm)', border: '1px solid var(--color-border)', borderRadius: 'var(--border-radius)', background: 'var(--color-bg-secondary)' }}>
+                  <div className="flex items-center" style={{ gap: 'var(--spacing-sm)' }}>
+                    <Calendar size={16} color="var(--color-primary)" />
+                    <div>
+                      <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text)' }}>
+                        {meeting.lead_name}
+                      </div>
+                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                        {new Date(meeting.meeting_date).toLocaleDateString('es-ES', {
+                          weekday: 'short',
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })} • {meeting.duration_minutes} min
+                      </div>
+                    </div>
+                  </div>
+                  <a
+                    href={meeting.meeting_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn--primary btn--sm"
+                    style={{ fontSize: 'var(--font-size-xs)', padding: '4px 8px' }}
+                  >
+                    Unirse
+                  </a>
+                </div>
+              ))}
+          </div>
+          {metrics.upcomingMeetings > 5 && (
+            <div style={{ textAlign: 'center', marginTop: 'var(--spacing-md)' }}>
+              <a href="/meetings" className="btn btn--ghost" style={{ fontSize: 'var(--font-size-sm)' }}>
+                Ver todas las reuniones
+              </a>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Conversaciones por agente */}
       {metrics.conversationsByAgent.length > 0 && (

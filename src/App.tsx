@@ -12,6 +12,7 @@ import Analytics from './pages/Analytics'
 import Conversations from './pages/Conversations'
 import Contacts from './pages/Contacts'
 import Calendar from './pages/Calendar'
+import Meetings from './pages/Meetings'
 import SettingsPage from './pages/Settings'
 import AuthCallback from './pages/AuthCallback'
 import InstagramCallback from './pages/InstagramCallback'
@@ -37,7 +38,7 @@ function Layout() {
     { path: '/conversations', label: t('navigation.conversations'), icon: MessageSquare },
     { path: '/contacts', label: t('navigation.contacts'), icon: Users },
     { path: '/agents', label: t('navigation.agents'), icon: Brain },
-    { path: '/calendar', label: t('navigation.calendar'), icon: CalendarIcon },
+    { path: '/meetings', label: 'Reuniones', icon: CalendarIcon },
     { path: '/integrations', label: t('navigation.integrations'), icon: Plug },
     { path: '/settings', label: t('navigation.settings'), icon: Settings },
   ]
@@ -151,6 +152,7 @@ function App() {
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/agents" element={<Agents />} />
+          <Route path="/meetings" element={<Meetings />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/integrations" element={<Integrations />} />
           <Route path="/settings" element={<SettingsPage />} />

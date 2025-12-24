@@ -29,3 +29,4 @@ ALTER TABLE public.agents
   CHECK ((platform = ANY (ARRAY['whatsapp'::text, 'instagram'::text])) OR (platform IS NULL));
 
 COMMIT;
+
