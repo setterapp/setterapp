@@ -1384,7 +1384,7 @@ async function generateAndSendAutoReply(
           },
         },
         {
-          onConflict: 'user_id,platform_message_id',
+          onConflict: 'conversation_id,platform_message_id',
           ignoreDuplicates: true,
         }
       );
