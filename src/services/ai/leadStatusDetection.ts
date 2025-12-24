@@ -18,10 +18,17 @@ interface LeadStatusResult {
 }
 
 /**
- * Analiza la conversación y determina el estado del lead usando IA
+ * Analiza la conversación y determina el estado del lead usando IA (modelo económico)
  */
 export async function detectLeadStatus(messages: Message[]): Promise<LeadStatusResult> {
-  console.log('[LeadStatus] Analyzing conversation with', messages.length, 'messages')
+  return detectLeadStatusWithModel(messages, 'gpt-3.5-turbo')
+}
+
+/**
+ * Analiza la conversación y determina el estado del lead usando IA con modelo específico
+ */
+export async function detectLeadStatusWithModel(messages: Message[], model: string = 'gpt-3.5-turbo'): Promise<LeadStatusResult> {
+  console.log(`[LeadStatus] Analyzing conversation with ${messages.length} messages using ${model}`)
 
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY
 
@@ -35,30 +42,24 @@ export async function detectLeadStatus(messages: Message[]): Promise<LeadStatusR
   }
 
   try {
-    // Preparar el contexto de la conversación
-    const conversationText = messages.map(m =>
-      `${m.sender === 'agent' ? 'Agente' : 'Lead'}: ${m.content}`
+    // Preparar el contexto de la conversación (últimos 8 mensajes para mantener bajo costo)
+    const recentMessages = messages.slice(-8)
+    const conversationText = recentMessages.map(m =>
+      `${m.sender === 'agent' ? 'A' : 'L'}: ${m.content.substring(0, 100)}` // Limitar longitud
     ).join('\n')
 
-    const prompt = `Analiza esta conversación entre un agente de ventas y un lead potencial.
+    const prompt = `Analiza estos mensajes recientes de una conversación de ventas y determina el estado actual del lead:
 
-Conversación:
 ${conversationText}
 
-Determina el estado del lead según estos criterios:
+Estados:
+- COLD: No interesado, rechaza, negativo
+- WARM: Interés moderado, preguntas básicas
+- HOT: Muy interesado, pregunta precios/fechas
+- CLOSED: Compra realizada exitosamente
+- NOT_CLOSED: Cerrado sin conversión
 
-- COLD (Frío): El lead no está interesado, no responde bien, da respuestas cortas negativas, o explícitamente rechaza la oferta
-- WARM (Tibio): El lead muestra cierto interés, hace preguntas, pero aún no está listo para comprometerse
-- HOT (Caliente): El lead está muy interesado, pregunta sobre precios, quiere agendar una llamada, solicita más detalles específicos, está listo para avanzar
-- CLOSED (Cerrado): El lead ya realizó la compra exitosamente o se comprometió definitivamente
-- NOT_CLOSED (No Cerrado): El lead fue cerrado pero no convertido (rechazado, perdió interés, eligió competencia, etc.)
-
-Responde SOLO con un objeto JSON en este formato exacto:
-{
-  "status": "cold" | "warm" | "hot" | "closed" | "not_closed",
-  "confidence": 0.0-1.0,
-  "reasoning": "breve explicación de por qué elegiste este estado"
-}`
+Responde solo con JSON: {"status": "cold|warm|hot|closed|not_closed", "confidence": 0.0-1.0, "reasoning": "breve explicación"}`
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -67,19 +68,19 @@ Responde SOLO con un objeto JSON en este formato exacto:
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: model,
         messages: [
           {
             role: 'system',
-            content: 'Eres un experto en ventas que analiza conversaciones para determinar el nivel de interés de leads. Respondes solo con JSON válido.'
+            content: 'Clasifica leads en ventas. Responde solo con JSON válido.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.3,
-        max_tokens: 200
+        temperature: 0.2, // Más determinista
+        max_tokens: 100   // Menos tokens para reducir costo
       })
     })
 
@@ -247,6 +248,128 @@ export async function syncContactsLeadStatus(): Promise<{
       synced: 0,
       message: `Error: ${error.message}`
     }
+  }
+}
+
+/**
+ * Clasifica automáticamente el estado del lead cuando llega un mensaje nuevo (usando modelo económico)
+ */
+export async function autoClassifyLeadStatus(conversationId: string): Promise<{
+  success: boolean
+  statusChanged: boolean
+  oldStatus?: LeadStatus
+  newStatus?: LeadStatus
+  confidence?: number
+}> {
+  try {
+    console.log('[LeadStatus] Auto-classifying lead status for conversation:', conversationId)
+
+    const { createClient } = await import('@supabase/supabase-js')
+    const supabase = createClient(
+      import.meta.env.VITE_SUPABASE_URL,
+      import.meta.env.VITE_SUPABASE_ANON_KEY
+    )
+
+    // Obtener mensajes recientes de la conversación
+    const { data: messagesData, error: messagesError } = await supabase
+      .from('messages')
+      .select('content, sender, created_at')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true })
+      .limit(12) // Últimos 12 mensajes para contexto
+
+    if (messagesError) {
+      console.error('[LeadStatus] Error fetching messages:', messagesError)
+      return { success: false, statusChanged: false }
+    }
+
+    if (!messagesData || messagesData.length === 0) {
+      return { success: true, statusChanged: false }
+    }
+
+    // Convertir a formato Message
+    const messages: Message[] = messagesData.map(m => ({
+      content: m.content,
+      sender: m.sender as 'agent' | 'lead',
+      timestamp: m.created_at
+    }))
+
+    // Solo clasificar si hay al menos 3 mensajes y el último es del lead
+    if (messages.length < 3 || messages[messages.length - 1].sender !== 'lead') {
+      return { success: true, statusChanged: false }
+    }
+
+    // Clasificar usando el modelo económico
+    const result = await detectLeadStatusWithModel(messages, 'gpt-3.5-turbo')
+
+    if (result.confidence < 0.6) {
+      console.log('[LeadStatus] Low confidence, skipping classification')
+      return { success: true, statusChanged: false }
+    }
+
+    // Obtener estado actual
+    const { data: conversation, error: convError } = await supabase
+      .from('conversations')
+      .select('lead_status, contact_id')
+      .eq('id', conversationId)
+      .single()
+
+    if (convError) {
+      console.error('[LeadStatus] Error fetching conversation:', convError)
+      return { success: false, statusChanged: false }
+    }
+
+    const oldStatus = conversation?.lead_status as LeadStatus | null
+    const newStatus = result.status
+
+    // Solo actualizar si el estado cambió
+    if (oldStatus === newStatus) {
+      return { success: true, statusChanged: false, oldStatus: oldStatus || undefined, newStatus, confidence: result.confidence }
+    }
+
+    console.log(`[LeadStatus] Status changed: ${oldStatus} -> ${newStatus} (confidence: ${result.confidence})`)
+
+    // Actualizar conversación
+    const { error: updateError } = await supabase
+      .from('conversations')
+      .update({
+        lead_status: newStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', conversationId)
+
+    if (updateError) {
+      console.error('[LeadStatus] Error updating conversation:', updateError)
+      return { success: false, statusChanged: false }
+    }
+
+    // Actualizar contacto si existe
+    if (conversation.contact_id) {
+      const { error: contactError } = await supabase
+        .from('contacts')
+        .update({
+          lead_status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', conversation.contact_id)
+
+      if (contactError) {
+        console.error('[LeadStatus] Error updating contact:', contactError)
+        // No fallar la operación principal
+      }
+    }
+
+    return {
+      success: true,
+      statusChanged: true,
+      oldStatus: oldStatus || undefined,
+      newStatus,
+      confidence: result.confidence
+    }
+
+  } catch (error: any) {
+    console.error('[LeadStatus] Error in auto classification:', error)
+    return { success: false, statusChanged: false }
   }
 }
 

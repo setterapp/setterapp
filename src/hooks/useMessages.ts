@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { autoClassifyLeadStatus } from '../services/ai/leadStatusDetection'
 
 export interface Message {
   id: string
@@ -135,6 +136,22 @@ export function useMessages(conversationId: string | null) {
                     return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
                   })
                 })
+
+                // Clasificar automáticamente el estado del lead si es un mensaje entrante del lead
+                if (newMessage.direction === 'inbound' && conversationId) {
+                  // Ejecutar clasificación en background sin bloquear la UI
+                  setTimeout(async () => {
+                    try {
+                      const result = await autoClassifyLeadStatus(conversationId)
+
+                      if (result.statusChanged) {
+                        console.log(`[Messages] Lead status auto-updated: ${result.oldStatus} → ${result.newStatus}`)
+                      }
+                    } catch (error) {
+                      console.error('[Messages] Error in auto lead classification:', error)
+                    }
+                  }, 1000) // Pequeño delay para no interferir con la carga inicial
+                }
               } else if (payload.eventType === 'UPDATE') {
                 const updatedMessage = payload.new as Message
                 setMessages(prev => {
