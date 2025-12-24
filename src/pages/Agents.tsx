@@ -22,7 +22,7 @@ function Agents() {
     config: {} as AgentConfig,
   })
   const [currentStep, setCurrentStep] = useState(1)
-  const totalSteps = 6
+  const totalSteps = 7
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -464,6 +464,139 @@ function Agents() {
                     rows={3}
                   />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 7: Configuración de Reuniones */}
+          {currentStep === 7 && (
+            <div>
+              <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
+                Generación de Reuniones
+              </h3>
+              <div>
+                <div className="form-group">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer' }}>
+                    <Checkbox
+                      checked={formData.config.enableMeetingScheduling || false}
+                      onCheckedChange={(checked) => updateConfig('enableMeetingScheduling', checked)}
+                    />
+                    <span style={{ color: 'var(--color-text)' }}>Habilitar generación automática de reuniones con Google Calendar</span>
+                  </label>
+                  <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)', opacity: 0.9, display: 'block', marginTop: 'var(--spacing-xs)' }}>
+                    Cuando un lead esté calificado, el agente podrá crear automáticamente una reunión en tu calendario
+                  </small>
+                </div>
+
+                {formData.config.enableMeetingScheduling && (
+                  <>
+                    <div className="form-group">
+                      <label htmlFor="meetingTitle">Título de la Reunión</label>
+                      <input
+                        id="meetingTitle"
+                        type="text"
+                        className="input"
+                        value={formData.config.meetingTitle || ''}
+                        onChange={(e) => updateConfig('meetingTitle', e.target.value)}
+                        placeholder="Ej: Llamada de Consultoría con {nombre}"
+                      />
+                      <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)', opacity: 0.9 }}>
+                        Usa {'{nombre}'} para incluir el nombre del lead
+                      </small>
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="meetingDescription">Descripción de la Reunión</label>
+                      <textarea
+                        id="meetingDescription"
+                        className="input textarea"
+                        value={formData.config.meetingDescription || ''}
+                        onChange={(e) => updateConfig('meetingDescription', e.target.value)}
+                        placeholder="Describe el propósito de la reunión"
+                        rows={2}
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 'var(--spacing-md)' }}>
+                      <div className="form-group">
+                        <label htmlFor="meetingDuration">Duración (min)</label>
+                        <input
+                          id="meetingDuration"
+                          type="number"
+                          className="input"
+                          min="15"
+                          step="15"
+                          value={formData.config.meetingDuration || 30}
+                          onChange={(e) => updateConfig('meetingDuration', parseInt(e.target.value) || 30)}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="meetingBufferMinutes">Buffer (min)</label>
+                        <input
+                          id="meetingBufferMinutes"
+                          type="number"
+                          className="input"
+                          min="0"
+                          step="5"
+                          value={formData.config.meetingBufferMinutes || 0}
+                          onChange={(e) => updateConfig('meetingBufferMinutes', parseInt(e.target.value) || 0)}
+                        />
+                        <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)', opacity: 0.9 }}>
+                          Tiempo entre reuniones
+                        </small>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
+                      <div className="form-group">
+                        <label htmlFor="meetingAvailableHoursStart">Horario Disponible - Inicio</label>
+                        <input
+                          id="meetingAvailableHoursStart"
+                          type="time"
+                          className="input"
+                          value={formData.config.meetingAvailableHoursStart || '09:00'}
+                          onChange={(e) => updateConfig('meetingAvailableHoursStart', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="meetingAvailableHoursEnd">Horario Disponible - Fin</label>
+                        <input
+                          id="meetingAvailableHoursEnd"
+                          type="time"
+                          className="input"
+                          value={formData.config.meetingAvailableHoursEnd || '18:00'}
+                          onChange={(e) => updateConfig('meetingAvailableHoursEnd', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Días Disponibles</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 'var(--spacing-sm)' }}>
+                        {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day, index) => {
+                          const dayValue = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'][index]
+                          const availableDays = formData.config.meetingAvailableDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+                          return (
+                            <label key={dayValue} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', cursor: 'pointer' }}>
+                              <Checkbox
+                                checked={availableDays.includes(dayValue)}
+                                onCheckedChange={(checked) => {
+                                  const newDays = checked
+                                    ? [...availableDays, dayValue]
+                                    : availableDays.filter(d => d !== dayValue)
+                                  updateConfig('meetingAvailableDays', newDays)
+                                }}
+                              />
+                              <span style={{ fontSize: 'var(--font-size-sm)' }}>{day}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}

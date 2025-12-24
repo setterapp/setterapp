@@ -19,6 +19,15 @@ export interface AgentConfig {
   disqualifyMessage?: string
   toneGuidelines?: string
   additionalContext?: string
+  // Configuración de reuniones con Google Calendar
+  enableMeetingScheduling?: boolean
+  meetingDuration?: number // en minutos
+  meetingTitle?: string
+  meetingDescription?: string
+  meetingBufferMinutes?: number // tiempo de buffer entre reuniones
+  meetingAvailableHoursStart?: string // ej: "09:00"
+  meetingAvailableHoursEnd?: string // ej: "18:00"
+  meetingAvailableDays?: string[] // ej: ["monday", "tuesday", "wednesday", "thursday", "friday"]
 }
 
 export interface Agent {
