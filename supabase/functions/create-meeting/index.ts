@@ -115,28 +115,38 @@ serve(async (req) => {
         const availableHoursEnd = agentConfig.meetingAvailableHoursEnd || '18:00'
         const availableDays = agentConfig.meetingAvailableDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
 
+
         // --- MODE: CHECK AVAILABILITY ---
         if (checkAvailabilityOnly) {
-            console.log('[CreateMeeting] Checking availability...')
-            const slots = await findAllAvailableSlots(
-                calendarId,
-                accessToken,
-                duration,
-                bufferMinutes,
-                availableHoursStart,
-                availableHoursEnd,
-                availableDays
-            )
+            console.log('[CreateMeeting] Step 4: Checking availability (Parallelized)...')
+            try {
+                const slots = await findAllAvailableSlots(
+                    calendarId,
+                    accessToken,
+                    duration,
+                    bufferMinutes,
+                    availableHoursStart,
+                    availableHoursEnd,
+                    availableDays
+                )
 
-            console.log(`[CreateMeeting] Found ${slots.length} available slots`)
+                console.log(`[CreateMeeting] Step 5: Found ${slots.length} available slots`)
 
-            return new Response(
-                JSON.stringify({
-                    success: true,
-                    slots: slots
-                }),
-                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            )
+                return new Response(
+                    JSON.stringify({
+                        success: true,
+                        slots: slots
+                    }),
+                    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                )
+            } catch (err) {
+                console.error('[CreateMeeting] Error in check logic:', err)
+                // Return specific error to help diagnosis
+                return new Response(
+                    JSON.stringify({ success: false, error: err.message }),
+                    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                )
+            }
         }
 
         // --- MODE: CREATE MEETING ---
@@ -153,23 +163,24 @@ serve(async (req) => {
             console.log('[CreateMeeting] Using provided custom date:', startTime.toISOString())
         } else {
             // Fallback: Find first available slot
-            const slot = await findNextAvailableSlot(
+            const slots = await findAllAvailableSlots(
                 calendarId,
                 accessToken,
                 duration,
                 bufferMinutes,
                 availableHoursStart,
                 availableHoursEnd,
-                availableDays
+                availableDays,
+                3 // Reduced scope for quick check
             )
-            if (!slot) {
+            if (slots.length === 0) {
                 return new Response(
                     JSON.stringify({ success: false, error: 'No available slots found' }),
                     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
                 )
             }
-            startTime = slot.start
-            endTime = slot.end
+            startTime = new Date(slots[0].start)
+            endTime = new Date(slots[0].end)
             console.log('[CreateMeeting] Found next available slot:', startTime.toISOString())
         }
 
@@ -269,98 +280,84 @@ async function findAllAvailableSlots(
     bufferMinutes: number,
     availableHoursStart: string,
     availableHoursEnd: string,
-    availableDays: string[]
+    availableDays: string[],
+    daysScope: number = 5
 ): Promise<Array<{ start: string; end: string }>> {
-    const slots: Array<{ start: string; end: string }> = []
-
-    // Config
-    const maxDaysAhead = 5
     const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
     const [startHour, startMinute] = availableHoursStart.split(':').map(Number)
     const [endHour, endMinute] = availableHoursEnd.split(':').map(Number)
 
     const now = new Date()
-    // Round up to next 30 mins for cleaner start times
     now.setMinutes(Math.ceil(now.getMinutes() / 30) * 30, 0, 0)
 
-    for (let dayOffset = 0; dayOffset < maxDaysAhead; dayOffset++) {
-        const checkDate = new Date(now)
-        checkDate.setDate(checkDate.getDate() + dayOffset)
+    const promises = []
 
-        // Skip days not in availableDays
-        const dayName = daysOfWeek[checkDate.getDay()]
-        if (!availableDays.includes(dayName)) continue
+    for (let dayOffset = 0; dayOffset < daysScope; dayOffset++) {
+        promises.push((async () => {
+            const checkDate = new Date(now)
+            checkDate.setDate(checkDate.getDate() + dayOffset)
 
-        // Define Start/End working hours for this day
-        const workStart = new Date(checkDate)
-        workStart.setHours(startHour, startMinute, 0, 0)
+            const dayName = daysOfWeek[checkDate.getDay()]
+            if (!availableDays.includes(dayName)) return []
 
-        const workEnd = new Date(checkDate)
-        workEnd.setHours(endHour, endMinute, 0, 0)
+            const workStart = new Date(checkDate)
+            workStart.setHours(startHour, startMinute, 0, 0)
 
-        // If today, ensure we start after NOW
-        let currentTime = new Date(workStart)
-        if (currentTime < now) {
-            currentTime = new Date(now)
-        }
+            const workEnd = new Date(checkDate)
+            workEnd.setHours(endHour, endMinute, 0, 0)
 
-        // If 'now' is already past workEnd, skip today
-        if (currentTime >= workEnd) continue
-
-        // Fetch events for this day to check conflicts
-        const eventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?` +
-            `timeMin=${workStart.toISOString()}&` +
-            `timeMax=${workEnd.toISOString()}&` +
-            `singleEvents=true&` +
-            `orderBy=startTime`
-
-        const eventsRes = await fetch(eventsUrl, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        })
-
-        if (!eventsRes.ok) continue
-
-        const eventsData = await eventsRes.json()
-        const events = eventsData.items || []
-
-        // Search for slots in this day
-        while (currentTime.getTime() + duration * 60000 <= workEnd.getTime()) {
-            const slotStart = new Date(currentTime)
-            const slotEnd = new Date(currentTime.getTime() + duration * 60000)
-
-            // Check conflict
-            const hasConflict = events.some((event: any) => {
-                const evStart = new Date(event.start.dateTime || event.start.date)
-                const evEnd = new Date(event.end.dateTime || event.end.date)
-
-                // Add buffer
-                const bufferedSlotStart = new Date(slotStart.getTime() - bufferMinutes * 60000)
-                const bufferedSlotEnd = new Date(slotEnd.getTime() + bufferMinutes * 60000)
-
-                return (bufferedSlotStart < evEnd && bufferedSlotEnd > evStart)
-            })
-
-            if (!hasConflict) {
-                slots.push({
-                    start: slotStart.toISOString(),
-                    end: slotEnd.toISOString()
-                })
-                // Limit number of slots per day or total to avoid spamming
-                if (slots.length >= 15) return slots
+            let currentTime = new Date(workStart)
+            if (currentTime < now) {
+                currentTime = new Date(now)
             }
 
-            // Increment: 30 mins or duration? Let's do 30 mins steps for flexibility
-            currentTime = new Date(currentTime.getTime() + 30 * 60000)
-        }
+            if (currentTime >= workEnd) return []
+
+            const eventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?` +
+                `timeMin=${workStart.toISOString()}&` +
+                `timeMax=${workEnd.toISOString()}&` +
+                `singleEvents=true&` +
+                `orderBy=startTime`
+
+            const eventsRes = await fetch(eventsUrl, {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            })
+
+            if (!eventsRes.ok) {
+                console.error(`[CreateMeeting] Google API Error for ${checkDate.toISOString().split('T')[0]}: ${eventsRes.status} ${eventsRes.statusText}`)
+                if (eventsRes.status === 401) throw new Error('Google Calendar Token Expired')
+                return []
+            }
+
+            const eventsData = await eventsRes.json()
+            const events = eventsData.items || []
+            const daySlots = []
+
+            while (currentTime.getTime() + duration * 60000 <= workEnd.getTime()) {
+                const slotStart = new Date(currentTime)
+                const slotEnd = new Date(currentTime.getTime() + duration * 60000)
+
+                const hasConflict = events.some((event: any) => {
+                    const evStart = new Date(event.start.dateTime || event.start.date)
+                    const evEnd = new Date(event.end.dateTime || event.end.date)
+                    const bufStart = new Date(slotStart.getTime() - bufferMinutes * 60000)
+                    const bufEnd = new Date(slotEnd.getTime() + bufferMinutes * 60000)
+                    return (bufStart < evEnd && bufEnd > evStart)
+                })
+
+                if (!hasConflict) {
+                    daySlots.push({ start: slotStart.toISOString(), end: slotEnd.toISOString() })
+                    if (daySlots.length >= 8) break // Limit slots per day
+                }
+                currentTime = new Date(currentTime.getTime() + 30 * 60000)
+            }
+            return daySlots
+        })())
     }
 
-    return slots
+    const results = await Promise.all(promises)
+    return results.flat().slice(0, 20) // Limit total returned slots to prevent large JSON
 }
-
-// Keep the old helper for backward compatibility if needed, using the logic from new helper or keeping as is?
-// To save tokens/space I will replace it if possible, but the prompt implies I should keeping fixing "create-meeting".
-// I'll keep the logic simple in "serve" and rely on "findAllAvailableSlots" or re-implement "findNextAvailableSlot" as a wrapper if needed.
-// Actually, findNextAvailableSlot is just findAllAvailableSlots()[0].
 
 async function findNextAvailableSlot(
     calendarId: string,
@@ -371,7 +368,7 @@ async function findNextAvailableSlot(
     availableHoursEnd: string,
     availableDays: string[]
 ): Promise<{ start: Date; end: Date } | null> {
-    const slots = await findAllAvailableSlots(calendarId, accessToken, duration, bufferMinutes, availableHoursStart, availableHoursEnd, availableDays)
+    const slots = await findAllAvailableSlots(calendarId, accessToken, duration, bufferMinutes, availableHoursStart, availableHoursEnd, availableDays, 5)
     if (slots.length > 0) {
         return { start: new Date(slots[0].start), end: new Date(slots[0].end) }
     }

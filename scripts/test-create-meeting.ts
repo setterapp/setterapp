@@ -36,7 +36,27 @@ async function testCreateMeeting() {
 
     console.log("📝 Payload:", payload);
 
+
     try {
+        // Test 1: Check Availability
+        console.log('\n🧪 Testing Check Availability...')
+        const checkResponse = await fetch(FUNCTION_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+                ...payload,
+                checkAvailabilityOnly: true
+            }),
+        });
+        const checkData = await checkResponse.json();
+        console.log('Available Slots:', JSON.stringify(checkData.slots?.slice(0, 3) || checkData, null, 2));
+
+
+        // Test 2: Create Meeting (Uncomment to run)
+        /*
         const response = await fetch(FUNCTION_URL, {
             method: "POST",
             headers: {
@@ -58,6 +78,7 @@ async function testCreateMeeting() {
         } else {
             console.error("❌ Test Failed: Function returned error status");
         }
+        */
 
     } catch (error) {
         console.error("❌ Test Failed: Network or execution error", error);
