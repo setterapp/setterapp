@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, User } from 'lucide-react'
 import type { Conversation } from '../hooks/useConversations'
 import { formatDate } from '../utils/date'
 import WhatsAppIcon from './icons/WhatsAppIcon'
@@ -115,6 +115,73 @@ function ConversationItem({
   const username = conversation.contact_ref?.username || conversation.contact_metadata?.username
   const name = conversation.contact_metadata?.name
 
+  // Función para renderizar el avatar (foto o por defecto)
+  const renderAvatar = () => {
+    const hasProfilePicture = profilePicture && !imageError
+
+    return (
+      <div
+        className="conversation-item-avatar"
+        style={{
+          width: '48px',
+          height: '48px',
+          borderRadius: '50%',
+          overflow: 'hidden',
+          flexShrink: 0,
+          border: '3px solid var(--color-border)',
+          background: hasProfilePicture
+            ? 'transparent'
+            : (conversation.platform === 'whatsapp'
+                ? '#a6e3a1'
+                : '#f38ba8'),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+        }}
+      >
+        {hasProfilePicture ? (
+          <img
+            src={profilePicture}
+            alt={displayName}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+            onError={() => {
+              setImageError(true)
+            }}
+          />
+        ) : (
+          // Avatar por defecto (monigote como WhatsApp)
+          <User size={24} color="#666" />
+        )}
+
+        {/* Icono de red social debajo del avatar */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '-8px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'white',
+            borderRadius: '50%',
+            padding: '2px',
+            border: '2px solid var(--color-border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '20px',
+            height: '20px',
+          }}
+        >
+          <PlatformIcon size={12} color="#666" />
+        </div>
+      </div>
+    )
+  }
+
   const rawContact = conversation.contact || ''
   const isNumeric = /^\d+$/.test(rawContact)
   const alias = conversation.contact_alias
@@ -142,50 +209,10 @@ function ConversationItem({
       }}
       title={rawContact && displayName !== rawContact ? rawContact : undefined}
     >
-      {/* Mostrar foto de perfil si está disponible y no hay error, sino mostrar el icono de plataforma */}
-      {profilePicture && !imageError ? (
-        <div
-          className="conversation-item-avatar"
-          style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
-            overflow: 'hidden',
-            flexShrink: 0,
-            border: '3px solid var(--color-border)',
-            background: conversation.platform === 'whatsapp'
-              ? '#a6e3a1'
-              : '#f38ba8',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <img
-            src={profilePicture}
-            alt={displayName}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-            onError={() => {
-              setImageError(true)
-            }}
-          />
-        </div>
-      ) : (
-        <div
-          className="conversation-item-icon"
-          style={{
-            background: conversation.platform === 'whatsapp'
-              ? '#a6e3a1'
-              : '#f38ba8'
-          }}
-        >
-          <PlatformIcon size={20} color="#000" />
-        </div>
-      )}
+      {/* Avatar con foto de perfil y icono de red social */}
+      <div style={{ position: 'relative', paddingBottom: '12px' }}>
+        {renderAvatar()}
+      </div>
 
       <div className="conversation-item-content">
         <div className="conversation-item-header">
