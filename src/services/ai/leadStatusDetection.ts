@@ -206,6 +206,51 @@ export function getStatusChangeMessage(oldStatus: LeadStatus | null, newStatus: 
 }
 
 /**
+ * Sincroniza el lead_status desde conversations hacia contacts
+ */
+export async function syncContactsLeadStatus(): Promise<{
+  success: boolean
+  synced: number
+  message: string
+}> {
+  try {
+    console.log('[LeadStatus] Syncing lead status from conversations to contacts...')
+
+    const { createClient } = await import('@supabase/supabase-js')
+    const supabase = createClient(
+      import.meta.env.VITE_SUPABASE_URL,
+      import.meta.env.VITE_SUPABASE_ANON_KEY
+    )
+
+    // Ejecutar la sincronización usando RPC (si existe) o directamente con query
+    const { data, error } = await supabase.rpc('sync_contacts_lead_status')
+
+    if (error) {
+      console.error('[LeadStatus] Error syncing contacts lead status:', error)
+      return {
+        success: false,
+        synced: 0,
+        message: `Error: ${error.message}`
+      }
+    }
+
+    return {
+      success: true,
+      synced: data || 0,
+      message: `Synchronized ${data || 0} contacts`
+    }
+
+  } catch (error: any) {
+    console.error('[LeadStatus] Error in contact sync:', error)
+    return {
+      success: false,
+      synced: 0,
+      message: `Error: ${error.message}`
+    }
+  }
+}
+
+/**
  * Procesa automáticamente todas las conversaciones sin estado de lead
  */
 export async function processAllConversationsWithoutLeadStatus(): Promise<{

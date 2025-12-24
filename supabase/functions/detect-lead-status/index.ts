@@ -250,13 +250,20 @@ serve(async (req) => {
 
       // Si hay un contacto asociado, actualizar su estado también
       if (conversation.contact_id) {
-        await supabase
+        const { error: contactUpdateError } = await supabase
           .from('contacts')
           .update({
             lead_status: newStatus,
             updated_at: new Date().toISOString()
           })
           .eq('id', conversation.contact_id)
+
+        if (contactUpdateError) {
+          console.error('[DetectLeadStatus] Error updating contact lead status:', contactUpdateError)
+          // No fallar la operación principal si falla la actualización del contacto
+        } else {
+          console.log('[DetectLeadStatus] Contact lead status updated:', conversation.contact_id)
+        }
       }
 
       return new Response(

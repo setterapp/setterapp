@@ -11,6 +11,7 @@ export type Contact = {
   username?: string | null
   profile_picture?: string | null
   last_message_at?: string | null
+  lead_status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null
   created_at: string
   updated_at: string
 }

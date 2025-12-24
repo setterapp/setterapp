@@ -278,20 +278,28 @@ serve(async (req) => {
           })
 
           // Si hay un contacto asociado, actualizar su estado también
-          const { data: contactData } = await supabase
+          const { data: contactData, error: contactQueryError } = await supabase
             .from('conversations')
             .select('contact_id')
             .eq('id', conversation.id)
             .single()
 
-          if (contactData?.contact_id) {
-            await supabase
+          if (contactQueryError) {
+            console.error(`[BulkDetectLeadStatus] Error querying contact for conversation ${conversation.id}:`, contactQueryError)
+          } else if (contactData?.contact_id) {
+            const { error: contactUpdateError } = await supabase
               .from('contacts')
               .update({
                 lead_status: result.status,
                 updated_at: new Date().toISOString()
               })
               .eq('id', contactData.contact_id)
+
+            if (contactUpdateError) {
+              console.error(`[BulkDetectLeadStatus] Error updating contact ${contactData.contact_id}:`, contactUpdateError)
+            } else {
+              console.log(`[BulkDetectLeadStatus] Contact ${contactData.contact_id} lead status updated`)
+            }
           }
         }
 
