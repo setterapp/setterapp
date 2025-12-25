@@ -88,7 +88,7 @@ function Conversations() {
 
   return (
     <div className="conversations-container">
-      <div className={`card conversations-card ${selectedConversationId ? 'conversations-card--expanded' : ''} ${isFirstSelection && selectedConversationId ? 'conversations-card--animating' : ''}`}>
+      <div className={`card conversations-card ${selectedConversationId ? 'conversations-card--expanded' : ''} ${isFirstSelection && selectedConversationId ? 'conversations-card--animating' : ''}`} style={{ border: '2px solid #000' }}>
         {/* Lista de conversaciones - ocultar en mobile cuando hay una seleccionada */}
         {(!isMobile || !selectedConversationId) && (
           <ConversationList
