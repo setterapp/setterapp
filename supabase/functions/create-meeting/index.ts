@@ -314,25 +314,66 @@ serve(async (req) => {
 
         const event = await eventResponse.json()
 
-        // Extraer el link de Google Meet del conferenceData
+        logger.info('Initial event created', {
+            eventId: event.id,
+            conferenceDataStatus: event.conferenceData?.createRequest?.status || 'unknown',
+            hasEntryPoints: !!event.conferenceData?.entryPoints
+        })
+
+        // El conferenceData puede estar en "pending" inicialmente
+        // Esperamos y hacemos polling para obtener el link de Meet
         let meetingLink = event.htmlLink // fallback al link del calendario
-        if (event.conferenceData?.entryPoints) {
-            const videoEntry = event.conferenceData.entryPoints.find((ep: any) => ep.entryPointType === 'video')
-            if (videoEntry?.uri) {
-                meetingLink = videoEntry.uri
+        let finalEvent = event
+
+        const maxRetries = 3
+        for (let i = 0; i < maxRetries; i++) {
+            if (finalEvent.conferenceData?.entryPoints) {
+                const videoEntry = finalEvent.conferenceData.entryPoints.find((ep: any) => ep.entryPointType === 'video')
+                if (videoEntry?.uri) {
+                    meetingLink = videoEntry.uri
+                    logger.success('Google Meet link found', { meetingLink, attempt: i + 1 })
+                    break
+                }
+            } else if (finalEvent.hangoutLink) {
+                meetingLink = finalEvent.hangoutLink
+                logger.success('Hangout link found', { meetingLink, attempt: i + 1 })
+                break
             }
-        } else if (event.hangoutLink) {
-            meetingLink = event.hangoutLink
+
+            // Si no encontramos el link y no es el último intento, esperamos y reintentamos
+            if (i < maxRetries - 1) {
+                logger.info('Conference data not ready, waiting...', { attempt: i + 1 })
+                await new Promise(resolve => setTimeout(resolve, 2000)) // Esperar 2 segundos
+
+                // Obtener el evento actualizado
+                const getResponse = await fetch(
+                    `https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.id}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                        }
+                    }
+                )
+
+                if (getResponse.ok) {
+                    finalEvent = await getResponse.json()
+                    logger.info('Event refetched', {
+                        hasConferenceData: !!finalEvent.conferenceData,
+                        hasEntryPoints: !!finalEvent.conferenceData?.entryPoints
+                    })
+                }
+            }
         }
 
-        logger.success('Google Calendar event created', { eventId: event.id, meetingLink, hasConferenceData: !!event.conferenceData })
+        logger.success('Google Calendar event created', { eventId: event.id, meetingLink, hasConferenceData: !!finalEvent.conferenceData })
         debugLog.push({
             step: 'CALENDAR_EVENT_CREATED',
             data: {
                 eventId: event.id,
                 meetingLink,
-                conferenceData: event.conferenceData ? 'present' : 'missing',
-                hangoutLink: event.hangoutLink || 'missing'
+                conferenceData: finalEvent.conferenceData ? 'present' : 'missing',
+                entryPoints: finalEvent.conferenceData?.entryPoints || 'missing',
+                hangoutLink: finalEvent.hangoutLink || 'missing'
             }
         })
 
