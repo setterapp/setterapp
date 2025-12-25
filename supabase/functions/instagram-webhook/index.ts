@@ -820,29 +820,35 @@ async function processInstagramEvent(event: any, pageId: string) {
                         }
                     )
                     .select('id')
-                    .single();
+                    .maybeSingle(); // maybeSingle() en lugar de single() para manejar duplicados
 
                 if (messageError) {
                     console.error('❌ Error saving message:', messageError);
                     console.error('❌ Error details:', JSON.stringify(messageError, null, 2));
                 } else {
-                    console.log('✅ Message saved successfully with ID:', savedMessage?.id);
+                    // Si savedMessage es null, significa que era un duplicado (ignoreDuplicates: true)
+                    if (savedMessage) {
+                        console.log('✅ Message saved successfully with ID:', savedMessage.id);
+                    } else {
+                        console.log('ℹ️ Message was a duplicate, skipped');
+                    }
 
                     // 🤖 Generar y enviar respuesta automática con IA
-                    // Esta función se ejecuta de forma asíncrona sin bloquear la respuesta del webhook
-                    generateAndSendAutoReply(userId, conversationId, senderId, messageText)
-                        .catch(error => {
-                            console.error('❌ Error en respuesta automática:', error);
-                            // No lanzar el error para no afectar el webhook
-                        });
+                    // Solo si NO es un duplicado
+                    if (savedMessage) {
+                        generateAndSendAutoReply(userId, conversationId, senderId, messageText)
+                            .catch(error => {
+                                console.error('❌ Error en respuesta automática:', error);
+                                // No lanzar el error para no afectar el webhook
+                            });
 
-                    // 📊 Detectar estado del lead automáticamente
-                    // Esta función se ejecuta de forma asíncrona sin bloquear la respuesta del webhook
-                    detectLeadStatusAsync(conversationId)
-                        .catch(error => {
-                            console.error('❌ Error detectando estado del lead:', error);
-                            // No lanzar el error para no afectar el webhook
-                        });
+                        // 📊 Detectar estado del lead automáticamente
+                        detectLeadStatusAsync(conversationId)
+                            .catch(error => {
+                                console.error('❌ Error detectando estado del lead:', error);
+                                // No lanzar el error para no afectar el webhook
+                            });
+                    }
                 }
             }
 
