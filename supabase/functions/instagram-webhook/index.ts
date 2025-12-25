@@ -797,59 +797,77 @@ async function processInstagramEvent(event: any, pageId: string) {
                     messageId
                 });
 
+                // Verificar primero si ya existe para tener mejor visibilidad
+                const { data: existingMessage } = await supabase
+                    .from('messages')
+                    .select('id, created_at')
+                    .eq('user_id', userId)
+                    .eq('platform_message_id', messageId)
+                    .maybeSingle();
+
+                if (existingMessage) {
+                    console.log('ℹ️ Message already exists in database (duplicate webhook):', {
+                        messageId,
+                        existingId: existingMessage.id,
+                        createdAt: existingMessage.created_at
+                    });
+                    // Es un duplicado real, no procesarlo de nuevo
+                    return new Response(JSON.stringify({ success: true, skipped: 'duplicate' }), {
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                    });
+                }
+
+                // No existe, proceder a insertarlo
                 const { data: savedMessage, error: messageError } = await supabase
                     .from('messages')
-                    .upsert(
-                        {
-                            conversation_id: conversationId,
-                            user_id: userId,
-                            platform_message_id: messageId,
-                            content: messageText,
-                            direction: 'inbound',
-                            message_type: 'text',
-                            metadata: {
-                                sender_id: senderId,
-                                recipient_id: recipientId,
-                                timestamp: timestampInSeconds,
-                                raw_timestamp: rawTimestamp,
-                            },
+                    .insert({
+                        conversation_id: conversationId,
+                        user_id: userId,
+                        platform_message_id: messageId,
+                        content: messageText,
+                        direction: 'inbound',
+                        message_type: 'text',
+                        metadata: {
+                            sender_id: senderId,
+                            recipient_id: recipientId,
+                            timestamp: timestampInSeconds,
+                            raw_timestamp: rawTimestamp,
                         },
-                        {
-                            onConflict: 'user_id,platform_message_id',
-                            ignoreDuplicates: true,
-                        }
-                    )
+                    })
                     .select('id')
-                    .maybeSingle(); // maybeSingle() en lugar de single() para manejar duplicados
+                    .single();
 
                 if (messageError) {
                     console.error('❌ Error saving message:', messageError);
                     console.error('❌ Error details:', JSON.stringify(messageError, null, 2));
-                } else {
-                    // Si savedMessage es null, significa que era un duplicado (ignoreDuplicates: true)
-                    if (savedMessage) {
-                        console.log('✅ Message saved successfully with ID:', savedMessage.id);
-                    } else {
-                        console.log('ℹ️ Message was a duplicate, skipped');
+
+                    // Si falla por violación de unique constraint, es race condition (2 webhooks simultáneos)
+                    if (messageError.code === '23505') {
+                        console.log('ℹ️ Race condition: message became duplicate during insert');
+                        return new Response(JSON.stringify({ success: true, skipped: 'race_condition' }), {
+                            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                        });
                     }
 
-                    // 🤖 Generar y enviar respuesta automática con IA
-                    // Solo si NO es un duplicado
-                    if (savedMessage) {
-                        generateAndSendAutoReply(userId, conversationId, senderId, messageText)
-                            .catch(error => {
-                                console.error('❌ Error en respuesta automática:', error);
-                                // No lanzar el error para no afectar el webhook
-                            });
-
-                        // 📊 Detectar estado del lead automáticamente
-                        detectLeadStatusAsync(conversationId)
-                            .catch(error => {
-                                console.error('❌ Error detectando estado del lead:', error);
-                                // No lanzar el error para no afectar el webhook
-                            });
-                    }
+                    // Otro error, no bloquear el webhook pero logear
+                    throw messageError;
                 }
+
+                console.log('✅ Message saved successfully with ID:', savedMessage.id);
+
+                // 🤖 Generar y enviar respuesta automática con IA
+                generateAndSendAutoReply(userId, conversationId, senderId, messageText)
+                    .catch(error => {
+                        console.error('❌ Error en respuesta automática:', error);
+                        // No lanzar el error para no afectar el webhook
+                    });
+
+                // 📊 Detectar estado del lead automáticamente
+                detectLeadStatusAsync(conversationId)
+                    .catch(error => {
+                        console.error('❌ Error detectando estado del lead:', error);
+                        // No lanzar el error para no afectar el webhook
+                    });
             }
 
             // Manejar otros tipos de mensajes (imágenes, etc.)
