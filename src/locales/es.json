@@ -306,7 +306,9 @@
       "platform": "Plataforma",
       "leadStatus": "Estado Lead",
       "lastSeen": "Último Visto",
-      "actions": "Acciones"
+      "actions": "Acciones",
+      "of": "de",
+      "rowsSelected": "fila(s) seleccionadas"
     },
     "status": {
       "cold": "Frío",
@@ -316,9 +318,21 @@
       "notClosed": "No Cerrado",
       "none": "Sin Estado"
     },
+    "actions": {
+      "selected": "seleccionados",
+      "copyToClipboard": "Copiar al Portapapeles",
+      "exportCSV": "Exportar CSV",
+      "copiedToClipboard": "¡Copiado al portapapeles! Ahora puedes pegarlo en Excel.",
+      "copyFailed": "Error al copiar al portapapeles"
+    },
+    "pagination": {
+      "previous": "Anterior",
+      "next": "Siguiente"
+    },
     "empty": {
       "title": "No hay contactos aún",
-      "description": "Los contactos aparecerán aquí cuando recibas mensajes"
+      "description": "Los contactos aparecerán aquí cuando recibas mensajes",
+      "noResults": "No hay resultados."
     }
   }
 }

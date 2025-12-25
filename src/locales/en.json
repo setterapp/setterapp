@@ -306,7 +306,9 @@
       "platform": "Platform",
       "leadStatus": "Lead Status",
       "lastSeen": "Last Seen",
-      "actions": "Actions"
+      "actions": "Actions",
+      "of": "of",
+      "rowsSelected": "row(s) selected"
     },
     "status": {
       "cold": "Cold",
@@ -316,9 +318,21 @@
       "notClosed": "Not Closed",
       "none": "No Status"
     },
+    "actions": {
+      "selected": "selected",
+      "copyToClipboard": "Copy to Clipboard",
+      "exportCSV": "Export CSV",
+      "copiedToClipboard": "Copied to clipboard! You can now paste it in Excel.",
+      "copyFailed": "Failed to copy to clipboard"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    },
     "empty": {
       "title": "No contacts yet",
-      "description": "Contacts will appear here as you receive messages"
+      "description": "Contacts will appear here as you receive messages",
+      "noResults": "No results."
     }
   }
 }

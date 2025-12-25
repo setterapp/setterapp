@@ -9,6 +9,7 @@ import {
   type ColumnDef,
   type SortingState,
   type ColumnFiltersState,
+  type RowSelectionState,
 } from "@tanstack/react-table"
 import {
   Table,
@@ -19,18 +20,29 @@ import {
   TableRow,
 } from "./table"
 import { Button } from "./button"
+import { useTranslation } from 'react-i18next'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  onRowSelectionChange?: (selection: RowSelectionState) => void
+  rowSelection?: RowSelectionState
+  renderToolbar?: (table: ReturnType<typeof useReactTable<TData>>) => React.ReactNode
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  onRowSelectionChange,
+  rowSelection,
+  renderToolbar,
 }: DataTableProps<TData, TValue>) {
+  const { t } = useTranslation()
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [internalRowSelection, setInternalRowSelection] = React.useState<RowSelectionState>({})
+
+  const effectiveRowSelection = rowSelection !== undefined ? rowSelection : internalRowSelection
 
   const table = useReactTable({
     data,
@@ -41,14 +53,30 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onRowSelectionChange: (updater) => {
+      const newSelection = typeof updater === 'function'
+        ? updater(effectiveRowSelection)
+        : updater
+
+      if (onRowSelectionChange) {
+        onRowSelectionChange(newSelection)
+      } else {
+        setInternalRowSelection(newSelection)
+      }
+    },
     state: {
       sorting,
       columnFilters,
+      rowSelection: effectiveRowSelection,
     },
+    enableRowSelection: true,
   })
 
   return (
     <div style={{ width: '100%' }}>
+      {/* Render custom toolbar if provided */}
+      {renderToolbar && renderToolbar(table)}
+
       <div>
         <Table>
           <TableHeader>
@@ -85,8 +113,9 @@ export function DataTable<TData, TValue>({
                 return (
                   <TableRow
                     key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
                     style={{
-                      background: 'var(--color-bg)',
+                      background: row.getIsSelected() ? 'rgba(137, 180, 250, 0.1)' : 'var(--color-bg)',
                       color: 'var(--color-text)'
                     }}
                   >
@@ -113,7 +142,7 @@ export function DataTable<TData, TValue>({
                     borderBottom: 'none'
                   }}
                 >
-                  No hay resultados.
+                  {t('contacts.empty.noResults')}
                 </TableCell>
               </TableRow>
             )}
@@ -132,8 +161,8 @@ export function DataTable<TData, TValue>({
           color: 'var(--color-text)',
           flex: 1
         }}>
-          {table.getFilteredSelectedRowModel().rows.length} de{" "}
-          {table.getFilteredRowModel().rows.length} fila(s) seleccionadas.
+          {table.getFilteredSelectedRowModel().rows.length} {t('contacts.table.of')}{" "}
+          {table.getFilteredRowModel().rows.length} {t('contacts.table.rowsSelected')}
         </div>
         <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
           <Button
@@ -142,7 +171,7 @@ export function DataTable<TData, TValue>({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            Anterior
+            {t('contacts.pagination.previous')}
           </Button>
           <Button
             variant="noShadow"
@@ -150,7 +179,7 @@ export function DataTable<TData, TValue>({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            Siguiente
+            {t('contacts.pagination.next')}
           </Button>
         </div>
       </div>

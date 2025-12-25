@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DataTable } from '../components/ui/data-table'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -6,12 +7,50 @@ import type { Contact } from '../hooks/useContacts'
 import { formatDate } from '../utils/date'
 import PlatformBadge from '../components/badges/PlatformBadge'
 import LeadStatusBadge from '../components/badges/LeadStatusBadge'
+import { Download, Copy, CheckSquare } from 'lucide-react'
 
 function Contacts() {
   const { t } = useTranslation()
   const { contacts, loading, error } = useContacts()
+  const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({})
 
   const columns: ColumnDef<Contact>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <input
+            type="checkbox"
+            checked={table.getIsAllPageRowsSelected()}
+            onChange={table.getToggleAllPageRowsSelectedHandler()}
+            style={{
+              width: '18px',
+              height: '18px',
+              cursor: 'pointer',
+              accentColor: 'var(--color-primary)',
+            }}
+          />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <input
+            type="checkbox"
+            checked={row.getIsSelected()}
+            onChange={row.getToggleSelectedHandler()}
+            style={{
+              width: '18px',
+              height: '18px',
+              cursor: 'pointer',
+              accentColor: 'var(--color-primary)',
+            }}
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 50,
+    },
     {
       accessorKey: 'display_name',
       header: t('contacts.table.name'),
@@ -93,6 +132,90 @@ function Contacts() {
     },
   ]
 
+  const handleExportCSV = (selectedContacts: Contact[]) => {
+    const headers = [
+      t('contacts.table.name'),
+      t('contacts.table.email'),
+      t('contacts.table.phone'),
+      t('contacts.table.platform'),
+      t('contacts.table.leadStatus'),
+      t('contacts.table.lastSeen'),
+    ]
+
+    const rows = selectedContacts.map(contact => {
+      const name =
+        contact.display_name ||
+        (contact.username ? `@${contact.username}` : null) ||
+        (contact.platform === 'whatsapp'
+          ? `+${contact.external_id}`
+          : `IG …${contact.external_id.slice(-6)}`)
+
+      const email = contact.email || ''
+      const phone = contact.phone || (contact.platform === 'whatsapp' ? `+${contact.external_id}` : '')
+      const platform = contact.platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'
+      const status = contact.lead_status ? t(`contacts.status.${contact.lead_status}`) : t('contacts.status.none')
+      const lastSeen = contact.last_message_at ? formatDate(contact.last_message_at) : ''
+
+      return [name, email, phone, platform, status, lastSeen]
+    })
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `contacts_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleCopyToClipboard = async (selectedContacts: Contact[]) => {
+    const headers = [
+      t('contacts.table.name'),
+      t('contacts.table.email'),
+      t('contacts.table.phone'),
+      t('contacts.table.platform'),
+      t('contacts.table.leadStatus'),
+      t('contacts.table.lastSeen'),
+    ]
+
+    const rows = selectedContacts.map(contact => {
+      const name =
+        contact.display_name ||
+        (contact.username ? `@${contact.username}` : null) ||
+        (contact.platform === 'whatsapp'
+          ? `+${contact.external_id}`
+          : `IG …${contact.external_id.slice(-6)}`)
+
+      const email = contact.email || ''
+      const phone = contact.phone || (contact.platform === 'whatsapp' ? `+${contact.external_id}` : '')
+      const platform = contact.platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'
+      const status = contact.lead_status ? t(`contacts.status.${contact.lead_status}`) : t('contacts.status.none')
+      const lastSeen = contact.last_message_at ? formatDate(contact.last_message_at) : ''
+
+      return [name, email, phone, platform, status, lastSeen]
+    })
+
+    const tsvContent = [
+      headers.join('\t'),
+      ...rows.map(row => row.join('\t'))
+    ].join('\n')
+
+    try {
+      await navigator.clipboard.writeText(tsvContent)
+      alert(t('contacts.actions.copiedToClipboard'))
+    } catch (err) {
+      console.error('Failed to copy:', err)
+      alert(t('contacts.actions.copyFailed'))
+    }
+  }
+
   return (
     <div>
       {loading && contacts.length === 0 ? (
@@ -117,7 +240,78 @@ function Contacts() {
           </div>
         </div>
       ) : (
-        <DataTable columns={columns} data={contacts} />
+        <>
+          <DataTable
+            columns={columns}
+            data={contacts}
+            onRowSelectionChange={setSelectedRows}
+            rowSelection={selectedRows}
+            renderToolbar={(table) => {
+              const selectedCount = table.getFilteredSelectedRowModel().rows.length
+              const selectedContacts = table.getFilteredSelectedRowModel().rows.map(row => row.original)
+
+              if (selectedCount === 0) return null
+
+              return (
+                <div
+                  style={{
+                    padding: 'var(--spacing-md)',
+                    borderBottom: '2px solid var(--color-border)',
+                    backgroundColor: 'var(--color-bg-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-md)',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+                    <CheckSquare size={18} color="var(--color-primary)" />
+                    <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
+                      {selectedCount} {t('contacts.actions.selected')}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginLeft: 'auto' }}>
+                    <button
+                      onClick={() => handleCopyToClipboard(selectedContacts)}
+                      className="btn btn--sm"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-xs)',
+                        fontSize: 'var(--font-size-sm)',
+                        padding: '8px 16px',
+                        backgroundColor: 'var(--color-primary)',
+                        color: '#000',
+                      }}
+                    >
+                      <Copy size={16} />
+                      {t('contacts.actions.copyToClipboard')}
+                    </button>
+
+                    <button
+                      onClick={() => handleExportCSV(selectedContacts)}
+                      className="btn btn--sm"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-xs)',
+                        fontSize: 'var(--font-size-sm)',
+                        padding: '8px 16px',
+                        backgroundColor: '#a6e3a1',
+                        color: '#000',
+                        border: '2px solid #000',
+                      }}
+                    >
+                      <Download size={16} />
+                      {t('contacts.actions.exportCSV')}
+                    </button>
+                  </div>
+                </div>
+              )
+            }}
+          />
+        </>
       )}
     </div>
   )
