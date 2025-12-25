@@ -1067,104 +1067,15 @@ async function generateAndSendAutoReply(
             { role: 'user', content: inboundMessage }
         ];
 
-        const enableMeetingScheduling = agent.config?.enableMeetingScheduling || false;
-
         // Primera llamada a la IA
-        let aiMessage = await generateAIResponse(messages, enableMeetingScheduling);
+        let aiMessage = await generateAIResponse(messages);
 
         if (!aiMessage) {
             console.error('❌ No se pudo generar respuesta con IA');
             return;
         }
 
-        // 5. Manejar Tool Calls - SIMPLIFICADO
-        if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
-            console.log('🛠️ AI Tool Calls:', JSON.stringify(aiMessage.tool_calls, null, 2));
-
-            for (const toolCall of aiMessage.tool_calls) {
-                if (toolCall.function.name === 'process_meeting_request') {
-                    let args;
-                    try {
-                        args = JSON.parse(toolCall.function.arguments);
-                    } catch (e) {
-                        console.error('❌ Failed to parse arguments:', e);
-                        const errorMessage = 'hubo un error procesando la información. ¿lo intentamos de nuevo?';
-                        await sendInstagramMessage(userId, recipientId, errorMessage);
-                        return;
-                    }
-
-                    console.log('📅 [process_meeting_request] Action:', args.action, 'Args:', args);
-
-                    // OPCIÓN 1: Verificar disponibilidad
-                    if (args.action === 'check') {
-                        console.log('📅 Checking availability...');
-                        const slots = await checkAvailabilityForLead(conversationId, agent);
-                        console.log(`📅 Slots found: ${slots.length}`);
-
-                        messages.push(aiMessage);
-                        messages.push({
-                            role: 'tool',
-                            tool_call_id: toolCall.id,
-                            content: JSON.stringify({
-                                available_slots: slots,
-                                info: "Presenta estos horarios al usuario de forma amigable. Ofrece 2-3 opciones."
-                            })
-                        });
-
-                        console.log('🤖 Regenerando respuesta con slots...');
-                        aiMessage = await generateAIResponse(messages, enableMeetingScheduling);
-                        break;
-                    }
-
-                    // OPCIÓN 2: Agendar reunión
-                    if (args.action === 'schedule') {
-                        // Validar que tenemos email y nombre
-                        if (!args.lead_email || !args.lead_name) {
-                            console.error('❌ Missing email/name:', args);
-                            const errorMessage = 'necesito tu email y nombre completo para agendar la reunión.';
-                            await sendInstagramMessage(userId, recipientId, errorMessage);
-                            return;
-                        }
-
-                        // Validar email
-                        const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-                        if (!emailRegex.test(args.lead_email)) {
-                            console.error('❌ Invalid email:', args.lead_email);
-                            const errorMessage = 'el email no parece válido. ¿me lo puedes dar de nuevo?';
-                            await sendInstagramMessage(userId, recipientId, errorMessage);
-                            return;
-                        }
-
-                        console.log('📅 Scheduling meeting with date:', args.preferred_date);
-
-                        // Llamar a create-meeting (maneja el parsing de fecha natural en backend)
-                        const meetingResult = await createMeetingForLead(
-                            userId,
-                            conversationId,
-                            args.lead_email,
-                            args.lead_name,
-                            args.preferred_date, // Fecha en lenguaje natural
-                            args.lead_phone,
-                            agent
-                        );
-
-                        console.log('📅 Result:', meetingResult);
-
-                        if (meetingResult.success && meetingResult.meeting) {
-                            const confirmationMessage = `perfecto ${args.lead_name}! te agendé la reunión para el ${formatMeetingDate(meetingResult.meeting.date)}. te llegará la invitación a ${args.lead_email} con el link de google meet: ${meetingResult.meeting.link}`;
-                            await sendInstagramMessage(userId, recipientId, confirmationMessage);
-                            await saveOutboundMessage(conversationId, userId, confirmationMessage, agent.id, true, meetingResult.meeting.id);
-                            console.log('✅ Meeting scheduled');
-                        } else {
-                            console.error('❌ Error creating meeting:', meetingResult.error);
-                            const errorMessage = 'disculpa, hubo un problema agendando la reunión. ¿me confirmas el horario que querías?';
-                            await sendInstagramMessage(userId, recipientId, errorMessage);
-                        }
-                        return;
-                    }
-                }
-            }
-        }
+        // 5. Tool calls removed - simple chat mode only
 
         // 6. Enviar respuesta de texto final (si existe después de tool calls o si era texto directo)
         if (aiMessage && aiMessage.content) {
@@ -1205,59 +1116,21 @@ async function saveOutboundMessage(conversationId: string, userId: string, conte
 }
 
 // Wrapper para check availability
-async function checkAvailabilityForLead(conversationId: string, agent: any) {
-    try {
-        const requestBody = {
-            conversationId,
-            agentId: agent.id,
-            checkAvailabilityOnly: true,
-            leadName: 'Checking Availability' // Dummy for validation
-        };
-
-        console.log('📅 [checkAvailability] INPUT:', JSON.stringify(requestBody, null, 2));
-
-        const { data, error } = await supabase.functions.invoke('create-meeting', {
-            body: requestBody
-        });
-
-        console.log('📅 [checkAvailability] OUTPUT:', JSON.stringify({
-            success: !error,
-            slotsCount: data?.slots?.length || 0,
-            error: error?.message,
-            debug: data?.debug,
-            executionTime: data?.executionTime
-        }, null, 2));
-
-        if (data?.debug) {
-            console.log('🔍 [checkAvailability] DEBUG LOG:', JSON.stringify(data.debug, null, 2));
-        }
-
-        if (error) throw error;
-        return data.slots || [];
-    } catch (e) {
-        console.error('❌ [checkAvailability] Error:', e);
-        return [];
-    }
-}
+// checkAvailabilityForLead removed - meeting scheduling disabled
 
 /**
- * Genera una respuesta usando OpenAI con function calling
+ * Genera una respuesta usando OpenAI - simple chat mode
  */
-async function generateAIResponse(messages: any[], enableMeetingScheduling: boolean = false) {
+async function generateAIResponse(messages: any[]) {
     if (!OPENAI_API_KEY) return null;
 
     try {
-        const requestBody: any = {
+        const requestBody = {
             model: 'gpt-4o-mini',
             messages: messages,
             temperature: 0.7,
             max_tokens: 500
         };
-
-        if (enableMeetingScheduling) {
-            requestBody.tools = getMeetingTools();
-            requestBody.tool_choice = 'auto';
-        }
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -1278,132 +1151,15 @@ async function generateAIResponse(messages: any[], enableMeetingScheduling: bool
     }
 }
 
-/**
- * Herramientas de Google Calendar siguiendo el patrón de n8n
- * Usa schemas estructurados como DynamicStructuredTool para mejor validación
- */
-function getMeetingTools() {
-    return [
-        {
-            type: 'function',
-            function: {
-                name: 'process_meeting_request',
-                description: `Procesa una solicitud de reunión. Esta función maneja TODO: verificar disponibilidad, validar datos y agendar.
-
-USA ESTA FUNCIÓN CUANDO:
-- El usuario quiere saber disponibilidad
-- El usuario quiere agendar una reunión
-- El usuario confirma un horario
-
-PARÁMETROS (todos opcionales):
-- action: "check" para ver disponibilidad, "schedule" para agendar
-- lead_email: Email del prospecto (requerido si action="schedule")
-- lead_name: Nombre completo (requerido si action="schedule")
-- preferred_date: Fecha deseada en lenguaje natural (ej: "mañana 3pm", "25 de diciembre 10am")
-
-CÓMO USAR:
-1. Usuario pregunta disponibilidad → process_meeting_request({action: "check"})
-2. Usuario quiere agendar → process_meeting_request({action: "schedule", lead_email: "...", lead_name: "...", preferred_date: "mañana 3pm"})
-
-La función retorna:
-- Si action="check": Lista de horarios disponibles
-- Si action="schedule": Confirmación de reunión agendada con link de Google Meet`,
-                parameters: {
-                    type: 'object',
-                    properties: {
-                        action: {
-                            type: 'string',
-                            description: 'Acción a realizar: "check" para verificar disponibilidad, "schedule" para agendar reunión',
-                            enum: ['check', 'schedule']
-                        },
-                        lead_email: {
-                            type: 'string',
-                            description: 'Email del prospecto (obligatorio si action="schedule")'
-                        },
-                        lead_name: {
-                            type: 'string',
-                            description: 'Nombre completo del prospecto (obligatorio si action="schedule")'
-                        },
-                        preferred_date: {
-                            type: 'string',
-                            description: 'Fecha y hora deseada en lenguaje natural. Ejemplos: "mañana a las 3pm", "25 de diciembre 10am", "hoy 15:00"'
-                        },
-                        lead_phone: {
-                            type: 'string',
-                            description: 'Teléfono del prospecto (opcional)'
-                        }
-                    },
-                    required: ['action']
-                }
-            }
-        }
-    ];
-}
+// Meeting tools and timezone functions removed - agent is now a simple chat assistant
 
 /**
- * Calcula el offset de timezone en formato ISO (ej: +01:00, -03:00)
- */
-function getTimezoneOffset(timezone: string): string {
-    try {
-        const now = new Date();
-        // Crear formatter para extraer el offset
-        const formatter = new Intl.DateTimeFormat('en-US', {
-            timeZone: timezone,
-            timeZoneName: 'longOffset'
-        });
-
-        const parts = formatter.formatToParts(now);
-        const offsetPart = parts.find(part => part.type === 'timeZoneName');
-
-        if (offsetPart?.value && offsetPart.value.startsWith('GMT')) {
-            // Convertir GMT+1 a +01:00
-            const offset = offsetPart.value.replace('GMT', '');
-            if (offset === '') return '+00:00';
-
-            const sign = offset[0];
-            const hours = parseInt(offset.slice(1)) || 0;
-            return `${sign}${hours.toString().padStart(2, '0')}:00`;
-        }
-
-        // Fallback para Europe/Madrid
-        if (timezone.includes('Madrid') || timezone.includes('Europe')) {
-            return '+01:00';
-        }
-
-        // Fallback general
-        return '+00:00';
-    } catch (error) {
-        console.error('Error getting timezone offset:', error);
-        return '+00:00';
-    }
-}
-
-/**
- * Construye el system prompt con contexto temporal (inspirado en mejores prácticas)
+ * Construye el system prompt simple para chat conversacional
  */
 function buildSystemPrompt(agentName: string, description: string, config: any): string {
-    // Contexto temporal actual (crítico para parsear "mañana", "hoy", etc.)
-    const now = new Date();
-
-    // Usar timezone del agente o Europe/Madrid por defecto
-    const timezone = config?.meetingTimezone || 'Europe/Madrid';
-    const locale = timezone.includes('America') ? 'es-AR' : 'es-ES';
-
-    const currentTime = new Intl.DateTimeFormat(locale, {
-        timeZone: timezone,
-        dateStyle: 'full',
-        timeStyle: 'short'
-    }).format(now);
-
     let prompt = `Eres ${agentName}.\n\n`;
 
-    // === CONTEXTO TEMPORAL (como en el artículo) ===
-    prompt += `=== CONTEXTO ACTUAL ===\n`;
-    prompt += `Fecha y hora actual: ${currentTime}\n`;
-    prompt += `Timezone: ${timezone}\n`;
-    prompt += `ISO: ${now.toISOString()}\n\n`;
-
-    if (description) prompt += `Tu descripción: ${description}\n\n`;
+    if (description) prompt += `${description}\n\n`;
 
     // Información del agente
     if (config?.assistantName) prompt += `Tu nombre: ${config.assistantName}\n`;
@@ -1411,31 +1167,11 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
     if (config?.businessNiche) prompt += `Nicho: ${config.businessNiche}\n`;
     if (config?.offerDetails) prompt += `Oferta: ${config.offerDetails}\n\n`;
 
-    if (config?.enableMeetingScheduling) {
-        prompt += `=== REUNIONES ===\n`;
-        prompt += `Tienes acceso directo a Google Calendar con process_meeting_request().\n\n`;
-
-        prompt += `Cuando el usuario mencione disponibilidad o quiera agendar, INMEDIATAMENTE usa la herramienta:\n\n`;
-
-        prompt += `Usuario pregunta disponibilidad:\n`;
-        prompt += `→ INMEDIATAMENTE: process_meeting_request({action: "check"})\n`;
-        prompt += `→ Ofrece 2-3 opciones de los horarios que te devuelve\n\n`;
-
-        prompt += `Usuario quiere agendar:\n`;
-        prompt += `→ Pide email y nombre si no los tienes\n`;
-        prompt += `→ INMEDIATAMENTE: process_meeting_request({action: "schedule", lead_email: "...", lead_name: "...", preferred_date: "mañana 3pm"})\n\n`;
-
-        prompt += `IMPORTANTE:\n`;
-        prompt += `• NUNCA inventes horarios disponibles\n`;
-        prompt += `• SIEMPRE usa la herramienta para verificar antes\n`;
-        prompt += `• Acepta fechas en lenguaje natural: "mañana 3pm", "hoy 15:00"\n\n`;
-    }
-
     prompt += `=== ESTILO DE COMUNICACIÓN ===\n`;
     prompt += `• Natural y conversacional\n`;
     prompt += `• Mensajes cortos (2-3 oraciones máximo)\n`;
     prompt += `• Minúsculas casuales (estilo Instagram/WhatsApp)\n`;
-    prompt += `• Tono argentino/latino amigable\n`;
+    prompt += `• Tono amigable\n`;
     prompt += `• Sin emojis excesivos (máximo 1-2 por mensaje)\n`;
 
     return prompt;
@@ -1468,73 +1204,4 @@ async function detectLeadStatusAsync(conversationId: string) {
     }
 }
 
-/**
- * Crea una reunión para el lead usando la Edge Function create-meeting
- */
-async function createMeetingForLead(
-    userId: string,
-    conversationId: string,
-    leadEmail: string,
-    leadName: string,
-    preferredDatetime: string | undefined,
-    leadPhone: string | undefined,
-    agent: any
-) {
-    try {
-        const requestBody = {
-            conversationId,
-            leadName,
-            leadEmail,
-            leadPhone,
-            agentId: agent.id,
-            customDate: preferredDatetime
-        };
-
-        console.log('📅 [createMeeting] INPUT:', JSON.stringify(requestBody, null, 2));
-
-        const { data, error } = await supabase.functions.invoke('create-meeting', {
-            body: requestBody
-        });
-
-        console.log('📅 [createMeeting] OUTPUT:', JSON.stringify({
-            success: data?.success,
-            meetingId: data?.meeting?.id,
-            meetingLink: data?.meeting?.link,
-            meetingDate: data?.meeting?.date,
-            error: error?.message,
-            debug: data?.debug,
-            executionTime: data?.executionTime
-        }, null, 2));
-
-        if (data?.debug) {
-            console.log('🔍 [createMeeting] DEBUG LOG:', JSON.stringify(data.debug, null, 2));
-        }
-
-        if (error) {
-            console.error('❌ Error creando reunión:', error);
-            return { success: false, error };
-        }
-
-        return data;
-    } catch (error) {
-        console.error('❌ Error llamando a create-meeting:', error);
-        return { success: false, error };
-    }
-}
-
-/**
- * Formatea la fecha de la reunión para mostrarla al usuario
- */
-function formatMeetingDate(isoDate: string): string {
-    const date = new Date(isoDate);
-    const options: Intl.DateTimeFormatOptions = {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'America/Argentina/Buenos_Aires'
-    };
-    return date.toLocaleDateString('es-AR', options);
-}
+// createMeetingForLead and formatMeetingDate removed - meeting scheduling disabled
