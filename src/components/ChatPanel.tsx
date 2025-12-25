@@ -37,14 +37,14 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
     }
   }, [messages.length, messages])
 
-  const getLeadStatusBackgroundColor = (status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null) => {
+  const getLeadStatusBackgroundColor = (status?: 'cold' | 'warm' | 'booked' | 'closed' | 'not_closed' | null) => {
     if (!status) return null
     switch (status) {
       case 'cold':
         return '#94a3b8' // secondary color
       case 'warm':
         return '#fbbf24' // warning color
-      case 'hot':
+      case 'booked':
         return '#ef4444' // danger color
       case 'closed':
         return '#22c55e' // success color
@@ -123,7 +123,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
           <select
             value={conversation.lead_status || ''}
             onChange={async (e) => {
-              const newStatus = e.target.value as 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | ''
+              const newStatus = e.target.value as 'cold' | 'warm' | 'booked' | 'closed' | 'not_closed' | ''
               if (!newStatus) return
 
               try {
@@ -176,7 +176,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
             <option value="">Sin estado</option>
             <option value="cold">Frío</option>
             <option value="warm">Tibio</option>
-            <option value="hot">Caliente</option>
+            <option value="booked">Agendado</option>
             <option value="closed">Cerrado</option>
             <option value="not_closed">No Cerrado</option>
           </select>

@@ -313,7 +313,7 @@
     "status": {
       "cold": "Cold",
       "warm": "Warm",
-      "hot": "Hot",
+      "booked": "Booked",
       "closed": "Closed",
       "notClosed": "Not Closed",
       "none": "No Status"

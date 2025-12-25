@@ -9,7 +9,7 @@ export interface Contact {
   phone?: string | null
   username?: string | null
   profile_picture?: string | null
-  lead_status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null
+  lead_status?: 'cold' | 'warm' | 'booked' | 'closed' | 'not_closed' | null
 }
 
 export interface Conversation {
@@ -24,7 +24,7 @@ export interface Conversation {
   last_message_at?: string
   created_at: string
   updated_at: string
-  lead_status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null
+  lead_status?: 'cold' | 'warm' | 'booked' | 'closed' | 'not_closed' | null
   contact_metadata?: {
     username?: string
     name?: string

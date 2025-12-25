@@ -105,7 +105,7 @@ function Contacts() {
       accessorKey: 'lead_status',
       header: t('contacts.table.leadStatus'),
       cell: ({ row }) => {
-        const status = row.getValue('lead_status') as 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null
+        const status = row.getValue('lead_status') as 'cold' | 'warm' | 'booked' | 'closed' | 'not_closed' | null
         return <LeadStatusBadge status={status} />
       },
     },

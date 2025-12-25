@@ -313,7 +313,7 @@
     "status": {
       "cold": "Frío",
       "warm": "Tibio",
-      "hot": "Caliente",
+      "booked": "Agendado",
       "closed": "Cerrado",
       "notClosed": "No Cerrado",
       "none": "Sin Estado"

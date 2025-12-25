@@ -7,7 +7,8 @@ import {
   CheckCircle,
   XCircle,
   Target,
-  Zap
+  Zap,
+  Smartphone
 } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { useConversations } from '../hooks/useConversations'
@@ -61,16 +62,22 @@ function Analytics() {
     const totalLeads = filteredConversations.length
     const coldLeads = filteredConversations.filter(c => c.lead_status === 'cold').length
     const warmLeads = filteredConversations.filter(c => c.lead_status === 'warm').length
-    const hotLeads = filteredConversations.filter(c => c.lead_status === 'hot').length
+    const bookedLeads = filteredConversations.filter(c => c.lead_status === 'booked').length
     const closedLeads = filteredConversations.filter(c => c.lead_status === 'closed').length
     const notClosedLeads = filteredConversations.filter(c => c.lead_status === 'not_closed').length
 
-    // Qualified Lead Rate: (hot + closed) / total
-    const qualifiedLeads = hotLeads + closedLeads
+    // Platform Distribution
+    const whatsappLeads = filteredConversations.filter(c => c.platform === 'whatsapp').length
+    const instagramLeads = filteredConversations.filter(c => c.platform === 'instagram').length
+    const whatsappPercentage = totalLeads > 0 ? Math.round((whatsappLeads / totalLeads) * 100) : 0
+    const instagramPercentage = totalLeads > 0 ? Math.round((instagramLeads / totalLeads) * 100) : 0
+
+    // Qualified Lead Rate: (booked + closed) / total
+    const qualifiedLeads = bookedLeads + closedLeads
     const qualifiedLeadRate = totalLeads > 0 ? Math.round((qualifiedLeads / totalLeads) * 100) : 0
 
-    // Close Rate: closed / (hot + closed + not_closed)
-    const opportunities = hotLeads + closedLeads + notClosedLeads
+    // Close Rate: closed / (booked + closed + not_closed)
+    const opportunities = bookedLeads + closedLeads + notClosedLeads
     const closeRate = opportunities > 0 ? Math.round((closedLeads / opportunities) * 100) : 0
 
     // Response Rate: conversaciones con agente / total
@@ -125,11 +132,16 @@ function Analytics() {
       totalLeads,
       coldLeads,
       warmLeads,
-      hotLeads,
+      bookedLeads,
       closedLeads,
       qualifiedLeadRate,
       closeRate,
       responseRate,
+      // Platform
+      whatsappLeads,
+      instagramLeads,
+      whatsappPercentage,
+      instagramPercentage,
       // Meetings
       totalMeetings,
       completedMeetings,
@@ -197,77 +209,31 @@ function Analytics() {
           Sales & Lead Performance
         </h2>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 'var(--spacing-md)',
-          marginBottom: 'var(--spacing-lg)'
-        }}>
-          {/* Total Leads */}
-          <div className="card" style={{
-            border: '2px solid #000',
-            padding: 'var(--spacing-md)',
-            backgroundColor: 'rgba(137, 180, 250, 0.1)'
-          }}>
-            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Total Leads
-            </div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-primary)', lineHeight: 1 }}>
-              {metrics.totalLeads}
-            </div>
+        {/* Lead Metrics Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
+          <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(137, 180, 250, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-primary)' }}>{metrics.totalLeads}</div>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Leads</div>
           </div>
 
-          {/* Qualified Lead Rate */}
-          <div className="card" style={{
-            border: '2px solid #000',
-            padding: 'var(--spacing-md)',
-            backgroundColor: 'rgba(166, 227, 161, 0.1)'
-          }}>
-            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Qualified Rate
-            </div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#a6e3a1', lineHeight: 1 }}>
-              {metrics.qualifiedLeadRate}%
-            </div>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-              {metrics.hotLeads + metrics.closedLeads} hot/closed
-            </div>
+          <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.qualifiedLeadRate}%</div>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Qualified</div>
           </div>
 
-          {/* Close Rate */}
-          <div className="card" style={{
-            border: '2px solid #000',
-            padding: 'var(--spacing-md)',
-            backgroundColor: 'rgba(166, 227, 161, 0.15)'
-          }}>
-            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Close Rate
-            </div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#a6e3a1', lineHeight: 1 }}>
-              {metrics.closeRate}%
-            </div>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-              {metrics.closedLeads} closed deals
-            </div>
+          <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.15)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.closeRate}%</div>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Close Rate</div>
           </div>
 
-          {/* Response Rate */}
-          <div className="card" style={{
-            border: '2px solid #000',
-            padding: 'var(--spacing-md)',
-            backgroundColor: 'rgba(249, 226, 175, 0.1)'
-          }}>
-            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Response Rate
-            </div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#f9e2af', lineHeight: 1 }}>
-              {metrics.responseRate}%
-            </div>
+          <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(249, 226, 175, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#f9e2af' }}>{metrics.responseRate}%</div>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Response</div>
           </div>
         </div>
 
         {/* Lead Distribution */}
-        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
           <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
             <Target size={18} />
             Lead Distribution
@@ -282,12 +248,32 @@ function Analytics() {
               <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Warm</div>
             </div>
             <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(243, 139, 168, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f38ba8' }}>{metrics.hotLeads}</div>
-              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Hot</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f38ba8' }}>{metrics.bookedLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Booked</div>
             </div>
             <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.closedLeads}</div>
               <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Closed</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Platform Distribution */}
+        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+            <Smartphone size={18} />
+            Platform Distribution
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--spacing-md)' }}>
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.whatsappLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>WhatsApp</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#a6e3a1', marginTop: '2px' }}>{metrics.whatsappPercentage}%</div>
+            </div>
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(243, 139, 168, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f38ba8' }}>{metrics.instagramLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Instagram</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#f38ba8', marginTop: '2px' }}>{metrics.instagramPercentage}%</div>
             </div>
           </div>
         </div>
@@ -308,71 +294,52 @@ function Analytics() {
           Appointment Performance
         </h2>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 'var(--spacing-md)'
-        }}>
-          {/* Total Meetings */}
-          <div className="card" style={{
-            border: '2px solid #000',
-            padding: 'var(--spacing-md)',
-            backgroundColor: 'rgba(137, 180, 250, 0.1)'
-          }}>
-            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Total Meetings
-            </div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-primary)', lineHeight: 1 }}>
-              {metrics.totalMeetings}
-            </div>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: '4px', display: 'flex', gap: 'var(--spacing-xs)' }}>
-              <span><CheckCircle size={12} style={{ display: 'inline', marginRight: '2px' }} />{metrics.completedMeetings}</span>
-              <span><XCircle size={12} style={{ display: 'inline', marginRight: '2px' }} />{metrics.noShowMeetings}</span>
+        {/* Meeting Metrics Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
+          <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(137, 180, 250, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-primary)' }}>{metrics.totalMeetings}</div>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Meetings</div>
+          </div>
+
+          <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.15)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.showRate}%</div>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Show Rate</div>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+              {metrics.showRate >= 95 ? '🎯 Excellent' : metrics.showRate >= 80 ? '✓ Good' : '⚠ Improve'}
             </div>
           </div>
 
-          {/* Show Rate */}
-          <div className="card" style={{
-            border: '2px solid #000',
-            padding: 'var(--spacing-md)',
-            backgroundColor: 'rgba(166, 227, 161, 0.15)'
-          }}>
-            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Show Rate
-            </div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#a6e3a1', lineHeight: 1 }}>
-              {metrics.showRate}%
-            </div>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-              {metrics.showRate >= 95 ? '🎯 Excellent' : metrics.showRate >= 80 ? '✓ Good' : '⚠ Needs improvement'}
-            </div>
+          <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(249, 226, 175, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#f9e2af' }}>{metrics.upcomingMeetings}</div>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Upcoming</div>
           </div>
 
-          {/* Upcoming Meetings */}
-          <div className="card" style={{
-            border: '2px solid #000',
-            padding: 'var(--spacing-md)',
-            backgroundColor: 'rgba(249, 226, 175, 0.1)'
-          }}>
-            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Upcoming
-            </div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#f9e2af', lineHeight: 1 }}>
-              {metrics.upcomingMeetings}
-            </div>
+          <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(137, 180, 250, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-primary)' }}>{metrics.conversionToMeeting}%</div>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Lead → Meeting</div>
           </div>
+        </div>
 
-          {/* Conversion to Meeting */}
-          <div className="card" style={{
-            border: '2px solid #000',
-            padding: 'var(--spacing-md)',
-            backgroundColor: 'rgba(137, 180, 250, 0.1)'
-          }}>
-            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Lead → Meeting
+        {/* Meeting Distribution */}
+        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+            <Target size={18} />
+            Meeting Results
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--spacing-md)' }}>
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a6e3a1', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                <CheckCircle size={20} />
+                {metrics.completedMeetings}
+              </div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Completed</div>
             </div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-primary)', lineHeight: 1 }}>
-              {metrics.conversionToMeeting}%
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(243, 139, 168, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f38ba8', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                <XCircle size={20} />
+                {metrics.noShowMeetings}
+              </div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>No Show</div>
             </div>
           </div>
         </div>
