@@ -88,6 +88,11 @@ function Analytics() {
     const connectedIntegrations = integrations.filter(int => int.status === 'connected').length
 
     // Métricas de reuniones
+    const filteredMeetings = meetings.filter(m => {
+      const meetingDate = new Date(m.meeting_date)
+      return meetingDate >= startDate
+    })
+
     const upcomingMeetings = meetings.filter(m => {
       const meetingDate = new Date(m.meeting_date)
       return meetingDate >= now && m.status === 'scheduled'
@@ -100,6 +105,18 @@ function Analytics() {
       const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
       return meetingDate >= todayStart && meetingDate < todayEnd && m.status === 'scheduled'
     }).length
+
+    // Métricas de meetings en el período seleccionado
+    const totalMeetings = filteredMeetings.length
+    const completedMeetings = filteredMeetings.filter(m => m.status === 'completed').length
+    const noShowMeetings = filteredMeetings.filter(m => m.status === 'no_show').length
+    const scheduledMeetings = filteredMeetings.filter(m => m.status === 'scheduled').length
+
+    // Calcular tasa de asistencia (completed / (completed + no_show))
+    const totalFinishedMeetings = completedMeetings + noShowMeetings
+    const showRate = totalFinishedMeetings > 0
+      ? Math.round((completedMeetings / totalFinishedMeetings) * 100)
+      : 0
 
     // Conversaciones por día (últimos 21 días)
     const conversationsByDay = Array.from({ length: 21 }, (_, i) => {
@@ -161,7 +178,12 @@ function Analytics() {
       conversationsByAgent,
       conversationGrowth,
       upcomingMeetings,
-      todayMeetings
+      todayMeetings,
+      totalMeetings,
+      completedMeetings,
+      noShowMeetings,
+      scheduledMeetings,
+      showRate
     }
   }, [conversations, agents, integrations, meetings, timeRange])
 
@@ -171,7 +193,7 @@ function Analytics() {
         <div className="card">
           <div className="empty-state">
             <div className="spinner"></div>
-            <p>Cargando analíticas...</p>
+            <p>{t('analytics.loading')}</p>
           </div>
         </div>
       </div>
@@ -184,7 +206,7 @@ function Analytics() {
       {/* Filtro de tiempo */}
       <div className="card" style={{ marginBottom: 'var(--spacing-md)' }}>
         <div className="flex items-center" style={{ flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
-          <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>Período:</span>
+          <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>{t('analytics.period')}</span>
           {(['today', 'week', 'month', 'all'] as TimeRange[]).map((range) => (
             <button
               key={range}
@@ -192,10 +214,7 @@ function Analytics() {
               className={`btn ${timeRange === range ? 'btn--primary' : 'btn--ghost'}`}
               style={{ fontSize: 'var(--font-size-sm)', padding: 'var(--spacing-xs) var(--spacing-md)' }}
             >
-              {range === 'today' && 'Hoy'}
-              {range === 'week' && '7 días'}
-              {range === 'month' && '30 días'}
-              {range === 'all' && 'Todo'}
+              {t(`analytics.${range}`)}
             </button>
           ))}
         </div>
@@ -205,7 +224,7 @@ function Analytics() {
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--spacing-md)' }}>
         <div className="card">
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            Conversaciones
+            {t('analytics.metrics.conversations')}
           </h3>
           <div className="flex items-center justify-between" style={{ alignItems: 'center' }}>
             <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
@@ -245,7 +264,7 @@ function Analytics() {
 
         <div className="card">
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            Tasa de Respuesta
+            {t('analytics.metrics.responseRate')}
           </h3>
           <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
             <div style={{
@@ -269,7 +288,7 @@ function Analytics() {
 
         <div className="card">
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            Mensajes
+            {t('analytics.metrics.messages')}
           </h3>
           <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
             <div style={{
@@ -293,7 +312,7 @@ function Analytics() {
 
         <div className="card">
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            {metrics.activeAgents}
+            {t('analytics.metrics.activeAgents')}
           </h3>
           <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
             <div style={{
@@ -362,13 +381,69 @@ function Analytics() {
             </p>
           </div>
         </div>
+
+        <div className="card">
+          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            {t('analytics.metrics.showRate')}
+          </h3>
+          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: 'var(--border-radius)',
+              background: 'rgba(166, 227, 161, 0.15)',
+              border: '2px solid #000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <Calendar size={24} color="var(--color-success)" />
+            </div>
+            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-success)' }}>
+              {metrics.showRate}%
+            </p>
+          </div>
+        </div>
+
+        <div className="card">
+          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            {t('analytics.metrics.totalMeetings')}
+          </h3>
+          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: 'var(--border-radius)',
+              background: 'rgba(137, 180, 250, 0.15)',
+              border: '2px solid #000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <Calendar size={24} color="var(--color-primary)" />
+            </div>
+            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-text)' }}>
+              {metrics.totalMeetings}
+            </p>
+          </div>
+          <div style={{ marginTop: 'var(--spacing-sm)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span>{t('analytics.metrics.completedMeetings')}: {metrics.completedMeetings}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>{t('analytics.metrics.noShowMeetings')}: {metrics.noShowMeetings}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Gráfico de actividad */}
       <div className="card" style={{ marginTop: 'var(--spacing-md)' }}>
         <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
           <Calendar size={20} />
-          Actividad (Últimos 21 días)
+          {t('analytics.activity')}
         </h3>
         <ChartContainer
           config={{
@@ -469,7 +544,7 @@ function Analytics() {
                           month: 'short',
                           hour: '2-digit',
                           minute: '2-digit'
-                        })} • {meeting.duration_minutes} min
+                        })} • {meeting.duration_minutes} {t('analytics.minutes')}
                       </div>
                     </div>
                   </div>
@@ -480,7 +555,7 @@ function Analytics() {
                     className="btn btn--primary btn--sm"
                     style={{ fontSize: 'var(--font-size-xs)', padding: '4px 8px' }}
                   >
-                    Unirse
+                    {t('analytics.joinMeeting')}
                   </a>
                 </div>
               ))}
@@ -488,7 +563,7 @@ function Analytics() {
           {metrics.upcomingMeetings > 5 && (
             <div style={{ textAlign: 'center', marginTop: 'var(--spacing-md)' }}>
               <a href="/meetings" className="btn btn--ghost" style={{ fontSize: 'var(--font-size-sm)' }}>
-                Ver todas las reuniones
+                {t('analytics.viewAllMeetings')}
               </a>
             </div>
           )}
@@ -552,8 +627,8 @@ function Analytics() {
       {metrics.totalConversations === 0 && (
         <div className="card" style={{ marginTop: 'var(--spacing-md)' }}>
           <div className="empty-state">
-            <h3>No hay datos aún</h3>
-            <p>Las analíticas aparecerán aquí una vez que tengas conversaciones activas</p>
+            <h3>{t('analytics.empty.title')}</h3>
+            <p>{t('analytics.empty.description')}</p>
           </div>
         </div>
       )}

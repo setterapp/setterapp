@@ -102,6 +102,7 @@
     "title": "Analíticas",
     "description": "Métricas y estadísticas de tus conversaciones y agentes",
     "refresh": "Actualizar",
+    "loading": "Cargando analíticas...",
     "period": "Período:",
     "today": "Hoy",
     "week": "7 días",
@@ -113,11 +114,18 @@
       "messages": "Mensajes",
       "activeAgents": "Agentes Activos",
       "todayMeetings": "Reuniones Hoy",
-      "upcomingMeetings": "Próximas Reuniones"
+      "upcomingMeetings": "Próximas Reuniones",
+      "showRate": "Tasa de Asistencia",
+      "totalMeetings": "Total Reuniones",
+      "completedMeetings": "Completadas",
+      "noShowMeetings": "No Asistieron"
     },
     "activity": "Actividad (Últimos 21 días)",
     "conversationsByAgent": "Conversaciones por Agente",
     "upcomingMeetingsList": "Próximas Reuniones",
+    "viewAllMeetings": "Ver todas las reuniones",
+    "joinMeeting": "Unirse",
+    "minutes": "min",
     "empty": {
       "title": "No hay datos aún",
       "description": "Las analíticas aparecerán aquí una vez que tengas conversaciones activas"

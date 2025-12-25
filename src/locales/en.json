@@ -102,6 +102,7 @@
     "title": "Analytics",
     "description": "Metrics and statistics of your conversations and agents",
     "refresh": "Refresh",
+    "loading": "Loading analytics...",
     "period": "Period:",
     "today": "Today",
     "week": "7 days",
@@ -113,11 +114,18 @@
       "messages": "Messages",
       "activeAgents": "Active Agents",
       "todayMeetings": "Today's Meetings",
-      "upcomingMeetings": "Upcoming Meetings"
+      "upcomingMeetings": "Upcoming Meetings",
+      "showRate": "Show Rate",
+      "totalMeetings": "Total Meetings",
+      "completedMeetings": "Completed",
+      "noShowMeetings": "No Shows"
     },
     "activity": "Activity (Last 21 days)",
     "conversationsByAgent": "Conversations by Agent",
     "upcomingMeetingsList": "Upcoming Meetings",
+    "viewAllMeetings": "View all meetings",
+    "joinMeeting": "Join",
+    "minutes": "min",
     "empty": {
       "title": "No data yet",
       "description": "Analytics will appear here once you have active conversations"
