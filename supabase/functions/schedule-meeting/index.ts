@@ -161,11 +161,19 @@ Deno.serve(async (req: Request) => {
       reminders: {
         useDefault: true,
       },
+      conferenceData: {
+        createRequest: {
+          requestId: `meet-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          conferenceSolutionKey: {
+            type: 'hangoutsMeet'
+          }
+        }
+      }
     };
 
-    // Crear evento en Google Calendar
+    // Crear evento en Google Calendar con conferenceData
     const calendarResponse = await fetch(
-      'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+      'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all',
       {
         method: 'POST',
         headers: {
@@ -184,9 +192,59 @@ Deno.serve(async (req: Request) => {
 
     const createdEvent = await calendarResponse.json();
     const calendarEventId = createdEvent.id;
-    const meetingLink = createdEvent.htmlLink || '';
 
-    console.log(`[schedule-meeting] Calendar event created: ${calendarEventId}`);
+    console.log('[schedule-meeting] Initial event created', {
+      eventId: createdEvent.id,
+      conferenceDataStatus: createdEvent.conferenceData?.createRequest?.status || 'unknown',
+      hasEntryPoints: !!createdEvent.conferenceData?.entryPoints
+    });
+
+    // El conferenceData puede estar en "pending" inicialmente
+    // Esperamos y hacemos polling para obtener el link de Meet
+    let meetingLink = createdEvent.htmlLink; // fallback al link del calendario
+    let finalEvent = createdEvent;
+
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+      if (finalEvent.conferenceData?.entryPoints) {
+        const videoEntry = finalEvent.conferenceData.entryPoints.find((ep: any) => ep.entryPointType === 'video');
+        if (videoEntry?.uri) {
+          meetingLink = videoEntry.uri;
+          console.log('[schedule-meeting] Google Meet link found', { meetingLink, attempt: i + 1 });
+          break;
+        }
+      } else if (finalEvent.hangoutLink) {
+        meetingLink = finalEvent.hangoutLink;
+        console.log('[schedule-meeting] Hangout link found', { meetingLink, attempt: i + 1 });
+        break;
+      }
+
+      // Si no encontramos el link y no es el último intento, esperamos y reintentamos
+      if (i < maxRetries - 1) {
+        console.log('[schedule-meeting] Conference data not ready, waiting...', { attempt: i + 1 });
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Esperar 2 segundos
+
+        // Obtener el evento actualizado
+        const getResponse = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/primary/events/${createdEvent.id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+            }
+          }
+        );
+
+        if (getResponse.ok) {
+          finalEvent = await getResponse.json();
+          console.log('[schedule-meeting] Event refetched', {
+            hasConferenceData: !!finalEvent.conferenceData,
+            hasEntryPoints: !!finalEvent.conferenceData?.entryPoints
+          });
+        }
+      }
+    }
+
+    console.log(`[schedule-meeting] Calendar event created: ${calendarEventId}, final meeting link: ${meetingLink}`);
 
     // Guardar en tabla meetings
     const { data: meeting, error: meetingError } = await supabase
