@@ -22,6 +22,60 @@ function extractPlatformMessageId(event: any): string | null {
     return typeof id === 'string' && id.trim() !== '' ? id : null;
 }
 
+// Helper: Verifica si un error de API es por token inválido/expirado (code 190)
+function isTokenExpiredError(errorData: any): boolean {
+    return errorData?.error?.code === 190 || errorData?.error?.code === '190';
+}
+
+// Helper: Normaliza el timestamp del webhook a ms y segundos
+function normalizeWebhookTimestamp(rawTimestamp: any): { timestampInMs: number; timestampInSeconds: number } {
+    const now = Date.now();
+    const fallback = {
+        timestampInMs: now,
+        timestampInSeconds: Math.floor(now / 1000)
+    };
+
+    // Parsear timestamp (puede venir como number o string)
+    const parsedTimestamp = (typeof rawTimestamp === 'number' && Number.isFinite(rawTimestamp))
+        ? rawTimestamp
+        : (typeof rawTimestamp === 'string' && rawTimestamp.trim() !== '' && Number.isFinite(Number(rawTimestamp))
+            ? Number(rawTimestamp)
+            : null);
+
+    if (parsedTimestamp === null) {
+        return fallback;
+    }
+
+    // Determinar si está en milisegundos (> 1e12) o segundos (< 1e10)
+    let timestampInMs: number;
+    let timestampInSeconds: number;
+
+    if (parsedTimestamp > 1e12) {
+        timestampInMs = parsedTimestamp;
+        timestampInSeconds = Math.floor(parsedTimestamp / 1000);
+    } else {
+        timestampInSeconds = parsedTimestamp;
+        timestampInMs = parsedTimestamp * 1000;
+    }
+
+    // Validar que el timestamp sea razonable (año entre 2000 y 2100)
+    const date = new Date(timestampInMs);
+    const year = date.getFullYear();
+    const isValidDate = !isNaN(date.getTime()) && year >= 2000 && year <= 2100;
+
+    if (!isValidDate || !Number.isFinite(timestampInMs) || timestampInMs <= 0) {
+        console.warn('⚠️ Invalid timestamp, using current time as fallback:', {
+            rawTimestamp,
+            parsedTimestamp,
+            year,
+            isValidDate
+        });
+        return fallback;
+    }
+
+    return { timestampInMs, timestampInSeconds };
+}
+
 Deno.serve(async (req: Request) => {
     // Manejar CORS
     if (req.method === 'OPTIONS') {
@@ -201,49 +255,7 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
 
         const debugEnabled = Boolean(instagramIntegration?.config?.debug_webhooks);
 
-        // FACEBOOK INTEGRATION DISABLED - Código comentado temporalmente
-        // Preferir Page Access Token desde la integración de Facebook (flujo recomendado)
-        // (la UI crea/actualiza una integración `type=facebook` con `page_access_token`)
-        // const { data: facebookIntegration } = await supabase
-        //   .from('integrations')
-        //   .select('config')
-        //   .eq('type', 'facebook')
-        //   .eq('user_id', userId)
-        //   .eq('status', 'connected')
-        //   .maybeSingle();
-        //
-        // const pageAccessToken =
-        //   facebookIntegration?.config?.page_access_token ||
-        //   instagramIntegration?.config?.page_access_token;
-        //
-        // if (pageAccessToken) {
-        //   try {
-        //     const res = await fetch(
-        //       `https://graph.facebook.com/v24.0/${senderId}?fields=name,username,profile_pic&access_token=${encodeURIComponent(pageAccessToken)}`,
-        //       { method: 'GET' }
-        //     );
-        //     const data = await res.json().catch(() => null);
-        //     if (res.ok && data && !data.error) {
-        //       return {
-        //         name: data.name || null,
-        //         username: data.username || null,
-        //         profile_picture: data.profile_pic || null,
-        //       };
-        //     }
-        //     if (debugEnabled && data?.error) {
-        //       console.warn('⚠️ User Profile API error:', {
-        //         message: data.error?.message,
-        //         code: data.error?.code,
-        //         subcode: data.error?.error_subcode,
-        //         fbtrace_id: data.error?.fbtrace_id,
-        //       });
-        //     }
-        //   } catch {
-        //     // ignore
-        //   }
-        // }
-
-        // Fallback legacy (tokens antiguos) - usar access_token de integración IG si existe
+        // Usar access_token de integración IG
         if (instagramError || !instagramIntegration) {
             // Sin logs por defecto (seguridad)
             return null;
@@ -291,14 +303,8 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
                 const data = await response.json();
                 if (data.error) {
                     if (debugEnabled) console.log('⚠️ Error en respuesta directa:', data.error);
-                    // Meta usa code=190 para token inválido/expirado/revocado/no parseable o tipo incorrecto.
-                    if (data.error.code === 190 || data.error.code === '190') {
-                        if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado (code 190). No se puede obtener perfil.', {
-                            message: data.error?.message,
-                            code: data.error?.code,
-                            subcode: data.error?.error_subcode,
-                            fbtrace_id: data.error?.fbtrace_id,
-                        });
+                    if (isTokenExpiredError(data)) {
+                        if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado. No se puede obtener perfil.');
                         return null;
                     }
                 } else {
@@ -315,13 +321,8 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
                 // Verificar si es error de token expirado
                 try {
                     const errorData = JSON.parse(errorText);
-                    if (errorData.error?.code === 190 || errorData.error?.code === '190') {
-                        if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado (code 190). No se puede obtener perfil.', {
-                            message: errorData.error?.message,
-                            code: errorData.error?.code,
-                            subcode: errorData.error?.error_subcode,
-                            fbtrace_id: errorData.error?.fbtrace_id,
-                        });
+                    if (isTokenExpiredError(errorData)) {
+                        if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado. No se puede obtener perfil.');
                         return null;
                     }
                 } catch (e) {
@@ -345,13 +346,8 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
                 if (data.error) {
                     if (debugEnabled) console.log('⚠️ Error en respuesta de Facebook:', data.error);
                     // code 190 => token inválido/expirado/revocado/no parseable/tipo incorrecto
-                    if (data.error.code === 190 || data.error.code === '190') {
-                        if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado (code 190). No se puede obtener perfil.', {
-                            message: data.error?.message,
-                            code: data.error?.code,
-                            subcode: data.error?.error_subcode,
-                            fbtrace_id: data.error?.fbtrace_id,
-                        });
+                    if (isTokenExpiredError(data)) {
+                        if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado. No se puede obtener perfil.');
                         return null;
                     }
                 } else {
@@ -368,13 +364,8 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
                 // Verificar si es error de token expirado
                 try {
                     const errorData = JSON.parse(errorText);
-                    if (errorData.error?.code === 190 || errorData.error?.code === '190') {
-                        if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado (code 190). No se puede obtener perfil.', {
-                            message: errorData.error?.message,
-                            code: errorData.error?.code,
-                            subcode: errorData.error?.error_subcode,
-                            fbtrace_id: errorData.error?.fbtrace_id,
-                        });
+                    if (isTokenExpiredError(errorData)) {
+                        if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado. No se puede obtener perfil.');
                         return null;
                     }
                 } catch (e) {
@@ -533,66 +524,7 @@ async function processInstagramEvent(event: any, pageId: string) {
             const message = event.message;
             const senderId = event.sender?.id;
             const recipientId = event.recipient?.id;
-            // Instagram puede enviar timestamp en milisegundos o segundos
-            // Si es mayor que 1e12, está en milisegundos
-            // Algunos payloads pueden no incluir timestamp o venir como string
-            const rawTimestamp = (typeof event.timestamp === 'number' && Number.isFinite(event.timestamp))
-                ? event.timestamp
-                : (typeof event.timestamp === 'string' && event.timestamp.trim() !== '' && Number.isFinite(Number(event.timestamp)) ? Number(event.timestamp) : null);
-
-            const safeIso = (ms: number) => {
-                const d = new Date(ms);
-                return Number.isFinite(d.getTime()) ? d.toISOString() : null;
-            };
-
-            // Determinar si está en milisegundos o segundos
-            // Los timestamps en milisegundos son típicamente > 1e12 (año 2001)
-            // Los timestamps en segundos son típicamente < 1e10 (año 2286)
-            let timestampInMs: number = Date.now();
-            let timestampInSeconds: number = Math.floor(Date.now() / 1000);
-
-            if (rawTimestamp !== null) {
-                if (rawTimestamp > 1e12) {
-                    // Está en milisegundos
-                    timestampInMs = rawTimestamp;
-                    timestampInSeconds = Math.floor(rawTimestamp / 1000);
-                } else {
-                    // Está en segundos
-                    timestampInSeconds = rawTimestamp;
-                    timestampInMs = rawTimestamp * 1000;
-                }
-            }
-
-            // Validar que el timestamp sea razonable (entre 2000 y 2100)
-            const dateFromTimestamp = new Date(timestampInMs);
-            const year = dateFromTimestamp.getFullYear();
-            const isValidDate = !isNaN(dateFromTimestamp.getTime()) && year >= 2000 && year <= 2100;
-
-            if (!isValidDate) {
-                console.error('❌ Invalid timestamp detected:', {
-                    rawTimestamp,
-                    timestampInMs,
-                    timestampInSeconds,
-                    dateFromTimestamp: safeIso(timestampInMs),
-                    year,
-                    isValidDate
-                });
-                // Usar timestamp actual como fallback
-                timestampInMs = Date.now();
-                timestampInSeconds = Math.floor(Date.now() / 1000);
-                console.log('⚠️ Using current timestamp as fallback:', {
-                    timestampInMs,
-                    timestampInSeconds,
-                    date: safeIso(timestampInMs)
-                });
-            }
-
-            // Asegurarse de que timestampInMs sea un número válido
-            if (!Number.isFinite(timestampInMs) || timestampInMs <= 0) {
-                console.error('❌ timestampInMs is not a valid number:', timestampInMs);
-                timestampInMs = Date.now();
-                timestampInSeconds = Math.floor(Date.now() / 1000);
-            }
+            const { timestampInMs, timestampInSeconds } = normalizeWebhookTimestamp(event.timestamp);
 
             const messageId = message.mid || message.id;
             const messageText = message.text || '';
@@ -600,7 +532,7 @@ async function processInstagramEvent(event: any, pageId: string) {
             // Security: Log only metadata, never message content
             console.log('📩 Message received:', {
                 messageId,
-                timestamp: safeIso(timestampInMs),
+                timestamp: new Date(timestampInMs).toISOString(),
                 pageId
             });
 
@@ -831,7 +763,7 @@ async function processInstagramEvent(event: any, pageId: string) {
                             sender_id: senderId,
                             recipient_id: recipientId,
                             timestamp: timestampInSeconds,
-                            raw_timestamp: rawTimestamp,
+                            raw_timestamp: event.timestamp,
                         },
                     })
                     .select('id')
@@ -1075,9 +1007,7 @@ async function generateAndSendAutoReply(
             return;
         }
 
-        // 5. Tool calls removed - simple chat mode only
-
-        // 6. Enviar respuesta de texto final (si existe después de tool calls o si era texto directo)
+        // 5. Enviar respuesta de texto final
         if (aiMessage && aiMessage.content) {
             const textContent = aiMessage.content;
             const sendResult = await sendInstagramMessage(userId, recipientId, textContent);
@@ -1093,16 +1023,12 @@ async function generateAndSendAutoReply(
 }
 
 // Helper para guardar mensaje outbound
-async function saveOutboundMessage(conversationId: string, userId: string, content: string, agentId: string, isMeeting: boolean = false, meetingId: string = '') {
-    const metadata: any = {
+async function saveOutboundMessage(conversationId: string, userId: string, content: string, agentId: string) {
+    const metadata = {
         generated_by: 'ai',
         agent_id: agentId,
         model: 'gpt-4o-mini'
     };
-    if (isMeeting) {
-        metadata.meeting_scheduled = true;
-        metadata.meeting_id = meetingId;
-    }
 
     await supabase.from('messages').upsert({
         conversation_id: conversationId,
@@ -1114,9 +1040,6 @@ async function saveOutboundMessage(conversationId: string, userId: string, conte
         metadata: metadata
     }, { onConflict: 'user_id,platform_message_id', ignoreDuplicates: true });
 }
-
-// Wrapper para check availability
-// checkAvailabilityForLead removed - meeting scheduling disabled
 
 /**
  * Genera una respuesta usando OpenAI - simple chat mode
@@ -1150,8 +1073,6 @@ async function generateAIResponse(messages: any[]) {
         return null;
     }
 }
-
-// Meeting tools and timezone functions removed - agent is now a simple chat assistant
 
 /**
  * Construye el system prompt simple para chat conversacional
@@ -1204,4 +1125,3 @@ async function detectLeadStatusAsync(conversationId: string) {
     }
 }
 
-// createMeetingForLead and formatMeetingDate removed - meeting scheduling disabled
