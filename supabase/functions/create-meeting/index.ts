@@ -313,10 +313,28 @@ serve(async (req) => {
         }
 
         const event = await eventResponse.json()
-        const meetingLink = event.hangoutLink || event.htmlLink
 
-        logger.success('Google Calendar event created', { eventId: event.id, meetingLink })
-        debugLog.push({ step: 'CALENDAR_EVENT_CREATED', data: { eventId: event.id, meetingLink } })
+        // Extraer el link de Google Meet del conferenceData
+        let meetingLink = event.htmlLink // fallback al link del calendario
+        if (event.conferenceData?.entryPoints) {
+            const videoEntry = event.conferenceData.entryPoints.find((ep: any) => ep.entryPointType === 'video')
+            if (videoEntry?.uri) {
+                meetingLink = videoEntry.uri
+            }
+        } else if (event.hangoutLink) {
+            meetingLink = event.hangoutLink
+        }
+
+        logger.success('Google Calendar event created', { eventId: event.id, meetingLink, hasConferenceData: !!event.conferenceData })
+        debugLog.push({
+            step: 'CALENDAR_EVENT_CREATED',
+            data: {
+                eventId: event.id,
+                meetingLink,
+                conferenceData: event.conferenceData ? 'present' : 'missing',
+                hangoutLink: event.hangoutLink || 'missing'
+            }
+        })
 
         // Guardar en BD (Best effort)
         logger.step(6, 'Saving meeting to database')
