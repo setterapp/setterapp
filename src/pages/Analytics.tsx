@@ -2,18 +2,16 @@ import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   MessageSquare,
-  Inbox,
-  Users,
-  Zap,
+  TrendingUp,
   Calendar,
-  Brain,
-  ArrowUp,
-  ArrowDown
+  CheckCircle,
+  XCircle,
+  Target,
+  Zap
 } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { useConversations } from '../hooks/useConversations'
 import { useAgents } from '../hooks/useAgents'
-import { useIntegrations } from '../hooks/useIntegrations'
 import { useMeetings } from '../hooks/useMeetings'
 import {
   ChartContainer,
@@ -27,13 +25,12 @@ type TimeRange = 'today' | 'week' | 'month' | 'all'
 function Analytics() {
   const { t } = useTranslation()
   const { conversations, loading: conversationsLoading } = useConversations()
-  const { agents, loading: agentsLoading } = useAgents()
-  const { integrations, loading: integrationsLoading } = useIntegrations()
+  const { agents } = useAgents()
   const { meetings, loading: meetingsLoading } = useMeetings()
 
   const [timeRange, setTimeRange] = useState<TimeRange>('week')
 
-  const loading = conversationsLoading || agentsLoading || integrationsLoading || meetingsLoading
+  const loading = conversationsLoading || meetingsLoading
 
   // Calcular métricas basadas en el rango de tiempo seleccionado
   const metrics = useMemo(() => {
@@ -51,7 +48,7 @@ function Analytics() {
         startDate.setDate(now.getDate() - 30)
         break
       case 'all':
-        startDate = new Date(0) // Desde el inicio
+        startDate = new Date(0)
         break
     }
 
@@ -60,65 +57,50 @@ function Analytics() {
       return convDate >= startDate
     })
 
-    // Conversaciones totales
-    const totalConversations = filteredConversations.length
+    // === LEAD METRICS ===
+    const totalLeads = filteredConversations.length
+    const coldLeads = filteredConversations.filter(c => c.lead_status === 'cold').length
+    const warmLeads = filteredConversations.filter(c => c.lead_status === 'warm').length
+    const hotLeads = filteredConversations.filter(c => c.lead_status === 'hot').length
+    const closedLeads = filteredConversations.filter(c => c.lead_status === 'closed').length
+    const notClosedLeads = filteredConversations.filter(c => c.lead_status === 'not_closed').length
 
-    // Conversaciones activas (con mensajes no leídos)
-    const activeConversations = filteredConversations.filter(conv => conv.unread_count > 0).length
+    // Qualified Lead Rate: (hot + closed) / total
+    const qualifiedLeads = hotLeads + closedLeads
+    const qualifiedLeadRate = totalLeads > 0 ? Math.round((qualifiedLeads / totalLeads) * 100) : 0
 
-    // Conversaciones por plataforma
-    const whatsappConversations = filteredConversations.filter(conv => conv.platform === 'whatsapp').length
-    const instagramConversations = filteredConversations.filter(conv => conv.platform === 'instagram').length
+    // Close Rate: closed / (hot + closed + not_closed)
+    const opportunities = hotLeads + closedLeads + notClosedLeads
+    const closeRate = opportunities > 0 ? Math.round((closedLeads / opportunities) * 100) : 0
 
-    // Mensajes totales estimados (basado en unread_count)
-    const totalMessages = filteredConversations.reduce((sum, conv) => sum + conv.unread_count, 0)
-
-    // Conversaciones con agente asignado
+    // Response Rate: conversaciones con agente / total
     const conversationsWithAgent = filteredConversations.filter(conv => conv.agent_id).length
+    const responseRate = totalLeads > 0 ? Math.round((conversationsWithAgent / totalLeads) * 100) : 0
 
-    // Tasa de respuesta (conversaciones con agente / total)
-    const responseRate = totalConversations > 0
-      ? Math.round((conversationsWithAgent / totalConversations) * 100)
-      : 0
-
-    // Agentes activos
-    const activeAgents = agents.filter(agent => agent.platform !== null).length
-
-    // Integraciones conectadas
-    const connectedIntegrations = integrations.filter(int => int.status === 'connected').length
-
-    // Métricas de reuniones
+    // === MEETING METRICS ===
     const filteredMeetings = meetings.filter(m => {
       const meetingDate = new Date(m.meeting_date)
       return meetingDate >= startDate
     })
 
+    const totalMeetings = filteredMeetings.length
+    const completedMeetings = filteredMeetings.filter(m => m.status === 'completed').length
+    const noShowMeetings = filteredMeetings.filter(m => m.status === 'no_show').length
     const upcomingMeetings = meetings.filter(m => {
       const meetingDate = new Date(m.meeting_date)
       return meetingDate >= now && m.status === 'scheduled'
     }).length
 
-    const todayMeetings = meetings.filter(m => {
-      const meetingDate = new Date(m.meeting_date)
-      const today = new Date()
-      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-      const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
-      return meetingDate >= todayStart && meetingDate < todayEnd && m.status === 'scheduled'
-    }).length
-
-    // Métricas de meetings en el período seleccionado
-    const totalMeetings = filteredMeetings.length
-    const completedMeetings = filteredMeetings.filter(m => m.status === 'completed').length
-    const noShowMeetings = filteredMeetings.filter(m => m.status === 'no_show').length
-    const scheduledMeetings = filteredMeetings.filter(m => m.status === 'scheduled').length
-
-    // Calcular tasa de asistencia (completed / (completed + no_show))
+    // Show Rate: completed / (completed + no_show)
     const totalFinishedMeetings = completedMeetings + noShowMeetings
     const showRate = totalFinishedMeetings > 0
       ? Math.round((completedMeetings / totalFinishedMeetings) * 100)
       : 0
 
-    // Conversaciones por día (últimos 21 días)
+    // Conversion to Meeting: total meetings / total leads
+    const conversionToMeeting = totalLeads > 0 ? Math.round((totalMeetings / totalLeads) * 100) : 0
+
+    // === ACTIVITY CHART ===
     const conversationsByDay = Array.from({ length: 21 }, (_, i) => {
       const date = new Date()
       date.setDate(date.getDate() - (20 - i))
@@ -138,59 +120,32 @@ function Analytics() {
       }
     })
 
-    // Conversaciones por agente
-    const conversationsByAgent = agents.map(agent => {
-      const count = filteredConversations.filter(conv => conv.agent_id === agent.id).length
-      return {
-        agentName: agent.name,
-        count,
-        platform: agent.platform
-      }
-    }).filter(item => item.count > 0).sort((a, b) => b.count - a.count)
-
-    // Comparación con período anterior
-    const previousStartDate = new Date(startDate)
-    const previousEndDate = new Date(startDate)
-    const daysDiff = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-    previousStartDate.setDate(previousStartDate.getDate() - daysDiff)
-    previousEndDate.setDate(previousEndDate.getDate() - daysDiff)
-
-    const previousConversations = conversations.filter(conv => {
-      const convDate = new Date(conv.created_at)
-      return convDate >= previousStartDate && convDate < previousEndDate
-    }).length
-
-    const conversationGrowth = previousConversations > 0
-      ? Math.round(((totalConversations - previousConversations) / previousConversations) * 100)
-      : totalConversations > 0 ? 100 : 0
-
     return {
-      totalConversations,
-      activeConversations,
-      whatsappConversations,
-      instagramConversations,
-      totalMessages,
-      conversationsWithAgent,
+      // Leads
+      totalLeads,
+      coldLeads,
+      warmLeads,
+      hotLeads,
+      closedLeads,
+      qualifiedLeadRate,
+      closeRate,
       responseRate,
-      activeAgents,
-      connectedIntegrations,
-      conversationsByDay,
-      conversationsByAgent,
-      conversationGrowth,
-      upcomingMeetings,
-      todayMeetings,
+      // Meetings
       totalMeetings,
       completedMeetings,
       noShowMeetings,
-      scheduledMeetings,
-      showRate
+      upcomingMeetings,
+      showRate,
+      conversionToMeeting,
+      // Chart
+      conversationsByDay
     }
-  }, [conversations, agents, integrations, meetings, timeRange])
+  }, [conversations, agents, meetings, timeRange])
 
   if (loading) {
     return (
       <div>
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <div className="spinner"></div>
             <p>{t('analytics.loading')}</p>
@@ -202,17 +157,24 @@ function Analytics() {
 
   return (
     <div>
-
-      {/* Filtro de tiempo */}
-      <div className="card" style={{ marginBottom: 'var(--spacing-md)', border: '2px solid #000' }}>
-        <div className="flex items-center" style={{ flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
-          <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>{t('analytics.period')}</span>
+      {/* Time Filter */}
+      <div className="card" style={{ marginBottom: 'var(--spacing-lg)', border: '2px solid #000', padding: 'var(--spacing-md)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--spacing-sm)' }}>
+          <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text)' }}>
+            {t('analytics.period')}
+          </span>
           {(['today', 'week', 'month', 'all'] as TimeRange[]).map((range) => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
-              className={`btn ${timeRange === range ? 'btn--primary' : 'btn--ghost'}`}
-              style={{ fontSize: 'var(--font-size-sm)', padding: 'var(--spacing-xs) var(--spacing-md)' }}
+              className="btn btn--sm"
+              style={{
+                fontSize: 'var(--font-size-xs)',
+                padding: '6px 12px',
+                backgroundColor: timeRange === range ? 'var(--color-primary)' : 'transparent',
+                color: timeRange === range ? '#000' : 'var(--color-text)',
+                fontWeight: 600
+              }}
             >
               {t(`analytics.${range}`)}
             </button>
@@ -220,229 +182,213 @@ function Analytics() {
         </div>
       </div>
 
-      {/* Métricas principales */}
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--spacing-md)' }}>
-        <div className="card" style={{ border: '2px solid #000' }}>
-          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            {t('analytics.metrics.conversations')}
-          </h3>
-          <div className="flex items-center justify-between" style={{ alignItems: 'center' }}>
-            <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: 'var(--border-radius)',
-                background: 'rgba(137, 180, 250, 0.15)',
-                border: '2px solid #000',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <MessageSquare size={24} color="var(--color-primary)" />
-              </div>
-              <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-text)' }}>
-                {metrics.totalConversations}
-              </p>
-            </div>
-            {metrics.conversationGrowth !== 0 && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                color: metrics.conversationGrowth > 0 ? 'var(--color-success)' : 'var(--color-danger)',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: 600,
-                flexShrink: 0
-              }}>
-                {metrics.conversationGrowth > 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
-                {Math.abs(metrics.conversationGrowth)}%
-              </div>
-            )}
-          </div>
-        </div>
+      {/* SALES & LEADS SECTION */}
+      <div style={{ marginBottom: 'var(--spacing-xl)' }}>
+        <h2 style={{
+          fontSize: 'var(--font-size-xl)',
+          fontWeight: 700,
+          marginBottom: 'var(--spacing-md)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--spacing-sm)',
+          color: 'var(--color-text)'
+        }}>
+          <TrendingUp size={24} />
+          Sales & Lead Performance
+        </h2>
 
-        <div className="card" style={{ border: '2px solid #000' }}>
-          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            {t('analytics.metrics.responseRate')}
-          </h3>
-          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: 'var(--border-radius)',
-              background: 'rgba(166, 227, 161, 0.15)',
-              border: '2px solid #000',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <Zap size={24} color="var(--color-success)" />
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: 'var(--spacing-md)',
+          marginBottom: 'var(--spacing-lg)'
+        }}>
+          {/* Total Leads */}
+          <div className="card" style={{
+            border: '2px solid #000',
+            padding: 'var(--spacing-md)',
+            backgroundColor: 'rgba(137, 180, 250, 0.1)'
+          }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Total Leads
             </div>
-            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-success)' }}>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-primary)', lineHeight: 1 }}>
+              {metrics.totalLeads}
+            </div>
+          </div>
+
+          {/* Qualified Lead Rate */}
+          <div className="card" style={{
+            border: '2px solid #000',
+            padding: 'var(--spacing-md)',
+            backgroundColor: 'rgba(166, 227, 161, 0.1)'
+          }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Qualified Rate
+            </div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#a6e3a1', lineHeight: 1 }}>
+              {metrics.qualifiedLeadRate}%
+            </div>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+              {metrics.hotLeads + metrics.closedLeads} hot/closed
+            </div>
+          </div>
+
+          {/* Close Rate */}
+          <div className="card" style={{
+            border: '2px solid #000',
+            padding: 'var(--spacing-md)',
+            backgroundColor: 'rgba(166, 227, 161, 0.15)'
+          }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Close Rate
+            </div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#a6e3a1', lineHeight: 1 }}>
+              {metrics.closeRate}%
+            </div>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+              {metrics.closedLeads} closed deals
+            </div>
+          </div>
+
+          {/* Response Rate */}
+          <div className="card" style={{
+            border: '2px solid #000',
+            padding: 'var(--spacing-md)',
+            backgroundColor: 'rgba(249, 226, 175, 0.1)'
+          }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Response Rate
+            </div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#f9e2af', lineHeight: 1 }}>
               {metrics.responseRate}%
-            </p>
+            </div>
           </div>
         </div>
 
-        <div className="card" style={{ border: '2px solid #000' }}>
-          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            {t('analytics.metrics.messages')}
+        {/* Lead Distribution */}
+        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+            <Target size={18} />
+            Lead Distribution
           </h3>
-          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: 'var(--border-radius)',
-              background: 'rgba(249, 226, 175, 0.15)',
-              border: '2px solid #000',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <Inbox size={24} color="var(--color-warning)" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 'var(--spacing-md)' }}>
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(148, 163, 184, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#94a3b8' }}>{metrics.coldLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Cold</div>
             </div>
-            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-warning)' }}>
-              {metrics.totalMessages}
-            </p>
-          </div>
-        </div>
-
-        <div className="card" style={{ border: '2px solid #000' }}>
-          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            {t('analytics.metrics.activeAgents')}
-          </h3>
-          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: 'var(--border-radius)',
-              background: 'rgba(137, 180, 250, 0.15)',
-              border: '2px solid #000',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <Brain size={24} color="var(--color-primary)" />
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(249, 226, 175, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f9e2af' }}>{metrics.warmLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Warm</div>
             </div>
-            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-text)' }}>
-              {metrics.activeAgents}
-            </p>
-          </div>
-        </div>
-
-        <div className="card" style={{ border: '2px solid #000' }}>
-          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            {t('analytics.metrics.todayMeetings')}
-          </h3>
-          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: 'var(--border-radius)',
-              background: 'rgba(166, 227, 161, 0.15)',
-              border: '2px solid #000',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <Calendar size={24} color="var(--color-success)" />
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(243, 139, 168, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f38ba8' }}>{metrics.hotLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Hot</div>
             </div>
-            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-success)' }}>
-              {metrics.todayMeetings}
-            </p>
-          </div>
-        </div>
-
-        <div className="card" style={{ border: '2px solid #000' }}>
-          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            {t('analytics.metrics.upcomingMeetings')}
-          </h3>
-          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: 'var(--border-radius)',
-              background: 'rgba(249, 226, 175, 0.15)',
-              border: '2px solid #000',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <Calendar size={24} color="var(--color-warning)" />
-            </div>
-            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-warning)' }}>
-              {metrics.upcomingMeetings}
-            </p>
-          </div>
-        </div>
-
-        <div className="card" style={{ border: '2px solid #000' }}>
-          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            {t('analytics.metrics.showRate')}
-          </h3>
-          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: 'var(--border-radius)',
-              background: 'rgba(166, 227, 161, 0.15)',
-              border: '2px solid #000',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <Calendar size={24} color="var(--color-success)" />
-            </div>
-            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-success)' }}>
-              {metrics.showRate}%
-            </p>
-          </div>
-        </div>
-
-        <div className="card" style={{ border: '2px solid #000' }}>
-          <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-            {t('analytics.metrics.totalMeetings')}
-          </h3>
-          <div className="flex items-center" style={{ gap: 'var(--spacing-md)', alignItems: 'center' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: 'var(--border-radius)',
-              background: 'rgba(137, 180, 250, 0.15)',
-              border: '2px solid #000',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <Calendar size={24} color="var(--color-primary)" />
-            </div>
-            <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700, color: 'var(--color-text)' }}>
-              {metrics.totalMeetings}
-            </p>
-          </div>
-          <div style={{ marginTop: 'var(--spacing-sm)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span>{t('analytics.metrics.completedMeetings')}: {metrics.completedMeetings}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>{t('analytics.metrics.noShowMeetings')}: {metrics.noShowMeetings}</span>
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.closedLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Closed</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Gráfico de actividad */}
-      <div className="card" style={{ marginTop: 'var(--spacing-md)', border: '2px solid #000' }}>
-        <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
-          <Calendar size={20} />
+      {/* MEETINGS SECTION */}
+      <div style={{ marginBottom: 'var(--spacing-xl)' }}>
+        <h2 style={{
+          fontSize: 'var(--font-size-xl)',
+          fontWeight: 700,
+          marginBottom: 'var(--spacing-md)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--spacing-sm)',
+          color: 'var(--color-text)'
+        }}>
+          <Calendar size={24} />
+          Appointment Performance
+        </h2>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: 'var(--spacing-md)'
+        }}>
+          {/* Total Meetings */}
+          <div className="card" style={{
+            border: '2px solid #000',
+            padding: 'var(--spacing-md)',
+            backgroundColor: 'rgba(137, 180, 250, 0.1)'
+          }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Total Meetings
+            </div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-primary)', lineHeight: 1 }}>
+              {metrics.totalMeetings}
+            </div>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: '4px', display: 'flex', gap: 'var(--spacing-xs)' }}>
+              <span><CheckCircle size={12} style={{ display: 'inline', marginRight: '2px' }} />{metrics.completedMeetings}</span>
+              <span><XCircle size={12} style={{ display: 'inline', marginRight: '2px' }} />{metrics.noShowMeetings}</span>
+            </div>
+          </div>
+
+          {/* Show Rate */}
+          <div className="card" style={{
+            border: '2px solid #000',
+            padding: 'var(--spacing-md)',
+            backgroundColor: 'rgba(166, 227, 161, 0.15)'
+          }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Show Rate
+            </div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#a6e3a1', lineHeight: 1 }}>
+              {metrics.showRate}%
+            </div>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+              {metrics.showRate >= 95 ? '🎯 Excellent' : metrics.showRate >= 80 ? '✓ Good' : '⚠ Needs improvement'}
+            </div>
+          </div>
+
+          {/* Upcoming Meetings */}
+          <div className="card" style={{
+            border: '2px solid #000',
+            padding: 'var(--spacing-md)',
+            backgroundColor: 'rgba(249, 226, 175, 0.1)'
+          }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Upcoming
+            </div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#f9e2af', lineHeight: 1 }}>
+              {metrics.upcomingMeetings}
+            </div>
+          </div>
+
+          {/* Conversion to Meeting */}
+          <div className="card" style={{
+            border: '2px solid #000',
+            padding: 'var(--spacing-md)',
+            backgroundColor: 'rgba(137, 180, 250, 0.1)'
+          }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Lead → Meeting
+            </div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-primary)', lineHeight: 1 }}>
+              {metrics.conversionToMeeting}%
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ACTIVITY CHART */}
+      <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+        <h3 style={{
+          fontSize: 'var(--font-size-base)',
+          fontWeight: 600,
+          marginBottom: 'var(--spacing-lg)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--spacing-sm)'
+        }}>
+          <MessageSquare size={18} />
           {t('analytics.activity')}
         </h3>
         <ChartContainer
@@ -456,177 +402,60 @@ function Analytics() {
               color: "#f38ba8",
             },
           } satisfies ChartConfig}
-          style={{ height: '300px' }}
+          style={{ height: '280px' }}
         >
           <BarChart
             accessibilityLayer
             data={metrics.conversationsByDay}
-            margin={{ top: 20, right: 10, left: 0, bottom: 0 }}
+            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
           >
             <CartesianGrid
               vertical={false}
               stroke="#e5e5e5"
               strokeWidth={1}
               strokeDasharray="0"
-              horizontalPoints={[]}
             />
             <XAxis
               dataKey="date"
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 12 }}
+              tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 11 }}
             />
             <YAxis
               tickLine={false}
               axisLine={false}
-              tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 12 }}
+              tick={{ fill: 'var(--color-text)', fontWeight: 600, fontSize: 11 }}
               width={30}
               allowDecimals={false}
-              domain={[0, 'dataMax']}
-              tickFormatter={(value) => {
-                const intValue = Math.floor(value)
-                return intValue > 0 ? intValue.toString() : ''
-              }}
             />
             <ChartTooltip
               cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
-              content={<ChartTooltipContent indicator="dot" formatter={(value) => {
-                const intValue = Math.floor(Number(value))
-                return intValue > 0 ? intValue.toString() : ''
-              }} />}
+              content={<ChartTooltipContent indicator="dot" />}
             />
             <Bar
               dataKey="whatsapp"
-              fill="var(--color-whatsapp)"
+              fill="#a6e3a1"
               radius={4}
               stroke="#000"
-              strokeWidth={3}
+              strokeWidth={2}
             />
             <Bar
               dataKey="instagram"
-              fill="var(--color-instagram)"
+              fill="#f38ba8"
               radius={4}
               stroke="#000"
-              strokeWidth={3}
+              strokeWidth={2}
             />
           </BarChart>
         </ChartContainer>
       </div>
 
-      {/* Próximas reuniones */}
-      {metrics.upcomingMeetings > 0 && (
-        <div className="card" style={{ marginTop: 'var(--spacing-md)', border: '2px solid #000' }}>
-          <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
-            <Calendar size={20} />
-            {t('analytics.metrics.upcomingMeetings')} ({metrics.upcomingMeetings})
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-            {meetings
-              .filter(m => {
-                const meetingDate = new Date(m.meeting_date)
-                return meetingDate >= new Date() && m.status === 'scheduled'
-              })
-              .sort((a, b) => new Date(a.meeting_date).getTime() - new Date(b.meeting_date).getTime())
-              .slice(0, 5) // Mostrar máximo 5 reuniones
-              .map(meeting => (
-                <div key={meeting.id} className="flex items-center justify-between" style={{ padding: 'var(--spacing-sm)', border: '1px solid var(--color-border)', borderRadius: 'var(--border-radius)', background: 'var(--color-bg-secondary)' }}>
-                  <div className="flex items-center" style={{ gap: 'var(--spacing-sm)' }}>
-                    <Calendar size={16} color="var(--color-primary)" />
-                    <div>
-                      <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text)' }}>
-                        {meeting.lead_name}
-                      </div>
-                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                        {new Date(meeting.meeting_date).toLocaleDateString('es-ES', {
-                          weekday: 'short',
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })} • {meeting.duration_minutes} {t('analytics.minutes')}
-                      </div>
-                    </div>
-                  </div>
-                  <a
-                    href={meeting.meeting_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn--primary btn--sm"
-                    style={{ fontSize: 'var(--font-size-xs)', padding: '4px 8px' }}
-                  >
-                    {t('analytics.joinMeeting')}
-                  </a>
-                </div>
-              ))}
-          </div>
-          {metrics.upcomingMeetings > 5 && (
-            <div style={{ textAlign: 'center', marginTop: 'var(--spacing-md)' }}>
-              <a href="/meetings" className="btn btn--ghost" style={{ fontSize: 'var(--font-size-sm)' }}>
-                {t('analytics.viewAllMeetings')}
-              </a>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Conversaciones por agente */}
-      {metrics.conversationsByAgent.length > 0 && (
-        <div className="card" style={{ marginTop: 'var(--spacing-md)', border: '2px solid #000' }}>
-          <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
-            <Users size={20} />
-            {t('analytics.conversationsByAgent')}
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-            {metrics.conversationsByAgent.map((item, index) => (
-              <div key={index}>
-                <div className="flex items-center justify-between" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                  <div className="flex items-center" style={{ gap: 'var(--spacing-sm)' }}>
-                    <Brain size={16} color="var(--color-primary)" />
-                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text)', fontWeight: 500 }}>
-                      {item.agentName}
-                    </span>
-                    {item.platform && (
-                      <span style={{
-                        fontSize: 'var(--font-size-xs)',
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        background: item.platform === 'whatsapp' ? 'rgba(166, 227, 161, 0.2)' : 'rgba(243, 139, 168, 0.2)',
-                        color: item.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8'
-                      }}>
-                        {item.platform === 'whatsapp' ? 'WA' : 'IG'}
-                      </span>
-                    )}
-                  </div>
-                  <span style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>
-                    {item.count}
-                  </span>
-                </div>
-                <div style={{
-                  width: '100%',
-                  height: '6px',
-                  background: 'var(--color-bg-secondary)',
-                  borderRadius: '3px',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    width: `${metrics.totalConversations > 0 ? (item.count / metrics.totalConversations) * 100 : 0}%`,
-                    height: '100%',
-                    background: 'var(--color-primary)',
-                    borderRadius: '3px',
-                    transition: 'width 0.3s ease'
-                  }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Estado vacío */}
-      {metrics.totalConversations === 0 && (
+      {/* Empty State */}
+      {metrics.totalLeads === 0 && (
         <div className="card" style={{ marginTop: 'var(--spacing-md)', border: '2px solid #000' }}>
           <div className="empty-state">
+            <Zap size={48} style={{ opacity: 0.3, margin: '0 auto var(--spacing-md)' }} />
             <h3>{t('analytics.empty.title')}</h3>
             <p>{t('analytics.empty.description')}</p>
           </div>
