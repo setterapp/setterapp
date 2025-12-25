@@ -1086,8 +1086,43 @@ async function generateAndSendAutoReply(
                 }
 
                 if (toolCall.function.name === 'schedule_meeting') {
-                    const args = JSON.parse(toolCall.function.arguments);
+                    let args;
+                    try {
+                        args = JSON.parse(toolCall.function.arguments);
+                    } catch (e) {
+                        console.error('❌ Failed to parse schedule_meeting arguments:', e);
+                        const errorMessage = 'hubo un error procesando la información. ¿me puedes dar tu email y nombre de nuevo?';
+                        await sendInstagramMessage(userId, recipientId, errorMessage);
+                        return;
+                    }
+
                     console.log('📅 [AutoReply] Scheduling meeting:', args);
+
+                    // Validación de parámetros (patrón n8n)
+                    if (!args.lead_email || !args.lead_name || !args.preferred_datetime) {
+                        console.error('❌ Missing required parameters:', { args });
+                        const errorMessage = 'me falta información para agendar. necesito tu email, nombre completo y confirmar el horario.';
+                        await sendInstagramMessage(userId, recipientId, errorMessage);
+                        return;
+                    }
+
+                    // Validar formato de email (patrón n8n)
+                    const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+                    if (!emailRegex.test(args.lead_email)) {
+                        console.error('❌ Invalid email format:', args.lead_email);
+                        const errorMessage = 'el email no parece válido. ¿me lo puedes dar de nuevo?';
+                        await sendInstagramMessage(userId, recipientId, errorMessage);
+                        return;
+                    }
+
+                    // Validar formato de fecha ISO 8601 (patrón n8n)
+                    const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/;
+                    if (!dateRegex.test(args.preferred_datetime)) {
+                        console.error('❌ Invalid datetime format:', args.preferred_datetime);
+                        const errorMessage = 'hubo un error con el formato de fecha. ¿me confirmas el horario de nuevo?';
+                        await sendInstagramMessage(userId, recipientId, errorMessage);
+                        return;
+                    }
 
                     // Llamar a la función de crear reunión
                     const meetingResult = await createMeetingForLead(
@@ -1232,27 +1267,40 @@ async function generateAIResponse(messages: any[], enableMeetingScheduling: bool
     }
 }
 
+/**
+ * Herramientas de Google Calendar siguiendo el patrón de n8n
+ * Usa schemas estructurados como DynamicStructuredTool para mejor validación
+ */
 function getMeetingTools() {
     return [
         {
             type: 'function',
             function: {
                 name: 'check_availability',
-                description: `Consulta los horarios disponibles en tu calendario para los próximos 5 días.
+                description: `Check calendar availability for the next days.
 
-CUÁNDO USAR:
-- Cuando el lead pregunta "¿qué horarios tienes?"
-- Antes de proponer fechas específicas
-- Cuando vas a ofrecer opciones de reunión
+WHEN TO USE:
+- User asks "what times do you have available?"
+- Before proposing specific time slots
+- When offering meeting options to the lead
 
-RETORNA:
-- Lista de slots disponibles con fecha/hora de inicio y fin
-- Cada slot respeta tu configuración de horarios y días laborables
+WHAT IT RETURNS:
+- Array of available time slots with start/end times
+- Each slot respects your configured working hours and days
+- Times are in ISO 8601 format with timezone
 
-IMPORTANTE: NUNCA propongas horarios sin llamar primero a esta función.`,
+IMPORTANT: ALWAYS call this before suggesting specific meeting times. NEVER invent availability.`,
                 parameters: {
                     type: 'object',
-                    properties: {},
+                    properties: {
+                        days_to_check: {
+                            type: 'number',
+                            description: 'Number of days to check for availability (1-7). Default is 5 days.',
+                            minimum: 1,
+                            maximum: 7,
+                            default: 5
+                        }
+                    },
                     required: []
                 }
             }
@@ -1261,42 +1309,56 @@ IMPORTANTE: NUNCA propongas horarios sin llamar primero a esta función.`,
             type: 'function',
             function: {
                 name: 'schedule_meeting',
-                description: `Crea una reunión REAL en Google Calendar con link de Google Meet.
+                description: `Create a REAL meeting in Google Calendar with Google Meet link.
 
-REQUISITOS ANTES DE LLAMAR:
-✓ Email válido del lead (OBLIGATORIO)
-✓ Nombre completo del lead (OBLIGATORIO)
-✓ Fecha/hora confirmada por el lead (OBLIGATORIO)
-✓ El lead ha confirmado que quiere agendar
+REQUIREMENTS BEFORE CALLING (ALL MANDATORY):
+- lead_email: Valid email address (REQUIRED)
+- lead_name: Full name of the lead (REQUIRED)
+- preferred_datetime: Confirmed date/time in ISO 8601 format (REQUIRED)
+- Lead has explicitly confirmed they want to schedule
 
-QUÉ HACE:
-1. Crea evento en Google Calendar
-2. Genera link de Google Meet
-3. Envía invitación por email al lead
+WHAT IT DOES:
+1. Creates event in Google Calendar
+2. Generates Google Meet link automatically
+3. Sends calendar invitation to lead's email
+4. Saves meeting record in database
 
-IMPORTANTE:
-- Solo llamar cuando tengas TODA la información
-- Confirmar con el lead antes de ejecutar
-- preferred_datetime DEBE estar en formato ISO 8601 con timezone
-  Ejemplo: "2025-12-26T15:00:00-03:00" para mañana 26 de diciembre a las 3pm Argentina`,
+CRITICAL RULES:
+- ONLY call when you have ALL required information
+- MUST validate email format before calling
+- MUST confirm with lead before executing
+- preferred_datetime format: YYYY-MM-DDTHH:mm:ss±HH:mm
+- Use timezone from system context
+
+VALIDATION:
+All parameters marked as required MUST be provided.
+Property names with description, type and required status:
+- lead_email (description: Email address of the lead for sending invitation, type: string, required: true)
+- lead_name (description: Full name of the lead, type: string, required: true)
+- preferred_datetime (description: Meeting date/time in ISO 8601 with timezone, type: string, required: true)
+- lead_phone (description: Phone number if provided by lead, type: string, required: false)`,
                 parameters: {
                     type: 'object',
                     properties: {
                         lead_email: {
                             type: 'string',
-                            description: 'Email del lead para enviar la invitación. Debe ser un email válido.'
+                            description: 'Email address of the lead for sending calendar invitation. Must be valid email format.',
+                            pattern: '^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$'
                         },
                         lead_name: {
                             type: 'string',
-                            description: 'Nombre completo del lead (ej: "Juan Pérez")'
+                            description: 'Full name of the lead (e.g., "Juan Pérez", "María García")',
+                            minLength: 2,
+                            maxLength: 100
                         },
                         preferred_datetime: {
                             type: 'string',
-                            description: 'Fecha y hora elegida en formato ISO 8601 con timezone. Usar el timezone que está en el contexto del sistema. Formato: YYYY-MM-DDTHH:mm:ss±HH:mm'
+                            description: 'Meeting date and time in ISO 8601 format with timezone. Must match format: YYYY-MM-DDTHH:mm:ss±HH:mm. Use the timezone specified in system context.',
+                            pattern: '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{2}:\\d{2}$'
                         },
                         lead_phone: {
                             type: 'string',
-                            description: 'Teléfono del lead (opcional). Solo incluir si el lead lo proporciona.'
+                            description: 'Phone number of the lead (optional). Only include if explicitly provided by the lead.'
                         }
                     },
                     required: ['lead_email', 'lead_name', 'preferred_datetime']
