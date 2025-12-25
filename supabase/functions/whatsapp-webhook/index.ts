@@ -302,13 +302,7 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
                             // No lanzar el error para no afectar el webhook
                         });
 
-                    // 📊 Detectar estado del lead automáticamente
-                    // Esta función se ejecuta de forma asíncrona sin bloquear la respuesta del webhook
-                    detectLeadStatusAsync(conversationId)
-                        .catch(error => {
-                            console.error('❌ Error detectando estado del lead:', error);
-                            // No lanzar el error para no afectar el webhook
-                        });
+                    // Clasificación automática de lead status removida - ahora es manual por el usuario
                 }
             }
 
@@ -939,29 +933,5 @@ function formatMeetingDate(isoDate: string): string {
     return date.toLocaleDateString('es-AR', options);
 }
 
-/**
- * Detecta el estado del lead automáticamente llamando a la Edge Function
- */
-async function detectLeadStatusAsync(conversationId: string) {
-    try {
-        console.log('📊 Detectando estado del lead para conversación:', conversationId);
-
-        const { data, error } = await supabase.functions.invoke('detect-lead-status', {
-            body: { conversationId }
-        });
-
-        if (error) {
-            console.error('❌ Error llamando a detect-lead-status:', error);
-            return;
-        }
-
-        if (data?.statusChanged) {
-            console.log('✅ Estado del lead actualizado:', data.oldStatus, '->', data.newStatus);
-            console.log('📝 Razón:', data.reasoning);
-        } else {
-            console.log('ℹ️ Estado del lead sin cambios:', data?.status || 'unknown');
-        }
-    } catch (error) {
-        console.error('❌ Error detectando estado del lead:', error);
-    }
-}
+// Función de detección automática de lead status removida - ahora es manual por el usuario
+// La clasificación de leads se hace manualmente desde la UI mediante un selector dropdown

@@ -216,24 +216,57 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
               >
                 {conversation.platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'}
               </span>
-              {leadStatusBackgroundColor && leadStatusLabel && (
-                <span
-                  style={{
-                    backgroundColor: leadStatusBackgroundColor,
-                    color: '#000',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '2px 6px',
-                    borderRadius: 'var(--border-radius-sm)',
-                    fontSize: 'var(--font-size-xs)',
-                    fontWeight: 600,
-                    border: '2px solid #000',
-                  }}
-                >
-                  {leadStatusLabel}
-                </span>
-              )}
+              {/* Selector manual de lead status */}
+              <select
+                value={conversation.lead_status || ''}
+                onChange={async (e) => {
+                  const newStatus = e.target.value as 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | ''
+                  if (!newStatus) return
+
+                  try {
+                    // Actualizar en conversations
+                    await supabase
+                      .from('conversations')
+                      .update({
+                        lead_status: newStatus,
+                        updated_at: new Date().toISOString()
+                      })
+                      .eq('id', conversationId)
+
+                    // Actualizar en contacts si existe
+                    if (conversation.contact_ref?.id) {
+                      await supabase
+                        .from('contacts')
+                        .update({
+                          lead_status: newStatus,
+                          updated_at: new Date().toISOString()
+                        })
+                        .eq('id', conversation.contact_ref.id)
+                    }
+
+                    console.log('Lead status actualizado a:', newStatus)
+                  } catch (error) {
+                    console.error('Error actualizando lead status:', error)
+                  }
+                }}
+                style={{
+                  backgroundColor: leadStatusBackgroundColor || '#f3f4f6',
+                  color: '#000',
+                  padding: '2px 6px',
+                  borderRadius: 'var(--border-radius-sm)',
+                  fontSize: 'var(--font-size-xs)',
+                  fontWeight: 600,
+                  border: '2px solid #000',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="">Sin estado</option>
+                <option value="cold">Frío</option>
+                <option value="warm">Tibio</option>
+                <option value="hot">Caliente</option>
+                <option value="closed">Cerrado</option>
+                <option value="not_closed">No Cerrado</option>
+              </select>
             </div>
           </div>
         </div>
