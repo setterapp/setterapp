@@ -82,7 +82,6 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
   }
 
   const leadStatusBackgroundColor = getLeadStatusBackgroundColor(conversation.lead_status)
-  const leadStatusLabel = getLeadStatusLabel(conversation.lead_status)
 
   const contact = conversation.contact_ref
   const alias = conversation.contact_alias
