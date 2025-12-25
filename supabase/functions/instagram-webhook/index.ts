@@ -1413,33 +1413,22 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
 
     if (config?.enableMeetingScheduling) {
         prompt += `=== REUNIONES ===\n`;
-        prompt += `Tienes UNA herramienta: process_meeting_request()\n\n`;
+        prompt += `Tienes acceso directo a Google Calendar con process_meeting_request().\n\n`;
 
-        prompt += `CÓMO USARLA:\n`;
-        prompt += `1. Usuario pregunta disponibilidad:\n`;
-        prompt += `   → process_meeting_request({action: "check"})\n`;
-        prompt += `   → Te devuelve horarios disponibles\n`;
-        prompt += `   → Ofrécele 2-3 opciones al usuario\n\n`;
+        prompt += `Cuando el usuario mencione disponibilidad o quiera agendar, INMEDIATAMENTE usa la herramienta:\n\n`;
 
-        prompt += `2. Usuario quiere agendar:\n`;
-        prompt += `   → Primero pide: email y nombre\n`;
-        prompt += `   → Luego llama: process_meeting_request({\n`;
-        prompt += `       action: "schedule",\n`;
-        prompt += `       lead_email: "email@ejemplo.com",\n`;
-        prompt += `       lead_name: "Juan Pérez",\n`;
-        prompt += `       preferred_date: "mañana 3pm"  // en lenguaje natural!\n`;
-        prompt += `     })\n\n`;
+        prompt += `Usuario pregunta disponibilidad:\n`;
+        prompt += `→ INMEDIATAMENTE: process_meeting_request({action: "check"})\n`;
+        prompt += `→ Ofrece 2-3 opciones de los horarios que te devuelve\n\n`;
 
-        prompt += `EJEMPLOS:\n`;
-        prompt += `• "mañana a las 3pm" ✓\n`;
-        prompt += `• "hoy 15:00" ✓\n`;
-        prompt += `• "25 de diciembre 10am" ✓\n`;
-        prompt += `La función parsea el lenguaje natural por ti!\n\n`;
+        prompt += `Usuario quiere agendar:\n`;
+        prompt += `→ Pide email y nombre si no los tienes\n`;
+        prompt += `→ INMEDIATAMENTE: process_meeting_request({action: "schedule", lead_email: "...", lead_name: "...", preferred_date: "mañana 3pm"})\n\n`;
 
-        prompt += `REGLAS:\n`;
-        prompt += `✗ NO inventes horarios - usa action="check" primero\n`;
-        prompt += `✗ NO agendes sin email y nombre\n`;
-        prompt += `✓ SÍ pide confirmación antes de agendar\n\n`;
+        prompt += `IMPORTANTE:\n`;
+        prompt += `• NUNCA inventes horarios disponibles\n`;
+        prompt += `• SIEMPRE usa la herramienta para verificar antes\n`;
+        prompt += `• Acepta fechas en lenguaje natural: "mañana 3pm", "hoy 15:00"\n\n`;
     }
 
     prompt += `=== ESTILO DE COMUNICACIÓN ===\n`;
