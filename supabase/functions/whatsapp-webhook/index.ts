@@ -432,10 +432,12 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
         prompt += `\n\n=== AGENDAMIENTO DE REUNIONES ===\n`;
         prompt += `Tienes la capacidad de agendar reuniones automáticamente en Google Calendar usando la función schedule_meeting.\n\n`;
 
-        prompt += `🔧 IMPORTANTE - CÓMO AGENDAR:\n`;
-        prompt += `Una vez que tengas el EMAIL, NOMBRE y FECHA/HORA del lead, DEBES llamar a la función schedule_meeting.\n`;
-        prompt += `NO digas "te agendo la reunión" a menos que primero llames a la función.\n`;
-        prompt += `La función schedule_meeting hará el agendamiento real en Google Calendar.\n\n`;
+        prompt += `🔧 CRÍTICO - REGLAS ABSOLUTAS PARA AGENDAR:\n`;
+        prompt += `1. NUNCA llames a schedule_meeting sin tener el EMAIL del lead\n`;
+        prompt += `2. El email debe ser proporcionado EXPLÍCITAMENTE por el lead en la conversación\n`;
+        prompt += `3. NUNCA inventes, generes o asumas un email - es FRAUDE hacerlo\n`;
+        prompt += `4. NO digas "te agendo" o "ya agendé" hasta que hayas llamado a la función Y recibas confirmación\n`;
+        prompt += `5. La función schedule_meeting creará el evento real en Google Calendar y generará el link de Google Meet\n\n`;
 
         prompt += `CUÁNDO OFRECER UNA REUNIÓN:\n`;
         prompt += `- Cuando el lead muestre interés genuino en el producto/servicio\n`;
@@ -548,28 +550,28 @@ function getMeetingSchedulingTool() {
         type: 'function',
         function: {
             name: 'schedule_meeting',
-            description: 'Agenda una reunión con el lead cuando tenga toda la información necesaria: email, nombre completo y fecha/hora preferida',
+            description: 'SOLO usa esta función DESPUÉS de que el lead te haya dado su email explícitamente. NUNCA inventes o asumas un email. Si no tienes el email del lead, NO llames a esta función.',
             parameters: {
                 type: 'object',
                 properties: {
                     lead_email: {
                         type: 'string',
-                        description: 'Email del lead para enviarle la invitación de calendario'
+                        description: 'Email del lead que TE DIO EXPLÍCITAMENTE en la conversación. NUNCA inventes, generes o asumas un email. Debe ser EXACTAMENTE el email que el lead escribió.'
                     },
                     lead_name: {
                         type: 'string',
-                        description: 'Nombre completo del lead'
+                        description: 'Nombre completo del lead tal como te lo dio en la conversación'
                     },
                     preferred_datetime: {
                         type: 'string',
-                        description: 'Fecha y hora preferida para la reunión en formato ISO 8601. Si el lead dice "mañana a las 3pm", calcular la fecha exacta basándose en la fecha/hora actual y convertir a formato ISO.'
+                        description: 'Fecha y hora preferida para la reunión en formato ISO 8601. Si el lead dice "mañana a las 3pm", calcular la fecha exacta basándose en la fecha/hora actual y convertir a formato ISO. IMPORTANTE: Asegúrate de calcular la fecha correctamente respetando la zona horaria.'
                     },
                     lead_phone: {
                         type: 'string',
                         description: 'Número de teléfono del lead (opcional)'
                     }
                 },
-                required: ['lead_email', 'lead_name']
+                required: ['lead_email', 'lead_name', 'preferred_datetime']
             }
         }
     };
@@ -769,8 +771,19 @@ async function generateAndSendAutoReply(
                     console.log('📅 [AutoReply] Meeting creation result:', JSON.stringify(meetingResult, null, 2));
 
                     if (meetingResult.success) {
+                        // Verificar que el link sea de Google Meet y no del calendario
+                        const meetLink = meetingResult.meeting.link;
+                        const isGoogleMeetLink = meetLink && (meetLink.includes('meet.google.com') || meetLink.includes('hangouts.google.com'));
+
                         // Enviar mensaje de confirmación con el link de la reunión
-                        const confirmationMessage = `perfecto ${args.lead_name}! te agendé la reunión para el ${formatMeetingDate(meetingResult.meeting.date)}. te llegará la invitación a ${args.lead_email} con el link de google meet: ${meetingResult.meeting.link}`;
+                        let confirmationMessage = `perfecto ${args.lead_name}! te agendé la reunión para el ${formatMeetingDate(meetingResult.meeting.date)}. `;
+
+                        if (isGoogleMeetLink) {
+                            confirmationMessage += `te llegará la invitación a ${args.lead_email} con el link de google meet: ${meetLink}`;
+                        } else {
+                            confirmationMessage += `te llegará la invitación a ${args.lead_email} con toda la información de la reunión.`;
+                            console.warn('⚠️ El link no es de Google Meet:', meetLink);
+                        }
 
                         await sendWhatsAppMessage(userId, phoneNumberId, recipientPhone, confirmationMessage);
 

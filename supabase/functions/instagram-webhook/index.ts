@@ -1002,13 +1002,13 @@ async function generateAndSendAutoReply(
                 type: 'function',
                 function: {
                     name: 'schedule_meeting',
-                    description: 'Agenda una reunión en el calendario después de confirmar disponibilidad con check_availability. Solo usa esta función cuando el usuario haya confirmado la fecha y hora.',
+                    description: 'SOLO usa esta función DESPUÉS de que el lead te haya dado su email explícitamente. NUNCA inventes o asumas un email. Si no tienes el email del lead, NO llames a esta función. Debe usarse después de confirmar disponibilidad con check_availability y cuando el usuario haya confirmado la fecha y hora.',
                     parameters: {
                         type: 'object',
                         properties: {
                             meeting_date: {
                                 type: 'string',
-                                description: 'Fecha y hora de la reunión en formato ISO 8601 (ej: 2025-12-26T15:00:00-03:00)'
+                                description: 'Fecha y hora de la reunión en formato ISO 8601 (ej: 2025-12-26T15:00:00-03:00). IMPORTANTE: Asegúrate de calcular la fecha correctamente respetando la zona horaria del lead.'
                             },
                             duration_minutes: {
                                 type: 'number',
@@ -1016,14 +1016,14 @@ async function generateAndSendAutoReply(
                             },
                             lead_name: {
                                 type: 'string',
-                                description: 'Nombre del lead/cliente'
+                                description: 'Nombre completo del lead tal como te lo dio en la conversación'
                             },
                             lead_email: {
                                 type: 'string',
-                                description: 'Email del lead (opcional)'
+                                description: 'Email del lead que TE DIO EXPLÍCITAMENTE en la conversación. NUNCA inventes, generes o asumas un email. Debe ser EXACTAMENTE el email que el lead escribió. Este campo es OBLIGATORIO.'
                             }
                         },
-                        required: ['meeting_date', 'lead_name']
+                        required: ['meeting_date', 'lead_name', 'lead_email']
                     }
                 }
             }
