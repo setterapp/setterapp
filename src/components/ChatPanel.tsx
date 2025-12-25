@@ -1,10 +1,8 @@
 import { useEffect, useRef } from 'react'
-import { ArrowLeft, Pencil } from 'lucide-react'
+import { ArrowLeft, User } from 'lucide-react'
 import type { Conversation } from '../hooks/useConversations'
 import { useMessages } from '../hooks/useMessages'
 import MessageBubble from './MessageBubble'
-import WhatsAppIcon from './icons/WhatsAppIcon'
-import InstagramIcon from './icons/InstagramIcon'
 import { supabase } from '../lib/supabase'
 
 interface ChatPanelProps {
@@ -38,11 +36,6 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
       })
     }
   }, [messages.length, messages])
-
-  const PlatformIcon =
-    conversation.platform === 'whatsapp'
-      ? WhatsAppIcon
-      : InstagramIcon
 
   const getLeadStatusBackgroundColor = (status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null) => {
     if (!status) return null
@@ -84,23 +77,11 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
         : rawContact)
       : 'Sin nombre')
 
-  const subtitleParts: string[] = []
-  if (username && !displayName.includes(`@${username}`)) {
-    subtitleParts.push(`@${username}`)
-  }
-  if (conversation.platform === 'instagram' && (!username || username.trim() === '') && isNumeric) {
-    subtitleParts.push(`ID …${rawContact.slice(-6)}`)
-  }
-  if (conversation.platform === 'whatsapp' && isNumeric) {
-    subtitleParts.push(`+${rawContact}`)
-  }
-
   return (
     <div className="chat-panel">
       {/* Header */}
       <div className="chat-header">
-        {/* Primera fila: Ícono + Nombre + Editar + Lead Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', minHeight: '32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
           {isMobile && onBack && (
             <button
               onClick={onBack}
@@ -119,68 +100,25 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
               <ArrowLeft size={20} />
             </button>
           )}
-          {conversation.platform === 'instagram' ? (
-            <div
-              style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: 'var(--border-radius-sm)',
-                border: '2px solid #000',
-                background: '#f38ba8',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <InstagramIcon size={18} color="#000" />
-            </div>
-          ) : (
-            <div style={{ flexShrink: 0, display: 'flex' }}>
-              <PlatformIcon size={24} />
-            </div>
-          )}
+          {/* Avatar genérico del usuario */}
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              border: '2px solid #000',
+              background: 'var(--color-bg-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <User size={18} color="var(--color-text-secondary)" />
+          </div>
           <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)', fontWeight: 600, flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {displayName}
           </h3>
-          <button
-            onClick={async () => {
-              const next = window.prompt('Nombre para este contacto', (contact?.display_name || alias || name || username || rawContact) || '')
-              if (next === null) return
-              const trimmed = next.trim()
-              if (!trimmed) return
-              try {
-                if (contact?.id) {
-                  await supabase
-                    .from('contacts')
-                    .update({ display_name: trimmed, updated_at: new Date().toISOString() })
-                    .eq('id', contact.id)
-                } else {
-                  await supabase
-                    .from('conversations')
-                    .update({ contact_alias: trimmed, updated_at: new Date().toISOString() })
-                    .eq('id', conversationId)
-                }
-              } catch {
-                // sin logs
-              }
-            }}
-            className="btn-icon"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              display: 'inline-flex',
-              alignItems: 'center',
-              color: 'var(--color-text-secondary)',
-              flexShrink: 0,
-            }}
-            title="Renombrar contacto"
-            aria-label="Renombrar contacto"
-          >
-            <Pencil size={14} />
-          </button>
           {/* Selector de lead status - estilo badge como en Agentes */}
           <select
             value={conversation.lead_status || ''}
@@ -243,22 +181,6 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
             <option value="not_closed">No Cerrado</option>
           </select>
         </div>
-
-        {/* Segunda fila: Plataforma + Subtítulo (solo si hay subtítulo) */}
-        {subtitleParts.length > 0 && (
-          <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-xs)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginLeft: isMobile && onBack ? '44px' : '32px' }}>
-            <span
-              style={{
-                color: conversation.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
-                fontWeight: 500,
-              }}
-            >
-              {conversation.platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'}
-            </span>
-            <span>·</span>
-            <span>{subtitleParts.join(' · ')}</span>
-          </div>
-        )}
       </div>
 
       {/* Messages */}
