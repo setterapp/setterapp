@@ -99,7 +99,8 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
     <div className="chat-panel">
       {/* Header */}
       <div className="chat-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+        {/* Primera fila: Ícono + Nombre + Editar + Lead Status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
           {isMobile && onBack && (
             <button
               onClick={onBack}
@@ -108,20 +109,21 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                padding: 'var(--spacing-xs)',
+                padding: 0,
                 display: 'flex',
                 alignItems: 'center',
                 color: 'var(--color-text)',
+                flexShrink: 0,
               }}
             >
-              <ArrowLeft size={24} />
+              <ArrowLeft size={20} />
             </button>
           )}
           {conversation.platform === 'instagram' ? (
             <div
               style={{
-                width: '32px',
-                height: '32px',
+                width: '28px',
+                height: '28px',
                 borderRadius: 'var(--border-radius-sm)',
                 border: '2px solid #000',
                 background: '#f38ba8',
@@ -131,125 +133,124 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
                 flexShrink: 0,
               }}
             >
-              <InstagramIcon size={20} color="#000" />
+              <InstagramIcon size={18} color="#000" />
             </div>
           ) : (
-            <PlatformIcon size={28} />
+            <div style={{ flexShrink: 0, display: 'flex' }}>
+              <PlatformIcon size={24} />
+            </div>
           )}
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-              <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', fontWeight: 600 }}>
-                {displayName}
-              </h3>
-              <button
-                onClick={async () => {
-                  const next = window.prompt('Nombre para este contacto', (contact?.display_name || alias || name || username || rawContact) || '')
-                  if (next === null) return
-                  const trimmed = next.trim()
-                  if (!trimmed) return
-                  try {
-                    if (contact?.id) {
-                      await supabase
-                        .from('contacts')
-                        .update({ display_name: trimmed, updated_at: new Date().toISOString() })
-                        .eq('id', contact.id)
-                    } else {
-                      await supabase
-                        .from('conversations')
-                        .update({ contact_alias: trimmed, updated_at: new Date().toISOString() })
-                        .eq('id', conversationId)
-                    }
-                  } catch {
-                    // sin logs
-                  }
-                }}
-                className="btn-icon"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  color: 'var(--color-text-secondary)',
-                }}
-                title="Renombrar contacto"
-                aria-label="Renombrar contacto"
-              >
-                <Pencil size={16} />
-              </button>
-            </div>
-            {subtitleParts.length > 0 && (
-              <div style={{ marginTop: 2, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                {subtitleParts.join(' · ')}
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-xs)', alignItems: 'center' }}>
-              <span
-                style={{
-                  fontSize: 'var(--font-size-xs)',
-                  color: conversation.platform === 'whatsapp'
-                    ? '#a6e3a1'
-                    : '#f38ba8',
-                  fontWeight: 500,
-                }}
-              >
-                {conversation.platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'}
-              </span>
-              {/* Selector manual de lead status */}
-              <select
-                value={conversation.lead_status || ''}
-                onChange={async (e) => {
-                  const newStatus = e.target.value as 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | ''
-                  if (!newStatus) return
+          <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)', fontWeight: 600, flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {displayName}
+          </h3>
+          <button
+            onClick={async () => {
+              const next = window.prompt('Nombre para este contacto', (contact?.display_name || alias || name || username || rawContact) || '')
+              if (next === null) return
+              const trimmed = next.trim()
+              if (!trimmed) return
+              try {
+                if (contact?.id) {
+                  await supabase
+                    .from('contacts')
+                    .update({ display_name: trimmed, updated_at: new Date().toISOString() })
+                    .eq('id', contact.id)
+                } else {
+                  await supabase
+                    .from('conversations')
+                    .update({ contact_alias: trimmed, updated_at: new Date().toISOString() })
+                    .eq('id', conversationId)
+                }
+              } catch {
+                // sin logs
+              }
+            }}
+            className="btn-icon"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              display: 'inline-flex',
+              alignItems: 'center',
+              color: 'var(--color-text-secondary)',
+              flexShrink: 0,
+            }}
+            title="Renombrar contacto"
+            aria-label="Renombrar contacto"
+          >
+            <Pencil size={14} />
+          </button>
+          {/* Selector de lead status - ahora en la misma línea */}
+          <select
+            value={conversation.lead_status || ''}
+            onChange={async (e) => {
+              const newStatus = e.target.value as 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | ''
+              if (!newStatus) return
 
-                  try {
-                    // Actualizar en conversations
-                    await supabase
-                      .from('conversations')
-                      .update({
-                        lead_status: newStatus,
-                        updated_at: new Date().toISOString()
-                      })
-                      .eq('id', conversationId)
+              try {
+                // Actualizar en conversations
+                await supabase
+                  .from('conversations')
+                  .update({
+                    lead_status: newStatus,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', conversationId)
 
-                    // Actualizar en contacts si existe
-                    if (conversation.contact_ref?.id) {
-                      await supabase
-                        .from('contacts')
-                        .update({
-                          lead_status: newStatus,
-                          updated_at: new Date().toISOString()
-                        })
-                        .eq('id', conversation.contact_ref.id)
-                    }
+                // Actualizar en contacts si existe
+                if (conversation.contact_ref?.id) {
+                  await supabase
+                    .from('contacts')
+                    .update({
+                      lead_status: newStatus,
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('id', conversation.contact_ref.id)
+                }
 
-                    console.log('Lead status actualizado a:', newStatus)
-                  } catch (error) {
-                    console.error('Error actualizando lead status:', error)
-                  }
-                }}
-                style={{
-                  backgroundColor: leadStatusBackgroundColor || '#f3f4f6',
-                  color: '#000',
-                  padding: '2px 6px',
-                  borderRadius: 'var(--border-radius-sm)',
-                  fontSize: 'var(--font-size-xs)',
-                  fontWeight: 600,
-                  border: '2px solid #000',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="">Sin estado</option>
-                <option value="cold">Frío</option>
-                <option value="warm">Tibio</option>
-                <option value="hot">Caliente</option>
-                <option value="closed">Cerrado</option>
-                <option value="not_closed">No Cerrado</option>
-              </select>
-            </div>
-          </div>
+                console.log('Lead status actualizado a:', newStatus)
+              } catch (error) {
+                console.error('Error actualizando lead status:', error)
+              }
+            }}
+            style={{
+              backgroundColor: leadStatusBackgroundColor || '#f3f4f6',
+              color: '#000',
+              padding: '2px 6px',
+              borderRadius: 'var(--border-radius-sm)',
+              fontSize: 'var(--font-size-xs)',
+              fontWeight: 600,
+              border: '2px solid #000',
+              cursor: 'pointer',
+              marginLeft: 'auto',
+              flexShrink: 0,
+            }}
+          >
+            <option value="">Sin estado</option>
+            <option value="cold">Frío</option>
+            <option value="warm">Tibio</option>
+            <option value="hot">Caliente</option>
+            <option value="closed">Cerrado</option>
+            <option value="not_closed">No Cerrado</option>
+          </select>
         </div>
+
+        {/* Segunda fila: Plataforma + Subtítulo (solo si hay subtítulo) */}
+        {subtitleParts.length > 0 && (
+          <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-xs)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginLeft: isMobile && onBack ? '44px' : '32px' }}>
+            <span
+              style={{
+                color: conversation.platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8',
+                fontWeight: 500,
+              }}
+            >
+              {conversation.platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'}
+            </span>
+            <span>·</span>
+            <span>{subtitleParts.join(' · ')}</span>
+          </div>
+        )}
       </div>
 
       {/* Messages */}

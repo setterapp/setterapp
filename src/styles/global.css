@@ -351,7 +351,7 @@ input, textarea, select {
 }
 
 .chat-header {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
   border-bottom: 2px solid #000;
   background: var(--color-bg);
   flex-shrink: 0;
@@ -518,7 +518,7 @@ input, textarea, select {
 
   /* Improve chat header on mobile */
   .chat-header {
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
   }
 
   /* Better input container on mobile */
