@@ -44,25 +44,6 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
       ? WhatsAppIcon
       : InstagramIcon
 
-
-  const getLeadStatusLabel = (status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null) => {
-    if (!status) return null
-    switch (status) {
-      case 'cold':
-        return 'Frío'
-      case 'warm':
-        return 'Tibio'
-      case 'hot':
-        return 'Caliente'
-      case 'closed':
-        return 'Cerrado'
-      case 'not_closed':
-        return 'No Cerrado'
-      default:
-        return null
-    }
-  }
-
   const getLeadStatusBackgroundColor = (status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null) => {
     if (!status) return null
     switch (status) {
