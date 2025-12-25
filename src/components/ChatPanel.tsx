@@ -100,7 +100,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
       {/* Header */}
       <div className="chat-header">
         {/* Primera fila: Ícono + Nombre + Editar + Lead Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', minHeight: '32px' }}>
           {isMobile && onBack && (
             <button
               onClick={onBack}
@@ -181,7 +181,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
           >
             <Pencil size={14} />
           </button>
-          {/* Selector de lead status - ahora en la misma línea */}
+          {/* Selector de lead status - estilo badge como en Agentes */}
           <select
             value={conversation.lead_status || ''}
             onChange={async (e) => {
@@ -217,14 +217,22 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
             style={{
               backgroundColor: leadStatusBackgroundColor || '#f3f4f6',
               color: '#000',
-              padding: '2px 6px',
+              padding: '4px 8px',
               borderRadius: 'var(--border-radius-sm)',
-              fontSize: 'var(--font-size-xs)',
+              fontSize: 'var(--font-size-sm)',
               fontWeight: 600,
               border: '2px solid #000',
               cursor: 'pointer',
               marginLeft: 'auto',
               flexShrink: 0,
+              display: 'inline-flex',
+              alignItems: 'center',
+              appearance: 'none',
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23000\' stroke-width=\'3\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E")',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 6px center',
+              backgroundSize: '12px',
+              paddingRight: '24px',
             }}
           >
             <option value="">Sin estado</option>
