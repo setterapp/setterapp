@@ -55,7 +55,7 @@ export default function Meetings() {
   if (loading && meetings.length === 0) {
     return (
       <div>
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <div className="spinner" />
             <p>{t('meetings.loading')}</p>
@@ -68,7 +68,7 @@ export default function Meetings() {
   if (error) {
     return (
       <div>
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <p style={{ color: 'var(--color-danger)' }}>{t('common.error')}: {error}</p>
           </div>
@@ -80,7 +80,7 @@ export default function Meetings() {
   return (
     <div>
       {/* Time filter tabs */}
-      <div className="card" style={{ marginBottom: 'var(--spacing-md)' }}>
+      <div className="card" style={{ marginBottom: 'var(--spacing-md)', border: '2px solid #000' }}>
         <div className="flex items-center" style={{ flexWrap: 'wrap', gap: 'var(--spacing-sm)' }}>
           {(['today', 'week', 'month'] as TimeFilter[]).map((filter) => (
             <button
@@ -96,7 +96,7 @@ export default function Meetings() {
       </div>
 
       {filteredMeetings.length === 0 ? (
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <Calendar size={64} style={{ opacity: 0.3, margin: '0 auto var(--spacing-md)' }} />
             <h3 style={{ marginBottom: 'var(--spacing-sm)' }}>{t('meetings.noMeetings')}</h3>
@@ -152,7 +152,7 @@ function MeetingsTable({
   const { t } = useTranslation()
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'auto' }}>
+    <div className="card" style={{ padding: 0, overflow: 'auto', border: '2px solid #000' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr style={{ borderBottom: '2px solid var(--color-border)', backgroundColor: 'var(--color-bg-secondary)' }}>

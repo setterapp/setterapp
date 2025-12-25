@@ -157,7 +157,7 @@ function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="card">
+      <div className="card" style={{ border: '2px solid #000' }}>
         <div className="empty-state">
           <div className="spinner"></div>
           <p>{t('common.loading')}</p>
@@ -171,7 +171,7 @@ function SettingsPage() {
       {user ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--spacing-md)' }}>
           {/* Información Personal */}
-          <div className="card">
+          <div className="card" style={{ border: '2px solid #000' }}>
             <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
               <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
                 <User size={18} />
@@ -226,7 +226,7 @@ function SettingsPage() {
           </div>
 
           {/* Preferencias */}
-          <div className="card">
+          <div className="card" style={{ border: '2px solid #000' }}>
             <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
               <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
                 <Globe size={18} />
@@ -320,7 +320,7 @@ function SettingsPage() {
           </div>
 
           {/* Notificaciones */}
-          <div className="card">
+          <div className="card" style={{ border: '2px solid #000' }}>
             <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
               <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
                 <Bell size={18} />
@@ -384,7 +384,7 @@ function SettingsPage() {
           </div>
 
           {/* Cuenta y Seguridad */}
-          <div className="card">
+          <div className="card" style={{ border: '2px solid #000' }}>
             <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
               <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
                 <Shield size={18} />
@@ -408,7 +408,7 @@ function SettingsPage() {
           </div>
         </div>
       ) : (
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <User size={48} style={{ margin: '0 auto var(--spacing-md)', opacity: 0.5 }} />
             <h3>No has iniciado sesión</h3>

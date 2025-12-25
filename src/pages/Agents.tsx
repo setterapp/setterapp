@@ -160,7 +160,7 @@ function Agents() {
 
     if (loading) {
         return (
-            <div className="card">
+            <div className="card" style={{ border: '2px solid #000' }}>
                 <div className="empty-state">
                     <div className="spinner"></div>
                     <p>Cargando agentes...</p>
@@ -171,7 +171,7 @@ function Agents() {
 
     if (error) {
         return (
-            <div className="card">
+            <div className="card" style={{ border: '2px solid #000' }}>
                 <div className="empty-state">
                     <h3>Error</h3>
                     <p>{error}</p>
@@ -768,7 +768,7 @@ function Agents() {
             </Modal>
 
             {agents.length === 0 ? (
-                <div className="card">
+                <div className="card" style={{ border: '2px solid #000' }}>
                     <div className="empty-state">
                         <Brain size={48} style={{ margin: '0 auto var(--spacing-md)', opacity: 0.5 }} />
                         <h3>No hay agentes creados</h3>
@@ -790,7 +790,7 @@ function Agents() {
                                 }}
                                 style={{
                                     background: 'var(--color-bg)',
-                                    border: '1px solid var(--color-border)',
+                                    border: '2px solid #000',
                                     borderRadius: 'var(--border-radius-lg)',
                                     padding: 'var(--spacing-lg)',
                                     display: 'flex',

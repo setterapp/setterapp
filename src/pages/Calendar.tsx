@@ -141,7 +141,7 @@ function Calendar() {
   if (loading) {
     return (
       <div>
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <div className="spinner"></div>
             <p>Cargando eventos...</p>
@@ -154,7 +154,7 @@ function Calendar() {
   if (error) {
     return (
       <div>
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <h3>Error</h3>
             <p>{error}</p>
@@ -181,7 +181,7 @@ function Calendar() {
     <div>
 
       {events.length === 0 ? (
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <div style={{ margin: '0 auto var(--spacing-md)', opacity: 0.5 }}>
               <GoogleCalendarIcon size={48} color="#4285F4" />
@@ -197,7 +197,7 @@ function Calendar() {
               key={event.id}
               style={{
                 background: 'var(--color-bg)',
-                border: '1px solid var(--color-border)',
+                border: '2px solid #000',
                 borderRadius: 'var(--border-radius-lg)',
                 padding: 'var(--spacing-lg)',
                 transition: 'var(--transition)',

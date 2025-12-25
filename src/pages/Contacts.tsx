@@ -210,21 +210,21 @@ function Contacts() {
   return (
     <div>
       {loading && contacts.length === 0 ? (
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <div className="spinner" />
             <p>{t('contacts.loading')}</p>
           </div>
         </div>
       ) : error ? (
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <h3>{t('common.error')}</h3>
             <p style={{ color: 'var(--color-danger)' }}>{error}</p>
           </div>
         </div>
       ) : contacts.length === 0 ? (
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <h3>{t('contacts.empty.title')}</h3>
             <p style={{ color: 'var(--color-text-secondary)' }}>{t('contacts.empty.description')}</p>

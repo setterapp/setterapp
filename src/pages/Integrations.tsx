@@ -330,14 +330,14 @@ function Integrations() {
   return (
     <div>
       {loading ? (
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <div className="spinner"></div>
             <p>{t('common.loading')}</p>
           </div>
         </div>
       ) : error ? (
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <h3>Error</h3>
             <p>{error}</p>
@@ -364,7 +364,7 @@ function Integrations() {
                 onClick={(e) => handleCardClick(integration, e)}
                 style={{
                   background: 'var(--color-bg)',
-                  border: '1px solid var(--color-border)',
+                  border: '2px solid #000',
                   borderRadius: 'var(--border-radius-lg)',
                   padding: 'var(--spacing-lg)',
                   display: 'flex',
