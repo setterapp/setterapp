@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, User, LogOut, Globe, Bell, Shield } from 'lucide-react'
+import { User, LogOut, Globe, Bell, Shield } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -168,18 +168,6 @@ function SettingsPage() {
 
   return (
     <div>
-      <div className="page-header">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="flex items-center gap-md" style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--spacing-xs)' }}>
-              <Settings size={20} />
-              {t('settings.title')}
-            </h2>
-            <p style={{ fontSize: 'var(--font-size-sm)', margin: 0 }}>{t('settings.description')}</p>
-          </div>
-        </div>
-      </div>
-
       {user ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--spacing-md)' }}>
           {/* Información Personal */}

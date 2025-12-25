@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Plug, Check, X, MoreVertical, AlertTriangle } from 'lucide-react'
+import { Check, X, MoreVertical, AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useIntegrations } from '../hooks/useIntegrations'
 import { instagramService } from '../services/facebook/instagram'
@@ -329,18 +329,6 @@ function Integrations() {
 
   return (
     <div>
-      <div className="page-header">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="flex items-center gap-md">
-              <Plug size={28} />
-              {t('integrations.title')}
-            </h2>
-            <p>{t('integrations.description')}</p>
-          </div>
-        </div>
-      </div>
-
       {loading ? (
         <div className="card">
           <div className="empty-state">

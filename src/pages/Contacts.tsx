@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next'
-import { Users } from 'lucide-react'
 import { DataTable } from '../components/ui/data-table'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useContacts } from '../hooks/useContacts'
@@ -142,15 +141,6 @@ function Contacts() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h2 className="flex items-center gap-md">
-            <Users size={28} />
-            Contactos
-          </h2>
-          <p>Gestiona tus contactos de WhatsApp e Instagram</p>
-        </div>
-      </div>
 
       {loading && data.length === 0 ? (
         <div className="card">

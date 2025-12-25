@@ -141,13 +141,6 @@ function Calendar() {
   if (loading) {
     return (
       <div>
-        <div className="page-header">
-          <h2 className="flex items-center gap-md">
-            <GoogleCalendarIcon size={28} color="#4285F4" />
-            Calendario
-          </h2>
-          <p>Gestiona tus reuniones y eventos</p>
-        </div>
         <div className="card">
           <div className="empty-state">
             <div className="spinner"></div>
@@ -161,13 +154,6 @@ function Calendar() {
   if (error) {
     return (
       <div>
-        <div className="page-header">
-          <h2 className="flex items-center gap-md">
-            <GoogleCalendarIcon size={28} color="#4285F4" />
-            Calendario
-          </h2>
-          <p>Gestiona tus reuniones y eventos</p>
-        </div>
         <div className="card">
           <div className="empty-state">
             <h3>Error</h3>
@@ -193,25 +179,6 @@ function Calendar() {
 
   return (
     <div>
-      <div className="page-header">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="flex items-center gap-md">
-              <GoogleCalendarIcon size={28} color="#4285F4" />
-              Calendario
-            </h2>
-            <p>Gestiona tus reuniones y eventos</p>
-          </div>
-          <button
-            onClick={fetchEvents}
-            className="btn btn--secondary"
-            style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}
-          >
-            <GoogleCalendarIcon size={18} color="#4285F4" />
-            Actualizar
-          </button>
-        </div>
-      </div>
 
       {events.length === 0 ? (
         <div className="card">

@@ -182,24 +182,15 @@ function Agents() {
 
     return (
         <div>
-            <div className="page-header">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h2 className="flex items-center gap-md">
-                            <Brain size={28} />
-                            Agentes de IA
-                        </h2>
-                        <p>Crea y gestiona agentes de IA para WhatsApp e Instagram</p>
-                    </div>
-                    <button className="btn btn--primary" onClick={() => {
-                        setCurrentStep(1) // Siempre empezar desde el primer paso
-                        setIsTransitioning(false) // Resetear flag de transición
-                        setShowForm(true)
-                    }}>
-                        <Plus size={18} />
-                        Crear Agente
-                    </button>
-                </div>
+            <div style={{ marginBottom: 'var(--spacing-md)', display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="btn btn--primary" onClick={() => {
+                    setCurrentStep(1) // Siempre empezar desde el primer paso
+                    setIsTransitioning(false) // Resetear flag de transición
+                    setShowForm(true)
+                }}>
+                    <Plus size={18} />
+                    Crear Agente
+                </button>
             </div>
 
             <Modal

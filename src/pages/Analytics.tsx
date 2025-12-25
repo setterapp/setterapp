@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  BarChart3,
   MessageSquare,
   Inbox,
   Users,
@@ -9,8 +8,7 @@ import {
   Calendar,
   Brain,
   ArrowUp,
-  ArrowDown,
-  RefreshCcw
+  ArrowDown
 } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { useConversations } from '../hooks/useConversations'
@@ -34,7 +32,6 @@ function Analytics() {
   const { meetings, loading: meetingsLoading } = useMeetings()
 
   const [timeRange, setTimeRange] = useState<TimeRange>('week')
-  const [refreshing, setRefreshing] = useState(false)
 
   const loading = conversationsLoading || agentsLoading || integrationsLoading || meetingsLoading
 
@@ -168,21 +165,9 @@ function Analytics() {
     }
   }, [conversations, agents, integrations, meetings, timeRange])
 
-  const handleRefresh = async () => {
-    setRefreshing(true)
-    // Simular refresh
-    setTimeout(() => setRefreshing(false), 1000)
-  }
-
   if (loading) {
     return (
       <div>
-        <div className="page-header">
-          <h2 className="flex items-center gap-md">
-            <BarChart3 size={28} />
-            Analíticas
-          </h2>
-        </div>
         <div className="card">
           <div className="empty-state">
             <div className="spinner"></div>
@@ -195,32 +180,6 @@ function Analytics() {
 
   return (
     <div>
-      <div className="page-header">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="flex items-center" style={{ gap: 'var(--spacing-md)' }}>
-              <BarChart3 size={28} />
-              Analíticas
-            </h2>
-            <p>Métricas y estadísticas de tus conversaciones y agentes</p>
-          </div>
-          <button
-            onClick={handleRefresh}
-            className="btn btn--secondary"
-            disabled={refreshing}
-            style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}
-          >
-            <RefreshCcw
-              size={18}
-              style={refreshing ? {
-                animation: 'spin 1s linear infinite',
-                transformOrigin: 'center'
-              } : {}}
-            />
-            Actualizar
-          </button>
-        </div>
-      </div>
 
       {/* Filtro de tiempo */}
       <div className="card" style={{ marginBottom: 'var(--spacing-md)' }}>
@@ -593,7 +552,6 @@ function Analytics() {
       {metrics.totalConversations === 0 && (
         <div className="card" style={{ marginTop: 'var(--spacing-md)' }}>
           <div className="empty-state">
-            <BarChart3 size={48} style={{ margin: '0 auto var(--spacing-md)', opacity: 0.5 }} />
             <h3>No hay datos aún</h3>
             <p>Las analíticas aparecerán aquí una vez que tengas conversaciones activas</p>
           </div>

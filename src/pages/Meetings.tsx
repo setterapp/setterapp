@@ -41,9 +41,6 @@ export default function Meetings() {
   if (loading && meetings.length === 0) {
     return (
       <div className="page-container">
-        <div className="page-header">
-          <h1>{t('meetings.title')}</h1>
-        </div>
         <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center' }}>
           <div className="spinner" />
           <p style={{ marginTop: 'var(--spacing-md)' }}>Cargando reuniones...</p>
@@ -55,9 +52,6 @@ export default function Meetings() {
   if (error) {
     return (
       <div className="page-container">
-        <div className="page-header">
-          <h1>{t('meetings.title')}</h1>
-        </div>
         <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-danger)' }}>
           <p>Error: {error}</p>
         </div>
@@ -67,15 +61,6 @@ export default function Meetings() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1>
-          <Calendar size={32} style={{ marginRight: 'var(--spacing-sm)' }} />
-          Reuniones
-        </h1>
-        <p style={{ marginTop: 'var(--spacing-xs)', color: 'var(--color-text-secondary)' }}>
-          Gestiona todas tus reuniones programadas con leads
-        </p>
-      </div>
 
       {meetings.length === 0 ? (
         <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center' }}>
