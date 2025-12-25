@@ -961,9 +961,6 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
 /**
  * Genera y envía una respuesta automática con IA
  */
-/**
- * Genera y envía una respuesta automática con IA
- */
 async function generateAndSendAutoReply(
     userId: string,
     conversationId: string,
@@ -988,37 +985,198 @@ async function generateAndSendAutoReply(
         // 3. Construir system prompt
         const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config);
 
-        // 4. Ciclo de interacción (permite una ronda de tool execution: Check -> Reply)
+        // 4. Definir tools para el agente (solo si tiene Google Calendar conectado)
+        const tools = [
+            {
+                type: 'function',
+                function: {
+                    name: 'check_availability',
+                    description: 'Verifica la disponibilidad del calendario para los próximos días. Usa esta función ANTES de sugerir horarios para reuniones.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            days_ahead: {
+                                type: 'number',
+                                description: 'Número de días en el futuro a verificar (por defecto 10 días)'
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                type: 'function',
+                function: {
+                    name: 'schedule_meeting',
+                    description: 'Agenda una reunión en el calendario después de confirmar disponibilidad con check_availability. Solo usa esta función cuando el usuario haya confirmado la fecha y hora.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            meeting_date: {
+                                type: 'string',
+                                description: 'Fecha y hora de la reunión en formato ISO 8601 (ej: 2025-12-26T15:00:00-03:00)'
+                            },
+                            duration_minutes: {
+                                type: 'number',
+                                description: 'Duración de la reunión en minutos (por defecto 30)'
+                            },
+                            lead_name: {
+                                type: 'string',
+                                description: 'Nombre del lead/cliente'
+                            },
+                            lead_email: {
+                                type: 'string',
+                                description: 'Email del lead (opcional)'
+                            }
+                        },
+                        required: ['meeting_date', 'lead_name']
+                    }
+                }
+            }
+        ];
+
+        // 5. Construir mensajes iniciales
         let messages = [
             { role: 'system', content: systemPrompt },
             ...conversationHistory,
-            // El mensaje del usuario ya está en conversationHistory si se guardó antes,
-            // PERO en este flujo parece que se pasa 'inboundMessage' manualmente porque quizás no se ha guardado o para asegurar contexto.
-            // Si getConversationHistory YA trae el mensaje reciente, evitamos duplicar.
-            // Asumiremos que el historial trae los anteriores y añadimos el actual.
             { role: 'user', content: inboundMessage }
         ];
 
-        // Primera llamada a la IA
-        let aiMessage = await generateAIResponse(messages);
+        // 6. Loop de ejecución de tools (máximo 5 iteraciones para evitar loops infinitos)
+        let iteration = 0;
+        const maxIterations = 5;
+        let finalResponse = null;
 
-        if (!aiMessage) {
-            console.error('❌ No se pudo generar respuesta con IA');
-            return;
+        while (iteration < maxIterations) {
+            iteration++;
+            console.log(`🔄 Iteración ${iteration}: Llamando a OpenAI...`);
+
+            // Llamar a OpenAI con tools
+            const aiMessage = await generateAIResponse(messages, tools);
+
+            if (!aiMessage) {
+                console.error('❌ No se pudo generar respuesta con IA');
+                return;
+            }
+
+            // Si OpenAI responde con texto (sin tool calls), terminamos
+            if (!aiMessage.tool_calls || aiMessage.tool_calls.length === 0) {
+                finalResponse = aiMessage.content;
+                break;
+            }
+
+            // OpenAI quiere llamar tools
+            console.log(`🔧 OpenAI solicitó ${aiMessage.tool_calls.length} tool calls`);
+
+            // Agregar el mensaje de IA a la conversación
+            messages.push(aiMessage);
+
+            // Ejecutar cada tool call
+            for (const toolCall of aiMessage.tool_calls) {
+                const functionName = toolCall.function.name;
+                const functionArgs = JSON.parse(toolCall.function.arguments);
+
+                console.log(`🔧 Ejecutando ${functionName} con args:`, functionArgs);
+
+                let toolResult = null;
+
+                try {
+                    if (functionName === 'check_availability') {
+                        toolResult = await executeCheckAvailability(userId, functionArgs);
+                    } else if (functionName === 'schedule_meeting') {
+                        toolResult = await executeScheduleMeeting(
+                            userId,
+                            conversationId,
+                            agent.id,
+                            functionArgs
+                        );
+                    } else {
+                        toolResult = { error: 'Función desconocida' };
+                    }
+                } catch (error) {
+                    console.error(`❌ Error ejecutando ${functionName}:`, error);
+                    toolResult = { error: error instanceof Error ? error.message : 'Error desconocido' };
+                }
+
+                // Agregar resultado de la tool a la conversación
+                messages.push({
+                    role: 'tool',
+                    tool_call_id: toolCall.id,
+                    content: JSON.stringify(toolResult)
+                });
+
+                console.log(`✅ Resultado de ${functionName}:`, toolResult);
+            }
+
+            // Continuar el loop para que OpenAI procese los resultados
         }
 
-        // 5. Enviar respuesta de texto final
-        if (aiMessage && aiMessage.content) {
-            const textContent = aiMessage.content;
-            const sendResult = await sendInstagramMessage(userId, recipientId, textContent);
+        // 7. Enviar respuesta final al usuario
+        if (finalResponse) {
+            const sendResult = await sendInstagramMessage(userId, recipientId, finalResponse);
             if (sendResult) {
-                await saveOutboundMessage(conversationId, userId, textContent, agent.id);
-                console.log('✅ Text response sent');
+                await saveOutboundMessage(conversationId, userId, finalResponse, agent.id);
+                console.log('✅ Respuesta final enviada');
             }
+        } else {
+            console.warn('⚠️ No se obtuvo respuesta final del agente (máx iteraciones alcanzadas)');
         }
 
     } catch (error) {
         console.error('❌ Error en generateAndSendAutoReply:', error);
+    }
+}
+
+/**
+ * Ejecuta la función check_availability llamando a la Edge Function
+ */
+async function executeCheckAvailability(userId: string, args: any) {
+    try {
+        const { data, error } = await supabase.functions.invoke('check-availability', {
+            body: {
+                user_id: userId,
+                days_ahead: args.days_ahead || 10
+            }
+        });
+
+        if (error) {
+            return { error: 'No se pudo verificar disponibilidad', details: error };
+        }
+
+        return data;
+    } catch (error) {
+        return { error: 'Error al verificar disponibilidad' };
+    }
+}
+
+/**
+ * Ejecuta la función schedule_meeting llamando a la Edge Function
+ */
+async function executeScheduleMeeting(
+    userId: string,
+    conversationId: string,
+    agentId: string,
+    args: any
+) {
+    try {
+        const { data, error } = await supabase.functions.invoke('schedule-meeting', {
+            body: {
+                user_id: userId,
+                conversation_id: conversationId,
+                agent_id: agentId,
+                meeting_date: args.meeting_date,
+                duration_minutes: args.duration_minutes || 30,
+                lead_name: args.lead_name,
+                lead_email: args.lead_email
+            }
+        });
+
+        if (error) {
+            return { error: 'No se pudo agendar la reunión', details: error };
+        }
+
+        return data;
+    } catch (error) {
+        return { error: 'Error al agendar la reunión' };
     }
 }
 
@@ -1042,18 +1200,24 @@ async function saveOutboundMessage(conversationId: string, userId: string, conte
 }
 
 /**
- * Genera una respuesta usando OpenAI - simple chat mode
+ * Genera una respuesta usando OpenAI con soporte para tools
  */
-async function generateAIResponse(messages: any[]) {
+async function generateAIResponse(messages: any[], tools?: any[]) {
     if (!OPENAI_API_KEY) return null;
 
     try {
-        const requestBody = {
+        const requestBody: any = {
             model: 'gpt-4o-mini',
             messages: messages,
             temperature: 0.7,
             max_tokens: 500
         };
+
+        // Agregar tools si están disponibles
+        if (tools && tools.length > 0) {
+            requestBody.tools = tools;
+            requestBody.tool_choice = 'auto';
+        }
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -1064,7 +1228,11 @@ async function generateAIResponse(messages: any[]) {
             body: JSON.stringify(requestBody)
         });
 
-        if (!response.ok) return null;
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('❌ OpenAI API error:', errorData);
+            return null;
+        }
 
         const data = await response.json();
         return data.choices[0].message;
