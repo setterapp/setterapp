@@ -4,45 +4,12 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { useContacts } from '../hooks/useContacts'
 import type { Contact } from '../hooks/useContacts'
 import { formatDate } from '../utils/date'
+import PlatformBadge from '../components/badges/PlatformBadge'
+import LeadStatusBadge from '../components/badges/LeadStatusBadge'
 
 function Contacts() {
   const { t } = useTranslation()
   const { contacts, loading, error } = useContacts()
-
-  const getStatusBadge = (status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null) => {
-    const baseStyle = {
-      padding: '4px 12px',
-      borderRadius: 'var(--border-radius-sm)',
-      fontSize: 'var(--font-size-xs)',
-      fontWeight: 600,
-      border: '2px solid #000',
-      display: 'inline-block',
-    }
-
-    if (!status) {
-      return (
-        <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-          {t('contacts.status.none')}
-        </span>
-      )
-    }
-
-    const config: Record<string, { bg: string; label: string }> = {
-      cold: { bg: '#94a3b8', label: t('contacts.status.cold') },
-      warm: { bg: '#f9e2af', label: t('contacts.status.warm') },
-      hot: { bg: '#f38ba8', label: t('contacts.status.hot') },
-      closed: { bg: '#a6e3a1', label: t('contacts.status.closed') },
-      not_closed: { bg: '#f38ba8', label: t('contacts.status.notClosed') },
-    }
-
-    const { bg, label } = config[status] || { bg: '#94a3b8', label: status }
-
-    return (
-      <span style={{ ...baseStyle, backgroundColor: bg, color: '#000' }}>
-        {label}
-      </span>
-    )
-  }
 
   const columns: ColumnDef<Contact>[] = [
     {
@@ -100,25 +67,8 @@ function Contacts() {
       accessorKey: 'platform',
       header: t('contacts.table.platform'),
       cell: ({ row }) => {
-        const platform = row.getValue('platform') as string
-        const bg = platform === 'whatsapp' ? '#a6e3a1' : '#f38ba8'
-        const label = platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'
-        return (
-          <span
-            style={{
-              padding: '4px 12px',
-              borderRadius: 'var(--border-radius-sm)',
-              border: '2px solid #000',
-              fontSize: 'var(--font-size-xs)',
-              fontWeight: 600,
-              backgroundColor: bg,
-              color: '#000',
-              display: 'inline-block',
-            }}
-          >
-            {label}
-          </span>
-        )
+        const platform = row.getValue('platform') as 'whatsapp' | 'instagram'
+        return <PlatformBadge platform={platform} />
       },
     },
     {
@@ -126,7 +76,7 @@ function Contacts() {
       header: t('contacts.table.leadStatus'),
       cell: ({ row }) => {
         const status = row.getValue('lead_status') as 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null
-        return getStatusBadge(status)
+        return <LeadStatusBadge status={status} />
       },
     },
     {

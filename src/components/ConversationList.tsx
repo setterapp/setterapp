@@ -4,6 +4,7 @@ import type { Conversation } from '../hooks/useConversations'
 import { formatDate } from '../utils/date'
 import WhatsAppIcon from './icons/WhatsAppIcon'
 import InstagramIcon from './icons/InstagramIcon'
+import LeadStatusBadge from './badges/LeadStatusBadge'
 
 interface ConversationListProps {
   conversations: Conversation[]
@@ -69,45 +70,6 @@ function ConversationItem({
   leadStatusLabel?: any
 }) {
   const [imageError, setImageError] = useState(false)
-
-  const getLeadStatusBackgroundColor = (status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null) => {
-    if (!status) return null
-    switch (status) {
-      case 'cold':
-        return '#94a3b8' // secondary color
-      case 'warm':
-        return '#fbbf24' // warning color
-      case 'hot':
-        return '#ef4444' // danger color
-      case 'closed':
-        return '#22c55e' // success color
-      case 'not_closed':
-        return '#ef4444' // danger color
-      default:
-        return null
-    }
-  }
-
-  const getLeadStatusLabel = (status?: 'cold' | 'warm' | 'hot' | 'closed' | 'not_closed' | null) => {
-    if (!status) return null
-    switch (status) {
-      case 'cold':
-        return 'Frío'
-      case 'warm':
-        return 'Tibio'
-      case 'hot':
-        return 'Caliente'
-      case 'closed':
-        return 'Cerrado'
-      case 'not_closed':
-        return 'No Cerrado'
-      default:
-        return null
-    }
-  }
-
-  const leadStatusBackgroundColor = getLeadStatusBackgroundColor(conversation.lead_status)
-  const leadStatusLabelText = getLeadStatusLabel(conversation.lead_status)
   const contactPicture = conversation.contact_ref?.profile_picture
   const profilePicture = contactPicture || conversation.contact_metadata?.profile_picture
   const username = conversation.contact_ref?.username || conversation.contact_metadata?.username
@@ -214,23 +176,8 @@ function ConversationItem({
             <h4 className="conversation-item-name" style={{ fontWeight: conversation.unread_count > 0 ? 600 : 500, margin: 0, flex: 1 }}>
               {displayName}
             </h4>
-            {leadStatusBackgroundColor && leadStatusLabelText && (
-              <span
-                style={{
-                  backgroundColor: leadStatusBackgroundColor,
-                  color: '#000',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '2px 6px',
-                  borderRadius: 'var(--border-radius-sm)',
-                  fontSize: 'var(--font-size-xs)',
-                  fontWeight: 600,
-                  border: '2px solid #000',
-                }}
-              >
-                {leadStatusLabelText}
-              </span>
+            {conversation.lead_status && (
+              <LeadStatusBadge status={conversation.lead_status} />
             )}
           </div>
           <p className="conversation-item-timestamp" style={{ marginTop: 'var(--spacing-xs)' }}>
