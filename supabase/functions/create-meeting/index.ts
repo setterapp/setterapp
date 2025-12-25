@@ -152,17 +152,19 @@ serve(async (req) => {
         const availableHoursStart = agentConfig.meetingAvailableHoursStart || '09:00'
         const availableHoursEnd = agentConfig.meetingAvailableHoursEnd || '18:00'
         const availableDays = agentConfig.meetingAvailableDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+        const timezone = agentConfig.meetingTimezone || 'Europe/Madrid'
 
         logger.info('Meeting configuration', {
             duration,
             bufferMinutes,
             availableHoursStart,
             availableHoursEnd,
-            availableDays
+            availableDays,
+            timezone
         })
         debugLog.push({
             step: 'MEETING_CONFIG',
-            data: { duration, bufferMinutes, availableHoursStart, availableHoursEnd, availableDays }
+            data: { duration, bufferMinutes, availableHoursStart, availableHoursEnd, availableDays, timezone }
         })
 
 
@@ -290,8 +292,8 @@ serve(async (req) => {
                 body: JSON.stringify({
                     summary: meetingTitle,
                     description: meetingDescription,
-                    start: { dateTime: startTime.toISOString(), timeZone: 'America/Argentina/Buenos_Aires' },
-                    end: { dateTime: endTime.toISOString(), timeZone: 'America/Argentina/Buenos_Aires' },
+                    start: { dateTime: startTime.toISOString(), timeZone: timezone },
+                    end: { dateTime: endTime.toISOString(), timeZone: timezone },
                     attendees: attendees.length > 0 ? attendees : undefined,
                     conferenceData: {
                         createRequest: { requestId: `meet-${Date.now()}`, conferenceSolutionKey: { type: 'hangoutsMeet' } },

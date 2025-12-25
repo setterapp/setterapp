@@ -29,6 +29,7 @@ export interface AgentConfig {
   meetingAvailableHoursStart?: string // ej: "09:00"
   meetingAvailableHoursEnd?: string // ej: "18:00"
   meetingAvailableDays?: string[] // ej: ["monday", "tuesday", "wednesday", "thursday", "friday"]
+  meetingTimezone?: string // ej: "Europe/Madrid", "America/Argentina/Buenos_Aires"
 }
 
 export interface Agent {

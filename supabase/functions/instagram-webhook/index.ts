@@ -1292,7 +1292,7 @@ IMPORTANTE:
                         },
                         preferred_datetime: {
                             type: 'string',
-                            description: 'Fecha y hora elegida en formato ISO 8601 con timezone. Ejemplo: "2025-12-26T15:00:00-03:00" para el 26 de diciembre a las 3pm hora Argentina.'
+                            description: 'Fecha y hora elegida en formato ISO 8601 con timezone. Usar el timezone que está en el contexto del sistema. Formato: YYYY-MM-DDTHH:mm:ss±HH:mm'
                         },
                         lead_phone: {
                             type: 'string',
@@ -1307,13 +1307,56 @@ IMPORTANTE:
 }
 
 /**
+ * Calcula el offset de timezone en formato ISO (ej: +01:00, -03:00)
+ */
+function getTimezoneOffset(timezone: string): string {
+    try {
+        const now = new Date();
+        // Crear formatter para extraer el offset
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: timezone,
+            timeZoneName: 'longOffset'
+        });
+
+        const parts = formatter.formatToParts(now);
+        const offsetPart = parts.find(part => part.type === 'timeZoneName');
+
+        if (offsetPart?.value && offsetPart.value.startsWith('GMT')) {
+            // Convertir GMT+1 a +01:00
+            const offset = offsetPart.value.replace('GMT', '');
+            if (offset === '') return '+00:00';
+
+            const sign = offset[0];
+            const hours = parseInt(offset.slice(1)) || 0;
+            return `${sign}${hours.toString().padStart(2, '0')}:00`;
+        }
+
+        // Fallback para Europe/Madrid
+        if (timezone.includes('Madrid') || timezone.includes('Europe')) {
+            return '+01:00';
+        }
+
+        // Fallback general
+        return '+00:00';
+    } catch (error) {
+        console.error('Error getting timezone offset:', error);
+        return '+00:00';
+    }
+}
+
+/**
  * Construye el system prompt con contexto temporal (inspirado en mejores prácticas)
  */
 function buildSystemPrompt(agentName: string, description: string, config: any): string {
     // Contexto temporal actual (crítico para parsear "mañana", "hoy", etc.)
     const now = new Date();
-    const argentinaTime = new Intl.DateTimeFormat('es-AR', {
-        timeZone: 'America/Argentina/Buenos_Aires',
+
+    // Usar timezone del agente o Europe/Madrid por defecto
+    const timezone = config?.meetingTimezone || 'Europe/Madrid';
+    const locale = timezone.includes('America') ? 'es-AR' : 'es-ES';
+
+    const currentTime = new Intl.DateTimeFormat(locale, {
+        timeZone: timezone,
         dateStyle: 'full',
         timeStyle: 'short'
     }).format(now);
@@ -1322,8 +1365,8 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
 
     // === CONTEXTO TEMPORAL (como en el artículo) ===
     prompt += `=== CONTEXTO ACTUAL ===\n`;
-    prompt += `Fecha y hora actual: ${argentinaTime}\n`;
-    prompt += `Timezone: America/Argentina/Buenos_Aires\n`;
+    prompt += `Fecha y hora actual: ${currentTime}\n`;
+    prompt += `Timezone: ${timezone}\n`;
     prompt += `ISO: ${now.toISOString()}\n\n`;
 
     if (description) prompt += `Tu descripción: ${description}\n\n`;
@@ -1363,10 +1406,14 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
         prompt += `PASO 5 - Confirmar y agendar:\n`;
         prompt += `  • Valida que tienes: email, nombre, fecha elegida\n`;
         prompt += `  • Llama a schedule_meeting() con todos los parámetros\n`;
-        prompt += `  • IMPORTANTE: preferred_datetime debe estar en formato ISO 8601\n`;
-        prompt += `  • Ejemplo de conversión:\n`;
-        prompt += `    - "mañana a las 3pm" → ${new Date(now.getTime() + 24*60*60*1000).toISOString().split('T')[0]}T15:00:00-03:00\n`;
-        prompt += `    - "hoy a las 5pm" → ${now.toISOString().split('T')[0]}T17:00:00-03:00\n\n`;
+        prompt += `  • IMPORTANTE: preferred_datetime debe estar en formato ISO 8601 con timezone\n`;
+        prompt += `  • Ejemplos de conversión (usar timezone ${timezone}):\n`;
+
+        // Generar offset del timezone
+        const timezoneOffset = getTimezoneOffset(timezone);
+        const tomorrow = new Date(now.getTime() + 24*60*60*1000);
+        prompt += `    - "mañana a las 3pm" → ${tomorrow.toISOString().split('T')[0]}T15:00:00${timezoneOffset}\n`;
+        prompt += `    - "hoy a las 5pm" → ${now.toISOString().split('T')[0]}T17:00:00${timezoneOffset}\n\n`;
 
         prompt += `=== REGLAS CRÍTICAS ===\n`;
         prompt += `✗ NO agendar sin email válido\n`;
@@ -1374,7 +1421,7 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
         prompt += `✗ NO agendar sin confirmación del lead\n`;
         prompt += `✓ SIEMPRE verificar disponibilidad primero\n`;
         prompt += `✓ SIEMPRE confirmar fecha/hora antes de agendar\n`;
-        prompt += `✓ SIEMPRE usar timezone America/Argentina/Buenos_Aires\n\n`;
+        prompt += `✓ SIEMPRE usar timezone ${timezone}\n\n`;
     }
 
     prompt += `=== ESTILO DE COMUNICACIÓN ===\n`;
