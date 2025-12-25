@@ -427,9 +427,27 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
         prompt += `\nContexto adicional: ${config.additionalContext}\n`;
     }
 
+    // Información de fecha/hora y calendario
+    const timezone = config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
+    const now = new Date();
+    const currentDateTime = now.toLocaleString('es-AR', {
+        timeZone: timezone,
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    prompt += `\n\n=== INFORMACIÓN ACTUAL ===\n`;
+    prompt += `Fecha y hora actual: ${currentDateTime}\n`;
+    prompt += `Zona horaria: ${timezone}\n\n`;
+
     // Instrucciones específicas para agendamiento de reuniones
     if (config?.enableMeetingScheduling) {
-        prompt += `\n\n=== AGENDAMIENTO DE REUNIONES ===\n`;
+        prompt += `=== AGENDAMIENTO DE REUNIONES ===\n`;
         prompt += `Tienes la capacidad de agendar reuniones automáticamente en Google Calendar usando la función schedule_meeting.\n\n`;
 
         prompt += `🔧 CRÍTICO - REGLAS ABSOLUTAS PARA AGENDAR:\n`;
@@ -457,9 +475,12 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
         prompt += `   - Necesario para personalizar la invitación\n\n`;
 
         prompt += `3. ✅ FECHA Y HORA PREFERIDA:\n`;
-        prompt += `   - Ejemplo: "¿Qué día y hora te viene mejor? Tengo disponibilidad ${config.meetingAvailableHoursStart || '9:00'} a ${config.meetingAvailableHoursEnd || '18:00'}"\n`;
+        prompt += `   - Horario de atención: ${config.meetingAvailableHoursStart || '9:00'} a ${config.meetingAvailableHoursEnd || '18:00'}\n`;
+        prompt += `   - Duración de la reunión: ${config.meetingDuration || 30} minutos\n`;
+        prompt += `   - Ejemplo: "¿Qué día y hora te viene mejor?"\n`;
         prompt += `   - Ejemplo: "¿Prefieres mañana por la mañana o tarde?"\n`;
-        prompt += `   - Duración de la reunión: ${config.meetingDuration || 30} minutos\n\n`;
+        prompt += `   - IMPORTANTE: Cuando calcules la fecha/hora en ISO 8601, usa la fecha actual de arriba (${currentDateTime}) como referencia\n`;
+        prompt += `   - Si el lead dice "mañana a las 3pm", calcula correctamente basándote en la fecha actual\n\n`;
 
         prompt += `4. ⚠️ NÚMERO DE TELÉFONO (OPCIONAL):\n`;
         prompt += `   - Solo si es necesario para la reunión virtual o confirmación\n`;

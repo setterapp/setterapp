@@ -139,12 +139,19 @@ Deno.serve(async (req: Request) => {
       throw new Error('No access token available');
     }
 
+    // Obtener timezone del agente
+    const { data: agent } = await supabase
+      .from('agents')
+      .select('config')
+      .eq('user_id', user_id)
+      .eq('platform', 'instagram')
+      .single();
+
+    const timeZone = agent?.config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
+
     // Calcular fecha de inicio y fin
     const startDate = new Date(meeting_date);
     const endDate = new Date(startDate.getTime() + (duration_minutes * 60 * 1000));
-
-    // Preparar evento de Google Calendar
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Argentina/Buenos_Aires';
 
     const calendarEvent = {
       summary: meeting_title || `Reunión con ${lead_name}`,

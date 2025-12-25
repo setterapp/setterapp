@@ -986,7 +986,7 @@ async function generateAndSendAutoReply(
                 type: 'function',
                 function: {
                     name: 'check_availability',
-                    description: 'Verifica la disponibilidad del calendario para los próximos días. Usa esta función ANTES de sugerir horarios para reuniones.',
+                    description: 'Verifica los horarios disponibles en el calendario. SIEMPRE usa esta función ANTES de proponer horarios de reunión. Devuelve una lista de slots disponibles con fecha y hora exactas que puedes ofrecer directamente al lead.',
                     parameters: {
                         type: 'object',
                         properties: {
@@ -1002,13 +1002,13 @@ async function generateAndSendAutoReply(
                 type: 'function',
                 function: {
                     name: 'schedule_meeting',
-                    description: 'SOLO usa esta función DESPUÉS de que el lead te haya dado su email explícitamente. NUNCA inventes o asumas un email. Si no tienes el email del lead, NO llames a esta función. Debe usarse después de confirmar disponibilidad con check_availability y cuando el usuario haya confirmado la fecha y hora.',
+                    description: 'Agenda una reunión en el calendario. SOLO usa esta función DESPUÉS de que el lead haya confirmado EXPLÍCITAMENTE tanto la fecha/hora como su email. NUNCA inventes o asumas un email. Usa EXACTAMENTE el string ISO 8601 que recibiste de check_availability para meeting_date.',
                     parameters: {
                         type: 'object',
                         properties: {
                             meeting_date: {
                                 type: 'string',
-                                description: 'Fecha y hora de la reunión en formato ISO 8601 (ej: 2025-12-26T15:00:00-03:00). IMPORTANTE: Asegúrate de calcular la fecha correctamente respetando la zona horaria del lead.'
+                                description: 'Fecha y hora de la reunión en formato ISO 8601. USA EXACTAMENTE el campo "start" del slot que el lead eligió de la lista de check_availability. NO modifiques ni recalcules esta fecha. Ejemplo: "2025-12-26T15:00:00.000Z"'
                             },
                             duration_minutes: {
                                 type: 'number',
@@ -1250,6 +1250,41 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
     if (config?.companyName) prompt += `Empresa: ${config.companyName}\n`;
     if (config?.businessNiche) prompt += `Nicho: ${config.businessNiche}\n`;
     if (config?.offerDetails) prompt += `Oferta: ${config.offerDetails}\n\n`;
+
+    // Información de fecha/hora y calendario
+    const timezone = config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
+    const now = new Date();
+    const currentDateTime = now.toLocaleString('es-AR', {
+        timeZone: timezone,
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    prompt += `=== INFORMACIÓN DE CALENDARIO ===\n`;
+    prompt += `Fecha y hora actual: ${currentDateTime}\n`;
+    prompt += `Zona horaria: ${timezone}\n`;
+    if (config?.meetingAvailableHoursStart && config?.meetingAvailableHoursEnd) {
+        prompt += `Horario de atención: ${config.meetingAvailableHoursStart} a ${config.meetingAvailableHoursEnd}\n`;
+    }
+    if (config?.meetingAvailableDays) {
+        const daysInSpanish: Record<string, string> = {
+            'monday': 'lunes',
+            'tuesday': 'martes',
+            'wednesday': 'miércoles',
+            'thursday': 'jueves',
+            'friday': 'viernes',
+            'saturday': 'sábado',
+            'sunday': 'domingo'
+        };
+        const daysStr = config.meetingAvailableDays.map((d: string) => daysInSpanish[d] || d).join(', ');
+        prompt += `Días disponibles: ${daysStr}\n`;
+    }
+    prompt += `\nIMPORTANTE: Cuando uses check_availability, recibirás slots con fechas y horas YA formateadas. Ofrécelas al lead EXACTAMENTE como las recibiste. NO recalcules ni modifiques las fechas.\n\n`;
 
     prompt += `=== ESTILO DE COMUNICACIÓN ===\n`;
     prompt += `• Natural y conversacional\n`;
