@@ -986,7 +986,7 @@ async function generateAndSendAutoReply(
                 type: 'function',
                 function: {
                     name: 'check_availability',
-                    description: 'Consulta los eventos ocupados del calendario. SIEMPRE usa esta función ANTES de proponer horarios. Devuelve: (1) eventos ocupados con start/end, (2) horario laboral (work_hours.start y work_hours.end), (3) días laborales, (4) timezone, (5) fecha/hora actual (current_datetime). Debes RAZONAR para encontrar los gaps entre eventos que estén dentro del horario laboral y proponer esos horarios al lead.',
+                    description: 'Consulta los eventos ocupados del calendario. SIEMPRE usa esta función ANTES de proponer horarios. Devuelve eventos con start_local/end_local/date_local (horarios en timezone local), work_hours (horario laboral en local), y current_datetime_local (fecha/hora actual en local). USA LOS CAMPOS *_local PARA TUS CÁLCULOS, no los ISO. Encuentra gaps entre eventos ocupados que estén dentro de work_hours.',
                     parameters: {
                         type: 'object',
                         properties: {
@@ -1288,20 +1288,25 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
 
     prompt += `\n📅 CÓMO PROPONER HORARIOS:\n`;
     prompt += `1. Usa check_availability para obtener eventos ocupados y horario laboral\n`;
-    prompt += `2. Analiza los gaps (espacios libres) entre eventos que estén dentro del horario laboral\n`;
-    prompt += `3. Propone 2-3 opciones de horarios disponibles al lead\n`;
-    prompt += `4. Cuando el lead elija, calcula la fecha/hora ISO 8601 correctamente usando:\n`;
-    prompt += `   - La fecha actual (current_datetime) que recibiste de check_availability\n`;
-    prompt += `   - El timezone correcto\n`;
-    prompt += `   - El día y hora que el lead eligió\n`;
-    prompt += `5. Usa schedule_meeting con la fecha ISO 8601 calculada\n\n`;
+    prompt += `2. La respuesta incluirá:\n`;
+    prompt += `   - current_datetime_local: fecha/hora actual en hora local (usa ESTA, no la versión _iso)\n`;
+    prompt += `   - work_hours: horario laboral (ej: 09:00 - 18:00 en hora local)\n`;
+    prompt += `   - occupied_events: cada evento tiene start_local, end_local, date_local (usa ESTOS campos)\n`;
+    prompt += `3. Analiza los gaps entre eventos ocupados (usando start_local/end_local) vs work_hours\n`;
+    prompt += `4. Propone 2-3 horarios disponibles al lead en hora local\n`;
+    prompt += `5. Cuando el lead elija, usa el campo "start" (ISO) del evento correspondiente para schedule_meeting\n\n`;
 
     prompt += `EJEMPLO: Si check_availability muestra:\n`;
-    prompt += `- current_datetime: 2025-12-26T10:00:00.000Z\n`;
-    prompt += `- work_hours: 09:00 - 18:00\n`;
-    prompt += `- occupied_events: [{"start": "2025-12-26T14:00:00.000Z", "end": "2025-12-26T15:00:00.000Z"}]\n`;
-    prompt += `Entonces los horarios disponibles HOY son: 09:00-14:00 y 15:00-18:00\n`;
-    prompt += `Puedes ofrecer: "tengo disponible a las 10am, 11am, o después de las 3pm"\n\n`;
+    prompt += `- current_datetime_local: "jueves, 26 de diciembre de 2025, 10:00"\n`;
+    prompt += `- work_hours: {start: "09:00", end: "18:00"}\n`;
+    prompt += `- occupied_events: [{\n`;
+    prompt += `    start: "2025-12-26T14:00:00.000Z",\n`;
+    prompt += `    start_local: "14:00",\n`;
+    prompt += `    end_local: "15:00"\n`;
+    prompt += `  }]\n`;
+    prompt += `Entonces HOY estás ocupado de 14:00-15:00, disponible: 10:00-14:00 y 15:00-18:00\n`;
+    prompt += `Ofreces: "tengo disponible a las 10am, 11am, 13:00, o después de las 15:00"\n`;
+    prompt += `Si el lead elige "15:00", usas schedule_meeting con meeting_date = "2025-12-26T15:00:00.000Z"\n\n`;
 
     prompt += `=== ESTILO DE COMUNICACIÓN ===\n`;
     prompt += `• Natural y conversacional\n`;

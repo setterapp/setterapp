@@ -204,15 +204,35 @@ Deno.serve(async (req: Request) => {
     const calendarData = await calendarResponse.json();
     const events = calendarData.items || [];
 
-    // Formatear eventos ocupados
-    const formattedEvents = events.map((event: any) => ({
-      id: event.id,
-      title: event.summary || 'Sin título',
-      start: event.start?.dateTime || event.start?.date,
-      end: event.end?.dateTime || event.end?.date,
-    }));
+    // Formatear eventos ocupados con información legible
+    const formattedEvents = events.map((event: any) => {
+      const start = new Date(event.start?.dateTime || event.start?.date);
+      const end = new Date(event.end?.dateTime || event.end?.date);
+
+      return {
+        id: event.id,
+        title: event.summary || 'Sin título',
+        start: start.toISOString(),
+        end: end.toISOString(),
+        start_local: start.toLocaleString('es-AR', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hour12: false }),
+        end_local: end.toLocaleString('es-AR', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hour12: false }),
+        date_local: start.toLocaleDateString('es-AR', { timeZone: timezone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      };
+    });
 
     console.log(`[check-availability] Found ${formattedEvents.length} occupied events`);
+
+    // Formatear current_datetime de forma clara
+    const currentDateTimeLocal = now.toLocaleString('es-AR', {
+      timeZone: timezone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
 
     return new Response(
       JSON.stringify({
@@ -226,7 +246,8 @@ Deno.serve(async (req: Request) => {
         timezone: timezone,
         duration_minutes: duration,
         buffer_minutes: bufferMinutes,
-        current_datetime: now.toISOString(),
+        current_datetime_iso: now.toISOString(),
+        current_datetime_local: currentDateTimeLocal,
         range: {
           from: timeMin.toISOString(),
           to: timeMax.toISOString()
