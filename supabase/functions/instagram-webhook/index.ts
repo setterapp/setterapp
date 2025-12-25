@@ -986,7 +986,7 @@ async function generateAndSendAutoReply(
                 type: 'function',
                 function: {
                     name: 'check_availability',
-                    description: 'Verifica los horarios disponibles en el calendario. SIEMPRE usa esta función ANTES de proponer horarios de reunión. Devuelve una lista de slots disponibles con fecha y hora exactas que puedes ofrecer directamente al lead.',
+                    description: 'Consulta los eventos ocupados del calendario. SIEMPRE usa esta función ANTES de proponer horarios. Devuelve: (1) eventos ocupados con start/end, (2) horario laboral (work_hours.start y work_hours.end), (3) días laborales, (4) timezone, (5) fecha/hora actual (current_datetime). Debes RAZONAR para encontrar los gaps entre eventos que estén dentro del horario laboral y proponer esos horarios al lead.',
                     parameters: {
                         type: 'object',
                         properties: {
@@ -1002,13 +1002,13 @@ async function generateAndSendAutoReply(
                 type: 'function',
                 function: {
                     name: 'schedule_meeting',
-                    description: 'Agenda una reunión en el calendario. SOLO usa esta función DESPUÉS de que el lead haya confirmado EXPLÍCITAMENTE tanto la fecha/hora como su email. NUNCA inventes o asumas un email. Usa EXACTAMENTE el string ISO 8601 que recibiste de check_availability para meeting_date.',
+                    description: 'Agenda una reunión en el calendario. SOLO usa esta función DESPUÉS de que el lead haya confirmado EXPLÍCITAMENTE tanto la fecha/hora como su email. NUNCA inventes o asumas un email. Calcula la fecha/hora en formato ISO 8601 usando current_datetime y timezone de check_availability como referencia.',
                     parameters: {
                         type: 'object',
                         properties: {
                             meeting_date: {
                                 type: 'string',
-                                description: 'Fecha y hora de la reunión en formato ISO 8601. USA EXACTAMENTE el campo "start" del slot que el lead eligió de la lista de check_availability. NO modifiques ni recalcules esta fecha. Ejemplo: "2025-12-26T15:00:00.000Z"'
+                                description: 'Fecha y hora de la reunión en formato ISO 8601 con timezone. Ejemplo: "2025-12-26T15:00:00.000Z". Calcula correctamente basándote en el current_datetime y timezone que recibiste de check_availability.'
                             },
                             duration_minutes: {
                                 type: 'number',
@@ -1284,7 +1284,24 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
         const daysStr = config.meetingAvailableDays.map((d: string) => daysInSpanish[d] || d).join(', ');
         prompt += `Días disponibles: ${daysStr}\n`;
     }
-    prompt += `\nIMPORTANTE: Cuando uses check_availability, recibirás slots con fechas y horas YA formateadas. Ofrécelas al lead EXACTAMENTE como las recibiste. NO recalcules ni modifiques las fechas.\n\n`;
+    prompt += `Duración de reuniones: ${config?.meetingDuration || 30} minutos\n`;
+
+    prompt += `\n📅 CÓMO PROPONER HORARIOS:\n`;
+    prompt += `1. Usa check_availability para obtener eventos ocupados y horario laboral\n`;
+    prompt += `2. Analiza los gaps (espacios libres) entre eventos que estén dentro del horario laboral\n`;
+    prompt += `3. Propone 2-3 opciones de horarios disponibles al lead\n`;
+    prompt += `4. Cuando el lead elija, calcula la fecha/hora ISO 8601 correctamente usando:\n`;
+    prompt += `   - La fecha actual (current_datetime) que recibiste de check_availability\n`;
+    prompt += `   - El timezone correcto\n`;
+    prompt += `   - El día y hora que el lead eligió\n`;
+    prompt += `5. Usa schedule_meeting con la fecha ISO 8601 calculada\n\n`;
+
+    prompt += `EJEMPLO: Si check_availability muestra:\n`;
+    prompt += `- current_datetime: 2025-12-26T10:00:00.000Z\n`;
+    prompt += `- work_hours: 09:00 - 18:00\n`;
+    prompt += `- occupied_events: [{"start": "2025-12-26T14:00:00.000Z", "end": "2025-12-26T15:00:00.000Z"}]\n`;
+    prompt += `Entonces los horarios disponibles HOY son: 09:00-14:00 y 15:00-18:00\n`;
+    prompt += `Puedes ofrecer: "tengo disponible a las 10am, 11am, o después de las 3pm"\n\n`;
 
     prompt += `=== ESTILO DE COMUNICACIÓN ===\n`;
     prompt += `• Natural y conversacional\n`;

@@ -154,30 +154,82 @@ Deno.serve(async (req: Request) => {
       timezone
     });
 
-    // Calcular slots disponibles usando misma lógica que create-meeting
-    const availableSlots = await findAvailableSlots(
-      accessToken,
-      duration,
-      bufferMinutes,
-      availableHoursStart,
-      availableHoursEnd,
-      availableDays,
-      timezone,
-      days_ahead
+    // Calcular rango de fechas
+    const now = new Date();
+    const timeMin = new Date(now);
+    timeMin.setHours(0, 0, 0, 0);
+
+    const timeMax = new Date(now);
+    timeMax.setDate(timeMax.getDate() + days_ahead);
+    timeMax.setHours(23, 59, 59, 999);
+
+    // Obtener eventos ocupados del calendario
+    const calendarParams = new URLSearchParams({
+      timeMin: timeMin.toISOString(),
+      timeMax: timeMax.toISOString(),
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      maxResults: '100',
+    });
+
+    const calendarResponse = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?${calendarParams}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
     );
 
-    console.log(`[check-availability] Found ${availableSlots.length} available slots`);
+    if (!calendarResponse.ok) {
+      const errorData = await calendarResponse.json().catch(() => ({}));
+      console.error('[check-availability] Calendar API error:', errorData);
+      return new Response(
+        JSON.stringify({
+          error: 'Failed to fetch calendar events',
+          occupied_events: [],
+          work_hours: {
+            start: availableHoursStart,
+            end: availableHoursEnd,
+            days: availableDays
+          },
+          timezone: timezone,
+          current_datetime: now.toISOString()
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const calendarData = await calendarResponse.json();
+    const events = calendarData.items || [];
+
+    // Formatear eventos ocupados
+    const formattedEvents = events.map((event: any) => ({
+      id: event.id,
+      title: event.summary || 'Sin título',
+      start: event.start?.dateTime || event.start?.date,
+      end: event.end?.dateTime || event.end?.date,
+    }));
+
+    console.log(`[check-availability] Found ${formattedEvents.length} occupied events`);
 
     return new Response(
       JSON.stringify({
-        available_slots: availableSlots,
-        total_slots: availableSlots.length,
-        timezone: timezone,
-        duration_minutes: duration,
+        occupied_events: formattedEvents,
+        total_events: formattedEvents.length,
         work_hours: {
           start: availableHoursStart,
           end: availableHoursEnd,
           days: availableDays
+        },
+        timezone: timezone,
+        duration_minutes: duration,
+        buffer_minutes: bufferMinutes,
+        current_datetime: now.toISOString(),
+        range: {
+          from: timeMin.toISOString(),
+          to: timeMax.toISOString()
         }
       }),
       {
@@ -191,8 +243,8 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : 'Unknown error',
-        available_slots: [],
-        total_slots: 0
+        occupied_events: [],
+        total_events: 0
       }),
       {
         status: 500,
@@ -201,110 +253,3 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
-
-// Función para encontrar slots disponibles (misma lógica que create-meeting)
-async function findAvailableSlots(
-  accessToken: string,
-  duration: number,
-  bufferMinutes: number,
-  availableHoursStart: string,
-  availableHoursEnd: string,
-  availableDays: string[],
-  timezone: string,
-  daysScope: number
-): Promise<Array<{ start: string; end: string; date: string; time: string }>> {
-  const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const [startHour, startMinute] = availableHoursStart.split(':').map(Number);
-  const [endHour, endMinute] = availableHoursEnd.split(':').map(Number);
-
-  // Usar fecha actual en el timezone del agente
-  const now = new Date();
-  now.setMinutes(Math.ceil(now.getMinutes() / 30) * 30, 0, 0);
-
-  const allSlots = [];
-
-  for (let dayOffset = 0; dayOffset < daysScope; dayOffset++) {
-    const checkDate = new Date(now);
-    checkDate.setDate(checkDate.getDate() + dayOffset);
-
-    const dayName = daysOfWeek[checkDate.getDay()];
-    if (!availableDays.includes(dayName)) continue;
-
-    const workStart = new Date(checkDate);
-    workStart.setHours(startHour, startMinute, 0, 0);
-
-    const workEnd = new Date(checkDate);
-    workEnd.setHours(endHour, endMinute, 0, 0);
-
-    let currentTime = new Date(workStart);
-    if (currentTime < now) {
-      currentTime = new Date(now);
-    }
-
-    if (currentTime >= workEnd) continue;
-
-    // Obtener eventos del día
-    const eventsUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
-      `timeMin=${workStart.toISOString()}&` +
-      `timeMax=${workEnd.toISOString()}&` +
-      `singleEvents=true&` +
-      `orderBy=startTime`;
-
-    const eventsRes = await fetch(eventsUrl, {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-
-    if (!eventsRes.ok) {
-      console.error(`[check-availability] Google API Error for ${checkDate.toISOString().split('T')[0]}`);
-      continue;
-    }
-
-    const eventsData = await eventsRes.json();
-    const events = eventsData.items || [];
-
-    // Generar slots disponibles
-    while (currentTime.getTime() + duration * 60000 <= workEnd.getTime()) {
-      const slotStart = new Date(currentTime);
-      const slotEnd = new Date(currentTime.getTime() + duration * 60000);
-
-      const hasConflict = events.some((event: any) => {
-        const evStart = new Date(event.start.dateTime || event.start.date);
-        const evEnd = new Date(event.end.dateTime || event.end.date);
-        const bufStart = new Date(slotStart.getTime() - bufferMinutes * 60000);
-        const bufEnd = new Date(slotEnd.getTime() + bufferMinutes * 60000);
-        return (bufStart < evEnd && bufEnd > evStart);
-      });
-
-      if (!hasConflict) {
-        // Formatear para que sea fácil de leer por la IA
-        const dateStr = slotStart.toLocaleDateString('es-AR', {
-          timeZone: timezone,
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-        const timeStr = slotStart.toLocaleTimeString('es-AR', {
-          timeZone: timezone,
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
-
-        allSlots.push({
-          start: slotStart.toISOString(),
-          end: slotEnd.toISOString(),
-          date: dateStr,
-          time: timeStr
-        });
-
-        if (allSlots.length >= 20) break; // Limitar a 20 slots totales
-      }
-      currentTime = new Date(currentTime.getTime() + 30 * 60000);
-    }
-
-    if (allSlots.length >= 20) break;
-  }
-
-  return allSlots;
-}
