@@ -194,43 +194,45 @@ function Analytics() {
         </div>
       </div>
 
-      {/* SALES & LEADS SECTION */}
-      <div style={{ marginBottom: 'var(--spacing-xl)' }}>
-        <h2 style={{
-          fontSize: 'var(--font-size-xl)',
-          fontWeight: 700,
-          marginBottom: 'var(--spacing-md)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--spacing-sm)',
-          color: 'var(--color-text)'
-        }}>
-          <TrendingUp size={24} />
-          Sales & Lead Performance
-        </h2>
+      {/* Main Analytics Container */}
+      <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-xl)', backgroundColor: '#fff' }}>
+        {/* SALES & LEADS SECTION */}
+        <div style={{ marginBottom: 'var(--spacing-xl)' }}>
+          <h2 style={{
+            fontSize: 'var(--font-size-xl)',
+            fontWeight: 700,
+            marginBottom: 'var(--spacing-md)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-sm)',
+            color: 'var(--color-text)'
+          }}>
+            <TrendingUp size={24} />
+            Sales & Lead Performance
+          </h2>
 
-        {/* Lead Metrics Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
-          <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(137, 180, 250, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-            <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-primary)' }}>{metrics.totalLeads}</div>
-            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Leads</div>
-          </div>
+          {/* Lead Metrics Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(137, 180, 250, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#000' }}>{metrics.totalLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Leads</div>
+            </div>
 
-          <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.qualifiedLeadRate}%</div>
-            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Qualified</div>
-          </div>
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#000' }}>{metrics.qualifiedLeadRate}%</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Qualified</div>
+            </div>
 
-          <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.15)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.closeRate}%</div>
-            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Close Rate</div>
-          </div>
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.15)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#000' }}>{metrics.closeRate}%</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Close Rate</div>
+            </div>
 
-          <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(249, 226, 175, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#f9e2af' }}>{metrics.responseRate}%</div>
-            <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Response</div>
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(249, 226, 175, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#000' }}>{metrics.responseRate}%</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Response</div>
+            </div>
           </div>
-        </div>
 
         {/* Lead Distribution */}
         <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
@@ -417,6 +419,8 @@ function Analytics() {
           </BarChart>
         </ChartContainer>
       </div>
+      </div>
+      {/* End Main Analytics Container */}
 
       {/* Empty State */}
       {metrics.totalLeads === 0 && (
