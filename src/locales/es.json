@@ -320,6 +320,8 @@
     },
     "actions": {
       "selected": "seleccionados",
+      "copy": "Copiar",
+      "export": "Exportar",
       "copyToClipboard": "Copiar al Portapapeles",
       "exportCSV": "Exportar CSV",
       "copiedToClipboard": "¡Copiado al portapapeles! Ahora puedes pegarlo en Excel.",

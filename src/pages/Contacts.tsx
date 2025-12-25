@@ -7,7 +7,8 @@ import type { Contact } from '../hooks/useContacts'
 import { formatDate } from '../utils/date'
 import PlatformBadge from '../components/badges/PlatformBadge'
 import LeadStatusBadge from '../components/badges/LeadStatusBadge'
-import { Download, Copy, CheckSquare } from 'lucide-react'
+import { Download, Copy } from 'lucide-react'
+import { Checkbox } from '../components/ui/checkbox'
 
 function Contacts() {
   const { t } = useTranslation()
@@ -19,30 +20,20 @@ function Contacts() {
       id: 'select',
       header: ({ table }) => (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <input
-            type="checkbox"
+          <Checkbox
             checked={table.getIsAllPageRowsSelected()}
-            onChange={table.getToggleAllPageRowsSelectedHandler()}
-            style={{
-              width: '18px',
-              height: '18px',
-              cursor: 'pointer',
-              accentColor: 'var(--color-primary)',
+            onCheckedChange={(checked) => {
+              table.toggleAllPageRowsSelected(!!checked)
             }}
           />
         </div>
       ),
       cell: ({ row }) => (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <input
-            type="checkbox"
+          <Checkbox
             checked={row.getIsSelected()}
-            onChange={row.getToggleSelectedHandler()}
-            style={{
-              width: '18px',
-              height: '18px',
-              cursor: 'pointer',
-              accentColor: 'var(--color-primary)',
+            onCheckedChange={(checked) => {
+              row.toggleSelected(!!checked)
             }}
           />
         </div>
@@ -240,78 +231,63 @@ function Contacts() {
           </div>
         </div>
       ) : (
-        <>
-          <DataTable
-            columns={columns}
-            data={contacts}
-            onRowSelectionChange={setSelectedRows}
-            rowSelection={selectedRows}
-            renderToolbar={(table) => {
-              const selectedCount = table.getFilteredSelectedRowModel().rows.length
-              const selectedContacts = table.getFilteredSelectedRowModel().rows.map(row => row.original)
+        <DataTable
+          columns={columns}
+          data={contacts}
+          onRowSelectionChange={setSelectedRows}
+          rowSelection={selectedRows}
+          renderFooterActions={(table) => {
+            const selectedCount = table.getFilteredSelectedRowModel().rows.length
+            const selectedContacts = table.getFilteredSelectedRowModel().rows.map(row => row.original)
+            const hasSelection = selectedCount > 0
 
-              if (selectedCount === 0) return null
-
-              return (
-                <div
+            return (
+              <>
+                <button
+                  onClick={() => hasSelection && handleCopyToClipboard(selectedContacts)}
+                  disabled={!hasSelection}
+                  className="btn btn--sm"
                   style={{
-                    padding: 'var(--spacing-md)',
-                    borderBottom: '2px solid var(--color-border)',
-                    backgroundColor: 'var(--color-bg-secondary)',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 'var(--spacing-md)',
-                    flexWrap: 'wrap',
+                    gap: 'var(--spacing-xs)',
+                    fontSize: 'var(--font-size-sm)',
+                    padding: '8px 16px',
+                    backgroundColor: hasSelection ? 'var(--color-primary)' : '#ccc',
+                    color: hasSelection ? '#000' : '#666',
+                    border: '2px solid #000',
+                    cursor: hasSelection ? 'pointer' : 'not-allowed',
+                    opacity: hasSelection ? 1 : 0.5,
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                    <CheckSquare size={18} color="var(--color-primary)" />
-                    <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
-                      {selectedCount} {t('contacts.actions.selected')}
-                    </span>
-                  </div>
+                  <Copy size={16} />
+                  {t('contacts.actions.copy')}
+                </button>
 
-                  <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginLeft: 'auto' }}>
-                    <button
-                      onClick={() => handleCopyToClipboard(selectedContacts)}
-                      className="btn btn--sm"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 'var(--spacing-xs)',
-                        fontSize: 'var(--font-size-sm)',
-                        padding: '8px 16px',
-                        backgroundColor: 'var(--color-primary)',
-                        color: '#000',
-                      }}
-                    >
-                      <Copy size={16} />
-                      {t('contacts.actions.copyToClipboard')}
-                    </button>
-
-                    <button
-                      onClick={() => handleExportCSV(selectedContacts)}
-                      className="btn btn--sm"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 'var(--spacing-xs)',
-                        fontSize: 'var(--font-size-sm)',
-                        padding: '8px 16px',
-                        backgroundColor: '#a6e3a1',
-                        color: '#000',
-                        border: '2px solid #000',
-                      }}
-                    >
-                      <Download size={16} />
-                      {t('contacts.actions.exportCSV')}
-                    </button>
-                  </div>
-                </div>
-              )
-            }}
-          />
-        </>
+                <button
+                  onClick={() => hasSelection && handleExportCSV(selectedContacts)}
+                  disabled={!hasSelection}
+                  className="btn btn--sm"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-xs)',
+                    fontSize: 'var(--font-size-sm)',
+                    padding: '8px 16px',
+                    backgroundColor: hasSelection ? '#a6e3a1' : '#ccc',
+                    color: hasSelection ? '#000' : '#666',
+                    border: '2px solid #000',
+                    cursor: hasSelection ? 'pointer' : 'not-allowed',
+                    opacity: hasSelection ? 1 : 0.5,
+                  }}
+                >
+                  <Download size={16} />
+                  {t('contacts.actions.export')}
+                </button>
+              </>
+            )
+          }}
+        />
       )}
     </div>
   )

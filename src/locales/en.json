@@ -320,6 +320,8 @@
     },
     "actions": {
       "selected": "selected",
+      "copy": "Copy",
+      "export": "Export",
       "copyToClipboard": "Copy to Clipboard",
       "exportCSV": "Export CSV",
       "copiedToClipboard": "Copied to clipboard! You can now paste it in Excel.",

@@ -27,7 +27,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
   onRowSelectionChange?: (selection: RowSelectionState) => void
   rowSelection?: RowSelectionState
-  renderToolbar?: (table: ReturnType<typeof useReactTable<TData>>) => React.ReactNode
+  renderFooterActions?: (table: ReturnType<typeof useReactTable<TData>>) => React.ReactNode
 }
 
 export function DataTable<TData, TValue>({
@@ -35,7 +35,7 @@ export function DataTable<TData, TValue>({
   data,
   onRowSelectionChange,
   rowSelection,
-  renderToolbar,
+  renderFooterActions,
 }: DataTableProps<TData, TValue>) {
   const { t } = useTranslation()
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -74,9 +74,6 @@ export function DataTable<TData, TValue>({
 
   return (
     <div style={{ width: '100%' }}>
-      {/* Render custom toolbar if provided */}
-      {renderToolbar && renderToolbar(table)}
-
       <div>
         <Table>
           <TableHeader>
@@ -152,19 +149,22 @@ export function DataTable<TData, TValue>({
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
         gap: 'var(--spacing-md)',
         paddingTop: 'var(--spacing-md)',
+        flexWrap: 'wrap',
       }}>
         <div style={{
           fontSize: 'var(--font-size-sm)',
           color: 'var(--color-text)',
-          flex: 1
         }}>
           {table.getFilteredSelectedRowModel().rows.length} {t('contacts.table.of')}{" "}
           {table.getFilteredRowModel().rows.length} {t('contacts.table.rowsSelected')}
         </div>
-        <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+        <div style={{ display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'center' }}>
+          {/* Render custom footer actions if provided */}
+          {renderFooterActions && renderFooterActions(table)}
+
           <Button
             variant="noShadow"
             size="sm"
