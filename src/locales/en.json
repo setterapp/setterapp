@@ -11,7 +11,8 @@
     "continue": "Continue",
     "actions": "Actions",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "error": "Error"
   },
   "navigation": {
     "conversations": "Conversations",
@@ -258,13 +259,66 @@
   },
   "meetings": {
     "title": "Meetings",
+    "loading": "Loading meetings...",
     "upcoming": "Upcoming meetings",
-    "history": "History",
+    "history": "Past meetings",
     "noMeetings": "No scheduled meetings",
-    "meetingsWillAppear": "Meetings created by agents will appear here"
+    "meetingsWillAppear": "Meetings created by agents will appear here",
+    "filters": {
+      "today": "Today",
+      "week": "This Week",
+      "month": "This Month"
+    },
+    "table": {
+      "name": "Name",
+      "date": "Date",
+      "duration": "Duration",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "completed": "Showed Up",
+      "noShow": "No Show",
+      "cancelled": "Cancelled",
+      "pending": "Pending Review"
+    },
+    "actions": {
+      "open": "Open",
+      "showedUp": "Showed Up",
+      "noShow": "No Show",
+      "markCompleted": "Mark as showed up",
+      "markNoShow": "Mark as no show"
+    },
+    "errors": {
+      "updateFailed": "Failed to update meeting status"
+    }
   },
   "contacts": {
+    "title": "Contacts",
+    "loading": "Loading contacts...",
     "leadStatus": "Lead Status",
-    "syncLeadStatus": "Sync Lead Status"
+    "syncLeadStatus": "Sync Lead Status",
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "platform": "Platform",
+      "leadStatus": "Lead Status",
+      "lastSeen": "Last Seen",
+      "actions": "Actions"
+    },
+    "status": {
+      "cold": "Cold",
+      "warm": "Warm",
+      "hot": "Hot",
+      "closed": "Closed",
+      "notClosed": "Not Closed",
+      "none": "No Status"
+    },
+    "empty": {
+      "title": "No contacts yet",
+      "description": "Contacts will appear here as you receive messages"
+    }
   }
 }

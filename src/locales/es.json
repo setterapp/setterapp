@@ -11,7 +11,8 @@
     "continue": "Continuar",
     "actions": "Acciones",
     "active": "Activo",
-    "inactive": "Inactivo"
+    "inactive": "Inactivo",
+    "error": "Error"
   },
   "navigation": {
     "conversations": "Conversaciones",
@@ -258,13 +259,66 @@
   },
   "meetings": {
     "title": "Reuniones",
+    "loading": "Cargando reuniones...",
     "upcoming": "Próximas reuniones",
-    "history": "Historial",
+    "history": "Reuniones pasadas",
     "noMeetings": "No hay reuniones programadas",
-    "meetingsWillAppear": "Las reuniones creadas por los agentes aparecerán aquí"
+    "meetingsWillAppear": "Las reuniones creadas por los agentes aparecerán aquí",
+    "filters": {
+      "today": "Hoy",
+      "week": "Esta Semana",
+      "month": "Este Mes"
+    },
+    "table": {
+      "name": "Nombre",
+      "date": "Fecha",
+      "duration": "Duración",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "status": {
+      "scheduled": "Programada",
+      "completed": "Asistió",
+      "noShow": "No Asistió",
+      "cancelled": "Cancelada",
+      "pending": "Pendiente Revisión"
+    },
+    "actions": {
+      "open": "Abrir",
+      "showedUp": "Asistió",
+      "noShow": "No Asistió",
+      "markCompleted": "Marcar como asistió",
+      "markNoShow": "Marcar como no asistió"
+    },
+    "errors": {
+      "updateFailed": "Error al actualizar el estado de la reunión"
+    }
   },
   "contacts": {
+    "title": "Contactos",
+    "loading": "Cargando contactos...",
     "leadStatus": "Estado Lead",
-    "syncLeadStatus": "Sincronizar Estados"
+    "syncLeadStatus": "Sincronizar Estados",
+    "table": {
+      "name": "Nombre",
+      "email": "Email",
+      "phone": "Teléfono",
+      "platform": "Plataforma",
+      "leadStatus": "Estado Lead",
+      "lastSeen": "Último Visto",
+      "actions": "Acciones"
+    },
+    "status": {
+      "cold": "Frío",
+      "warm": "Tibio",
+      "hot": "Caliente",
+      "closed": "Cerrado",
+      "notClosed": "No Cerrado",
+      "none": "Sin Estado"
+    },
+    "empty": {
+      "title": "No hay contactos aún",
+      "description": "Los contactos aparecerán aquí cuando recibas mensajes"
+    }
   }
 }

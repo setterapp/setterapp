@@ -11,6 +11,8 @@ export interface Meeting {
   duration_minutes: number
   meeting_link: string
   lead_name: string
+  lead_email?: string | null
+  lead_phone?: string | null
   status: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
   metadata?: any
   created_at: string

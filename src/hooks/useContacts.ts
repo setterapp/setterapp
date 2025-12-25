@@ -8,6 +8,7 @@ export type Contact = {
   external_id: string
   display_name?: string | null
   phone?: string | null
+  email?: string | null
   username?: string | null
   profile_picture?: string | null
   last_message_at?: string | null
