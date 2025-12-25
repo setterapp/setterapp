@@ -1077,104 +1077,91 @@ async function generateAndSendAutoReply(
             return;
         }
 
-        // 5. Manejar Tool Calls (Disponibilidad o Agendamiento)
+        // 5. Manejar Tool Calls - SIMPLIFICADO
         if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
             console.log('🛠️ AI Tool Calls:', JSON.stringify(aiMessage.tool_calls, null, 2));
 
-            // Solo procesamos el primer tool call para mantenerlo simple por ahora, o iteramos si son Check -> Schedule (raro en un turno)
-            // Normalmente CheckAvailability es un turno, y Schedule es otro turno futuro.
-
             for (const toolCall of aiMessage.tool_calls) {
-                if (toolCall.function.name === 'check_availability') {
-                    console.log('📅 [AutoReply] Checking availability...');
-
-                    // Ejecutar check
-                    const slots = await checkAvailabilityForLead(conversationId, agent);
-                    console.log(`📅 [AutoReply] Slots found: ${slots.length}`);
-
-                    // Añadir resultado al historial de mensajes de esta sesión (contexto temporal)
-                    messages.push(aiMessage); // El mensaje del asistente con el tool_call
-                    messages.push({
-                        role: 'tool',
-                        tool_call_id: toolCall.id,
-                        content: JSON.stringify({
-                            available_slots: slots,
-                            info: "Estos son los horarios disponibles. Ofrécelos al usuario en formato amigable."
-                        })
-                    });
-
-                    // Segunda llamada a la IA para que formule la respuesta con los slots
-                    console.log('🤖 Re-generando respuesta con slots...');
-                    aiMessage = await generateAIResponse(messages, enableMeetingScheduling);
-                    break; // Solo permitimos un ciclo de check por ejecución para evitar loops
-                }
-
-                if (toolCall.function.name === 'schedule_meeting') {
+                if (toolCall.function.name === 'process_meeting_request') {
                     let args;
                     try {
                         args = JSON.parse(toolCall.function.arguments);
                     } catch (e) {
-                        console.error('❌ Failed to parse schedule_meeting arguments:', e);
-                        const errorMessage = 'hubo un error procesando la información. ¿me puedes dar tu email y nombre de nuevo?';
+                        console.error('❌ Failed to parse arguments:', e);
+                        const errorMessage = 'hubo un error procesando la información. ¿lo intentamos de nuevo?';
                         await sendInstagramMessage(userId, recipientId, errorMessage);
                         return;
                     }
 
-                    console.log('📅 [AutoReply] Scheduling meeting:', args);
+                    console.log('📅 [process_meeting_request] Action:', args.action, 'Args:', args);
 
-                    // Validación de parámetros (patrón n8n)
-                    if (!args.lead_email || !args.lead_name || !args.preferred_datetime) {
-                        console.error('❌ Missing required parameters:', { args });
-                        const errorMessage = 'me falta información para agendar. necesito tu email, nombre completo y confirmar el horario.';
-                        await sendInstagramMessage(userId, recipientId, errorMessage);
+                    // OPCIÓN 1: Verificar disponibilidad
+                    if (args.action === 'check') {
+                        console.log('📅 Checking availability...');
+                        const slots = await checkAvailabilityForLead(conversationId, agent);
+                        console.log(`📅 Slots found: ${slots.length}`);
+
+                        messages.push(aiMessage);
+                        messages.push({
+                            role: 'tool',
+                            tool_call_id: toolCall.id,
+                            content: JSON.stringify({
+                                available_slots: slots,
+                                info: "Presenta estos horarios al usuario de forma amigable. Ofrece 2-3 opciones."
+                            })
+                        });
+
+                        console.log('🤖 Regenerando respuesta con slots...');
+                        aiMessage = await generateAIResponse(messages, enableMeetingScheduling);
+                        break;
+                    }
+
+                    // OPCIÓN 2: Agendar reunión
+                    if (args.action === 'schedule') {
+                        // Validar que tenemos email y nombre
+                        if (!args.lead_email || !args.lead_name) {
+                            console.error('❌ Missing email/name:', args);
+                            const errorMessage = 'necesito tu email y nombre completo para agendar la reunión.';
+                            await sendInstagramMessage(userId, recipientId, errorMessage);
+                            return;
+                        }
+
+                        // Validar email
+                        const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+                        if (!emailRegex.test(args.lead_email)) {
+                            console.error('❌ Invalid email:', args.lead_email);
+                            const errorMessage = 'el email no parece válido. ¿me lo puedes dar de nuevo?';
+                            await sendInstagramMessage(userId, recipientId, errorMessage);
+                            return;
+                        }
+
+                        console.log('📅 Scheduling meeting with date:', args.preferred_date);
+
+                        // Llamar a create-meeting (maneja el parsing de fecha natural en backend)
+                        const meetingResult = await createMeetingForLead(
+                            userId,
+                            conversationId,
+                            args.lead_email,
+                            args.lead_name,
+                            args.preferred_date, // Fecha en lenguaje natural
+                            args.lead_phone,
+                            agent
+                        );
+
+                        console.log('📅 Result:', meetingResult);
+
+                        if (meetingResult.success && meetingResult.meeting) {
+                            const confirmationMessage = `perfecto ${args.lead_name}! te agendé la reunión para el ${formatMeetingDate(meetingResult.meeting.date)}. te llegará la invitación a ${args.lead_email} con el link de google meet: ${meetingResult.meeting.link}`;
+                            await sendInstagramMessage(userId, recipientId, confirmationMessage);
+                            await saveOutboundMessage(conversationId, userId, confirmationMessage, agent.id, true, meetingResult.meeting.id);
+                            console.log('✅ Meeting scheduled');
+                        } else {
+                            console.error('❌ Error creating meeting:', meetingResult.error);
+                            const errorMessage = 'disculpa, hubo un problema agendando la reunión. ¿me confirmas el horario que querías?';
+                            await sendInstagramMessage(userId, recipientId, errorMessage);
+                        }
                         return;
                     }
-
-                    // Validar formato de email (patrón n8n)
-                    const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-                    if (!emailRegex.test(args.lead_email)) {
-                        console.error('❌ Invalid email format:', args.lead_email);
-                        const errorMessage = 'el email no parece válido. ¿me lo puedes dar de nuevo?';
-                        await sendInstagramMessage(userId, recipientId, errorMessage);
-                        return;
-                    }
-
-                    // Validar formato de fecha ISO 8601 (patrón n8n)
-                    const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/;
-                    if (!dateRegex.test(args.preferred_datetime)) {
-                        console.error('❌ Invalid datetime format:', args.preferred_datetime);
-                        const errorMessage = 'hubo un error con el formato de fecha. ¿me confirmas el horario de nuevo?';
-                        await sendInstagramMessage(userId, recipientId, errorMessage);
-                        return;
-                    }
-
-                    // Llamar a la función de crear reunión
-                    const meetingResult = await createMeetingForLead(
-                        userId,
-                        conversationId,
-                        args.lead_email,
-                        args.lead_name,
-                        args.preferred_datetime,
-                        args.lead_phone,
-                        agent
-                    );
-
-                    console.log('📅 [AutoReply] Result:', meetingResult);
-
-                    if (meetingResult.success) {
-                        const confirmationMessage = `perfecto ${args.lead_name}! te agendé la reunión para el ${formatMeetingDate(meetingResult.meeting.date)}. te llegará la invitación a ${args.lead_email} con el link de google meet: ${meetingResult.meeting.link}`;
-
-                        await sendInstagramMessage(userId, recipientId, confirmationMessage);
-
-                        // Guardar mensaje
-                        await saveOutboundMessage(conversationId, userId, confirmationMessage, agent.id, true, meetingResult.meeting.id);
-                        console.log('✅ Meeting scheduled and confirmed');
-                    } else {
-                        console.error('❌ Error creating meeting:', meetingResult.error);
-                        const errorMessage = 'disculpa, hubo un problema agendando la reunión. déjame verificar y te confirmo en un momento.';
-                        await sendInstagramMessage(userId, recipientId, errorMessage);
-                    }
-                    return; // Terminamos aquí, no enviamos content adicional
                 }
             }
         }
@@ -1300,92 +1287,53 @@ function getMeetingTools() {
         {
             type: 'function',
             function: {
-                name: 'check_availability',
-                description: `Check calendar availability for the next days.
+                name: 'process_meeting_request',
+                description: `Procesa una solicitud de reunión. Esta función maneja TODO: verificar disponibilidad, validar datos y agendar.
 
-WHEN TO USE:
-- User asks "what times do you have available?"
-- Before proposing specific time slots
-- When offering meeting options to the lead
+USA ESTA FUNCIÓN CUANDO:
+- El usuario quiere saber disponibilidad
+- El usuario quiere agendar una reunión
+- El usuario confirma un horario
 
-WHAT IT RETURNS:
-- Array of available time slots with start/end times
-- Each slot respects your configured working hours and days
-- Times are in ISO 8601 format with timezone
+PARÁMETROS (todos opcionales):
+- action: "check" para ver disponibilidad, "schedule" para agendar
+- lead_email: Email del prospecto (requerido si action="schedule")
+- lead_name: Nombre completo (requerido si action="schedule")
+- preferred_date: Fecha deseada en lenguaje natural (ej: "mañana 3pm", "25 de diciembre 10am")
 
-IMPORTANT: ALWAYS call this before suggesting specific meeting times. NEVER invent availability.`,
+CÓMO USAR:
+1. Usuario pregunta disponibilidad → process_meeting_request({action: "check"})
+2. Usuario quiere agendar → process_meeting_request({action: "schedule", lead_email: "...", lead_name: "...", preferred_date: "mañana 3pm"})
+
+La función retorna:
+- Si action="check": Lista de horarios disponibles
+- Si action="schedule": Confirmación de reunión agendada con link de Google Meet`,
                 parameters: {
                     type: 'object',
                     properties: {
-                        days_to_check: {
-                            type: 'number',
-                            description: 'Number of days to check for availability (1-7). Default is 5 days.',
-                            minimum: 1,
-                            maximum: 7,
-                            default: 5
-                        }
-                    },
-                    required: []
-                }
-            }
-        },
-        {
-            type: 'function',
-            function: {
-                name: 'schedule_meeting',
-                description: `Create a REAL meeting in Google Calendar with Google Meet link.
-
-REQUIREMENTS BEFORE CALLING (ALL MANDATORY):
-- lead_email: Valid email address (REQUIRED)
-- lead_name: Full name of the lead (REQUIRED)
-- preferred_datetime: Confirmed date/time in ISO 8601 format (REQUIRED)
-- Lead has explicitly confirmed they want to schedule
-
-WHAT IT DOES:
-1. Creates event in Google Calendar
-2. Generates Google Meet link automatically
-3. Sends calendar invitation to lead's email
-4. Saves meeting record in database
-
-CRITICAL RULES:
-- ONLY call when you have ALL required information
-- MUST validate email format before calling
-- MUST confirm with lead before executing
-- preferred_datetime format: YYYY-MM-DDTHH:mm:ss±HH:mm
-- Use timezone from system context
-
-VALIDATION:
-All parameters marked as required MUST be provided.
-Property names with description, type and required status:
-- lead_email (description: Email address of the lead for sending invitation, type: string, required: true)
-- lead_name (description: Full name of the lead, type: string, required: true)
-- preferred_datetime (description: Meeting date/time in ISO 8601 with timezone, type: string, required: true)
-- lead_phone (description: Phone number if provided by lead, type: string, required: false)`,
-                parameters: {
-                    type: 'object',
-                    properties: {
+                        action: {
+                            type: 'string',
+                            description: 'Acción a realizar: "check" para verificar disponibilidad, "schedule" para agendar reunión',
+                            enum: ['check', 'schedule']
+                        },
                         lead_email: {
                             type: 'string',
-                            description: 'Email address of the lead for sending calendar invitation. Must be valid email format.',
-                            pattern: '^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$'
+                            description: 'Email del prospecto (obligatorio si action="schedule")'
                         },
                         lead_name: {
                             type: 'string',
-                            description: 'Full name of the lead (e.g., "Juan Pérez", "María García")',
-                            minLength: 2,
-                            maxLength: 100
+                            description: 'Nombre completo del prospecto (obligatorio si action="schedule")'
                         },
-                        preferred_datetime: {
+                        preferred_date: {
                             type: 'string',
-                            description: 'Meeting date and time in ISO 8601 format with timezone. Must match format: YYYY-MM-DDTHH:mm:ss±HH:mm. Use the timezone specified in system context.',
-                            pattern: '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{2}:\\d{2}$'
+                            description: 'Fecha y hora deseada en lenguaje natural. Ejemplos: "mañana a las 3pm", "25 de diciembre 10am", "hoy 15:00"'
                         },
                         lead_phone: {
                             type: 'string',
-                            description: 'Phone number of the lead (optional). Only include if explicitly provided by the lead.'
+                            description: 'Teléfono del prospecto (opcional)'
                         }
                     },
-                    required: ['lead_email', 'lead_name', 'preferred_datetime']
+                    required: ['action']
                 }
             }
         }
@@ -1464,50 +1412,34 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
     if (config?.offerDetails) prompt += `Oferta: ${config.offerDetails}\n\n`;
 
     if (config?.enableMeetingScheduling) {
-        prompt += `=== CAPACIDADES DE REUNIONES ===\n`;
-        prompt += `Tienes acceso a 2 herramientas:\n`;
-        prompt += `1. check_availability() - Consulta horarios disponibles en los próximos días\n`;
-        prompt += `2. schedule_meeting(lead_email, lead_name, preferred_datetime, lead_phone?) - Crea la reunión\n\n`;
+        prompt += `=== REUNIONES ===\n`;
+        prompt += `Tienes UNA herramienta: process_meeting_request()\n\n`;
 
-        prompt += `=== PROCESO PASO A PASO ===\n`;
-        prompt += `PASO 1 - Calificar interés:\n`;
-        prompt += `  • Si el lead muestra interés genuino, ofrece una reunión\n`;
-        prompt += `  • Ejemplo: "¿Te gustaría que agendemos una llamada para ver cómo te puedo ayudar?"\n\n`;
+        prompt += `CÓMO USARLA:\n`;
+        prompt += `1. Usuario pregunta disponibilidad:\n`;
+        prompt += `   → process_meeting_request({action: "check"})\n`;
+        prompt += `   → Te devuelve horarios disponibles\n`;
+        prompt += `   → Ofrécele 2-3 opciones al usuario\n\n`;
 
-        prompt += `PASO 2 - Verificar disponibilidad:\n`;
-        prompt += `  • IMPORTANTE: NUNCA inventes horarios\n`;
-        prompt += `  • SIEMPRE usa check_availability() antes de proponer horarios\n`;
-        prompt += `  • Ejemplo: "Déjame revisar mi agenda..." → llamas a check_availability()\n\n`;
+        prompt += `2. Usuario quiere agendar:\n`;
+        prompt += `   → Primero pide: email y nombre\n`;
+        prompt += `   → Luego llama: process_meeting_request({\n`;
+        prompt += `       action: "schedule",\n`;
+        prompt += `       lead_email: "email@ejemplo.com",\n`;
+        prompt += `       lead_name: "Juan Pérez",\n`;
+        prompt += `       preferred_date: "mañana 3pm"  // en lenguaje natural!\n`;
+        prompt += `     })\n\n`;
 
-        prompt += `PASO 3 - Ofrecer opciones:\n`;
-        prompt += `  • Presenta 2-3 opciones de horarios de forma amigable\n`;
-        prompt += `  • Ejemplo: "Tengo disponible mañana a las 10am, o el jueves a las 3pm. ¿Cuál te queda mejor?"\n\n`;
+        prompt += `EJEMPLOS:\n`;
+        prompt += `• "mañana a las 3pm" ✓\n`;
+        prompt += `• "hoy 15:00" ✓\n`;
+        prompt += `• "25 de diciembre 10am" ✓\n`;
+        prompt += `La función parsea el lenguaje natural por ti!\n\n`;
 
-        prompt += `PASO 4 - Recopilar información:\n`;
-        prompt += `  • REQUERIDO: Email (para enviar la invitación)\n`;
-        prompt += `  • REQUERIDO: Nombre completo\n`;
-        prompt += `  • Opcional: Teléfono\n`;
-        prompt += `  • Ejemplo: "Perfecto! ¿Me pasas tu email para enviarte la invitación?"\n\n`;
-
-        prompt += `PASO 5 - Confirmar y agendar:\n`;
-        prompt += `  • Valida que tienes: email, nombre, fecha elegida\n`;
-        prompt += `  • Llama a schedule_meeting() con todos los parámetros\n`;
-        prompt += `  • IMPORTANTE: preferred_datetime debe estar en formato ISO 8601 con timezone\n`;
-        prompt += `  • Ejemplos de conversión (usar timezone ${timezone}):\n`;
-
-        // Generar offset del timezone
-        const timezoneOffset = getTimezoneOffset(timezone);
-        const tomorrow = new Date(now.getTime() + 24*60*60*1000);
-        prompt += `    - "mañana a las 3pm" → ${tomorrow.toISOString().split('T')[0]}T15:00:00${timezoneOffset}\n`;
-        prompt += `    - "hoy a las 5pm" → ${now.toISOString().split('T')[0]}T17:00:00${timezoneOffset}\n\n`;
-
-        prompt += `=== REGLAS CRÍTICAS ===\n`;
-        prompt += `✗ NO agendar sin email válido\n`;
-        prompt += `✗ NO inventar horarios disponibles\n`;
-        prompt += `✗ NO agendar sin confirmación del lead\n`;
-        prompt += `✓ SIEMPRE verificar disponibilidad primero\n`;
-        prompt += `✓ SIEMPRE confirmar fecha/hora antes de agendar\n`;
-        prompt += `✓ SIEMPRE usar timezone ${timezone}\n\n`;
+        prompt += `REGLAS:\n`;
+        prompt += `✗ NO inventes horarios - usa action="check" primero\n`;
+        prompt += `✗ NO agendes sin email y nombre\n`;
+        prompt += `✓ SÍ pide confirmación antes de agendar\n\n`;
     }
 
     prompt += `=== ESTILO DE COMUNICACIÓN ===\n`;
