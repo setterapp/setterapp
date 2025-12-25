@@ -1238,22 +1238,66 @@ function getMeetingTools() {
             type: 'function',
             function: {
                 name: 'check_availability',
-                description: 'Consulta los horarios disponibles en el calendario para los próximos días. ÚSALO SIEMPRE antes de proponer una hora concreta.',
-                parameters: { type: 'object', properties: {}, required: [] }
+                description: `Consulta los horarios disponibles en tu calendario para los próximos 5 días.
+
+CUÁNDO USAR:
+- Cuando el lead pregunta "¿qué horarios tienes?"
+- Antes de proponer fechas específicas
+- Cuando vas a ofrecer opciones de reunión
+
+RETORNA:
+- Lista de slots disponibles con fecha/hora de inicio y fin
+- Cada slot respeta tu configuración de horarios y días laborables
+
+IMPORTANTE: NUNCA propongas horarios sin llamar primero a esta función.`,
+                parameters: {
+                    type: 'object',
+                    properties: {},
+                    required: []
+                }
             }
         },
         {
             type: 'function',
             function: {
                 name: 'schedule_meeting',
-                description: 'Agenda una reunión REAL. Solo usar cuando tengas Email + Nombre + Fecha Confirmada.',
+                description: `Crea una reunión REAL en Google Calendar con link de Google Meet.
+
+REQUISITOS ANTES DE LLAMAR:
+✓ Email válido del lead (OBLIGATORIO)
+✓ Nombre completo del lead (OBLIGATORIO)
+✓ Fecha/hora confirmada por el lead (OBLIGATORIO)
+✓ El lead ha confirmado que quiere agendar
+
+QUÉ HACE:
+1. Crea evento en Google Calendar
+2. Genera link de Google Meet
+3. Envía invitación por email al lead
+
+IMPORTANTE:
+- Solo llamar cuando tengas TODA la información
+- Confirmar con el lead antes de ejecutar
+- preferred_datetime DEBE estar en formato ISO 8601 con timezone
+  Ejemplo: "2025-12-26T15:00:00-03:00" para mañana 26 de diciembre a las 3pm Argentina`,
                 parameters: {
                     type: 'object',
                     properties: {
-                        lead_email: { type: 'string', description: 'Email del lead' },
-                        lead_name: { type: 'string', description: 'Nombre completo' },
-                        preferred_datetime: { type: 'string', description: 'Fecha ISO 8601' },
-                        lead_phone: { type: 'string', description: 'Teléfono (opcional)' }
+                        lead_email: {
+                            type: 'string',
+                            description: 'Email del lead para enviar la invitación. Debe ser un email válido.'
+                        },
+                        lead_name: {
+                            type: 'string',
+                            description: 'Nombre completo del lead (ej: "Juan Pérez")'
+                        },
+                        preferred_datetime: {
+                            type: 'string',
+                            description: 'Fecha y hora elegida en formato ISO 8601 con timezone. Ejemplo: "2025-12-26T15:00:00-03:00" para el 26 de diciembre a las 3pm hora Argentina.'
+                        },
+                        lead_phone: {
+                            type: 'string',
+                            description: 'Teléfono del lead (opcional). Solo incluir si el lead lo proporciona.'
+                        }
                     },
                     required: ['lead_email', 'lead_name', 'preferred_datetime']
                 }
@@ -1263,34 +1307,82 @@ function getMeetingTools() {
 }
 
 /**
- * Construye el system prompt
+ * Construye el system prompt con contexto temporal (inspirado en mejores prácticas)
  */
 function buildSystemPrompt(agentName: string, description: string, config: any): string {
-    let prompt = `Eres ${agentName}.\n\n`;
-    if (description) prompt += `Descr: ${description}\n`;
-    // ... Copying essential parts and adding availability instructions ...
-    // Since I'm replacing the whole block, I should reconstruct the prompt building logic carefully or reuse the existing function body if I could see it all, but I have a good idea.
-    // Wait, to be safe and precise, I should probably NOT replace buildSystemPrompt entirely if I can't see the original lines 938-1090 perfectly.
-    // I read them in Step 469. I have the full content of buildSystemPrompt.
+    // Contexto temporal actual (crítico para parsear "mañana", "hoy", etc.)
+    const now = new Date();
+    const argentinaTime = new Intl.DateTimeFormat('es-AR', {
+        timeZone: 'America/Argentina/Buenos_Aires',
+        dateStyle: 'full',
+        timeStyle: 'short'
+    }).format(now);
 
-    if (config?.assistantName) prompt += `Nombre: ${config.assistantName}.\n`;
-    if (config?.companyName) prompt += `Empresa: ${config.companyName}.\n`;
-    // ... (rest of context config) ...
+    let prompt = `Eres ${agentName}.\n\n`;
+
+    // === CONTEXTO TEMPORAL (como en el artículo) ===
+    prompt += `=== CONTEXTO ACTUAL ===\n`;
+    prompt += `Fecha y hora actual: ${argentinaTime}\n`;
+    prompt += `Timezone: America/Argentina/Buenos_Aires\n`;
+    prompt += `ISO: ${now.toISOString()}\n\n`;
+
+    if (description) prompt += `Tu descripción: ${description}\n\n`;
+
+    // Información del agente
+    if (config?.assistantName) prompt += `Tu nombre: ${config.assistantName}\n`;
+    if (config?.companyName) prompt += `Empresa: ${config.companyName}\n`;
     if (config?.businessNiche) prompt += `Nicho: ${config.businessNiche}\n`;
-    if (config?.offerDetails) prompt += `Oferta: ${config.offerDetails}\n`;
+    if (config?.offerDetails) prompt += `Oferta: ${config.offerDetails}\n\n`;
 
     if (config?.enableMeetingScheduling) {
-        prompt += `\n=== GESTIÓN DE REUNIONES ===\n`;
-        prompt += `1. 🕵️ PRIMERO: Si el cliente muestra interés, ofrece una reunión.\n`;
-        prompt += `2. 📅 SEGUNDO: Si pregunta "¿qué horarios tienes?" o si vas a proponer horarios, DEBES usar la tool 'check_availability'. NO inventes horarios.\n`;
-        prompt += `   - Ejemplo: "Voy a revisar mi agenda..." (y llamas a check_availability)\n`;
-        prompt += `3. 🗣️ TERCERO: Una vez que check_availability te devuelva los slots, ofrécelos amablemente.\n`;
-        prompt += `4. ✅ CUARTO: Cuando el cliente elija uno y te de su EMAIL y NOMBRE -> llama a 'schedule_meeting'.\n`;
-        prompt += `\nREGLAS:\n- NO agendes sin Email.\n- NO inventes disponibilidad.\n`;
+        prompt += `=== CAPACIDADES DE REUNIONES ===\n`;
+        prompt += `Tienes acceso a 2 herramientas:\n`;
+        prompt += `1. check_availability() - Consulta horarios disponibles en los próximos días\n`;
+        prompt += `2. schedule_meeting(lead_email, lead_name, preferred_datetime, lead_phone?) - Crea la reunión\n\n`;
+
+        prompt += `=== PROCESO PASO A PASO ===\n`;
+        prompt += `PASO 1 - Calificar interés:\n`;
+        prompt += `  • Si el lead muestra interés genuino, ofrece una reunión\n`;
+        prompt += `  • Ejemplo: "¿Te gustaría que agendemos una llamada para ver cómo te puedo ayudar?"\n\n`;
+
+        prompt += `PASO 2 - Verificar disponibilidad:\n`;
+        prompt += `  • IMPORTANTE: NUNCA inventes horarios\n`;
+        prompt += `  • SIEMPRE usa check_availability() antes de proponer horarios\n`;
+        prompt += `  • Ejemplo: "Déjame revisar mi agenda..." → llamas a check_availability()\n\n`;
+
+        prompt += `PASO 3 - Ofrecer opciones:\n`;
+        prompt += `  • Presenta 2-3 opciones de horarios de forma amigable\n`;
+        prompt += `  • Ejemplo: "Tengo disponible mañana a las 10am, o el jueves a las 3pm. ¿Cuál te queda mejor?"\n\n`;
+
+        prompt += `PASO 4 - Recopilar información:\n`;
+        prompt += `  • REQUERIDO: Email (para enviar la invitación)\n`;
+        prompt += `  • REQUERIDO: Nombre completo\n`;
+        prompt += `  • Opcional: Teléfono\n`;
+        prompt += `  • Ejemplo: "Perfecto! ¿Me pasas tu email para enviarte la invitación?"\n\n`;
+
+        prompt += `PASO 5 - Confirmar y agendar:\n`;
+        prompt += `  • Valida que tienes: email, nombre, fecha elegida\n`;
+        prompt += `  • Llama a schedule_meeting() con todos los parámetros\n`;
+        prompt += `  • IMPORTANTE: preferred_datetime debe estar en formato ISO 8601\n`;
+        prompt += `  • Ejemplo de conversión:\n`;
+        prompt += `    - "mañana a las 3pm" → ${new Date(now.getTime() + 24*60*60*1000).toISOString().split('T')[0]}T15:00:00-03:00\n`;
+        prompt += `    - "hoy a las 5pm" → ${now.toISOString().split('T')[0]}T17:00:00-03:00\n\n`;
+
+        prompt += `=== REGLAS CRÍTICAS ===\n`;
+        prompt += `✗ NO agendar sin email válido\n`;
+        prompt += `✗ NO inventar horarios disponibles\n`;
+        prompt += `✗ NO agendar sin confirmación del lead\n`;
+        prompt += `✓ SIEMPRE verificar disponibilidad primero\n`;
+        prompt += `✓ SIEMPRE confirmar fecha/hora antes de agendar\n`;
+        prompt += `✓ SIEMPRE usar timezone America/Argentina/Buenos_Aires\n\n`;
     }
 
-    // Adding style guidelines
-    prompt += `\nESTILO: Natural, breve, minúsculas casuales, argentino/latino según contexto.`;
+    prompt += `=== ESTILO DE COMUNICACIÓN ===\n`;
+    prompt += `• Natural y conversacional\n`;
+    prompt += `• Mensajes cortos (2-3 oraciones máximo)\n`;
+    prompt += `• Minúsculas casuales (estilo Instagram/WhatsApp)\n`;
+    prompt += `• Tono argentino/latino amigable\n`;
+    prompt += `• Sin emojis excesivos (máximo 1-2 por mensaje)\n`;
 
     return prompt;
 }
