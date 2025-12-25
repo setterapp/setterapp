@@ -204,7 +204,7 @@ function Analytics() {
     <div>
 
       {/* Filtro de tiempo */}
-      <div className="card" style={{ marginBottom: 'var(--spacing-md)' }}>
+      <div className="card" style={{ marginBottom: 'var(--spacing-md)', border: '2px solid #000' }}>
         <div className="flex items-center" style={{ flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
           <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>{t('analytics.period')}</span>
           {(['today', 'week', 'month', 'all'] as TimeRange[]).map((range) => (
@@ -222,7 +222,7 @@ function Analytics() {
 
       {/* Métricas principales */}
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--spacing-md)' }}>
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
             {t('analytics.metrics.conversations')}
           </h3>
@@ -262,7 +262,7 @@ function Analytics() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
             {t('analytics.metrics.responseRate')}
           </h3>
@@ -286,7 +286,7 @@ function Analytics() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
             {t('analytics.metrics.messages')}
           </h3>
@@ -310,7 +310,7 @@ function Analytics() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
             {t('analytics.metrics.activeAgents')}
           </h3>
@@ -334,7 +334,7 @@ function Analytics() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
             {t('analytics.metrics.todayMeetings')}
           </h3>
@@ -358,7 +358,7 @@ function Analytics() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
             {t('analytics.metrics.upcomingMeetings')}
           </h3>
@@ -382,7 +382,7 @@ function Analytics() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
             {t('analytics.metrics.showRate')}
           </h3>
@@ -406,7 +406,7 @@ function Analytics() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card" style={{ border: '2px solid #000' }}>
           <h3 className="card-title" style={{ margin: 0, marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
             {t('analytics.metrics.totalMeetings')}
           </h3>
@@ -440,7 +440,7 @@ function Analytics() {
       </div>
 
       {/* Gráfico de actividad */}
-      <div className="card" style={{ marginTop: 'var(--spacing-md)' }}>
+      <div className="card" style={{ marginTop: 'var(--spacing-md)', border: '2px solid #000' }}>
         <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
           <Calendar size={20} />
           {t('analytics.activity')}
@@ -516,7 +516,7 @@ function Analytics() {
 
       {/* Próximas reuniones */}
       {metrics.upcomingMeetings > 0 && (
-        <div className="card" style={{ marginTop: 'var(--spacing-md)' }}>
+        <div className="card" style={{ marginTop: 'var(--spacing-md)', border: '2px solid #000' }}>
           <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
             <Calendar size={20} />
             {t('analytics.metrics.upcomingMeetings')} ({metrics.upcomingMeetings})
@@ -572,7 +572,7 @@ function Analytics() {
 
       {/* Conversaciones por agente */}
       {metrics.conversationsByAgent.length > 0 && (
-        <div className="card" style={{ marginTop: 'var(--spacing-md)' }}>
+        <div className="card" style={{ marginTop: 'var(--spacing-md)', border: '2px solid #000' }}>
           <h3 className="card-title flex items-center" style={{ gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
             <Users size={20} />
             {t('analytics.conversationsByAgent')}
@@ -625,7 +625,7 @@ function Analytics() {
 
       {/* Estado vacío */}
       {metrics.totalConversations === 0 && (
-        <div className="card" style={{ marginTop: 'var(--spacing-md)' }}>
+        <div className="card" style={{ marginTop: 'var(--spacing-md)', border: '2px solid #000' }}>
           <div className="empty-state">
             <h3>{t('analytics.empty.title')}</h3>
             <p>{t('analytics.empty.description')}</p>
