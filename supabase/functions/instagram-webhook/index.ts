@@ -1126,16 +1126,10 @@ async function generateAndSendAutoReply(
  */
 async function executeCheckAvailability(userId: string, args: any) {
     try {
-        const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-
         const { data, error } = await supabase.functions.invoke('check-availability', {
             body: {
                 user_id: userId,
                 days_ahead: args.days_ahead || 10
-            },
-            headers: {
-                Authorization: `Bearer ${supabaseServiceKey}`
             }
         });
 
@@ -1159,8 +1153,6 @@ async function executeScheduleMeeting(
     args: any
 ) {
     try {
-        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-
         const { data, error } = await supabase.functions.invoke('schedule-meeting', {
             body: {
                 user_id: userId,
@@ -1170,9 +1162,6 @@ async function executeScheduleMeeting(
                 duration_minutes: args.duration_minutes || 30,
                 lead_name: args.lead_name,
                 lead_email: args.lead_email
-            },
-            headers: {
-                Authorization: `Bearer ${supabaseServiceKey}`
             }
         });
 

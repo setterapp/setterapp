@@ -28,8 +28,8 @@ These are called by external services (Meta, WhatsApp) and use their own verific
 - `whatsapp-webhook` - Same for WhatsApp
 - Verification: Use `VERIFY_TOKEN` environment variables specific to each platform
 
-#### Internal Edge Functions (NO JWT verification - use Service Role Key in invocation)
-These are called internally by webhooks using service role credentials in Authorization header:
+#### Internal Edge Functions (NO JWT verification, NO auth headers)
+These are called internally by webhooks WITHOUT authentication headers:
 - `check-availability` - Returns occupied calendar events for AI reasoning
 - `schedule-meeting` - Creates Google Calendar events with Meet links
 - `create-meeting` - Legacy function for meeting creation
@@ -37,26 +37,32 @@ These are called internally by webhooks using service role credentials in Author
 - `facebook-exchange-token`, `instagram-exchange-token` - OAuth token management
 
 #### 🚨 CRITICAL - JWT VERIFICATION RULES 🚨
-**NEVER add JWT verification to ANY edge function in this project**
+**NEVER add JWT verification OR Authorization headers to ANY edge function in this project**
 
 Why:
-1. Webhooks must be publicly accessible (Meta/WhatsApp callbacks)
-2. Internal functions are called with explicit `Authorization: Bearer ${serviceKey}` header
-3. No frontend directly calls these functions
-4. Adding JWT breaks the entire system
+1. All functions are designed to work WITHOUT authentication
+2. Webhooks are publicly accessible (Meta/WhatsApp callbacks)
+3. Meeting functions (check-availability, schedule-meeting) are called directly without headers
+4. Adding JWT or requiring headers breaks the entire system
 
-How functions authenticate:
+How functions are called:
 - **Webhooks**: Platform-specific VERIFY_TOKEN (Instagram, WhatsApp, etc.)
-- **Internal calls**: Service role key passed in Authorization header
+- **Meeting functions**: Direct invocation without headers
 - **Example**:
   ```typescript
+  // CORRECT - No headers
+  supabase.functions.invoke('check-availability', {
+    body: { user_id: userId, days_ahead: 10 }
+  })
+
+  // WRONG - Don't add headers
   supabase.functions.invoke('check-availability', {
     body: {...},
-    headers: { Authorization: `Bearer ${supabaseServiceKey}` }
+    headers: { Authorization: '...' }  // ❌ NO HACER ESTO
   })
   ```
 
-**If you're tempted to add JWT verification, DON'T. Re-read this section.**
+**If you're tempted to add JWT or Authorization headers, DON'T. Re-read this section.**
 
 ### Frontend Structure
 - `src/pages/Conversations.tsx` - Main conversation view with split panel
