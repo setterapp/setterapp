@@ -1263,15 +1263,15 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
         });
 
         prompt += `\n\n=== CALENDARIO ===
-Fecha/hora actual: ${currentDateTime}
+Ahora: ${currentDateTime}
 Horario laboral: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'}
-Duración reuniones: ${config?.meetingDuration || 30} min
 
-Herramientas:
-- check_availability: ver eventos ocupados (usa start_local/end_local)
-- schedule_meeting: agendar reunión
-
-Regla: SOLO propone horarios dentro del horario laboral donde NO haya eventos ocupados.`;
+IMPORTANTE:
+1. Cuando te pregunten por disponibilidad: PRIMERO llama check_availability
+2. NO inventes eventos ni horarios
+3. Solo usa la información que check_availability te devuelve
+4. Si hay evento a las 20:00, eso NO bloquea las 14:00 (razona correctamente)
+5. Propone SOLO dentro del horario laboral donde NO haya eventos ocupados`;
     }
 
     return prompt;
