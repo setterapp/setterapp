@@ -21,22 +21,42 @@ Multi-channel CRM and messaging platform with AI-powered lead classification and
 
 ### Edge Functions (Deno)
 
-#### Public Webhooks (NO JWT verification required)
+#### Public Webhooks (NO JWT verification)
 These are called by external services (Meta, WhatsApp) and use their own verification tokens:
 - `instagram-webhook` - Receives Instagram messages, saves to DB, triggers AI responses + lead classification
 - `messenger-webhook` - Same for Facebook Messenger
 - `whatsapp-webhook` - Same for WhatsApp
 - Verification: Use `VERIFY_TOKEN` environment variables specific to each platform
 
-#### Internal Edge Functions (use Supabase Service Role Key)
-These are called internally by webhooks or frontend with service role credentials:
+#### Internal Edge Functions (NO JWT verification - use Service Role Key in invocation)
+These are called internally by webhooks using service role credentials in Authorization header:
 - `check-availability` - Returns occupied calendar events for AI reasoning
 - `schedule-meeting` - Creates Google Calendar events with Meet links
 - `create-meeting` - Legacy function for meeting creation
 - `detect-lead-status` - Classifies conversation lead status using GPT-3.5-turbo
 - `facebook-exchange-token`, `instagram-exchange-token` - OAuth token management
 
-**IMPORTANT**: Never add JWT verification to webhook functions - they must remain publicly accessible for Meta/WhatsApp callbacks
+#### 🚨 CRITICAL - JWT VERIFICATION RULES 🚨
+**NEVER add JWT verification to ANY edge function in this project**
+
+Why:
+1. Webhooks must be publicly accessible (Meta/WhatsApp callbacks)
+2. Internal functions are called with explicit `Authorization: Bearer ${serviceKey}` header
+3. No frontend directly calls these functions
+4. Adding JWT breaks the entire system
+
+How functions authenticate:
+- **Webhooks**: Platform-specific VERIFY_TOKEN (Instagram, WhatsApp, etc.)
+- **Internal calls**: Service role key passed in Authorization header
+- **Example**:
+  ```typescript
+  supabase.functions.invoke('check-availability', {
+    body: {...},
+    headers: { Authorization: `Bearer ${supabaseServiceKey}` }
+  })
+  ```
+
+**If you're tempted to add JWT verification, DON'T. Re-read this section.**
 
 ### Frontend Structure
 - `src/pages/Conversations.tsx` - Main conversation view with split panel
