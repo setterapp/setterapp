@@ -316,6 +316,20 @@ function getMeetingTools() {
                     required: ['meeting_date', 'lead_name', 'lead_email']
                 }
             }
+        },
+        {
+            type: 'function',
+            function: {
+                name: 'update_contact_email',
+                description: 'Actualiza el email del contacto/lead en el CRM. Úsala cuando el lead te proporcione un email nuevo o corrija el anterior.',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        email: { type: 'string', description: 'El nuevo email del lead' }
+                    },
+                    required: ['email']
+                }
+            }
         }
     ];
 }
@@ -349,6 +363,22 @@ async function executeScheduleMeeting(userId: string, conversationId: string, ag
         return data;
     } catch (error) {
         return { error: 'Error al agendar la reunión' };
+    }
+}
+
+async function executeUpdateContactEmail(userId: string, conversationId: string, args: any) {
+    try {
+        const { data, error } = await supabase.functions.invoke('update-contact-email', {
+            body: {
+                user_id: userId,
+                conversation_id: conversationId,
+                email: args.email
+            }
+        });
+        if (error) return { error: 'No se pudo actualizar el email', details: error };
+        return data;
+    } catch (error) {
+        return { error: 'Error al actualizar el email' };
     }
 }
 
@@ -509,6 +539,8 @@ async function generateAndSendAutoReply(
                     toolResult = await executeCheckAvailability(userId, functionArgs);
                 } else if (functionName === 'schedule_meeting') {
                     toolResult = await executeScheduleMeeting(userId, conversationId, agent.id, functionArgs);
+                } else if (functionName === 'update_contact_email') {
+                    toolResult = await executeUpdateContactEmail(userId, conversationId, functionArgs);
                 } else {
                     toolResult = { error: 'Función desconocida' };
                 }
