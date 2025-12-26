@@ -986,7 +986,7 @@ async function generateAndSendAutoReply(
                 type: 'function',
                 function: {
                     name: 'check_availability',
-                    description: 'Consulta los eventos ocupados del calendario. SIEMPRE usa esta función ANTES de proponer horarios. Devuelve eventos con start_local/end_local/date_local (horarios en timezone local), work_hours (horario laboral en local), y current_datetime_local (fecha/hora actual en local). USA LOS CAMPOS *_local PARA TUS CÁLCULOS, no los ISO. Encuentra gaps entre eventos ocupados que estén dentro de work_hours.',
+                    description: 'Obtiene eventos ocupados del calendario. Devuelve JSON con: config (fecha actual local, work_hours, timezone), occupied_events (cada uno con start_local, end_local). USA start_local/end_local para encontrar gaps dentro de work_hours. Propone horarios disponibles al lead.',
                     parameters: {
                         type: 'object',
                         properties: {
@@ -1251,7 +1251,7 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
     if (config?.businessNiche) prompt += `Nicho: ${config.businessNiche}\n`;
     if (config?.offerDetails) prompt += `Oferta: ${config.offerDetails}\n\n`;
 
-    // Información de fecha/hora y calendario
+    // Configuración de calendario en JSON para que la IA lo procese fácilmente
     const timezone = config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
     const now = new Date();
     const currentDateTime = now.toLocaleString('es-AR', {
@@ -1265,59 +1265,30 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
         hour12: false
     });
 
-    prompt += `=== INFORMACIÓN DE CALENDARIO ===\n`;
-    prompt += `Fecha y hora actual: ${currentDateTime}\n`;
-    prompt += `Zona horaria: ${timezone}\n`;
-    if (config?.meetingAvailableHoursStart && config?.meetingAvailableHoursEnd) {
-        prompt += `Horario de atención: ${config.meetingAvailableHoursStart} a ${config.meetingAvailableHoursEnd}\n`;
-    }
-    if (config?.meetingAvailableDays) {
-        const daysInSpanish: Record<string, string> = {
-            'monday': 'lunes',
-            'tuesday': 'martes',
-            'wednesday': 'miércoles',
-            'thursday': 'jueves',
-            'friday': 'viernes',
-            'saturday': 'sábado',
-            'sunday': 'domingo'
-        };
-        const daysStr = config.meetingAvailableDays.map((d: string) => daysInSpanish[d] || d).join(', ');
-        prompt += `Días disponibles: ${daysStr}\n`;
-    }
-    prompt += `Duración de reuniones: ${config?.meetingDuration || 30} minutos\n`;
+    const calendarConfig = {
+        current_datetime_local: currentDateTime,
+        timezone: timezone,
+        work_hours: {
+            start: config?.meetingAvailableHoursStart || '09:00',
+            end: config?.meetingAvailableHoursEnd || '18:00',
+            days: config?.meetingAvailableDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+        },
+        meeting_duration: config?.meetingDuration || 30
+    };
 
-    prompt += `\n📅 CÓMO PROPONER HORARIOS:\n`;
-    prompt += `1. Usa check_availability para obtener eventos ocupados de los próximos 10 días\n`;
-    prompt += `2. La respuesta incluirá:\n`;
-    prompt += `   - current_datetime_local: fecha/hora actual en hora local (usa ESTA, no la versión _iso)\n`;
-    prompt += `   - work_hours: horario laboral (ej: 09:00 - 18:00 en hora local)\n`;
-    prompt += `   - occupied_events: cada evento tiene start_local, end_local, date_local (usa ESTOS campos)\n`;
-    prompt += `3. Analiza TODOS los días (hoy + próximos 10 días) para encontrar gaps disponibles\n`;
-    prompt += `4. Propone opciones flexibles:\n`;
-    prompt += `   - Ofrece lo MÁS PRONTO disponible (puede ser hoy, mañana, etc.)\n`;
-    prompt += `   - TAMBIÉN menciona opciones en días futuros\n`;
-    prompt += `   - Si el lead pregunta por una semana específica, muestra opciones de esa semana\n`;
-    prompt += `   - Sé flexible y adaptable a las preferencias del lead\n`;
-    prompt += `5. Cuando el lead elija un horario, calcula la fecha ISO correctamente y usa schedule_meeting\n\n`;
+    prompt += `\n=== CONFIGURACIÓN DE CALENDARIO ===\n`;
+    prompt += JSON.stringify(calendarConfig, null, 2);
+    prompt += `\n\n`;
 
-    prompt += `EJEMPLO 1 - Ofrecer opciones variadas:\n`;
-    prompt += `Lead: "¿Cuándo tenés disponible?"\n`;
-    prompt += `Tú: "lo más pronto que tengo es hoy a las 15:00. también tengo mañana a las 10am o el lunes que viene a las 14:00. ¿alguna te sirve?"\n\n`;
+    prompt += `=== INSTRUCCIONES PARA AGENDAR ===\n`;
+    prompt += `1. Usa check_availability - recibirás JSON con occupied_events y la misma config de arriba\n`;
+    prompt += `2. Los eventos ocupados tienen start_local y end_local (usa ESTOS, no los ISO)\n`;
+    prompt += `3. Encuentra gaps entre eventos que estén dentro de work_hours\n`;
+    prompt += `4. Ofrece opciones: lo más pronto + opciones en días futuros\n`;
+    prompt += `5. Cuando el lead elija, usa el campo "start" (ISO) de ese horario para schedule_meeting\n\n`;
 
-    prompt += `EJEMPLO 2 - Adaptarse a preferencias:\n`;
-    prompt += `Lead: "Esta semana no puedo, ¿y la próxima?"\n`;
-    prompt += `Tú: "la semana que viene tengo el lunes 30 a las 11am y 15:00, el miércoles 1 a las 10am, o el viernes 3 a las 14:00"\n\n`;
-
-    prompt += `EJEMPLO 3 - Cálculo de disponibilidad:\n`;
-    prompt += `Si check_availability muestra:\n`;
-    prompt += `- current_datetime_local: "jueves, 26 de diciembre de 2025, 10:00"\n`;
-    prompt += `- work_hours: {start: "09:00", end: "18:00"}\n`;
-    prompt += `- occupied_events del día 26: [{"start_local": "14:00", "end_local": "15:00", "date_local": "jueves, 26 de diciembre"}]\n`;
-    prompt += `- occupied_events del día 27: [] (ninguno)\n`;
-    prompt += `Entonces:\n`;
-    prompt += `- HOY (26): disponible 10:00-14:00 y 15:00-18:00\n`;
-    prompt += `- MAÑANA (27): disponible todo el día 09:00-18:00\n`;
-    prompt += `Ofreces: "tengo disponible hoy a las 15:00 o 16:00, o mañana desde las 9am en adelante"\n\n`;
+    prompt += `Ejemplo: Si check_availability muestra un evento de 14:00-15:00 hoy y nada mañana:\n`;
+    prompt += `→ "tengo disponible hoy a las 15:00, o mañana desde las 9am"\n\n`;
 
     prompt += `=== ESTILO DE COMUNICACIÓN ===\n`;
     prompt += `• Natural y conversacional\n`;

@@ -234,24 +234,21 @@ Deno.serve(async (req: Request) => {
       hour12: false
     });
 
+    // Respuesta estructurada simple para la IA
     return new Response(
       JSON.stringify({
-        occupied_events: formattedEvents,
-        total_events: formattedEvents.length,
-        work_hours: {
-          start: availableHoursStart,
-          end: availableHoursEnd,
-          days: availableDays
+        config: {
+          current_datetime_local: currentDateTimeLocal,
+          timezone: timezone,
+          work_hours: {
+            start: availableHoursStart,
+            end: availableHoursEnd,
+            days: availableDays
+          },
+          meeting_duration: duration
         },
-        timezone: timezone,
-        duration_minutes: duration,
-        buffer_minutes: bufferMinutes,
-        current_datetime_iso: now.toISOString(),
-        current_datetime_local: currentDateTimeLocal,
-        range: {
-          from: timeMin.toISOString(),
-          to: timeMax.toISOString()
-        }
+        occupied_events: formattedEvents,
+        total_events: formattedEvents.length
       }),
       {
         status: 200,
