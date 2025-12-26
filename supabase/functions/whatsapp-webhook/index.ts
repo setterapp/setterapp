@@ -890,7 +890,7 @@ async function generateAndSendAutoReply(
 }
 
 /**
- * Crea una reunión para el lead usando la Edge Function create-meeting
+ * Crea una reunión para el lead usando la Edge Function schedule-meeting
  */
 async function createMeetingForLead(
     userId: string,
@@ -902,7 +902,7 @@ async function createMeetingForLead(
     agent: any
 ) {
     try {
-        console.log('📅 [CreateMeetingForLead] Invoking create-meeting function with:', {
+        console.log('📅 [CreateMeetingForLead] Invoking schedule-meeting function with:', {
             conversationId,
             leadName,
             leadEmail,
@@ -913,14 +913,14 @@ async function createMeetingForLead(
             meetingEnabled: agent.config?.enableMeetingScheduling
         });
 
-        const { data, error } = await supabase.functions.invoke('create-meeting', {
+        const { data, error } = await supabase.functions.invoke('schedule-meeting', {
             body: {
-                conversationId,
-                leadName,
-                leadEmail,
-                leadPhone,
-                agentId: agent.id,
-                customDate: preferredDatetime
+                user_id: userId,
+                conversation_id: conversationId,
+                agent_id: agent.id,
+                meeting_date: preferredDatetime,
+                lead_name: leadName,
+                lead_email: leadEmail
             }
         });
 
@@ -941,7 +941,7 @@ async function createMeetingForLead(
 
         return data;
     } catch (error) {
-        console.error('❌ [CreateMeetingForLead] Exception calling create-meeting:', {
+        console.error('❌ [CreateMeetingForLead] Exception calling schedule-meeting:', {
             message: error.message,
             stack: error.stack,
             name: error.name
