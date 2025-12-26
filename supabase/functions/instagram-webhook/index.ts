@@ -986,7 +986,7 @@ async function generateAndSendAutoReply(
                 type: 'function',
                 function: {
                     name: 'check_availability',
-                    description: 'Obtiene eventos ocupados del calendario. Devuelve JSON con: config (fecha actual local, work_hours, timezone), occupied_events (cada uno con start_local, end_local). USA start_local/end_local para encontrar gaps dentro de work_hours. Propone horarios disponibles al lead.',
+                    description: 'Consulta eventos ocupados de los próximos 10 días. Devuelve JSON con config (work_hours, fecha actual) y occupied_events (con start_local, end_local). Propone horarios donde NO hay eventos, dentro de work_hours.',
                     parameters: {
                         type: 'object',
                         properties: {
@@ -1280,15 +1280,15 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
     prompt += JSON.stringify(calendarConfig, null, 2);
     prompt += `\n\n`;
 
-    prompt += `=== INSTRUCCIONES PARA AGENDAR ===\n`;
-    prompt += `1. Usa check_availability - recibirás JSON con occupied_events y la misma config de arriba\n`;
-    prompt += `2. Los eventos ocupados tienen start_local y end_local (usa ESTOS, no los ISO)\n`;
-    prompt += `3. Encuentra gaps entre eventos que estén dentro de work_hours\n`;
-    prompt += `4. Ofrece opciones: lo más pronto + opciones en días futuros\n`;
-    prompt += `5. Cuando el lead elija, usa el campo "start" (ISO) de ese horario para schedule_meeting\n\n`;
+    prompt += `=== CÓMO AGENDAR REUNIONES ===\n`;
+    prompt += `1. Llama check_availability para ver eventos ocupados de los próximos 10 días\n`;
+    prompt += `2. Propone horarios donde NO hay eventos, dentro de work_hours\n`;
+    prompt += `3. Usa los campos start_local/end_local de los eventos (no los ISO)\n`;
+    prompt += `4. Cuando el lead elija, usa el campo "start" (ISO) para schedule_meeting\n\n`;
 
-    prompt += `Ejemplo: Si check_availability muestra un evento de 14:00-15:00 hoy y nada mañana:\n`;
-    prompt += `→ "tengo disponible hoy a las 15:00, o mañana desde las 9am"\n\n`;
+    prompt += `Ejemplo: eventos ocupados hoy 14:00-15:00, work_hours 09:00-18:00\n`;
+    prompt += `→ Disponible: 09:00-14:00 y 15:00-18:00\n`;
+    prompt += `→ Ofreces: "tengo disponible a las 10am, 11am, o después de las 3pm"\n\n`;
 
     prompt += `=== ESTILO DE COMUNICACIÓN ===\n`;
     prompt += `• Natural y conversacional\n`;
