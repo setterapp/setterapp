@@ -230,7 +230,7 @@ Deno.serve(async (req: Request) => {
     const events = calendarData.items || [];
 
     // Formatear eventos ocupados con información legible
-    const formattedEvents = events.map((event: any) => {
+    const allFormattedEvents = events.map((event: any) => {
       const start = new Date(event.start?.dateTime || event.start?.date);
       const end = new Date(event.end?.dateTime || event.end?.date);
 
@@ -245,7 +245,21 @@ Deno.serve(async (req: Request) => {
       };
     });
 
-    console.log(`[check-availability] Found ${formattedEvents.length} occupied events`);
+    // FILTRAR: Solo eventos dentro de work_hours
+    const [workStartHour, workStartMin] = availableHoursStart.split(':').map(Number);
+    const [workEndHour, workEndMin] = availableHoursEnd.split(':').map(Number);
+    const workStartMinutes = workStartHour * 60 + workStartMin;
+    const workEndMinutes = workEndHour * 60 + workEndMin;
+
+    const formattedEvents = allFormattedEvents.filter((event) => {
+      const [eventHour, eventMin] = event.start_local.split(':').map(Number);
+      const eventMinutes = eventHour * 60 + eventMin;
+
+      // Solo incluir si el evento empieza dentro de work_hours
+      return eventMinutes >= workStartMinutes && eventMinutes < workEndMinutes;
+    });
+
+    console.log(`[check-availability] Found ${allFormattedEvents.length} total events, ${formattedEvents.length} within work_hours (${availableHoursStart}-${availableHoursEnd})`);
 
     // Formatear current_datetime de forma clara
     const currentDateTimeLocal = now.toLocaleString('es-AR', {
