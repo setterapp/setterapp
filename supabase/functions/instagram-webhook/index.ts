@@ -1245,8 +1245,36 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
  * Construye el system prompt usando SOLO la configuración del agente
  */
 function buildSystemPrompt(agentName: string, description: string, config: any): string {
-    // Solo usar el description que viene de la web
-    return description || `Eres ${agentName}.`;
+    let prompt = description || `Eres ${agentName}.`;
+
+    // Si tiene calendar capabilities activadas, agregar contexto mínimo
+    if (config?.enableMeetingScheduling === true) {
+        const now = new Date();
+        const timezone = config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
+        const currentDateTime = now.toLocaleString('es-AR', {
+            timeZone: timezone,
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+
+        prompt += `\n\n=== CALENDARIO ===
+Fecha/hora actual: ${currentDateTime}
+Horario laboral: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'}
+Duración reuniones: ${config?.meetingDuration || 30} min
+
+Herramientas:
+- check_availability: ver eventos ocupados (usa start_local/end_local)
+- schedule_meeting: agendar reunión
+
+Regla: SOLO propone horarios dentro del horario laboral donde NO haya eventos ocupados.`;
+    }
+
+    return prompt;
 }
 
 // Función de detección automática de lead status removida - ahora es manual por el usuario
