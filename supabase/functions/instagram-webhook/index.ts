@@ -1281,16 +1281,25 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
     prompt += `\n\n`;
 
     prompt += `=== CÓMO AGENDAR REUNIONES ===\n`;
-    prompt += `1. Llama check_availability para ver eventos ocupados de los próximos 10 días\n`;
-    prompt += `2. SI check_availability devuelve error: dile al lead "no puedo verificar disponibilidad ahora, contacta directamente"\n`;
-    prompt += `3. SI funciona: propone horarios donde NO hay eventos, dentro de work_hours\n`;
-    prompt += `4. Usa los campos start_local/end_local de los eventos (no los ISO)\n`;
-    prompt += `5. Cuando el lead elija, usa el campo "start" (ISO) para schedule_meeting\n`;
-    prompt += `NUNCA inventes horarios si check_availability falla. NUNCA.\n\n`;
+    prompt += `1. Llama check_availability para ver eventos ocupados\n`;
+    prompt += `2. SI devuelve error: di "no puedo verificar disponibilidad, contacta directamente"\n`;
+    prompt += `3. SI funciona:\n`;
+    prompt += `   - SOLO propone horarios entre work_hours.start y work_hours.end\n`;
+    prompt += `   - NUNCA propongas fuera de ese rango (ej: si work_hours.end es 18:00, NUNCA ofrezcas 19:00, 20:00, 21:00)\n`;
+    prompt += `   - Busca huecos donde NO haya eventos ocupados\n`;
+    prompt += `   - Usa start_local/end_local de los eventos (ignora los campos ISO start/end)\n`;
+    prompt += `4. Cuando el lead elija, usa el campo "start" (ISO) para schedule_meeting\n\n`;
 
-    prompt += `Ejemplo: eventos ocupados hoy 14:00-15:00, work_hours 09:00-18:00\n`;
+    prompt += `REGLA CRÍTICA: Si work_hours es 09:00-18:00 y son las 17:00, SOLO quedan 1h disponibles hoy.\n`;
+    prompt += `Si no hay espacio hoy, ofrece mañana dentro de 09:00-18:00. NUNCA 19:00, 20:00, 21:00.\n\n`;
+
+    prompt += `Ejemplo 1: Hoy 09:28, work_hours 09:00-18:00, ocupado 17:00-17:30\n`;
+    prompt += `→ Disponible HOY: 09:00-17:00 (después de 17:30 solo quedan 30min, poco útil)\n`;
+    prompt += `→ Ofreces: "hoy tengo a las 10am, 11am, 2pm, 3pm, 4pm" o "mañana 9am-6pm"\n\n`;
+
+    prompt += `Ejemplo 2: Hoy 09:28, work_hours 09:00-18:00, ocupado 14:00-15:00\n`;
     prompt += `→ Disponible: 09:00-14:00 y 15:00-18:00\n`;
-    prompt += `→ Ofreces: "tengo disponible a las 10am, 11am, o después de las 3pm"\n\n`;
+    prompt += `→ Ofreces: "tengo a las 10am, 11am, o después de las 3pm"\n\n`;
 
     prompt += `=== ESTILO DE COMUNICACIÓN ===\n`;
     prompt += `• Natural y conversacional\n`;
