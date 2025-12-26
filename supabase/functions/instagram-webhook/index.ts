@@ -1282,9 +1282,11 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
 
     prompt += `=== CÓMO AGENDAR REUNIONES ===\n`;
     prompt += `1. Llama check_availability para ver eventos ocupados de los próximos 10 días\n`;
-    prompt += `2. Propone horarios donde NO hay eventos, dentro de work_hours\n`;
-    prompt += `3. Usa los campos start_local/end_local de los eventos (no los ISO)\n`;
-    prompt += `4. Cuando el lead elija, usa el campo "start" (ISO) para schedule_meeting\n\n`;
+    prompt += `2. SI check_availability devuelve error: dile al lead "no puedo verificar disponibilidad ahora, contacta directamente"\n`;
+    prompt += `3. SI funciona: propone horarios donde NO hay eventos, dentro de work_hours\n`;
+    prompt += `4. Usa los campos start_local/end_local de los eventos (no los ISO)\n`;
+    prompt += `5. Cuando el lead elija, usa el campo "start" (ISO) para schedule_meeting\n`;
+    prompt += `NUNCA inventes horarios si check_availability falla. NUNCA.\n\n`;
 
     prompt += `Ejemplo: eventos ocupados hoy 14:00-15:00, work_hours 09:00-18:00\n`;
     prompt += `→ Disponible: 09:00-14:00 y 15:00-18:00\n`;

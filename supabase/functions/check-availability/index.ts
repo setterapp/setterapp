@@ -111,13 +111,14 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (integrationError || !integration) {
+      console.error('[check-availability] Google Calendar not connected for user:', user_id);
       return new Response(
         JSON.stringify({
-          error: 'Google Calendar not connected',
-          available_slots: [],
-          total_slots: 0
+          error: 'Google Calendar not connected. Cannot check availability.',
+          config: null,
+          occupied_events: []
         }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
@@ -187,17 +188,11 @@ Deno.serve(async (req: Request) => {
       console.error('[check-availability] Calendar API error:', errorData);
       return new Response(
         JSON.stringify({
-          error: 'Failed to fetch calendar events',
-          occupied_events: [],
-          work_hours: {
-            start: availableHoursStart,
-            end: availableHoursEnd,
-            days: availableDays
-          },
-          timezone: timezone,
-          current_datetime: now.toISOString()
+          error: 'Failed to fetch calendar events from Google',
+          config: null,
+          occupied_events: []
         }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
