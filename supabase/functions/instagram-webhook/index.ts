@@ -1005,13 +1005,13 @@ async function generateAndSendAutoReply(
                 type: 'function',
                 function: {
                     name: 'schedule_meeting',
-                    description: 'Agenda una reunión en el calendario. SOLO usa esta función DESPUÉS de que el lead haya confirmado EXPLÍCITAMENTE tanto la fecha/hora como su email. NUNCA inventes o asumas un email. Calcula la fecha/hora en formato ISO 8601 usando current_datetime y timezone de check_availability como referencia.',
+                    description: 'Agenda una reunión en el calendario de Google con link de Meet. IMPORTANTE: Antes de llamar esta función, SIEMPRE debes pedir el email del lead para enviarle la invitación. Solo llama esta función cuando YA TENGAS el email que el lead te proporcionó.',
                     parameters: {
                         type: 'object',
                         properties: {
                             meeting_date: {
                                 type: 'string',
-                                description: 'Fecha y hora de la reunión en formato ISO 8601 con timezone. Ejemplo: "2025-12-26T15:00:00.000Z". Calcula correctamente basándote en el current_datetime y timezone que recibiste de check_availability.'
+                                description: 'Fecha y hora de la reunión en formato ISO 8601 UTC. Ejemplo: "2025-12-26T18:00:00.000Z" para las 15:00 Argentina (UTC-3). IMPORTANTE: Convierte correctamente el horario local a UTC basándote en el timezone de check_availability.'
                             },
                             duration_minutes: {
                                 type: 'number',
@@ -1019,11 +1019,11 @@ async function generateAndSendAutoReply(
                             },
                             lead_name: {
                                 type: 'string',
-                                description: 'Nombre completo del lead tal como te lo dio en la conversación'
+                                description: 'Nombre completo del lead'
                             },
                             lead_email: {
                                 type: 'string',
-                                description: 'Email del lead que TE DIO EXPLÍCITAMENTE en la conversación. NUNCA inventes, generes o asumas un email. Debe ser EXACTAMENTE el email que el lead escribió. Este campo es OBLIGATORIO.'
+                                description: 'Email del lead que te proporcionó. Este campo es necesario para enviar la invitación de calendario.'
                             }
                         },
                         required: ['meeting_date', 'lead_name', 'lead_email']
@@ -1048,6 +1048,9 @@ async function generateAndSendAutoReply(
         while (iteration < maxIterations) {
             iteration++;
             console.log(`🔄 Iteración ${iteration}: Llamando a OpenAI...`);
+            console.log(`📋 Messages array tiene ${messages.length} mensajes:`,
+                messages.map((m: any) => `${m.role}${m.tool_call_id ? `[${m.tool_call_id.substring(0, 8)}]` : ''}`)
+            );
 
             // Llamar a OpenAI con tools
             const aiMessage = await generateAIResponse(messages, tools);
@@ -1056,6 +1059,13 @@ async function generateAndSendAutoReply(
                 console.error('❌ No se pudo generar respuesta con IA');
                 return;
             }
+
+            console.log(`🤖 OpenAI respondió:`, {
+                has_content: !!aiMessage.content,
+                content_preview: aiMessage.content?.substring(0, 100),
+                has_tool_calls: !!aiMessage.tool_calls,
+                tool_calls_count: aiMessage.tool_calls?.length || 0
+            });
 
             // Si OpenAI responde con texto (sin tool calls), terminamos
             if (!aiMessage.tool_calls || aiMessage.tool_calls.length === 0) {
@@ -1097,13 +1107,38 @@ async function generateAndSendAutoReply(
                 }
 
                 // Agregar resultado de la tool a la conversación
+                const toolResultString = JSON.stringify(toolResult);
                 messages.push({
                     role: 'tool',
                     tool_call_id: toolCall.id,
-                    content: JSON.stringify(toolResult)
+                    content: toolResultString
                 });
 
                 console.log(`✅ Resultado de ${functionName}:`, toolResult);
+                console.log(`📤 Tool result enviado a AI (stringified, primeros 500 chars):`, toolResultString.substring(0, 500));
+
+                // Log específico para check_availability
+                if (functionName === 'check_availability' && toolResult?.occupied_events) {
+                    console.log(`📊 EVENTOS OCUPADOS que la IA verá (${toolResult.occupied_events.length}):`,
+                        toolResult.occupied_events.map((e: any) => `${e.title} ${e.start_local}-${e.end_local}`));
+                }
+
+                // Log específico para schedule_meeting
+                if (functionName === 'schedule_meeting') {
+                    if (toolResult?.success) {
+                        console.log(`✅ REUNIÓN AGENDADA:`, {
+                            meeting_id: toolResult.meeting?.id,
+                            meeting_date: toolResult.meeting?.meeting_date,
+                            meeting_link: toolResult.meeting?.meeting_link,
+                            message: toolResult.message
+                        });
+                    } else {
+                        console.log(`❌ FALLÓ AGENDAR:`, {
+                            error: toolResult?.error,
+                            valid_hours: toolResult?.valid_hours
+                        });
+                    }
+                }
             }
 
             // Continuar el loop para que OpenAI procese los resultados
@@ -1266,12 +1301,19 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
 Ahora: ${currentDateTime}
 Horario laboral: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'}
 
+WORKFLOW DE AGENDAMIENTO (SIGUE ESTOS PASOS EN ORDEN):
+1. Lead pregunta por reunión → llama check_availability
+2. check_availability devuelve eventos ocupados (SOLO dentro del horario laboral)
+3. Propones horarios libres basándote en los resultados
+4. Lead confirma un horario → PIDE SU EMAIL (ej: "Perfecto! Para enviarte la invitación, ¿cuál es tu email?")
+5. Lead da su email → llama schedule_meeting con fecha, nombre Y email
+6. Confirmas la reunión agendada con el link de Meet
+
 IMPORTANTE:
-1. Cuando te pregunten por disponibilidad: PRIMERO llama check_availability
-2. NO inventes eventos ni horarios
-3. Solo usa la información que check_availability te devuelve
-4. Si hay evento a las 20:00, eso NO bloquea las 14:00 (razona correctamente)
-5. Propone SOLO dentro del horario laboral donde NO haya eventos ocupados`;
+- NUNCA inventes eventos - usa SOLO lo que check_availability devuelve
+- Un evento a las 10:00 NO bloquea las 14:00 (razona correctamente)
+- SIEMPRE pide el email ANTES de llamar schedule_meeting
+- NO llames schedule_meeting sin tener el email del lead`;
     }
 
     return prompt;

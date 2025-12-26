@@ -127,35 +127,8 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[check-availability] Checking for user ${user_id}, ${days_ahead} days ahead`);
 
-    // Obtener integración de Google Calendar
-    const { data: integration, error: integrationError } = await supabase
-      .from('integrations')
-      .select('*')
-      .eq('type', 'google-calendar')
-      .eq('user_id', user_id)
-      .eq('status', 'connected')
-      .single();
-
-    if (integrationError || !integration) {
-      console.error('[check-availability] Google Calendar not connected for user:', user_id);
-      const errorResponse = {
-        error: 'Google Calendar not connected. Cannot check availability.',
-        config: null,
-        occupied_events: []
-      };
-      await saveDebugLog(user_id, requestBody, errorResponse, 400, 'Google Calendar not connected');
-      return new Response(
-        JSON.stringify(errorResponse),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Obtener access token (y refrescar si es necesario)
-    const accessToken = await refreshGoogleTokenIfNeeded(integration);
-
-    if (!accessToken) {
-      throw new Error('No access token available');
-    }
+    // Ya no necesitamos acceder a Google Calendar API - consultamos directo desde Supabase
+    // La tabla calendar_events se sincroniza periódicamente con Google Calendar
 
     // Obtener agente de Instagram del usuario para config de horarios
     const { data: agent } = await supabase
@@ -192,50 +165,42 @@ Deno.serve(async (req: Request) => {
     timeMax.setDate(timeMax.getDate() + days_ahead);
     timeMax.setHours(23, 59, 59, 999);
 
-    // Obtener eventos ocupados del calendario
-    const calendarParams = new URLSearchParams({
-      timeMin: timeMin.toISOString(),
-      timeMax: timeMax.toISOString(),
-      singleEvents: 'true',
-      orderBy: 'startTime',
-      maxResults: '100',
-    });
+    console.log(`[check-availability] Consultando eventos desde Supabase (calendar_events table)`);
 
-    const calendarResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?${calendarParams}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    // Obtener eventos desde la tabla calendar_events (mucho más rápido que Google Calendar API)
+    const { data: dbEvents, error: dbError } = await supabase
+      .from('calendar_events')
+      .select('*')
+      .eq('user_id', user_id)
+      .gte('start_time', timeMin.toISOString())
+      .lte('start_time', timeMax.toISOString())
+      .eq('status', 'confirmed')
+      .order('start_time', { ascending: true });
 
-    if (!calendarResponse.ok) {
-      const errorData = await calendarResponse.json().catch(() => ({}));
-      console.error('[check-availability] Calendar API error:', errorData);
+    if (dbError) {
+      console.error('[check-availability] Database error:', dbError);
       const errorResponse = {
-        error: 'Failed to fetch calendar events from Google',
+        error: 'Failed to fetch calendar events from database',
         config: null,
         occupied_events: []
       };
-      await saveDebugLog(user_id, requestBody, errorResponse, 500, 'Calendar API error');
+      await saveDebugLog(user_id, requestBody, errorResponse, 500, 'Database error');
       return new Response(
         JSON.stringify(errorResponse),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const calendarData = await calendarResponse.json();
-    const events = calendarData.items || [];
+    const events = dbEvents || [];
+    console.log(`[check-availability] Encontrados ${events.length} eventos en la tabla`);
 
     // Formatear eventos ocupados con información legible
     const allFormattedEvents = events.map((event: any) => {
-      const start = new Date(event.start?.dateTime || event.start?.date);
-      const end = new Date(event.end?.dateTime || event.end?.date);
+      const start = new Date(event.start_time);
+      const end = new Date(event.end_time);
 
       return {
-        id: event.id,
+        id: event.google_event_id,
         title: event.summary || 'Sin título',
         start: start.toISOString(),
         end: end.toISOString(),

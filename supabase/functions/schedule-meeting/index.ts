@@ -140,7 +140,15 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    console.log(`[schedule-meeting] Scheduling for user ${user_id}, lead ${lead_name} on ${meeting_date}`);
+    console.log(`[schedule-meeting] === INICIO ===`);
+    console.log(`[schedule-meeting] Input recibido de la IA:`, {
+      user_id,
+      conversation_id,
+      meeting_date,
+      duration_minutes,
+      lead_name,
+      lead_email: lead_email || 'no proporcionado'
+    });
 
     // Obtener integración de Google Calendar
     const { data: integration, error: integrationError } = await supabase
@@ -185,6 +193,12 @@ Deno.serve(async (req: Request) => {
     const startDate = new Date(meeting_date);
     const endDate = new Date(startDate.getTime() + (duration_minutes * 60 * 1000));
 
+    console.log(`[schedule-meeting] 📅 Fecha propuesta:`, {
+      meeting_date_iso: meeting_date,
+      startDate_parsed: startDate.toISOString(),
+      timezone: timeZone
+    });
+
     // VALIDACIÓN: Verificar que esté dentro de work_hours
     const startHourLocal = startDate.toLocaleString('en-US', {
       timeZone,
@@ -201,12 +215,25 @@ Deno.serve(async (req: Request) => {
     const workStartMinutes = workStartHour * 60 + workStartMin;
     const workEndMinutes = workEndHour * 60 + workEndMin;
 
+    console.log(`[schedule-meeting] ⏰ VALIDACIÓN HORARIO:`, {
+      horario_propuesto: startHourLocal,
+      horario_laboral: `${availableHoursStart}-${availableHoursEnd}`,
+      proposedMinutes,
+      workStartMinutes,
+      workEndMinutes,
+      es_valido: proposedMinutes >= workStartMinutes && proposedMinutes < workEndMinutes
+    });
+
     if (proposedMinutes < workStartMinutes || proposedMinutes >= workEndMinutes) {
       const errorResponse = {
         error: `Horario fuera de rango. La reunión está propuesta para ${startHourLocal} pero el horario laboral es ${availableHoursStart}-${availableHoursEnd}. DEBES proponer un horario dentro de este rango.`,
         success: false,
         valid_hours: `${availableHoursStart}-${availableHoursEnd}`
       };
+      console.log(`[schedule-meeting] ❌ RECHAZADO - Horario fuera de rango:`, {
+        propuesto: startHourLocal,
+        valido: `${availableHoursStart}-${availableHoursEnd}`
+      });
       await saveDebugLog(user_id, conversation_id, requestBody, errorResponse, 400, 'Outside work hours');
       return new Response(
         JSON.stringify(errorResponse),
@@ -261,8 +288,9 @@ Deno.serve(async (req: Request) => {
     const createdEvent = await calendarResponse.json();
     const calendarEventId = createdEvent.id;
 
-    console.log('[schedule-meeting] Initial event created', {
+    console.log('[schedule-meeting] ✅ Evento creado en Google Calendar:', {
       eventId: createdEvent.id,
+      htmlLink: createdEvent.htmlLink,
       conferenceDataStatus: createdEvent.conferenceData?.createRequest?.status || 'unknown',
       hasEntryPoints: !!createdEvent.conferenceData?.entryPoints
     });
@@ -376,6 +404,8 @@ Deno.serve(async (req: Request) => {
       })}`,
     };
 
+    console.log(`[schedule-meeting] 🎉 SUCCESS - Respuesta que se enviará a la IA:`, successResponse);
+
     await saveDebugLog(user_id, conversation_id, requestBody, successResponse, 200);
 
     return new Response(
@@ -387,11 +417,14 @@ Deno.serve(async (req: Request) => {
     );
 
   } catch (error) {
-    console.error('[schedule-meeting] Error:', error);
+    console.error('[schedule-meeting] ❌ ERROR GENERAL:', error);
+    console.error('[schedule-meeting] Error stack:', error instanceof Error ? error.stack : 'No stack');
     const errorResponse = {
       error: error instanceof Error ? error.message : 'Unknown error',
       success: false,
     };
+
+    console.log(`[schedule-meeting] 💥 ERROR - Respuesta que se enviará a la IA:`, errorResponse);
 
     // Try to save log even on unexpected errors
     try {
