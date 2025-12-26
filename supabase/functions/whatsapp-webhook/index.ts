@@ -107,6 +107,7 @@ async function getUserIdFromPhoneNumberId(phoneNumberId: string): Promise<string
         }
 
         // Fallback to first integration
+        console.warn('⚠️ FALLBACK: No exact match for phoneNumberId:', phoneNumberId, '- using first WhatsApp integration for user:', integrations[0].user_id);
         return integrations[0].user_id;
     } catch (error) {
         console.error('❌ Error getting user_id:', error);

@@ -501,10 +501,10 @@ async function getUserIdFromPageId(pageId: string): Promise<string | null> {
         // Si no coincide, preferir instagram; si no hay, usar la primera conectada
         const instagram = integrations.find((i: any) => i.type === 'instagram');
         if (instagram) {
-            console.log('⚠️ No matching pageId found, using first connected instagram integration');
+            console.warn('⚠️ FALLBACK: No exact match for pageId:', pageId, '- using first IG integration for user:', instagram.user_id);
             return instagram.user_id;
         }
-        console.log('⚠️ No matching pageId found, using first connected integration');
+        console.warn('⚠️ FALLBACK: No exact match for pageId:', pageId, '- using first integration for user:', integrations[0].user_id);
         return integrations[0].user_id;
     } catch (error) {
         console.error('❌ Error getting user_id from pageId:', error);
