@@ -9,21 +9,17 @@ create table if not exists availability_debug_logs (
   function_name text not null, -- 'check-availability' or 'schedule-meeting'
 
   -- Request/Response
-  request_body jsonb not null, -- Input parameters
-  response_body jsonb not null, -- Output response
-  response_status int not null, -- HTTP status code
+  request_body jsonb,
+  response_body jsonb,
+  response_status int,
 
   -- Context
-  user_id uuid,
-  conversation_id uuid,
-  agent_id uuid,
+  user_id text,
+  conversation_id text,
+  agent_id text,
 
   -- Error tracking
-  error_message text,
-
-  -- Indexes for querying
-  constraint availability_debug_logs_function_name_check
-    check (function_name in ('check-availability', 'schedule-meeting'))
+  error_message text
 );
 
 -- Index for faster queries
@@ -33,17 +29,15 @@ create index if not exists availability_debug_logs_created_at_idx
 create index if not exists availability_debug_logs_user_id_idx
   on availability_debug_logs(user_id);
 
-create index if not exists availability_debug_logs_conversation_id_idx
-  on availability_debug_logs(conversation_id);
+create index if not exists availability_debug_logs_function_name_idx
+  on availability_debug_logs(function_name);
 
 -- RLS Policies
 alter table availability_debug_logs enable row level security;
 
--- Users can only see their own debug logs
-create policy "Users can view their own debug logs"
-  on availability_debug_logs
-  for select
-  using (auth.uid() = user_id);
+-- Drop existing policies first for idempotency
+drop policy if exists "Users can view their own debug logs" on availability_debug_logs;
+drop policy if exists "Service role has full access" on availability_debug_logs;
 
 -- Service role can do everything (for edge functions)
 create policy "Service role has full access"

@@ -1,6 +1,5 @@
 -- Revert messenger platform/type support (removes 'messenger' from CHECK constraints)
--- NOTE: This does NOT delete any existing rows. If you have existing 'messenger' rows,
--- you must delete/migrate them before applying this migration.
+-- Keeps 'facebook' temporarily (feature is disabled but data may exist)
 
 BEGIN;
 
@@ -8,7 +7,7 @@ BEGIN;
 ALTER TABLE public.integrations DROP CONSTRAINT IF EXISTS integrations_type_check;
 ALTER TABLE public.integrations
   ADD CONSTRAINT integrations_type_check
-  CHECK (type = ANY (ARRAY['whatsapp'::text, 'instagram'::text, 'google-calendar'::text]));
+  CHECK (type = ANY (ARRAY['whatsapp'::text, 'instagram'::text, 'google-calendar'::text, 'facebook'::text]));
 
 -- contacts.platform
 ALTER TABLE public.contacts DROP CONSTRAINT IF EXISTS contacts_platform_check;
@@ -29,4 +28,3 @@ ALTER TABLE public.agents
   CHECK ((platform = ANY (ARRAY['whatsapp'::text, 'instagram'::text])) OR (platform IS NULL));
 
 COMMIT;
-

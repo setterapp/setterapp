@@ -76,6 +76,46 @@ Deno.serve(async (req: Request) => {
   try {
     console.log('[sync-calendar] === INICIO SINCRONIZACIÓN ===');
 
+    // Verificar si la tabla calendar_events existe intentando hacer una query
+    console.log('[sync-calendar] Verificando tabla calendar_events...');
+    const { error: tableCheckError } = await supabase
+      .from('calendar_events')
+      .select('id')
+      .limit(1);
+
+    if (tableCheckError && tableCheckError.message.includes('does not exist')) {
+      console.log('[sync-calendar] Tabla calendar_events no existe, necesita ser creada manualmente');
+      return new Response(
+        JSON.stringify({
+          error: 'Table calendar_events does not exist. Please run the migration SQL first.',
+          sql: `
+create table calendar_events (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null,
+  google_event_id text not null,
+  summary text,
+  description text,
+  start_time timestamptz not null,
+  end_time timestamptz not null,
+  is_all_day boolean default false,
+  status text default 'confirmed',
+  last_synced_at timestamptz default now(),
+  constraint calendar_events_user_google_unique unique(user_id, google_event_id)
+);
+create index calendar_events_user_id_idx on calendar_events(user_id);
+create index calendar_events_start_time_idx on calendar_events(start_time);
+alter table calendar_events enable row level security;
+create policy "Service role has full access to calendar events" on calendar_events for all using (true) with check (true);
+          `
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('[sync-calendar] Tabla calendar_events existe');
+
     // Obtener todas las integraciones activas de Google Calendar
     const { data: integrations, error: integrationsError } = await supabase
       .from('integrations')

@@ -22,10 +22,7 @@ CREATE TABLE IF NOT EXISTS function_logs (
     error_details JSONB,
 
     -- Performance tracking
-    duration_ms INTEGER,
-
-    -- Indexes for common queries
-    CONSTRAINT function_logs_level_check CHECK (level IN ('info', 'warn', 'error', 'debug'))
+    duration_ms INTEGER
 );
 
 -- Indexes for efficient querying
@@ -40,18 +37,21 @@ CREATE INDEX IF NOT EXISTS idx_function_logs_execution_id ON function_logs(execu
 ALTER TABLE function_logs ENABLE ROW LEVEL SECURITY;
 
 -- Users can view their own logs
+DROP POLICY IF EXISTS "Users can view their own function logs" ON function_logs;
 CREATE POLICY "Users can view their own function logs"
     ON function_logs
     FOR SELECT
     USING (auth.uid() = user_id);
 
 -- Service role can insert logs
+DROP POLICY IF EXISTS "Service role can insert function logs" ON function_logs;
 CREATE POLICY "Service role can insert function logs"
     ON function_logs
     FOR INSERT
     WITH CHECK (true);
 
 -- Service role can view all logs
+DROP POLICY IF EXISTS "Service role can view all function logs" ON function_logs;
 CREATE POLICY "Service role can view all function logs"
     ON function_logs
     FOR SELECT
