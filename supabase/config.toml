@@ -1,0 +1,33 @@
+[project]
+# Supabase Project Configuration
+
+# Edge Functions JWT Configuration
+# CRITICAL: Most functions do NOT require JWT verification
+# Only instagram-resolve-profile requires JWT
+
+[functions.instagram-webhook]
+verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+[functions.messenger-webhook]
+verify_jwt = false
+
+[functions.check-availability]
+verify_jwt = false
+
+[functions.schedule-meeting]
+verify_jwt = false
+
+[functions.detect-lead-status]
+verify_jwt = false
+
+[functions.facebook-exchange-token]
+verify_jwt = false
+
+[functions.instagram-exchange-token]
+verify_jwt = false
+
+[functions.instagram-resolve-profile]
+verify_jwt = true

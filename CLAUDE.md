@@ -63,6 +63,27 @@ How functions are called:
 
 **If you're tempted to add JWT or Authorization headers, DON'T. Re-read this section.**
 
+#### 🚨 CRITICAL - EDGE FUNCTION DEPLOYMENT 🚨
+
+**ALWAYS use the deploy script when deploying functions:**
+
+```bash
+./deploy-functions.sh
+```
+
+**NEVER deploy manually** without the `--no-verify-jwt` flag. Supabase has a known bug where JWT verification auto-enables during deployment even if config.toml says otherwise.
+
+**If you must deploy a single function:**
+```bash
+supabase functions deploy function-name --no-verify-jwt
+```
+
+**NEVER enable JWT in the Supabase dashboard after deployment.** If you do, ALL functions will break immediately.
+
+Files:
+- `supabase/config.toml` - JWT configuration (has known bug, use deploy script instead)
+- `deploy-functions.sh` - Deployment script with --no-verify-jwt flags
+
 ### Frontend Structure
 - `src/pages/Conversations.tsx` - Main conversation view with split panel
 - `src/hooks/useConversations.ts` - Fetches conversations with Realtime updates
