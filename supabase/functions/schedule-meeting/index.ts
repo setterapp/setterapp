@@ -177,13 +177,14 @@ Deno.serve(async (req: Request) => {
       throw new Error('No access token available');
     }
 
-    // Obtener timezone del agente
+    // Obtener timezone del agente (buscar Instagram o WhatsApp)
     const { data: agent } = await supabase
       .from('agents')
       .select('config')
       .eq('user_id', user_id)
-      .eq('platform', 'instagram')
-      .single();
+      .in('platform', ['instagram', 'whatsapp'])
+      .limit(1)
+      .maybeSingle();
 
     const timeZone = agent?.config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
     const availableHoursStart = agent?.config?.meetingAvailableHoursStart || '09:00';
