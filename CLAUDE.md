@@ -31,8 +31,7 @@ These are called by external services (Meta, WhatsApp) and use their own verific
 #### Internal Edge Functions (NO JWT verification, NO auth headers)
 These are called internally by webhooks WITHOUT authentication headers:
 - `check-availability` - Returns occupied calendar events for AI reasoning
-- `schedule-meeting` - Creates Google Calendar events with Meet links
-- `create-meeting` - Legacy function for meeting creation
+- `schedule-meeting` - Creates Google Calendar events with Meet links (used by both Instagram and WhatsApp)
 - `detect-lead-status` - Classifies conversation lead status using GPT-3.5-turbo
 - `facebook-exchange-token`, `instagram-exchange-token` - OAuth token management
 
