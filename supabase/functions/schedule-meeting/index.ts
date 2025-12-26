@@ -75,6 +75,31 @@ async function refreshGoogleTokenIfNeeded(integration: any) {
   return newAccessToken;
 }
 
+// Helper para guardar logs de debug
+async function saveDebugLog(
+  userId: string,
+  conversationId: string | undefined,
+  requestBody: any,
+  responseBody: any,
+  status: number,
+  errorMessage?: string
+) {
+  try {
+    await supabase.from('availability_debug_logs').insert({
+      function_name: 'schedule-meeting',
+      user_id: userId,
+      conversation_id: conversationId || null,
+      request_body: requestBody,
+      response_body: responseBody,
+      response_status: status,
+      error_message: errorMessage || null
+    });
+  } catch (err) {
+    console.error('[schedule-meeting] Failed to save debug log:', err);
+    // No rethrow - logging shouldn't break the main function
+  }
+}
+
 Deno.serve(async (req: Request) => {
   // CORS
   if (req.method === 'OPTIONS') {
@@ -88,8 +113,9 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  let requestBody: any;
   try {
-    const body: ScheduleMeetingRequest = await req.json();
+    requestBody = await req.json();
     const {
       user_id,
       conversation_id,
@@ -100,14 +126,16 @@ Deno.serve(async (req: Request) => {
       lead_email,
       meeting_title,
       meeting_description
-    } = body;
+    } = requestBody;
 
     // Validaciones
     if (!user_id || !conversation_id || !meeting_date || !lead_name) {
+      const errorResponse = {
+        error: 'Missing required fields: user_id, conversation_id, meeting_date, lead_name'
+      };
+      await saveDebugLog(user_id || 'unknown', conversation_id, requestBody, errorResponse, 400, 'Missing required fields');
       return new Response(
-        JSON.stringify({
-          error: 'Missing required fields: user_id, conversation_id, meeting_date, lead_name'
-        }),
+        JSON.stringify(errorResponse),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -124,10 +152,12 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (integrationError || !integration) {
+      const errorResponse = {
+        error: 'Google Calendar not connected. Please connect your calendar first.'
+      };
+      await saveDebugLog(user_id, conversation_id, requestBody, errorResponse, 400, 'Google Calendar not connected');
       return new Response(
-        JSON.stringify({
-          error: 'Google Calendar not connected. Please connect your calendar first.'
-        }),
+        JSON.stringify(errorResponse),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -297,24 +327,28 @@ Deno.serve(async (req: Request) => {
     console.log(`[schedule-meeting] Meeting saved to DB: ${meeting.id}`);
 
     // Respuesta exitosa
+    const successResponse = {
+      success: true,
+      meeting: {
+        id: meeting.id,
+        calendar_event_id: calendarEventId,
+        meeting_date: startDate.toISOString(),
+        duration_minutes,
+        lead_name,
+        meeting_link: meetingLink,
+        status: 'scheduled',
+      },
+      message: `Reunión agendada exitosamente para ${startDate.toLocaleString('es-AR', {
+        timeZone,
+        dateStyle: 'full',
+        timeStyle: 'short',
+      })}`,
+    };
+
+    await saveDebugLog(user_id, conversation_id, requestBody, successResponse, 200);
+
     return new Response(
-      JSON.stringify({
-        success: true,
-        meeting: {
-          id: meeting.id,
-          calendar_event_id: calendarEventId,
-          meeting_date: startDate.toISOString(),
-          duration_minutes,
-          lead_name,
-          meeting_link: meetingLink,
-          status: 'scheduled',
-        },
-        message: `Reunión agendada exitosamente para ${startDate.toLocaleString('es-AR', {
-          timeZone,
-          dateStyle: 'full',
-          timeStyle: 'short',
-        })}`,
-      }),
+      JSON.stringify(successResponse),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
@@ -323,11 +357,27 @@ Deno.serve(async (req: Request) => {
 
   } catch (error) {
     console.error('[schedule-meeting] Error:', error);
+    const errorResponse = {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      success: false,
+    };
+
+    // Try to save log even on unexpected errors
+    try {
+      await saveDebugLog(
+        requestBody?.user_id || 'unknown',
+        requestBody?.conversation_id,
+        requestBody || {},
+        errorResponse,
+        500,
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+    } catch (logError) {
+      console.error('[schedule-meeting] Failed to save error log:', logError);
+    }
+
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : 'Unknown error',
-        success: false,
-      }),
+      JSON.stringify(errorResponse),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' }

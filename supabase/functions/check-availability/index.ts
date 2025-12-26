@@ -75,6 +75,29 @@ async function refreshGoogleTokenIfNeeded(integration: any) {
   return newAccessToken;
 }
 
+// Helper para guardar logs de debug
+async function saveDebugLog(
+  userId: string,
+  requestBody: any,
+  responseBody: any,
+  status: number,
+  errorMessage?: string
+) {
+  try {
+    await supabase.from('availability_debug_logs').insert({
+      function_name: 'check-availability',
+      user_id: userId,
+      request_body: requestBody,
+      response_body: responseBody,
+      response_status: status,
+      error_message: errorMessage || null
+    });
+  } catch (err) {
+    console.error('[check-availability] Failed to save debug log:', err);
+    // No rethrow - logging shouldn't break the main function
+  }
+}
+
 Deno.serve(async (req: Request) => {
   // CORS
   if (req.method === 'OPTIONS') {
@@ -88,13 +111,16 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  let requestBody: any;
   try {
-    const body: CheckAvailabilityRequest = await req.json();
-    const { user_id, days_ahead = 10 } = body;
+    requestBody = await req.json();
+    const { user_id, days_ahead = 10 } = requestBody;
 
     if (!user_id) {
+      const errorResponse = { error: 'user_id is required' };
+      await saveDebugLog('unknown', requestBody, errorResponse, 400, 'Missing user_id');
       return new Response(
-        JSON.stringify({ error: 'user_id is required' }),
+        JSON.stringify(errorResponse),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -112,12 +138,14 @@ Deno.serve(async (req: Request) => {
 
     if (integrationError || !integration) {
       console.error('[check-availability] Google Calendar not connected for user:', user_id);
+      const errorResponse = {
+        error: 'Google Calendar not connected. Cannot check availability.',
+        config: null,
+        occupied_events: []
+      };
+      await saveDebugLog(user_id, requestBody, errorResponse, 400, 'Google Calendar not connected');
       return new Response(
-        JSON.stringify({
-          error: 'Google Calendar not connected. Cannot check availability.',
-          config: null,
-          occupied_events: []
-        }),
+        JSON.stringify(errorResponse),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -186,12 +214,14 @@ Deno.serve(async (req: Request) => {
     if (!calendarResponse.ok) {
       const errorData = await calendarResponse.json().catch(() => ({}));
       console.error('[check-availability] Calendar API error:', errorData);
+      const errorResponse = {
+        error: 'Failed to fetch calendar events from Google',
+        config: null,
+        occupied_events: []
+      };
+      await saveDebugLog(user_id, requestBody, errorResponse, 500, 'Calendar API error');
       return new Response(
-        JSON.stringify({
-          error: 'Failed to fetch calendar events from Google',
-          config: null,
-          occupied_events: []
-        }),
+        JSON.stringify(errorResponse),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -230,21 +260,25 @@ Deno.serve(async (req: Request) => {
     });
 
     // Respuesta estructurada simple para la IA
-    return new Response(
-      JSON.stringify({
-        config: {
-          current_datetime_local: currentDateTimeLocal,
-          timezone: timezone,
-          work_hours: {
-            start: availableHoursStart,
-            end: availableHoursEnd,
-            days: availableDays
-          },
-          meeting_duration: duration
+    const successResponse = {
+      config: {
+        current_datetime_local: currentDateTimeLocal,
+        timezone: timezone,
+        work_hours: {
+          start: availableHoursStart,
+          end: availableHoursEnd,
+          days: availableDays
         },
-        occupied_events: formattedEvents,
-        total_events: formattedEvents.length
-      }),
+        meeting_duration: duration
+      },
+      occupied_events: formattedEvents,
+      total_events: formattedEvents.length
+    };
+
+    await saveDebugLog(user_id, requestBody, successResponse, 200);
+
+    return new Response(
+      JSON.stringify(successResponse),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
@@ -253,12 +287,27 @@ Deno.serve(async (req: Request) => {
 
   } catch (error) {
     console.error('[check-availability] Error:', error);
+    const errorResponse = {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      occupied_events: [],
+      total_events: 0
+    };
+
+    // Try to save log even on unexpected errors
+    try {
+      await saveDebugLog(
+        requestBody?.user_id || 'unknown',
+        requestBody || {},
+        errorResponse,
+        500,
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+    } catch (logError) {
+      console.error('[check-availability] Failed to save error log:', logError);
+    }
+
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : 'Unknown error',
-        occupied_events: [],
-        total_events: 0
-      }),
+      JSON.stringify(errorResponse),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
