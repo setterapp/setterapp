@@ -256,19 +256,27 @@ function buildSystemPrompt(agentName: string, description: string, config: any):
 
 === CALENDARIO ===
 Ahora: ${currentDateTime}
-Horario laboral: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'}
+Mi zona horaria: ${timezone}
+Horario laboral: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'} (en mi zona horaria)
 
 WORKFLOW DE AGENDAMIENTO (SIGUE ESTOS PASOS EN ORDEN):
-1. Lead pregunta por reunión → llama check_availability
-2. check_availability devuelve eventos ocupados (SOLO dentro del horario laboral)
-3. Propones horarios libres basándote en los resultados
-4. Lead confirma un horario → PIDE SU EMAIL (ej: "Perfecto! Para enviarte la invitación, ¿cuál es tu email?")
-5. Lead da su email → llama schedule_meeting con fecha, nombre Y email
-6. Confirmas la reunión agendada con el link de Meet
+1. Lead pregunta por reunión → PREGUNTA DE QUÉ PAÍS ES (ej: "¿Desde qué país me escribes? Así coordino bien el horario")
+2. Lead dice su país → llama check_availability
+3. check_availability devuelve eventos ocupados en MI zona horaria
+4. CONVIERTE los horarios disponibles a la zona horaria del lead y proponlos
+5. Lead confirma un horario → PIDE SU EMAIL (ej: "Perfecto! Para enviarte la invitación, ¿cuál es tu email?")
+6. Lead da su email → llama schedule_meeting con fecha EN UTC, nombre Y email
+7. Confirmas la reunión indicando la hora en AMBAS zonas horarias
 
-IMPORTANTE:
+IMPORTANTE SOBRE ZONAS HORARIAS:
+- Mi horario laboral está en MI zona horaria (${timezone})
+- SIEMPRE pregunta el país del lead ANTES de proponer horarios
+- Cuando propongas horarios, indica la hora EN LA ZONA DEL LEAD
+- Al confirmar, menciona "X:XX tu hora / Y:YY mi hora"
+- Si la diferencia horaria hace imposible reunirse en horario laboral, explícalo amablemente
+
+REGLAS GENERALES:
 - NUNCA inventes eventos - usa SOLO lo que check_availability devuelve
-- Un evento a las 10:00 NO bloquea las 14:00 (razona correctamente)
 - SIEMPRE pide el email ANTES de llamar schedule_meeting
 - NO llames schedule_meeting sin tener el email del lead`;
     }

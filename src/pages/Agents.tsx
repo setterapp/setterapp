@@ -652,6 +652,43 @@ function Agents() {
                                                 </div>
                                             </div>
 
+                                            <div className="form-group">
+                                                <label htmlFor="meetingTimezone">Zona Horaria</label>
+                                                <select
+                                                    id="meetingTimezone"
+                                                    className="input select"
+                                                    value={formData.config.meetingTimezone || 'America/Argentina/Buenos_Aires'}
+                                                    onChange={(e) => updateConfig('meetingTimezone', e.target.value)}
+                                                >
+                                                    <optgroup label="América">
+                                                        <option value="America/Argentina/Buenos_Aires">Argentina (Buenos Aires)</option>
+                                                        <option value="America/Santiago">Chile (Santiago)</option>
+                                                        <option value="America/Bogota">Colombia (Bogotá)</option>
+                                                        <option value="America/Lima">Perú (Lima)</option>
+                                                        <option value="America/Mexico_City">México (Ciudad de México)</option>
+                                                        <option value="America/Caracas">Venezuela (Caracas)</option>
+                                                        <option value="America/Montevideo">Uruguay (Montevideo)</option>
+                                                        <option value="America/Asuncion">Paraguay (Asunción)</option>
+                                                        <option value="America/La_Paz">Bolivia (La Paz)</option>
+                                                        <option value="America/Guayaquil">Ecuador (Guayaquil)</option>
+                                                        <option value="America/Panama">Panamá</option>
+                                                        <option value="America/New_York">Estados Unidos (Nueva York)</option>
+                                                        <option value="America/Los_Angeles">Estados Unidos (Los Ángeles)</option>
+                                                        <option value="America/Sao_Paulo">Brasil (São Paulo)</option>
+                                                    </optgroup>
+                                                    <optgroup label="Europa">
+                                                        <option value="Europe/Madrid">España (Madrid)</option>
+                                                        <option value="Europe/London">Reino Unido (Londres)</option>
+                                                        <option value="Europe/Paris">Francia (París)</option>
+                                                        <option value="Europe/Berlin">Alemania (Berlín)</option>
+                                                        <option value="Europe/Rome">Italia (Roma)</option>
+                                                    </optgroup>
+                                                </select>
+                                                <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)', opacity: 0.9 }}>
+                                                    Tu zona horaria para calcular disponibilidad
+                                                </small>
+                                            </div>
+
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
                                                 <div className="form-group">
                                                     <label htmlFor="meetingAvailableHoursStart">Horario Disponible - Inicio</label>

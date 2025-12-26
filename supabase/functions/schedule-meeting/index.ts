@@ -298,28 +298,32 @@ Deno.serve(async (req: Request) => {
 
     // El conferenceData puede estar en "pending" inicialmente
     // Esperamos y hacemos polling para obtener el link de Meet
-    let meetingLink = createdEvent.htmlLink; // fallback al link del calendario
+    let meetingLink = ''; // No usar fallback inmediatamente
     let finalEvent = createdEvent;
 
-    const maxRetries = 3;
+    const maxRetries = 5; // Aumentado de 3 a 5
     for (let i = 0; i < maxRetries; i++) {
+      // Intentar obtener el link de Meet de varias formas
       if (finalEvent.conferenceData?.entryPoints) {
         const videoEntry = finalEvent.conferenceData.entryPoints.find((ep: any) => ep.entryPointType === 'video');
         if (videoEntry?.uri) {
           meetingLink = videoEntry.uri;
-          console.log('[schedule-meeting] Google Meet link found', { meetingLink, attempt: i + 1 });
+          console.log('[schedule-meeting] ✅ Google Meet link found via entryPoints', { meetingLink, attempt: i + 1 });
           break;
         }
-      } else if (finalEvent.hangoutLink) {
+      }
+
+      if (finalEvent.hangoutLink) {
         meetingLink = finalEvent.hangoutLink;
-        console.log('[schedule-meeting] Hangout link found', { meetingLink, attempt: i + 1 });
+        console.log('[schedule-meeting] ✅ Google Meet link found via hangoutLink', { meetingLink, attempt: i + 1 });
         break;
       }
 
       // Si no encontramos el link y no es el último intento, esperamos y reintentamos
       if (i < maxRetries - 1) {
-        console.log('[schedule-meeting] Conference data not ready, waiting...', { attempt: i + 1 });
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Esperar 2 segundos
+        const waitTime = (i + 1) * 1500; // 1.5s, 3s, 4.5s, 6s (incrementando)
+        console.log('[schedule-meeting] ⏳ Conference data not ready, waiting...', { attempt: i + 1, waitMs: waitTime });
+        await new Promise(resolve => setTimeout(resolve, waitTime));
 
         // Obtener el evento actualizado
         const getResponse = await fetch(
@@ -335,10 +339,17 @@ Deno.serve(async (req: Request) => {
           finalEvent = await getResponse.json();
           console.log('[schedule-meeting] Event refetched', {
             hasConferenceData: !!finalEvent.conferenceData,
-            hasEntryPoints: !!finalEvent.conferenceData?.entryPoints
+            hasEntryPoints: !!finalEvent.conferenceData?.entryPoints,
+            hasHangoutLink: !!finalEvent.hangoutLink
           });
         }
       }
+    }
+
+    // Si después de todos los intentos no tenemos link de Meet, usar el link de Calendar como fallback
+    if (!meetingLink) {
+      meetingLink = createdEvent.htmlLink;
+      console.log('[schedule-meeting] ⚠️ Meet link not available, using Calendar link as fallback:', meetingLink);
     }
 
     console.log(`[schedule-meeting] Calendar event created: ${calendarEventId}, final meeting link: ${meetingLink}`);
