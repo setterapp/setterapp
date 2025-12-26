@@ -423,6 +423,36 @@ Deno.serve(async (req: Request) => {
       // No es crítico - el webhook lo sincronizará eventualmente
     }
 
+    // Actualizar el contacto con el email del lead
+    if (lead_email && conversation_id) {
+      try {
+        // Primero obtener el contact_id de la conversación
+        const { data: conversation } = await supabase
+          .from('conversations')
+          .select('contact_id')
+          .eq('id', conversation_id)
+          .single();
+
+        if (conversation?.contact_id) {
+          // Actualizar el contacto con el email
+          await supabase
+            .from('contacts')
+            .update({
+              email: lead_email,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', conversation.contact_id);
+
+          console.log(`[schedule-meeting] ✅ Contact updated with email: ${lead_email}`);
+        } else {
+          console.warn('[schedule-meeting] ⚠️ No contact_id found in conversation');
+        }
+      } catch (contactUpdateError) {
+        console.error('[schedule-meeting] Failed to update contact email (non-critical):', contactUpdateError);
+        // No es crítico - el email se guardó en meetings.metadata
+      }
+    }
+
     // Respuesta exitosa
     const successResponse = {
       success: true,
