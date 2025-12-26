@@ -178,10 +178,41 @@ Deno.serve(async (req: Request) => {
       .single();
 
     const timeZone = agent?.config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
+    const availableHoursStart = agent?.config?.meetingAvailableHoursStart || '09:00';
+    const availableHoursEnd = agent?.config?.meetingAvailableHoursEnd || '18:00';
 
     // Calcular fecha de inicio y fin
     const startDate = new Date(meeting_date);
     const endDate = new Date(startDate.getTime() + (duration_minutes * 60 * 1000));
+
+    // VALIDACIÓN: Verificar que esté dentro de work_hours
+    const startHourLocal = startDate.toLocaleString('en-US', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+
+    const [workStartHour, workStartMin] = availableHoursStart.split(':').map(Number);
+    const [workEndHour, workEndMin] = availableHoursEnd.split(':').map(Number);
+    const [proposedHour, proposedMin] = startHourLocal.split(':').map(Number);
+
+    const proposedMinutes = proposedHour * 60 + proposedMin;
+    const workStartMinutes = workStartHour * 60 + workStartMin;
+    const workEndMinutes = workEndHour * 60 + workEndMin;
+
+    if (proposedMinutes < workStartMinutes || proposedMinutes >= workEndMinutes) {
+      const errorResponse = {
+        error: `Horario fuera de rango. La reunión está propuesta para ${startHourLocal} pero el horario laboral es ${availableHoursStart}-${availableHoursEnd}. DEBES proponer un horario dentro de este rango.`,
+        success: false,
+        valid_hours: `${availableHoursStart}-${availableHoursEnd}`
+      };
+      await saveDebugLog(user_id, conversation_id, requestBody, errorResponse, 400, 'Outside work hours');
+      return new Response(
+        JSON.stringify(errorResponse),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     const calendarEvent = {
       summary: meeting_title || `Reunión con ${lead_name}`,
