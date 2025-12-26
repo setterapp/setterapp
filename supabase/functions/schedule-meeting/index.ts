@@ -385,6 +385,32 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[schedule-meeting] Meeting saved to DB: ${meeting.id}`);
 
+    // También guardar en calendar_events para sincronización inmediata
+    // (no necesitamos esperar el webhook de Google Calendar)
+    try {
+      await supabase
+        .from('calendar_events')
+        .upsert({
+          user_id: user_id,
+          google_event_id: calendarEventId,
+          summary: calendarEvent.summary,
+          description: calendarEvent.description || null,
+          start_time: startDate.toISOString(),
+          end_time: endDate.toISOString(),
+          is_all_day: false,
+          status: 'confirmed',
+          last_synced_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id,google_event_id',
+          ignoreDuplicates: false,
+        });
+
+      console.log(`[schedule-meeting] Event also saved to calendar_events for instant availability`);
+    } catch (calendarEventError) {
+      console.error('[schedule-meeting] Failed to save to calendar_events (non-critical):', calendarEventError);
+      // No es crítico - el webhook lo sincronizará eventualmente
+    }
+
     // Respuesta exitosa
     const successResponse = {
       success: true,

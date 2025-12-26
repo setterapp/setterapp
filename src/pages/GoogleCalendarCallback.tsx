@@ -134,6 +134,27 @@ function GoogleCalendarCallback() {
           hasRefreshToken: !!savedIntegration?.config?.provider_refresh_token
         })
 
+        // Activar webhook automáticamente para sincronización en tiempo real
+        setStatus('Activando sincronización automática...')
+
+        try {
+          console.log('[GoogleCalendarCallback] Setting up calendar watch webhook')
+
+          const watchResponse = await supabase.functions.invoke('setup-calendar-watch', {
+            body: { user_id: userSession.user.id }
+          })
+
+          if (watchResponse.error) {
+            console.error('[GoogleCalendarCallback] Failed to setup watch:', watchResponse.error)
+            // No es crítico - el usuario puede activarlo manualmente después
+          } else {
+            console.log('[GoogleCalendarCallback] Calendar watch activated:', watchResponse.data)
+          }
+        } catch (watchError) {
+          console.error('[GoogleCalendarCallback] Error setting up watch:', watchError)
+          // No es crítico - continuar con el flujo normal
+        }
+
         setStatus('¡Conexión exitosa! Redirigiendo...')
 
         // Esperar un momento y redirigir a integraciones
