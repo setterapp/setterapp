@@ -1238,63 +1238,11 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
 }
 
 /**
- * Construye el system prompt simple para chat conversacional
+ * Construye el system prompt usando SOLO la configuración del agente
  */
 function buildSystemPrompt(agentName: string, description: string, config: any): string {
-    let prompt = `Eres ${agentName}.\n\n`;
-
-    if (description) prompt += `${description}\n\n`;
-
-    // Información del agente
-    if (config?.assistantName) prompt += `Tu nombre: ${config.assistantName}\n`;
-    if (config?.companyName) prompt += `Empresa: ${config.companyName}\n`;
-    if (config?.businessNiche) prompt += `Nicho: ${config.businessNiche}\n`;
-    if (config?.offerDetails) prompt += `Oferta: ${config.offerDetails}\n\n`;
-
-    // Configuración de calendario en JSON para que la IA lo procese fácilmente
-    const timezone = config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
-    const now = new Date();
-    const currentDateTime = now.toLocaleString('es-AR', {
-        timeZone: timezone,
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    });
-
-    const calendarConfig = {
-        current_datetime_local: currentDateTime,
-        timezone: timezone,
-        work_hours: {
-            start: config?.meetingAvailableHoursStart || '09:00',
-            end: config?.meetingAvailableHoursEnd || '18:00',
-            days: config?.meetingAvailableDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
-        },
-        meeting_duration: config?.meetingDuration || 30
-    };
-
-    prompt += `\n=== CONFIGURACIÓN DE CALENDARIO ===\n`;
-    prompt += JSON.stringify(calendarConfig, null, 2);
-    prompt += `\n\n`;
-
-    prompt += `=== AGENDAR REUNIONES ===\n`;
-    prompt += `1. Llama check_availability\n`;
-    prompt += `2. Si error: di "no puedo verificar, contacta directamente"\n`;
-    prompt += `3. Propone SOLO horarios entre work_hours.start y work_hours.end donde NO haya eventos\n`;
-    prompt += `   Usa start_local/end_local. Ejemplo: work_hours 09:00-18:00 → NUNCA 19:00, 20:00, 21:00\n`;
-    prompt += `4. Cuando elija: usa campo "start" (ISO) para schedule_meeting\n\n`;
-
-    prompt += `=== ESTILO DE COMUNICACIÓN ===\n`;
-    prompt += `• Natural y conversacional\n`;
-    prompt += `• Mensajes cortos (2-3 oraciones máximo)\n`;
-    prompt += `• Minúsculas casuales (estilo Instagram/WhatsApp)\n`;
-    prompt += `• Tono amigable\n`;
-    prompt += `• Sin emojis excesivos (máximo 1-2 por mensaje)\n`;
-
-    return prompt;
+    // Solo usar el description que viene de la web
+    return description || `Eres ${agentName}.`;
 }
 
 // Función de detección automática de lead status removida - ahora es manual por el usuario
