@@ -980,12 +980,15 @@ async function generateAndSendAutoReply(
         // 3. Construir system prompt
         const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config);
 
-        // 4. Definir tools para el agente (solo si tiene Google Calendar conectado)
-        const tools = [
-            {
-                type: 'function',
-                function: {
-                    name: 'check_availability',
+        // 4. Definir tools para el agente (solo si enableMeetingScheduling está activado)
+        let tools: any[] = [];
+
+        if (agent.config?.enableMeetingScheduling === true) {
+            tools = [
+                {
+                    type: 'function',
+                    function: {
+                        name: 'check_availability',
                     description: 'Consulta eventos ocupados de los próximos 10 días. Devuelve JSON con config (work_hours, fecha actual) y occupied_events (con start_local, end_local). Propone horarios donde NO hay eventos, dentro de work_hours.',
                     parameters: {
                         type: 'object',
@@ -1027,7 +1030,8 @@ async function generateAndSendAutoReply(
                     }
                 }
             }
-        ];
+            ];
+        }
 
         // 5. Construir mensajes iniciales
         let messages = [
