@@ -14,9 +14,9 @@ create table if not exists availability_debug_logs (
   response_status int not null, -- HTTP status code
 
   -- Context
-  user_id uuid references users(id) on delete cascade,
-  conversation_id uuid references conversations(id) on delete cascade,
-  agent_id uuid references agents(id) on delete set null,
+  user_id uuid,
+  conversation_id uuid,
+  agent_id uuid,
 
   -- Error tracking
   error_message text,
