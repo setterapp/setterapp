@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Brain, Mail, Lock, User } from 'lucide-react'
+import { Mail, Lock, User } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import GoogleIcon from '../components/icons/GoogleIcon'
+import Logo from '../components/Logo'
 
 function Register() {
   const navigate = useNavigate()
@@ -117,17 +118,7 @@ function Register() {
               marginBottom: 'var(--spacing-md)',
             }}
           >
-            <Brain size={40} color="var(--color-primary)" />
-            <h1
-              style={{
-                margin: 0,
-                fontSize: 'var(--font-size-xl)',
-                fontWeight: 700,
-                color: 'var(--color-text)',
-              }}
-            >
-              setterapp.ai
-            </h1>
+            <Logo size={40} />
           </Link>
           <h2
             style={{
