@@ -134,18 +134,26 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
             value={optimisticLeadStatus || ''}
             onChange={async (e) => {
               const newStatus = e.target.value as 'cold' | 'warm' | 'booked' | 'closed' | 'not_closed' | ''
-              if (!newStatus) return
+              console.log('🔄 Lead status change initiated:', { oldStatus: optimisticLeadStatus, newStatus, contactId: conversation.contact_ref?.id })
+
+              if (!newStatus) {
+                console.log('⚠️ Empty status selected, skipping')
+                return
+              }
+
               if (!conversation.contact_ref?.id) {
-                console.error('No contact_ref to update lead status')
+                console.error('❌ No contact_ref to update lead status. conversation.contact_ref:', conversation.contact_ref)
                 return
               }
 
               // Optimistic update - update UI immediately
+              console.log('✅ Setting optimistic lead status to:', newStatus)
               setOptimisticLeadStatus(newStatus)
 
               try {
                 // Only update contacts table (source of truth)
-                await supabase
+                console.log('📡 Updating database...', { contactId: conversation.contact_ref.id, newStatus })
+                const { data, error } = await supabase
                   .from('contacts')
                   .update({
                     lead_status: newStatus,
@@ -153,9 +161,14 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
                   })
                   .eq('id', conversation.contact_ref.id)
 
-                console.log('Lead status updated to:', newStatus)
+                if (error) {
+                  console.error('❌ Database update failed:', error)
+                  throw error
+                }
+
+                console.log('✅ Lead status updated successfully to:', newStatus, 'Response:', data)
               } catch (error) {
-                console.error('Error updating lead status:', error)
+                console.error('❌ Error updating lead status:', error)
                 // Revert optimistic update on error
                 setOptimisticLeadStatus(conversation.contact_ref?.lead_status || null)
               }
