@@ -130,21 +130,6 @@ function Integrations() {
     }
   }
 
-  const handleCardClick = (integration: any, e: React.MouseEvent) => {
-    e.stopPropagation()
-
-    // Mostrar modal de advertencia/información según el tipo
-    // Funciona tanto para conectadas como desconectadas
-    if (integration.type === 'instagram') {
-      setShowInstagramWarning(true)
-    } else if (integration.type === 'whatsapp') {
-      setShowWhatsAppWarning(true)
-    // } else if (integration.type === 'facebook') { // COMENTADO - Facebook oculto
-    //   // setShowFacebookWarning(true)
-    } else if (integration.type === 'google-calendar') {
-      setShowGoogleCalendarWarning(true)
-    }
-  }
 
   const getIntegrationDescription = (type: string) => {
     return t(`integrations.descriptions.${type}`, '')
@@ -361,7 +346,6 @@ function Integrations() {
               <div
                 key={integration.id}
                 className="integration-card"
-                onClick={(e) => handleCardClick(integration, e)}
                 style={{
                   background: 'var(--color-bg)',
                   border: '2px solid #000',
@@ -370,14 +354,6 @@ function Integrations() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  transition: 'var(--transition)',
-                  cursor: 'pointer',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--color-primary)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--color-border)'
                 }}
               >
                 {/* Left: Title and metadata */}
