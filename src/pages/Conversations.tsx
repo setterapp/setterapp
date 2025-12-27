@@ -69,7 +69,7 @@ function Conversations() {
       <div className="conversations-container">
         <div className="empty-state" style={{ width: '100%', padding: 'var(--spacing-2xl)' }}>
           <div className="spinner" />
-          <p>Cargando conversaciones...</p>
+          <p>Loading conversations...</p>
         </div>
       </div>
     )

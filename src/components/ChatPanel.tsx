@@ -55,7 +55,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
     }
   }
 
-  const leadStatusBackgroundColor = getLeadStatusBackgroundColor(conversation.lead_status)
+  const leadStatusBackgroundColor = getLeadStatusBackgroundColor(conversation.contact_ref?.lead_status)
 
   const contact = conversation.contact_ref
   const alias = conversation.contact_alias
@@ -75,7 +75,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
           ? `+${rawContact}`
           : `ID …${rawContact.slice(-6)}`)
         : rawContact)
-      : 'Sin nombre')
+      : 'No name')
 
   return (
     <div className="chat-panel">
@@ -121,35 +121,28 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
           </h3>
           {/* Selector de lead status - estilo badge como en Agentes */}
           <select
-            value={conversation.lead_status || ''}
+            value={conversation.contact_ref?.lead_status || ''}
             onChange={async (e) => {
               const newStatus = e.target.value as 'cold' | 'warm' | 'booked' | 'closed' | 'not_closed' | ''
               if (!newStatus) return
+              if (!conversation.contact_ref?.id) {
+                console.error('No contact_ref to update lead status')
+                return
+              }
 
               try {
-                // Actualizar en conversations
+                // Only update contacts table (source of truth)
                 await supabase
-                  .from('conversations')
+                  .from('contacts')
                   .update({
                     lead_status: newStatus,
                     updated_at: new Date().toISOString()
                   })
-                  .eq('id', conversationId)
+                  .eq('id', conversation.contact_ref.id)
 
-                // Actualizar en contacts si existe
-                if (conversation.contact_ref?.id) {
-                  await supabase
-                    .from('contacts')
-                    .update({
-                      lead_status: newStatus,
-                      updated_at: new Date().toISOString()
-                    })
-                    .eq('id', conversation.contact_ref.id)
-                }
-
-                console.log('Lead status actualizado a:', newStatus)
+                console.log('Lead status updated to:', newStatus)
               } catch (error) {
-                console.error('Error actualizando lead status:', error)
+                console.error('Error updating lead status:', error)
               }
             }}
             style={{
@@ -173,12 +166,12 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
               paddingRight: '24px',
             }}
           >
-            <option value="">Sin estado</option>
-            <option value="cold">Frío</option>
-            <option value="warm">Tibio</option>
-            <option value="booked">Agendado</option>
-            <option value="closed">Cerrado</option>
-            <option value="not_closed">No Cerrado</option>
+            <option value="">No status</option>
+            <option value="cold">Cold</option>
+            <option value="warm">Warm</option>
+            <option value="booked">Booked</option>
+            <option value="closed">Closed</option>
+            <option value="not_closed">Not Closed</option>
           </select>
         </div>
       </div>
@@ -188,7 +181,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
         {loading && messages.length === 0 ? (
           <div className="empty-state">
             <div className="spinner" />
-            <p>Cargando mensajes...</p>
+            <p>Loading messages...</p>
           </div>
         ) : error ? (
           <div className="empty-state">
@@ -206,13 +199,13 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
                 fontWeight: 500,
               }}
             >
-              Reintentar
+              Retry
             </button>
           </div>
         ) : messages.length === 0 ? (
           <div className="empty-state">
             <p style={{ color: 'var(--color-text-secondary)' }}>
-              No hay mensajes en esta conversación
+              No messages in this conversation
             </p>
           </div>
         ) : (

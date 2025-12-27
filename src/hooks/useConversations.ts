@@ -118,7 +118,7 @@ export function useConversations() {
     } catch (err: any) {
       if (fetchId !== activeFetchIdRef.current) return
       const msg = err?.name === 'AbortError'
-        ? 'Timeout cargando conversaciones'
+        ? 'Timeout loading conversations'
         : (err?.message || 'Error fetching conversations')
       setError(msg)
     } finally {

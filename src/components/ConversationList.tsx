@@ -18,7 +18,7 @@ export default function ConversationList({ conversations, selectedId, onSelect }
       <div className="conversation-list-header">
         <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
           <MessageSquare size={24} />
-          Conversaciones
+          Conversations
         </h3>
       </div>
 
@@ -27,7 +27,7 @@ export default function ConversationList({ conversations, selectedId, onSelect }
           <div className="empty-state" style={{ padding: 'var(--spacing-xl)' }}>
             <MessageSquare size={48} style={{ margin: '0 auto var(--spacing-md)', opacity: 0.3 }} />
             <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-              No hay conversaciones
+              No conversations
             </p>
           </div>
         ) : (
@@ -155,7 +155,7 @@ function ConversationItem({
           ? `+${rawContact}`
           : `ID …${rawContact.slice(-6)}`)
         : rawContact)
-      : 'Sin nombre')
+      : 'No name')
 
   return (
     <div
@@ -176,8 +176,8 @@ function ConversationItem({
             <h4 className="conversation-item-name" style={{ fontWeight: conversation.unread_count > 0 ? 600 : 500, margin: 0, flex: 1 }}>
               {displayName}
             </h4>
-            {conversation.lead_status && (
-              <LeadStatusBadge status={conversation.lead_status} />
+            {conversation.contact_ref?.lead_status && (
+              <LeadStatusBadge status={conversation.contact_ref.lead_status} />
             )}
           </div>
           <p className="conversation-item-timestamp" style={{ marginTop: 'var(--spacing-xs)' }}>
@@ -187,7 +187,7 @@ function ConversationItem({
           </p>
         </div>
         <p className="conversation-item-message">
-          Último mensaje de la conversación...
+          Last message in conversation...
         </p>
       </div>
 

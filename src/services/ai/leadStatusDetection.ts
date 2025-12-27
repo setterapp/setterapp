@@ -1,6 +1,6 @@
 /**
  * Lead Status Detection Service
- * Usa IA para detectar automáticamente el estado del lead basándose en la conversación
+ * Uses AI to automatically detect lead status based on conversation
  */
 
 interface Message {
@@ -120,7 +120,7 @@ function fallbackDetection(messages: Message[]): LeadStatusResult {
     return {
       status: 'cold',
       confidence: 0.6,
-      reasoning: 'El lead no ha respondido recientemente'
+      reasoning: 'Lead has not responded recently'
     }
   }
 
@@ -142,7 +142,7 @@ function fallbackDetection(messages: Message[]): LeadStatusResult {
     return {
       status: 'not_closed',
       confidence: Math.min(notClosedCount * 0.4, 0.95),
-      reasoning: 'El lead muestra señales claras de rechazo o pérdida de interés'
+      reasoning: 'Lead shows clear signs of rejection or loss of interest'
     }
   }
 
@@ -150,7 +150,7 @@ function fallbackDetection(messages: Message[]): LeadStatusResult {
     return {
       status: 'closed',
       confidence: 0.7,
-      reasoning: 'El lead ha confirmado el siguiente paso o la compra'
+      reasoning: 'Lead has confirmed the next step or purchase'
     }
   }
 
@@ -158,7 +158,7 @@ function fallbackDetection(messages: Message[]): LeadStatusResult {
     return {
       status: 'hot',
       confidence: 0.7,
-      reasoning: 'El lead muestra alto interés y hace preguntas específicas'
+      reasoning: 'Lead shows high interest and asks specific questions'
     }
   }
 
@@ -166,14 +166,14 @@ function fallbackDetection(messages: Message[]): LeadStatusResult {
     return {
       status: 'cold',
       confidence: 0.7,
-      reasoning: 'El lead muestra poco interés o rechaza la oferta'
+      reasoning: 'Lead shows little interest or rejects the offer'
     }
   }
 
   return {
     status: 'warm',
     confidence: 0.6,
-    reasoning: 'El lead muestra interés moderado'
+    reasoning: 'Lead shows moderate interest'
   }
 }
 
@@ -192,22 +192,22 @@ export function getStatusChangeMessage(oldStatus: LeadStatus | null, newStatus: 
   if (oldStatus === newStatus) return null
 
   const statusLabels: Record<LeadStatus, string> = {
-    cold: 'Frío ❄️',
-    warm: 'Tibio 🌡️',
-    hot: 'Caliente 🔥',
-    closed: 'Cerrado ✅',
-    not_closed: 'No Cerrado ❌'
+    cold: 'Cold ❄️',
+    warm: 'Warm 🌡️',
+    hot: 'Hot 🔥',
+    closed: 'Closed ✅',
+    not_closed: 'Not Closed ❌'
   }
 
   if (!oldStatus) {
-    return `Lead clasificado como: ${statusLabels[newStatus]}`
+    return `Lead classified as: ${statusLabels[newStatus]}`
   }
 
-  return `Estado del lead actualizado: ${statusLabels[oldStatus]} → ${statusLabels[newStatus]}`
+  return `Lead status updated: ${statusLabels[oldStatus]} → ${statusLabels[newStatus]}`
 }
 
 /**
- * Sincroniza el lead_status desde conversations hacia contacts
+ * Syncs lead_status from conversations to contacts
  */
 export async function syncContactsLeadStatus(): Promise<{
   success: boolean
@@ -252,7 +252,7 @@ export async function syncContactsLeadStatus(): Promise<{
 }
 
 /**
- * Clasifica automáticamente el estado del lead cuando llega un mensaje nuevo (usando modelo económico)
+ * Automatically classifies lead status when a new message arrives (using economical model)
  */
 export async function autoClassifyLeadStatus(conversationId: string): Promise<{
   success: boolean
@@ -270,13 +270,13 @@ export async function autoClassifyLeadStatus(conversationId: string): Promise<{
       import.meta.env.VITE_SUPABASE_ANON_KEY
     )
 
-    // Obtener mensajes recientes de la conversación
+    // Get recent messages from the conversation
     const { data: messagesData, error: messagesError } = await supabase
       .from('messages')
       .select('content, direction, created_at')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true })
-      .limit(12) // Últimos 12 mensajes para contexto
+      .limit(12) // Last 12 messages for context
 
     if (messagesError) {
       console.error('[LeadStatus] Error fetching messages:', messagesError)
@@ -294,7 +294,7 @@ export async function autoClassifyLeadStatus(conversationId: string): Promise<{
       timestamp: m.created_at
     }))
 
-    // Solo clasificar si hay al menos 3 mensajes y el último es del lead
+    // Only classify if there are at least 3 messages and the last one is from the lead
     if (messages.length < 3 || messages[messages.length - 1].sender !== 'lead') {
       return { success: true, statusChanged: false }
     }
@@ -307,10 +307,10 @@ export async function autoClassifyLeadStatus(conversationId: string): Promise<{
       return { success: true, statusChanged: false }
     }
 
-    // Obtener estado actual
+    // Get current status from contact (source of truth)
     const { data: conversation, error: convError } = await supabase
       .from('conversations')
-      .select('lead_status, contact_id')
+      .select('contact_id, contacts(lead_status)')
       .eq('id', conversationId)
       .single()
 
@@ -319,44 +319,33 @@ export async function autoClassifyLeadStatus(conversationId: string): Promise<{
       return { success: false, statusChanged: false }
     }
 
-    const oldStatus = conversation?.lead_status as LeadStatus | null
+    if (!conversation?.contact_id) {
+      console.log('[LeadStatus] No contact_id found, skipping classification')
+      return { success: true, statusChanged: false }
+    }
+
+    const oldStatus = (conversation as any)?.contacts?.lead_status as LeadStatus | null
     const newStatus = result.status
 
-    // Solo actualizar si el estado cambió
+    // Only update if status changed
     if (oldStatus === newStatus) {
       return { success: true, statusChanged: false, oldStatus: oldStatus || undefined, newStatus, confidence: result.confidence }
     }
 
     console.log(`[LeadStatus] Status changed: ${oldStatus} -> ${newStatus} (confidence: ${result.confidence})`)
 
-    // Actualizar conversación
-    const { error: updateError } = await supabase
-      .from('conversations')
+    // Update contact only (source of truth)
+    const { error: contactError } = await supabase
+      .from('contacts')
       .update({
         lead_status: newStatus,
         updated_at: new Date().toISOString()
       })
-      .eq('id', conversationId)
+      .eq('id', conversation.contact_id)
 
-    if (updateError) {
-      console.error('[LeadStatus] Error updating conversation:', updateError)
+    if (contactError) {
+      console.error('[LeadStatus] Error updating contact:', contactError)
       return { success: false, statusChanged: false }
-    }
-
-    // Actualizar contacto si existe
-    if (conversation.contact_id) {
-      const { error: contactError } = await supabase
-        .from('contacts')
-        .update({
-          lead_status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', conversation.contact_id)
-
-      if (contactError) {
-        console.error('[LeadStatus] Error updating contact:', contactError)
-        // No fallar la operación principal
-      }
     }
 
     return {
@@ -374,7 +363,7 @@ export async function autoClassifyLeadStatus(conversationId: string): Promise<{
 }
 
 /**
- * Procesa automáticamente todas las conversaciones sin estado de lead
+ * Automatically processes all conversations without lead status
  */
 export async function processAllConversationsWithoutLeadStatus(): Promise<{
   success: boolean
@@ -391,7 +380,7 @@ export async function processAllConversationsWithoutLeadStatus(): Promise<{
       import.meta.env.VITE_SUPABASE_ANON_KEY
     )
 
-    // Obtener todas las conversaciones sin estado
+    // Get all conversations without status
     const { data: conversations, error: fetchError } = await supabase
       .from('conversations')
       .select('id')
@@ -415,7 +404,7 @@ export async function processAllConversationsWithoutLeadStatus(): Promise<{
     let processed = 0
     let errors = 0
 
-    // Procesar conversaciones por lotes para no sobrecargar
+    // Process conversations in batches to avoid overload
     const batchSize = 5
     for (let i = 0; i < conversations.length; i += batchSize) {
       const batch = conversations.slice(i, i + batchSize)

@@ -57,8 +57,8 @@ export function useMessages(conversationId: string | null) {
     } catch (err: any) {
       if (fetchId !== activeFetchIdRef.current) return
       const msg = err?.name === 'AbortError'
-        ? 'Timeout cargando mensajes'
-        : (err?.message || 'Error cargando mensajes')
+        ? 'Timeout loading messages'
+        : (err?.message || 'Error loading messages')
       setError(msg)
       setMessages([])
     } finally {
