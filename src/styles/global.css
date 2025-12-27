@@ -172,7 +172,7 @@ input, textarea, select {
 /* Main Container */
 .conversations-container {
   display: flex;
-  gap: var(--spacing-md);
+  gap: 0;
   height: 100%;
   width: 100%;
   margin: 0;
