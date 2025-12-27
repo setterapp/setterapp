@@ -43,7 +43,7 @@
   min-height: 100vh;
   background: var(--color-bg);
   border-right: 2px solid #000;
-  padding: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-md) var(--spacing-md);
   position: fixed;
   height: 100vh;
   overflow-y: auto;
@@ -52,8 +52,8 @@
 }
 
 .sidebar-header {
-  padding: 0 var(--spacing-md) var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: var(--spacing-md);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -87,7 +87,7 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
 }
 
 .nav-list li {

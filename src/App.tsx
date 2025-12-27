@@ -93,7 +93,7 @@ function Layout() {
 
       <nav className={`sidebar ${sidebarOpen ? 'sidebar--open' : ''}`}>
         <div className="sidebar-header">
-          <Logo size={24} />
+          <Logo size={32} />
           <button
             className="sidebar-close-button"
             onClick={() => setSidebarOpen(false)}
