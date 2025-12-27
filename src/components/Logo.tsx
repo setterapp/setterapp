@@ -16,7 +16,7 @@ function BotMessageIcon({ size }: { size: number }) {
       width={size}
     >
       <path d="M12 6V2H8" strokeWidth="2" />
-      <path d="m8 18 -4 4V8a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2Z" strokeWidth="2" />
+      <path d="m8 18 -4 4V8a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2Z" strokeWidth="2" fill="#c9dcff" />
       <path d="M2 12h2" strokeWidth="2" />
       <path d="M9 11v2" strokeWidth="2" />
       <path d="M15 11v2" strokeWidth="2" />
