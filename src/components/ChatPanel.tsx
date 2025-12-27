@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, User } from 'lucide-react'
 import type { Conversation } from '../hooks/useConversations'
 import { useMessages } from '../hooks/useMessages'
@@ -15,6 +15,16 @@ interface ChatPanelProps {
 export default function ChatPanel({ conversationId, conversation, onBack, isMobile = false }: ChatPanelProps) {
   const { messages, loading, error, refetch } = useMessages(conversationId)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Local state for optimistic lead status update
+  const [optimisticLeadStatus, setOptimisticLeadStatus] = useState<'cold' | 'warm' | 'booked' | 'closed' | 'not_closed' | null>(
+    conversation.contact_ref?.lead_status || null
+  )
+
+  // Sync with prop changes (e.g., when Realtime updates arrive)
+  useEffect(() => {
+    setOptimisticLeadStatus(conversation.contact_ref?.lead_status || null)
+  }, [conversation.contact_ref?.lead_status])
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -55,7 +65,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
     }
   }
 
-  const leadStatusBackgroundColor = getLeadStatusBackgroundColor(conversation.contact_ref?.lead_status)
+  const leadStatusBackgroundColor = getLeadStatusBackgroundColor(optimisticLeadStatus)
 
   const contact = conversation.contact_ref
   const alias = conversation.contact_alias
@@ -121,7 +131,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
           </h3>
           {/* Selector de lead status - estilo badge como en Agentes */}
           <select
-            value={conversation.contact_ref?.lead_status || ''}
+            value={optimisticLeadStatus || ''}
             onChange={async (e) => {
               const newStatus = e.target.value as 'cold' | 'warm' | 'booked' | 'closed' | 'not_closed' | ''
               if (!newStatus) return
@@ -129,6 +139,9 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
                 console.error('No contact_ref to update lead status')
                 return
               }
+
+              // Optimistic update - update UI immediately
+              setOptimisticLeadStatus(newStatus)
 
               try {
                 // Only update contacts table (source of truth)
@@ -143,6 +156,8 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
                 console.log('Lead status updated to:', newStatus)
               } catch (error) {
                 console.error('Error updating lead status:', error)
+                // Revert optimistic update on error
+                setOptimisticLeadStatus(conversation.contact_ref?.lead_status || null)
               }
             }}
             style={{
