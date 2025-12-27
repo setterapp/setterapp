@@ -30,7 +30,7 @@
   --shadow-neo: 3px 3px 0px 0px #000;
   --shadow-neo-lg: 4px 4px 0px 0px #000;
   --shadow-neo-xl: 6px 6px 0px 0px #000;
-  --border-neo: 4px;
+  --border-neo: 2px;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -205,11 +205,11 @@
 /* Card - Neobrutalism Style */
 .card {
   background: var(--color-bg);
-  border: 4px solid #000;
+  border: 2px solid #000;
   border-radius: 12px;
   padding: var(--spacing-lg);
   transition: all 0.1s ease;
-  box-shadow: 4px 4px 0px 0px #000;
+  box-shadow: 3px 3px 0px 0px #000;
 }
 
 .card--hover {
@@ -228,7 +228,7 @@
 
 .card--secondary {
   background: var(--color-bg-secondary);
-  border: 4px solid #000;
+  border: 2px solid #000;
 }
 
 /* Input - Neobrutalism Style */

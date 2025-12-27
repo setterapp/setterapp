@@ -124,7 +124,7 @@ function Landing() {
   ]
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg-secondary)' }}>
       {/* Header */}
       <header
         className="landing-header"
@@ -198,13 +198,13 @@ function Landing() {
               width: '120px',
               height: '120px',
               background: 'var(--color-primary)',
-              border: '4px solid #000',
+              border: '2px solid #000',
               borderRadius: '12px',
               margin: '0 auto var(--spacing-lg)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '4px 4px 0px 0px #000',
+              boxShadow: '3px 3px 0px 0px #000',
               animation: 'float 3s ease-in-out infinite',
             }}
           >
@@ -256,7 +256,6 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-bg)',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -337,7 +336,6 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-bg-secondary)',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -464,7 +462,6 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-bg)',
         }}
       >
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
@@ -542,7 +539,6 @@ function Landing() {
         className="landing-features"
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-bg-secondary)',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -592,12 +588,12 @@ function Landing() {
                     height: '80px',
                     borderRadius: '12px',
                     background: feature.color,
-                    border: '4px solid #000',
+                    border: '2px solid #000',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: '0 auto var(--spacing-md)',
-                    boxShadow: '4px 4px 0px 0px #000',
+                    boxShadow: '3px 3px 0px 0px #000',
                   }}
                 >
                   {feature.isComponent ? (
@@ -622,7 +618,6 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-bg)',
         }}
       >
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
@@ -683,13 +678,13 @@ function Landing() {
                     width: '100px',
                     height: '100px',
                     background: 'var(--color-primary)',
-                    border: '4px solid #000',
+                    border: '2px solid #000',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: '0 auto var(--spacing-md)',
-                    boxShadow: '4px 4px 0px 0px #000',
+                    boxShadow: '3px 3px 0px 0px #000',
                     position: 'relative',
                   }}
                 >
@@ -730,7 +725,6 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-bg-secondary)',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -792,7 +786,6 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-bg)',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -876,7 +869,6 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-bg-secondary)',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -1000,7 +992,6 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-bg)',
         }}
       >
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -1033,7 +1024,6 @@ function Landing() {
         className="landing-cta"
         style={{
           padding: '80px var(--spacing-xl)',
-          background: 'var(--color-bg-secondary)',
           textAlign: 'center',
         }}
       >
