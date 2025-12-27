@@ -13,8 +13,7 @@ import {
   Star,
   Clock,
   DollarSign,
-  TrendingUp,
-  Bot
+  TrendingUp
 } from 'lucide-react'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
@@ -209,7 +208,7 @@ function Landing() {
               animation: 'float 3s ease-in-out infinite',
             }}
           >
-            <Bot size={64} color="#000" strokeWidth={2.5} />
+            <Logo size={64} variant="icon" />
           </div>
 
           <h1
