@@ -19,9 +19,8 @@ supabase functions deploy google-calendar-webhook --no-verify-jwt
 supabase functions deploy setup-calendar-watch --no-verify-jwt
 supabase functions deploy send-meeting-reminders --no-verify-jwt
 
-# Deploy lead detection
-supabase functions deploy detect-lead-status --no-verify-jwt
-supabase functions deploy bulk-detect-lead-status --no-verify-jwt
+# Deploy other utility functions
+supabase functions deploy update-contact-email --no-verify-jwt
 
 # Deploy token exchange functions
 supabase functions deploy facebook-exchange-token --no-verify-jwt

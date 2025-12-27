@@ -6,16 +6,16 @@ Multi-channel CRM and messaging platform with AI-powered lead classification and
 ## Tech Stack
 - **Frontend**: React + TypeScript + Vite
 - **Backend**: Supabase (PostgreSQL + Edge Functions + Realtime)
-- **AI**: OpenAI GPT-3.5-turbo (lead classification) + GPT-4o-mini (auto-replies)
+- **AI**: OpenAI GPT-4o-mini (auto-replies)
 - **Platforms**: Instagram, Facebook Messenger, WhatsApp Business
 
 ## Key Architecture
 
 ### Database (Supabase)
 - `users` - User accounts
-- `conversations` - Chat conversations with `lead_status` (cold/warm/hot/closed/not_closed)
+- `conversations` - Chat conversations (linked to contacts)
 - `messages` - Individual messages with direction (inbound/outbound)
-- `contacts` - Contact profiles with CRM data
+- `contacts` - Contact profiles with CRM data including `lead_status` (source of truth)
 - `integrations` - Platform connections (Instagram/Messenger/WhatsApp)
 - `agents` - AI agent configurations per platform
 
@@ -23,7 +23,7 @@ Multi-channel CRM and messaging platform with AI-powered lead classification and
 
 #### Public Webhooks (NO JWT verification)
 These are called by external services (Meta, WhatsApp) and use their own verification tokens:
-- `instagram-webhook` - Receives Instagram messages, saves to DB, triggers AI responses + lead classification
+- `instagram-webhook` - Receives Instagram messages, saves to DB, triggers AI responses
 - `messenger-webhook` - Same for Facebook Messenger
 - `whatsapp-webhook` - Same for WhatsApp
 - Verification: Use `VERIFY_TOKEN` environment variables specific to each platform
@@ -32,7 +32,7 @@ These are called by external services (Meta, WhatsApp) and use their own verific
 These are called internally by webhooks WITHOUT authentication headers:
 - `check-availability` - Returns occupied calendar events for AI reasoning
 - `schedule-meeting` - Creates Google Calendar events with Meet links (used by both Instagram and WhatsApp)
-- `detect-lead-status` - Classifies conversation lead status using GPT-3.5-turbo
+- `update-contact-email` - Updates contact email in CRM
 - `facebook-exchange-token`, `instagram-exchange-token` - OAuth token management
 
 #### 🚨 CRITICAL - JWT VERIFICATION RULES 🚨
@@ -87,33 +87,27 @@ Files:
 ### Frontend Structure
 - `src/pages/Conversations.tsx` - Main conversation view with split panel
 - `src/hooks/useConversations.ts` - Fetches conversations with Realtime updates
-- `src/hooks/useMessages.ts` - Fetches messages + calls auto-classification on new inbound messages
-- `src/services/ai/leadStatusDetection.ts` - Lead classification logic (frontend + shared types)
+- `src/hooks/useMessages.ts` - Fetches messages with Realtime updates
+- `src/services/ai/leadStatusDetection.ts` - Lead status types and utilities
 
-## Lead Classification System
+## Lead Status System
 
 ### How It Works
-1. **Webhook receives message** → Saves to `messages` table
-2. **Webhook calls** `detect-lead-status` Edge Function asynchronously
-3. **Edge Function**:
-   - Fetches last 12 messages from conversation
-   - Sends to GPT-3.5-turbo with classification prompt
-   - Updates `conversations.lead_status` and `contacts.lead_status`
-4. **Frontend (if user has conversation open)**:
-   - `useMessages` detects new inbound message via Realtime
-   - Also calls `autoClassifyLeadStatus` (fallback/redundancy)
+- Lead status is managed **manually** by the user through dropdown in the UI
+- The `contacts` table is the **single source of truth** for lead status
+- Frontend reads from `contact_ref.lead_status` via conversation join
+- When user changes status, only the `contacts` table is updated
 
 ### Lead Statuses
 - **cold** - Not interested, negative
 - **warm** - Moderate interest, basic questions
-- **hot** - Very interested, asks prices/dates
+- **booked** - Meeting scheduled, high interest
 - **closed** - Purchase completed successfully
 - **not_closed** - Closed without conversion
 
 ## Important Notes
-- All webhooks run async classification to avoid blocking webhook responses
-- Frontend shows lead status badges in conversation list
-- Manual classification banner was removed (now fully automatic)
+- Lead status badges are shown in conversation list (from contacts table)
+- New contacts are created with default status 'cold'
 - Instagram webhook has duplicate message detection (Meta can send same message multiple times)
 - **Auto-Scheduling Enabled**: Both Instagram and WhatsApp webhooks support AI-powered meeting scheduling
   - AI uses `check_availability` to see occupied events + work hours
@@ -126,8 +120,7 @@ Files:
 
 ## Common Tasks
 - **Add new platform**: Create webhook Edge Function + integration type in DB
-- **Modify lead classification**: Edit `detect-lead-status` Edge Function
-- **Change AI prompts**: Check both Edge Function and `leadStatusDetection.ts`
+- **Change AI prompts**: Edit agent description in the database or UI
 
 ---
 

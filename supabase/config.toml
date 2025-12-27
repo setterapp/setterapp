@@ -20,7 +20,7 @@ verify_jwt = false
 [functions.schedule-meeting]
 verify_jwt = false
 
-[functions.detect-lead-status]
+[functions.update-contact-email]
 verify_jwt = false
 
 [functions.facebook-exchange-token]
