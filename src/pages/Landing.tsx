@@ -1,10 +1,129 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check, Zap, MessageSquare } from 'lucide-react'
+import {
+  ArrowRight,
+  Check,
+  X,
+  MessageSquare,
+  Calendar,
+  Users,
+  BarChart3,
+  Settings,
+  ChevronDown,
+  Star,
+  Clock,
+  DollarSign,
+  TrendingUp,
+  Bot
+} from 'lucide-react'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import Logo from '../components/Logo'
 
+// FAQ Accordion Item Component
+function FAQItem({ question, answer, isOpen, onClick }: {
+  question: string
+  answer: string
+  isOpen: boolean
+  onClick: () => void
+}) {
+  return (
+    <div
+      className="card"
+      style={{
+        padding: 0,
+        overflow: 'hidden',
+        cursor: 'pointer',
+        marginBottom: 'var(--spacing-md)',
+      }}
+      onClick={onClick}
+    >
+      <div
+        style={{
+          padding: 'var(--spacing-lg)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: isOpen ? 'var(--color-bg-secondary)' : 'var(--color-bg)',
+          transition: 'background 0.2s ease',
+        }}
+      >
+        <h4 style={{ margin: 0, fontSize: 'var(--font-size-lg)', fontWeight: 600 }}>
+          {question}
+        </h4>
+        <ChevronDown
+          size={24}
+          style={{
+            transition: 'transform 0.3s ease',
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            flexShrink: 0
+          }}
+        />
+      </div>
+      <div
+        style={{
+          maxHeight: isOpen ? '500px' : '0',
+          overflow: 'hidden',
+          transition: 'max-height 0.3s ease, padding 0.3s ease',
+          padding: isOpen ? 'var(--spacing-lg)' : '0 var(--spacing-lg)',
+          borderTop: isOpen ? '2px solid #000' : 'none',
+        }}
+      >
+        <p style={{ margin: 0, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+          {answer}
+        </p>
+      </div>
+    </div>
+  )
+}
+
 function Landing() {
+  const [openFAQ, setOpenFAQ] = useState<number | null>(null)
+
+  const faqs = [
+    {
+      question: "How does the AI work?",
+      answer: "Our AI uses advanced language models to understand and respond to messages naturally. It learns from your business context and can handle appointments, answer questions, and qualify leads automatically."
+    },
+    {
+      question: "What platforms do you support?",
+      answer: "We currently support WhatsApp Business and Instagram Direct Messages. We're actively working on adding more platforms like Facebook Messenger and Telegram."
+    },
+    {
+      question: "Can I customize the responses?",
+      answer: "Absolutely! You have full control over your AI agent's personality, tone, and responses. You can provide custom instructions, FAQs, and business information to make it truly yours."
+    },
+    {
+      question: "How does it integrate with my calendar?",
+      answer: "We integrate directly with Google Calendar. The AI can check your availability in real-time and book appointments automatically, sending calendar invites with video call links."
+    },
+    {
+      question: "What happens if the AI doesn't know how to respond?",
+      answer: "The AI is smart enough to recognize when it needs human help. It can escalate conversations to you, hold messages for review, or provide a polite response asking the customer to wait for a human response."
+    }
+  ]
+
+  const testimonials = [
+    {
+      name: "Sarah M.",
+      business: "Fitness Coach",
+      quote: "I used to spend 3 hours a day responding to DMs. Now my AI setter handles everything and I've increased my bookings by 40%.",
+      color: "#a6e3a1"
+    },
+    {
+      name: "Carlos R.",
+      business: "Real Estate Agent",
+      quote: "The 24/7 availability is a game changer. I'm booking appointments while I sleep. Best investment for my business.",
+      color: "#89b4fa"
+    },
+    {
+      name: "Emma L.",
+      business: "Beauty Salon Owner",
+      quote: "No more missed leads at night. The AI responds instantly and my clients love how fast they get answers.",
+      color: "#f38ba8"
+    }
+  ]
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
       {/* Header */}
@@ -29,15 +148,15 @@ function Landing() {
         </Link>
         <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center', flexWrap: 'wrap' }}>
           <Link to="/login" className="btn btn--ghost">
-            Iniciar sesión
+            Log In
           </Link>
           <Link to="/register" className="btn btn--primary">
-            Comenzar gratis
+            Start Free
           </Link>
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* 1. HERO SECTION */}
       <section
         className="landing-hero"
         style={{
@@ -53,13 +172,33 @@ function Landing() {
             padding: 'var(--spacing-2xl)',
             marginBottom: 'var(--spacing-2xl)',
             animation: 'slideInUp 0.6s ease-out',
+            position: 'relative',
           }}
         >
+          {/* Floating Badge */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '-20px',
+              right: '20px',
+              background: '#a6e3a1',
+              border: '2px solid #000',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontWeight: 700,
+              fontSize: 'var(--font-size-sm)',
+              boxShadow: '3px 3px 0px 0px #000',
+              animation: 'floatBadge 3s ease-in-out infinite',
+            }}
+          >
+            Save up to 80%
+          </div>
+
           <div
             style={{
               width: '120px',
               height: '120px',
-              background: 'var(--color-bg-secondary)',
+              background: 'var(--color-primary)',
               border: '4px solid #000',
               borderRadius: '12px',
               margin: '0 auto var(--spacing-lg)',
@@ -70,9 +209,10 @@ function Landing() {
               animation: 'float 3s ease-in-out infinite',
             }}
           >
-            <MessageSquare size={64} color="#000" strokeWidth={2.5} />
+            <Bot size={64} color="#000" strokeWidth={2.5} />
           </div>
-          <h2
+
+          <h1
             className="landing-hero-title"
             style={{
               fontSize: 'clamp(2rem, 5vw, 3.5rem)',
@@ -82,33 +222,323 @@ function Landing() {
               lineHeight: 1.2,
             }}
           >
-            Automatiza tus conversaciones con{' '}
-            <span style={{ color: 'var(--color-primary)' }}>Agentes de IA</span>
-          </h2>
+            Your AI Setter That{' '}
+            <span style={{ color: 'var(--color-primary)' }}>Never Sleeps</span>
+          </h1>
+
           <p
             style={{
               fontSize: 'var(--font-size-lg)',
               color: 'var(--color-text-secondary)',
               margin: '0 0 var(--spacing-2xl) 0',
               lineHeight: 1.6,
+              maxWidth: '700px',
+              marginLeft: 'auto',
+              marginRight: 'auto',
             }}
           >
-            Conecta WhatsApp e Instagram. Crea agentes inteligentes que gestionen
-            tus conversaciones automáticamente.
+            Forget commissions, training, and schedules. An AI agent that books
+            appointments 24/7 for a fraction of the cost of human setters.
           </p>
+
           <div className="landing-hero-buttons" style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/register" className="btn btn--primary btn--lg" style={{ animation: 'slideInUp 0.8s ease-out' }}>
-              Comenzar gratis
+              Start Free
               <ArrowRight size={20} />
             </Link>
             <Link to="/login" className="btn btn--secondary btn--lg" style={{ animation: 'slideInUp 1s ease-out' }}>
-              Iniciar sesión
+              Log In
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* 2. PAIN POINTS SECTION */}
+      <section
+        style={{
+          padding: '60px var(--spacing-xl)',
+          background: 'var(--color-bg)',
+        }}
+      >
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <h2
+            style={{
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+              fontWeight: 700,
+              textAlign: 'center',
+              margin: '0 0 var(--spacing-2xl) 0',
+              color: 'var(--color-text)',
+            }}
+          >
+            Tired of This?
+          </h2>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: 'var(--spacing-lg)',
+            }}
+          >
+            {[
+              { text: "Paying 10-30% commission per booking", icon: DollarSign },
+              { text: "Training setters who leave in 3 months", icon: Users },
+              { text: "Losing leads at 3am because no one answers", icon: Clock },
+              { text: "Slow responses that cool down hot leads", icon: TrendingUp },
+            ].map((pain, index) => (
+              <div
+                key={index}
+                style={{
+                  background: '#fff5f5',
+                  border: '2px solid #000',
+                  borderRadius: '12px',
+                  padding: 'var(--spacing-lg)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-md)',
+                  animation: `slideInUp 0.5s ease-out`,
+                  animationDelay: `${index * 0.1}s`,
+                  animationFillMode: 'both',
+                  boxShadow: '3px 3px 0px 0px #000',
+                  transition: 'transform 0.2s ease',
+                  cursor: 'default',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.animation = 'shake 0.3s ease-in-out'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.animation = ''
+                }}
+              >
+                <div
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    background: 'var(--color-danger)',
+                    border: '2px solid #000',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <X size={24} color="#000" strokeWidth={3} />
+                </div>
+                <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-text)' }}>
+                  {pain.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 3. SOLUTION SECTION */}
+      <section
+        style={{
+          padding: '60px var(--spacing-xl)',
+          background: 'var(--color-bg-secondary)',
+        }}
+      >
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <h2
+            style={{
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+              fontWeight: 700,
+              textAlign: 'center',
+              margin: '0 0 var(--spacing-2xl) 0',
+              color: 'var(--color-text)',
+            }}
+          >
+            The Smart Solution
+          </h2>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: 'var(--spacing-xl)',
+            }}
+          >
+            {/* Before Card */}
+            <div
+              className="card"
+              style={{
+                background: '#fff5f5',
+                animation: 'slideInLeft 0.6s ease-out',
+                animationFillMode: 'both',
+              }}
+            >
+              <div
+                style={{
+                  background: 'var(--color-danger)',
+                  color: '#000',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  display: 'inline-block',
+                  fontWeight: 700,
+                  marginBottom: 'var(--spacing-lg)',
+                  border: '2px solid #000',
+                }}
+              >
+                BEFORE
+              </div>
+              <h3 style={{ fontSize: 'var(--font-size-xl)', margin: '0 0 var(--spacing-md) 0' }}>
+                Human Setters
+              </h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {[
+                  "High monthly salaries + commissions",
+                  "Only available 8-10 hours/day",
+                  "Need constant training & supervision",
+                  "High turnover, start over every few months",
+                  "Slow response times = lost leads"
+                ].map((item, i) => (
+                  <li key={i} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-sm)',
+                    marginBottom: 'var(--spacing-sm)',
+                    color: 'var(--color-text-secondary)'
+                  }}>
+                    <X size={18} color="var(--color-danger)" strokeWidth={3} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* After Card */}
+            <div
+              className="card"
+              style={{
+                background: '#f0fff4',
+                animation: 'slideInRight 0.6s ease-out',
+                animationDelay: '0.2s',
+                animationFillMode: 'both',
+              }}
+            >
+              <div
+                style={{
+                  background: 'var(--color-success)',
+                  color: '#000',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  display: 'inline-block',
+                  fontWeight: 700,
+                  marginBottom: 'var(--spacing-lg)',
+                  border: '2px solid #000',
+                }}
+              >
+                NOW
+              </div>
+              <h3 style={{ fontSize: 'var(--font-size-xl)', margin: '0 0 var(--spacing-md) 0' }}>
+                SetterApp.ai
+              </h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {[
+                  "Fixed low monthly cost, no commissions",
+                  "Available 24/7, never takes a break",
+                  "Set it up once, works forever",
+                  "No turnover, always improving",
+                  "Instant responses = more conversions"
+                ].map((item, i) => (
+                  <li key={i} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-sm)',
+                    marginBottom: 'var(--spacing-sm)',
+                    color: 'var(--color-text-secondary)'
+                  }}>
+                    <Check size={18} color="var(--color-success)" strokeWidth={3} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. COMPARISON TABLE */}
+      <section
+        style={{
+          padding: '60px var(--spacing-xl)',
+          background: 'var(--color-bg)',
+        }}
+      >
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <h2
+            style={{
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+              fontWeight: 700,
+              textAlign: 'center',
+              margin: '0 0 var(--spacing-2xl) 0',
+              color: 'var(--color-text)',
+            }}
+          >
+            AI vs Human Setter
+          </h2>
+
+          <div
+            className="card"
+            style={{
+              overflow: 'hidden',
+              padding: 0,
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'var(--color-bg-secondary)' }}>
+                  <th style={{ padding: 'var(--spacing-md)', textAlign: 'left', borderBottom: '2px solid #000', fontWeight: 700 }}>
+                    Aspect
+                  </th>
+                  <th style={{ padding: 'var(--spacing-md)', textAlign: 'center', borderBottom: '2px solid #000', fontWeight: 700 }}>
+                    Human Setter
+                  </th>
+                  <th style={{ padding: 'var(--spacing-md)', textAlign: 'center', borderBottom: '2px solid #000', fontWeight: 700, background: '#e8f5e9' }}>
+                    SetterApp.ai
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { aspect: "Availability", human: "8-10 hours", ai: "24/7" },
+                  { aspect: "Monthly Cost", human: "$500-2000+", ai: "From $49" },
+                  { aspect: "Commissions", human: "10-30%", ai: "0%" },
+                  { aspect: "Response Time", human: "5-30 min", ai: "Instant" },
+                  { aspect: "Training Time", human: "Weeks", ai: "Minutes" },
+                  { aspect: "Turnover", human: "High", ai: "None" },
+                ].map((row, index) => (
+                  <tr key={index} style={{ borderBottom: index < 5 ? '1px solid #e0e0e0' : 'none' }}>
+                    <td style={{ padding: 'var(--spacing-md)', fontWeight: 600 }}>
+                      {row.aspect}
+                    </td>
+                    <td style={{ padding: 'var(--spacing-md)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                      {row.human}
+                    </td>
+                    <td style={{
+                      padding: 'var(--spacing-md)',
+                      textAlign: 'center',
+                      background: '#e8f5e9',
+                      fontWeight: 600,
+                      color: 'var(--color-success)'
+                    }}>
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        <Check size={16} strokeWidth={3} />
+                        {row.ai}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. FEATURES SECTION */}
       <section
         className="landing-features"
         style={{
@@ -117,7 +547,7 @@ function Landing() {
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h3
+          <h2
             className="landing-section-title"
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -127,8 +557,9 @@ function Landing() {
               color: 'var(--color-text)',
             }}
           >
-            Todo lo que necesitas en un solo lugar
-          </h3>
+            Everything You Need
+          </h2>
+
           <div
             className="landing-features-grid"
             style={{
@@ -137,120 +568,66 @@ function Landing() {
               gap: 'var(--spacing-lg)',
             }}
           >
-            {/* Feature 1 */}
-            <div
-              className="card card--hover"
-              style={{
-                padding: 'var(--spacing-2xl)',
-                textAlign: 'center',
-                animation: 'slideInUp 0.6s ease-out',
-                animationDelay: '0.1s',
-                animationFillMode: 'both',
-              }}
-            >
+            {[
+              { icon: WhatsAppIcon, title: "WhatsApp Business", desc: "Connect your WhatsApp Business account and automate conversations", color: "#a6e3a1", isComponent: true },
+              { icon: InstagramIcon, title: "Instagram DMs", desc: "Handle Instagram direct messages automatically 24/7", color: "#f38ba8", isComponent: true },
+              { icon: Calendar, title: "Auto-Scheduling", desc: "Integrates with Google Calendar to book appointments automatically", color: "#89b4fa" },
+              { icon: Users, title: "Built-in CRM", desc: "Track contacts, leads, and conversation history in one place", color: "#cba6f7" },
+              { icon: BarChart3, title: "Real-time Analytics", desc: "Monitor performance, response times, and conversion rates", color: "#f9e2af" },
+              { icon: Settings, title: "Full Customization", desc: "Customize AI personality, responses, and business rules", color: "#94e2d5" },
+            ].map((feature, index) => (
               <div
+                key={index}
+                className="card card--hover"
                 style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '12px',
-                  background: 'var(--color-primary)',
-                  border: '4px solid #000',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto var(--spacing-md)',
-                  boxShadow: '4px 4px 0px 0px #000',
+                  padding: 'var(--spacing-2xl)',
+                  textAlign: 'center',
+                  animation: 'slideInUp 0.6s ease-out',
+                  animationDelay: `${index * 0.1}s`,
+                  animationFillMode: 'both',
                 }}
               >
-                <Zap size={40} color="#000" fill="#000" />
+                <div
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '12px',
+                    background: feature.color,
+                    border: '4px solid #000',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto var(--spacing-md)',
+                    boxShadow: '4px 4px 0px 0px #000',
+                  }}
+                >
+                  {feature.isComponent ? (
+                    <feature.icon size={40} color="#000" />
+                  ) : (
+                    <feature.icon size={40} color="#000" strokeWidth={2} />
+                  )}
+                </div>
+                <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
+                  {feature.title}
+                </h4>
+                <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
+                  {feature.desc}
+                </p>
               </div>
-              <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
-                Agentes de IA
-              </h4>
-              <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
-                Crea y personaliza agentes inteligentes que respondan automáticamente a tus clientes
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div
-              className="card card--hover"
-              style={{
-                padding: 'var(--spacing-2xl)',
-                textAlign: 'center',
-                animation: 'slideInUp 0.6s ease-out',
-                animationDelay: '0.2s',
-                animationFillMode: 'both',
-              }}
-            >
-              <div
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '12px',
-                  background: '#a6e3a1',
-                  border: '4px solid #000',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto var(--spacing-md)',
-                  boxShadow: '4px 4px 0px 0px #000',
-                }}
-              >
-                <WhatsAppIcon size={40} color="#000" />
-              </div>
-              <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
-                WhatsApp Business
-              </h4>
-              <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
-                Integra tu cuenta de WhatsApp Business para gestionar conversaciones automáticamente
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div
-              className="card card--hover"
-              style={{
-                padding: 'var(--spacing-2xl)',
-                textAlign: 'center',
-                animation: 'slideInUp 0.6s ease-out',
-                animationDelay: '0.3s',
-                animationFillMode: 'both',
-              }}
-            >
-              <div
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '12px',
-                  background: '#f38ba8',
-                  border: '4px solid #000',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto var(--spacing-md)',
-                  boxShadow: '4px 4px 0px 0px #000',
-                }}
-              >
-                <InstagramIcon size={40} color="#000" />
-              </div>
-              <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
-                Instagram
-              </h4>
-              <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
-                Integra tu cuenta de Instagram para gestionar mensajes directos automáticamente
-              </p>
-            </div>
-
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="landing-benefits" style={{ padding: '60px var(--spacing-xl)' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <h3
-            className="landing-section-title"
+      {/* 6. HOW IT WORKS */}
+      <section
+        style={{
+          padding: '60px var(--spacing-xl)',
+          background: 'var(--color-bg)',
+        }}
+      >
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <h2
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
@@ -259,47 +636,90 @@ function Landing() {
               color: 'var(--color-text)',
             }}
           >
-            ¿Por qué elegir setterapp.ai?
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xl)' }}>
+            Get Started in 3 Steps
+          </h2>
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: 'var(--spacing-lg)',
+              flexWrap: 'wrap',
+              position: 'relative',
+            }}
+          >
+            {/* Connecting Line (hidden on mobile) */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '60px',
+                left: '20%',
+                right: '20%',
+                height: '4px',
+                background: '#000',
+                display: 'none',
+              }}
+              className="steps-line"
+            />
+
             {[
-              'Respuestas automáticas 24/7',
-              'Integración con múltiples plataformas',
-              'Análisis y métricas en tiempo real',
-              'Fácil de configurar y usar',
-              'Escalable para cualquier negocio',
-            ].map((benefit, index) => (
+              { icon: MessageSquare, title: "Connect your channels", desc: "Link your Instagram and WhatsApp accounts in minutes" },
+              { icon: Settings, title: "Configure your agent", desc: "Set up your AI with your business info and preferences" },
+              { icon: Calendar, title: "Start booking", desc: "Watch as your AI handles conversations and books appointments" },
+            ].map((step, index) => (
               <div
                 key={index}
-                className="card"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--spacing-md)',
-                  padding: 'var(--spacing-lg)',
-                  animation: `slideInLeft 0.5s ease-out`,
-                  animationDelay: `${index * 0.1}s`,
+                  flex: '1',
+                  minWidth: '250px',
+                  textAlign: 'center',
+                  animation: 'bounceIn 0.6s ease-out',
+                  animationDelay: `${index * 0.2}s`,
                   animationFillMode: 'both',
                 }}
               >
                 <div
                   style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '12px',
-                    background: 'var(--color-success)',
+                    width: '100px',
+                    height: '100px',
+                    background: 'var(--color-primary)',
                     border: '4px solid #000',
+                    borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '2px 2px 0px 0px #000',
+                    margin: '0 auto var(--spacing-md)',
+                    boxShadow: '4px 4px 0px 0px #000',
+                    position: 'relative',
                   }}
                 >
-                  <Check size={20} color="#000" strokeWidth={3} />
+                  <step.icon size={48} color="#000" strokeWidth={2} />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '-10px',
+                      right: '-10px',
+                      width: '36px',
+                      height: '36px',
+                      background: '#000',
+                      color: '#fff',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: 'var(--font-size-lg)',
+                    }}
+                  >
+                    {index + 1}
+                  </div>
                 </div>
-                <p style={{ fontSize: 'var(--font-size-lg)', margin: 0, color: 'var(--color-text)', fontWeight: 500 }}>
-                  {benefit}
+                <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
+                  {step.title}
+                </h4>
+                <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
+                  {step.desc}
                 </p>
               </div>
             ))}
@@ -307,18 +727,334 @@ function Landing() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* 7. METRICS SECTION */}
+      <section
+        style={{
+          padding: '60px var(--spacing-xl)',
+          background: 'var(--color-bg-secondary)',
+        }}
+      >
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <h2
+            style={{
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+              fontWeight: 700,
+              textAlign: 'center',
+              margin: '0 0 var(--spacing-2xl) 0',
+              color: 'var(--color-text)',
+            }}
+          >
+            Numbers That Speak
+          </h2>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: 'var(--spacing-lg)',
+            }}
+          >
+            {[
+              { value: "5,000+", label: "Conversations automated" },
+              { value: "<3s", label: "Average response time" },
+              { value: "85%", label: "Booking rate" },
+              { value: "0%", label: "Commissions paid" },
+            ].map((metric, index) => (
+              <div
+                key={index}
+                className="card"
+                style={{
+                  textAlign: 'center',
+                  animation: 'fadeInScale 0.5s ease-out',
+                  animationDelay: `${index * 0.1}s`,
+                  animationFillMode: 'both',
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 'clamp(2rem, 5vw, 3rem)',
+                    fontWeight: 700,
+                    margin: '0 0 var(--spacing-xs) 0',
+                    color: 'var(--color-primary)',
+                  }}
+                >
+                  {metric.value}
+                </p>
+                <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+                  {metric.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 8. TESTIMONIALS */}
+      <section
+        style={{
+          padding: '60px var(--spacing-xl)',
+          background: 'var(--color-bg)',
+        }}
+      >
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <h2
+            style={{
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+              fontWeight: 700,
+              textAlign: 'center',
+              margin: '0 0 var(--spacing-2xl) 0',
+              color: 'var(--color-text)',
+            }}
+          >
+            What Our Users Say
+          </h2>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: 'var(--spacing-lg)',
+            }}
+          >
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={index}
+                className="card"
+                style={{
+                  background: testimonial.color + '20',
+                  animation: 'slideInUp 0.5s ease-out',
+                  animationDelay: `${index * 0.1}s`,
+                  animationFillMode: 'both',
+                }}
+              >
+                <div style={{ display: 'flex', gap: '4px', marginBottom: 'var(--spacing-md)' }}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} size={20} fill="#f9e2af" color="#000" />
+                  ))}
+                </div>
+                <p
+                  style={{
+                    fontSize: 'var(--font-size-base)',
+                    color: 'var(--color-text)',
+                    margin: '0 0 var(--spacing-lg) 0',
+                    fontStyle: 'italic',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  "{testimonial.quote}"
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: testimonial.color,
+                      border: '2px solid #000',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: 'var(--font-size-lg)',
+                    }}
+                  >
+                    {testimonial.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 600 }}>{testimonial.name}</p>
+                    <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                      {testimonial.business}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 9. PRICING */}
+      <section
+        style={{
+          padding: '60px var(--spacing-xl)',
+          background: 'var(--color-bg-secondary)',
+        }}
+      >
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <h2
+            style={{
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+              fontWeight: 700,
+              textAlign: 'center',
+              margin: '0 0 var(--spacing-sm) 0',
+              color: 'var(--color-text)',
+            }}
+          >
+            Simple & Transparent
+          </h2>
+          <p
+            style={{
+              textAlign: 'center',
+              color: 'var(--color-text-secondary)',
+              margin: '0 0 var(--spacing-2xl) 0',
+              fontSize: 'var(--font-size-lg)',
+            }}
+          >
+            No hidden fees. No surprises. Cancel anytime.
+          </p>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 'var(--spacing-lg)',
+              alignItems: 'stretch',
+            }}
+          >
+            {[
+              {
+                name: "Starter",
+                price: "$49",
+                features: ["500 messages/month", "1 channel", "Basic analytics", "Email support"],
+                popular: false
+              },
+              {
+                name: "Pro",
+                price: "$99",
+                features: ["2,000 messages/month", "All channels", "Advanced analytics", "Priority support", "Calendar integration"],
+                popular: true
+              },
+              {
+                name: "Business",
+                price: "$199",
+                features: ["Unlimited messages", "All channels", "Full analytics", "Dedicated support", "API access", "Custom integrations"],
+                popular: false
+              },
+            ].map((plan, index) => (
+              <div
+                key={index}
+                className="card"
+                style={{
+                  position: 'relative',
+                  background: plan.popular ? 'var(--color-primary)' : 'var(--color-bg)',
+                  transform: plan.popular ? 'scale(1.05)' : 'scale(1)',
+                  animation: 'fadeInScale 0.5s ease-out',
+                  animationDelay: `${index * 0.1}s`,
+                  animationFillMode: 'both',
+                }}
+              >
+                {plan.popular && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '-12px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: '#000',
+                      color: '#fff',
+                      padding: '4px 16px',
+                      borderRadius: '20px',
+                      fontSize: 'var(--font-size-xs)',
+                      fontWeight: 700,
+                    }}
+                  >
+                    MOST POPULAR
+                  </div>
+                )}
+                <h3 style={{ fontSize: 'var(--font-size-xl)', margin: '0 0 var(--spacing-sm) 0', fontWeight: 700 }}>
+                  {plan.name}
+                </h3>
+                <p style={{ margin: '0 0 var(--spacing-lg) 0' }}>
+                  <span style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 700 }}>{plan.price}</span>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>/mo</span>
+                </p>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg) 0' }}>
+                  {plan.features.map((feature, i) => (
+                    <li
+                      key={i}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-sm)',
+                        marginBottom: 'var(--spacing-sm)',
+                      }}
+                    >
+                      <Check size={18} color="var(--color-success)" strokeWidth={3} />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to="/register"
+                  className={`btn ${plan.popular ? 'btn--secondary' : 'btn--primary'}`}
+                  style={{ width: '100%', justifyContent: 'center' }}
+                >
+                  Get Started
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 10. FAQ */}
+      <section
+        style={{
+          padding: '60px var(--spacing-xl)',
+          background: 'var(--color-bg)',
+        }}
+      >
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <h2
+            style={{
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+              fontWeight: 700,
+              textAlign: 'center',
+              margin: '0 0 var(--spacing-2xl) 0',
+              color: 'var(--color-text)',
+            }}
+          >
+            Frequently Asked Questions
+          </h2>
+
+          {faqs.map((faq, index) => (
+            <FAQItem
+              key={index}
+              question={faq.question}
+              answer={faq.answer}
+              isOpen={openFAQ === index}
+              onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* 11. FINAL CTA */}
       <section
         className="landing-cta"
         style={{
-          padding: '60px var(--spacing-xl)',
+          padding: '80px var(--spacing-xl)',
           background: 'var(--color-bg-secondary)',
           textAlign: 'center',
         }}
       >
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-          <h3
-            className="landing-section-title"
+          <div
+            style={{
+              display: 'inline-block',
+              background: 'var(--color-success)',
+              color: '#000',
+              padding: '6px 16px',
+              borderRadius: '20px',
+              fontSize: 'var(--font-size-sm)',
+              fontWeight: 700,
+              marginBottom: 'var(--spacing-lg)',
+              border: '2px solid #000',
+            }}
+          >
+            Join +500 businesses
+          </div>
+          <h2
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
@@ -326,8 +1062,8 @@ function Landing() {
               color: 'var(--color-text)',
             }}
           >
-            ¿Listo para comenzar?
-          </h3>
+            Start Saving Today
+          </h2>
           <p
             style={{
               fontSize: 'var(--font-size-lg)',
@@ -335,48 +1071,148 @@ function Landing() {
               margin: '0 0 var(--spacing-2xl) 0',
             }}
           >
-            Únete a miles de empresas que ya están automatizando sus conversaciones
+            No credit card required. No commitment. 14-day free trial.
           </p>
-          <Link to="/register" className="btn btn--primary btn--lg">
-            Comenzar gratis
+          <Link
+            to="/register"
+            className="btn btn--primary btn--lg"
+            style={{
+              animation: 'pulse 2s ease-in-out infinite',
+            }}
+          >
+            Start Free Trial
             <ArrowRight size={20} />
           </Link>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* 12. FOOTER */}
       <footer
         style={{
           padding: 'var(--spacing-2xl)',
-          textAlign: 'center',
-          color: 'var(--color-text-secondary)',
+          borderTop: '2px solid #000',
         }}
       >
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: 'var(--spacing-md)',
-          flexWrap: 'wrap',
-          marginBottom: 'var(--spacing-md)'
-        }}>
-          <Link
-            to="/privacy"
-            style={{
-              color: 'var(--color-text-secondary)',
-              textDecoration: 'none',
-              fontSize: 'var(--font-size-sm)',
-              transition: 'var(--transition)'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
-            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
-          >
-            Política de Privacidad
-          </Link>
+        <div
+          style={{
+            maxWidth: '1200px',
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 'var(--spacing-xl)',
+          }}
+        >
+          {/* Logo & Description */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)' }}>
+              <Logo size={40} variant="icon" />
+              <span style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>setterapp.ai</span>
+            </div>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', margin: 0 }}>
+              Your AI-powered setter that works 24/7 to grow your business.
+            </p>
+          </div>
+
+          {/* Product Links */}
+          <div>
+            <h4 style={{ fontWeight: 700, marginBottom: 'var(--spacing-md)' }}>Product</h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {['Features', 'Pricing', 'Integrations', 'API'].map((link) => (
+                <li key={link} style={{ marginBottom: 'var(--spacing-sm)' }}>
+                  <a
+                    href="#"
+                    style={{
+                      color: 'var(--color-text-secondary)',
+                      textDecoration: 'none',
+                      fontSize: 'var(--font-size-sm)',
+                      transition: 'color 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
+                  >
+                    {link}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Company Links */}
+          <div>
+            <h4 style={{ fontWeight: 700, marginBottom: 'var(--spacing-md)' }}>Company</h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {['About', 'Blog', 'Careers', 'Contact'].map((link) => (
+                <li key={link} style={{ marginBottom: 'var(--spacing-sm)' }}>
+                  <a
+                    href="#"
+                    style={{
+                      color: 'var(--color-text-secondary)',
+                      textDecoration: 'none',
+                      fontSize: 'var(--font-size-sm)',
+                      transition: 'color 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
+                  >
+                    {link}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Legal Links */}
+          <div>
+            <h4 style={{ fontWeight: 700, marginBottom: 'var(--spacing-md)' }}>Legal</h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>
+                <Link
+                  to="/privacy"
+                  style={{
+                    color: 'var(--color-text-secondary)',
+                    textDecoration: 'none',
+                    fontSize: 'var(--font-size-sm)',
+                    transition: 'color 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>
+                <a
+                  href="#"
+                  style={{
+                    color: 'var(--color-text-secondary)',
+                    textDecoration: 'none',
+                    fontSize: 'var(--font-size-sm)',
+                    transition: 'color 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
+                >
+                  Terms of Service
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
-        <p style={{ margin: 0, fontSize: 'var(--font-size-sm)' }}>
-          © 2024 setterapp.ai. Todos los derechos reservados.
-        </p>
+
+        {/* Copyright */}
+        <div
+          style={{
+            maxWidth: '1200px',
+            margin: 'var(--spacing-xl) auto 0',
+            paddingTop: 'var(--spacing-lg)',
+            borderTop: '1px solid #e0e0e0',
+            textAlign: 'center',
+            color: 'var(--color-text-secondary)',
+            fontSize: 'var(--font-size-sm)',
+          }}
+        >
+          © 2025 setterapp.ai. All rights reserved.
+        </div>
       </footer>
     </div>
   )
