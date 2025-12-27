@@ -45,7 +45,7 @@ export function useConversations() {
   const resolveAttemptedRef = useRef<Set<string>>(new Set())
   const refreshTimerRef = useRef<number | null>(null)
 
-  const conversationSelect = '*, contact_ref:contacts(id, platform, external_id, display_name, phone, username, profile_picture)'
+  const conversationSelect = '*, contact_ref:contacts(id, platform, external_id, display_name, phone, username, profile_picture, lead_status)'
 
   const sortConversations = (list: Conversation[]) => {
     const ts = (c: Conversation) => {
