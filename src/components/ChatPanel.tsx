@@ -162,13 +162,14 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
                   .eq('id', conversation.contact_ref.id)
 
                 if (error) {
-                  console.error('❌ Database update failed:', error)
+                  console.error('❌ Database update failed:', JSON.stringify(error, null, 2))
                   throw error
                 }
 
                 console.log('✅ Lead status updated successfully to:', newStatus, 'Response:', data)
               } catch (error) {
                 console.error('❌ Error updating lead status:', error)
+                console.error('❌ Error details (stringified):', JSON.stringify(error, null, 2))
                 // Revert optimistic update on error
                 setOptimisticLeadStatus(conversation.contact_ref?.lead_status || null)
               }
