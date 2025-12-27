@@ -190,6 +190,7 @@ input, textarea, select {
   height: 100%;
   transition: width 0.3s ease-out !important;
   margin: 0;
+  box-shadow: none !important;
 }
 
 .conversations-card--expanded {
@@ -348,6 +349,7 @@ input, textarea, select {
   height: 100%;
   overflow: hidden;
   flex: 1;
+  box-shadow: none;
 }
 
 .chat-header {
