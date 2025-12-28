@@ -108,7 +108,7 @@ function Analytics() {
         })
 
         return {
-          date: date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
+          date: date.getDate().toString(),
           whatsapp: dayConversations.filter(conv => conv.platform === 'whatsapp').length,
           instagram: dayConversations.filter(conv => conv.platform === 'instagram').length
         }
