@@ -201,7 +201,9 @@ function Analytics() {
             color: 'var(--color-text)'
           }}>
             <MessageSquare size={20} />
-            {t('analytics.activity')}
+            {timeRange === 'today' ? t('analytics.activityToday') :
+             timeRange === 'week' ? t('analytics.activityWeek') :
+             t('analytics.activityMonth')}
           </h3>
           <ChartContainer
             config={{

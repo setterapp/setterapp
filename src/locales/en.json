@@ -121,7 +121,10 @@
       "completedMeetings": "Completed",
       "noShowMeetings": "No Shows"
     },
-    "activity": "Activity (Last 21 days)",
+    "activity": "Activity",
+    "activityToday": "Activity (24 hours)",
+    "activityWeek": "Activity (7 days)",
+    "activityMonth": "Activity (30 days)",
     "conversationsByAgent": "Conversations by Agent",
     "upcomingMeetingsList": "Upcoming Meetings",
     "viewAllMeetings": "View all meetings",
