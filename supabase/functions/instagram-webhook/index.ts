@@ -855,8 +855,9 @@ async function getInstagramAgent(userId: string) {
 
 /**
  * Obtiene el historial de conversación para generar contexto
+ * Limitado a 25 mensajes para mantener el contexto manejable
  */
-async function getConversationHistory(conversationId: string, limit: number = 50) {
+async function getConversationHistory(conversationId: string, limit: number = 25) {
     try {
         const { data: messages, error } = await supabase
             .from('messages')
@@ -880,6 +881,75 @@ async function getConversationHistory(conversationId: string, limit: number = 50
     } catch (error) {
         console.error('❌ Error getting conversation history:', error);
         return [];
+    }
+}
+
+/**
+ * Obtiene el contexto guardado del contacto (memoria de largo plazo)
+ */
+async function getContactContext(conversationId: string): Promise<string | null> {
+    try {
+        // Obtener contact_id de la conversación
+        const { data: conversation } = await supabase
+            .from('conversations')
+            .select('contact_id')
+            .eq('id', conversationId)
+            .single();
+
+        if (!conversation?.contact_id) {
+            return null;
+        }
+
+        // Obtener el contexto del contacto
+        const { data: contact } = await supabase
+            .from('contacts')
+            .select('context')
+            .eq('id', conversation.contact_id)
+            .single();
+
+        return contact?.context || null;
+    } catch (error) {
+        console.error('❌ Error getting contact context:', error);
+        return null;
+    }
+}
+
+/**
+ * Actualiza el contexto del contacto (memoria de largo plazo)
+ */
+async function updateContactContext(conversationId: string, newContext: string): Promise<boolean> {
+    try {
+        // Obtener contact_id de la conversación
+        const { data: conversation } = await supabase
+            .from('conversations')
+            .select('contact_id')
+            .eq('id', conversationId)
+            .single();
+
+        if (!conversation?.contact_id) {
+            console.warn('⚠️ No contact_id found for conversation:', conversationId);
+            return false;
+        }
+
+        // Actualizar el contexto del contacto
+        const { error } = await supabase
+            .from('contacts')
+            .update({
+                context: newContext,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', conversation.contact_id);
+
+        if (error) {
+            console.error('❌ Error updating contact context:', error);
+            return false;
+        }
+
+        console.log('✅ Contact context updated successfully');
+        return true;
+    } catch (error) {
+        console.error('❌ Error updating contact context:', error);
+        return false;
     }
 }
 
@@ -1042,17 +1112,43 @@ async function generateAndSendAutoReply(
 
         console.log('✅ Agent encontrado:', agent.name);
 
-        // 2. Obtener historial de conversación
+        // 2. Obtener historial de conversación (últimos 25 mensajes)
         const conversationHistory = await getConversationHistory(conversationId);
 
-        // 3. Construir system prompt
-        const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config);
+        // 3. Obtener contexto del contacto (memoria de largo plazo)
+        const contactContext = await getContactContext(conversationId);
+        if (contactContext) {
+            console.log('📝 Contexto del contacto cargado:', contactContext.substring(0, 100) + '...');
+        }
 
-        // 4. Definir tools para el agente (solo si enableMeetingScheduling está activado)
-        let tools: any[] = [];
+        // 4. Construir system prompt con el contexto
+        const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config, contactContext);
 
+        // 5. Definir tools para el agente
+        let tools: any[] = [
+            // Tool para actualizar el contexto del contacto (siempre disponible)
+            {
+                type: 'function',
+                function: {
+                    name: 'update_context',
+                    description: 'Actualiza tu memoria sobre este lead. Usa esta función para guardar información importante que aprendas durante la conversación: nombre real, qué busca, objeciones, horarios preferidos, país/zona horaria, presupuesto, urgencia, cualquier dato relevante. El contexto debe ser un resumen conciso pero completo.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            context: {
+                                type: 'string',
+                                description: 'Resumen actualizado de todo lo que sabes sobre este lead. Formato sugerido: "Nombre: X | Busca: Y | País: Z | Objeciones: W | Notas: ..."'
+                            }
+                        },
+                        required: ['context']
+                    }
+                }
+            }
+        ];
+
+        // Agregar tools de calendario si está habilitado
         if (agent.config?.enableMeetingScheduling === true) {
-            tools = [
+            tools = [...tools,
                 {
                     type: 'function',
                     function: {
@@ -1189,6 +1285,12 @@ async function generateAndSendAutoReply(
                             conversationId,
                             functionArgs
                         );
+                    } else if (functionName === 'update_context') {
+                        // Actualizar el contexto del contacto (memoria de largo plazo)
+                        const success = await updateContactContext(conversationId, functionArgs.context);
+                        toolResult = success
+                            ? { success: true, message: 'Contexto actualizado correctamente' }
+                            : { error: 'No se pudo actualizar el contexto' };
                     } else {
                         toolResult = { error: 'Función desconocida' };
                     }
@@ -1395,10 +1497,21 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
 }
 
 /**
- * Construye el system prompt usando SOLO la configuración del agente
+ * Construye el system prompt usando la configuración del agente y el contexto del contacto
  */
-function buildSystemPrompt(agentName: string, description: string, config: any): string {
+function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null): string {
     let prompt = description || `Eres ${agentName}.`;
+
+    // Si hay contexto guardado del contacto, incluirlo
+    if (contactContext) {
+        prompt += `\n\n=== TU MEMORIA SOBRE ESTE LEAD ===
+${contactContext}
+
+IMPORTANTE: Esta es información que ya aprendiste sobre este lead en conversaciones anteriores. Úsala para personalizar tus respuestas. Si aprendes información nueva importante, usa la función update_context para actualizar tu memoria.`
+    } else {
+        prompt += `\n\n=== MEMORIA ===
+Es tu primera conversación con este lead o no tienes información guardada. Cuando aprendas datos importantes (nombre, qué busca, país, objeciones, etc.), usa la función update_context para guardarlos en tu memoria.`
+    }
 
     // Si tiene calendar capabilities activadas, agregar contexto mínimo
     if (config?.enableMeetingScheduling === true) {

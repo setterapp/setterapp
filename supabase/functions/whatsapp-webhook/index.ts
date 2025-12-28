@@ -222,7 +222,7 @@ async function getWhatsAppAgent(userId: string) {
     return agent;
 }
 
-async function getConversationHistory(conversationId: string, limit: number = 50) {
+async function getConversationHistory(conversationId: string, limit: number = 25) {
     const { data: messages } = await supabase
         .from('messages')
         .select('content, direction')
@@ -236,8 +236,82 @@ async function getConversationHistory(conversationId: string, limit: number = 50
     }));
 }
 
-function buildSystemPrompt(agentName: string, description: string, config: any): string {
+/**
+ * Obtiene el contexto guardado del contacto (memoria de largo plazo)
+ */
+async function getContactContext(conversationId: string): Promise<string | null> {
+    try {
+        const { data: conversation } = await supabase
+            .from('conversations')
+            .select('contact_id')
+            .eq('id', conversationId)
+            .single();
+
+        if (!conversation?.contact_id) return null;
+
+        const { data: contact } = await supabase
+            .from('contacts')
+            .select('context')
+            .eq('id', conversation.contact_id)
+            .single();
+
+        return contact?.context || null;
+    } catch (error) {
+        console.error('❌ Error getting contact context:', error);
+        return null;
+    }
+}
+
+/**
+ * Actualiza el contexto del contacto (memoria de largo plazo)
+ */
+async function updateContactContext(conversationId: string, newContext: string): Promise<boolean> {
+    try {
+        const { data: conversation } = await supabase
+            .from('conversations')
+            .select('contact_id')
+            .eq('id', conversationId)
+            .single();
+
+        if (!conversation?.contact_id) {
+            console.warn('⚠️ No contact_id found for conversation:', conversationId);
+            return false;
+        }
+
+        const { error } = await supabase
+            .from('contacts')
+            .update({
+                context: newContext,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', conversation.contact_id);
+
+        if (error) {
+            console.error('❌ Error updating contact context:', error);
+            return false;
+        }
+
+        console.log('✅ Contact context updated successfully');
+        return true;
+    } catch (error) {
+        console.error('❌ Error updating contact context:', error);
+        return false;
+    }
+}
+
+function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null): string {
     let prompt = description || `Eres ${agentName}.`;
+
+    // Si hay contexto guardado del contacto, incluirlo
+    if (contactContext) {
+        prompt += `\n\n=== TU MEMORIA SOBRE ESTE LEAD ===
+${contactContext}
+
+IMPORTANTE: Esta es información que ya aprendiste sobre este lead en conversaciones anteriores. Úsala para personalizar tus respuestas. Si aprendes información nueva importante, usa la función update_context para actualizar tu memoria.`
+    } else {
+        prompt += `\n\n=== MEMORIA ===
+Es tu primera conversación con este lead o no tienes información guardada. Cuando aprendas datos importantes (nombre, qué busca, país, objeciones, etc.), usa la función update_context para guardarlos en tu memoria.`
+    }
 
     if (config?.enableMeetingScheduling === true) {
         const timezone = config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
@@ -283,6 +357,28 @@ REGLAS GENERALES:
     }
 
     return prompt;
+}
+
+function getBaseTools() {
+    return [
+        {
+            type: 'function',
+            function: {
+                name: 'update_context',
+                description: 'Actualiza tu memoria sobre este lead. Usa esta función para guardar información importante que aprendas durante la conversación: nombre real, qué busca, objeciones, horarios preferidos, país/zona horaria, presupuesto, urgencia, cualquier dato relevante.',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        context: {
+                            type: 'string',
+                            description: 'Resumen actualizado de todo lo que sabes sobre este lead. Formato sugerido: "Nombre: X | Busca: Y | País: Z | Objeciones: W | Notas: ..."'
+                        }
+                    },
+                    required: ['context']
+                }
+            }
+        }
+    ];
 }
 
 function getMeetingTools() {
@@ -488,12 +584,23 @@ async function generateAndSendAutoReply(
             return;
         }
 
+        // Obtener historial (últimos 25 mensajes)
         const conversationHistory = await getConversationHistory(conversationId);
-        const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config);
 
-        let tools: any[] = [];
+        // Obtener contexto del contacto (memoria de largo plazo)
+        const contactContext = await getContactContext(conversationId);
+        if (contactContext) {
+            console.log('📝 Contexto del contacto cargado:', contactContext.substring(0, 100) + '...');
+        }
+
+        const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config, contactContext);
+
+        // Tools base (siempre incluye update_context)
+        let tools: any[] = getBaseTools();
+
+        // Agregar tools de calendario si está habilitado
         if (agent.config?.enableMeetingScheduling === true) {
-            tools = getMeetingTools();
+            tools = [...tools, ...getMeetingTools()];
         }
 
         let messages = [
@@ -541,6 +648,12 @@ async function generateAndSendAutoReply(
                     toolResult = await executeScheduleMeeting(userId, conversationId, agent.id, functionArgs);
                 } else if (functionName === 'update_contact_email') {
                     toolResult = await executeUpdateContactEmail(userId, conversationId, functionArgs);
+                } else if (functionName === 'update_context') {
+                    // Actualizar el contexto del contacto (memoria de largo plazo)
+                    const success = await updateContactContext(conversationId, functionArgs.context);
+                    toolResult = success
+                        ? { success: true, message: 'Contexto actualizado correctamente' }
+                        : { error: 'No se pudo actualizar el contexto' };
                 } else {
                     toolResult = { error: 'Función desconocida' };
                 }
