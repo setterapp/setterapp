@@ -1,0 +1,16 @@
+# robots.txt for setterapp.ai
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://setterapp.ai/sitemap.xml
+
+# Disallow admin/auth paths
+Disallow: /auth/
+Disallow: /analytics
+Disallow: /conversations
+Disallow: /contacts
+Disallow: /agents
+Disallow: /meetings
+Disallow: /integrations
+Disallow: /settings
