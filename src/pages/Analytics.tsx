@@ -70,24 +70,50 @@ function Analytics() {
       ? Math.round((completedMeetings / totalFinishedMeetings) * 100)
       : 0
 
-    const conversationsByDay = Array.from({ length: 21 }, (_, i) => {
-      const date = new Date()
-      date.setDate(date.getDate() - (20 - i))
-      date.setHours(0, 0, 0, 0)
-      const nextDay = new Date(date)
-      nextDay.setDate(nextDay.getDate() + 1)
+    // Dynamic chart based on time range
+    let conversationsByDay: { date: string; whatsapp: number; instagram: number }[]
 
-      const dayConversations = filteredConversations.filter(conv => {
-        const convDate = new Date(conv.created_at)
-        return convDate >= date && convDate < nextDay
+    if (timeRange === 'today') {
+      // Show by hours for today
+      conversationsByDay = Array.from({ length: 24 }, (_, i) => {
+        const date = new Date()
+        date.setHours(i, 0, 0, 0)
+        const nextHour = new Date(date)
+        nextHour.setHours(i + 1, 0, 0, 0)
+
+        const hourConversations = conversations.filter(conv => {
+          const convDate = new Date(conv.created_at)
+          return convDate >= date && convDate < nextHour
+        })
+
+        return {
+          date: `${i}:00`,
+          whatsapp: hourConversations.filter(conv => conv.platform === 'whatsapp').length,
+          instagram: hourConversations.filter(conv => conv.platform === 'instagram').length
+        }
       })
+    } else {
+      const chartDays = timeRange === 'week' ? 7 : 30
 
-      return {
-        date: date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
-        whatsapp: dayConversations.filter(conv => conv.platform === 'whatsapp').length,
-        instagram: dayConversations.filter(conv => conv.platform === 'instagram').length
-      }
-    })
+      conversationsByDay = Array.from({ length: chartDays }, (_, i) => {
+        const date = new Date()
+        date.setDate(date.getDate() - (chartDays - 1 - i))
+        date.setHours(0, 0, 0, 0)
+        const nextDay = new Date(date)
+        nextDay.setDate(nextDay.getDate() + 1)
+
+        const dayConversations = conversations.filter(conv => {
+          const convDate = new Date(conv.created_at)
+          return convDate >= date && convDate < nextDay
+        })
+
+        return {
+          date: date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
+          whatsapp: dayConversations.filter(conv => conv.platform === 'whatsapp').length,
+          instagram: dayConversations.filter(conv => conv.platform === 'instagram').length
+        }
+      })
+    }
 
     return {
       totalLeads,
