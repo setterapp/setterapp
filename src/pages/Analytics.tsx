@@ -235,7 +235,7 @@ function Analytics() {
           </div>
 
         {/* Lead Distribution */}
-        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
+        <div style={{ marginBottom: 'var(--spacing-lg)' }}>
           <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
             <Target size={18} />
             Lead Distribution
@@ -261,7 +261,7 @@ function Analytics() {
         </div>
 
         {/* Platform Distribution */}
-        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+        <div>
           <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
             <Smartphone size={18} />
             Platform Distribution
