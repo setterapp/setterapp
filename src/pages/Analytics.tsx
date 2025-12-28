@@ -234,45 +234,45 @@ function Analytics() {
 
         {/* Lead Distribution */}
         <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-            <Target size={18} />
+          <h3 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', color: 'var(--color-text)' }}>
+            <Target size={24} />
             Lead Distribution
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 'var(--spacing-md)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--spacing-md)' }}>
             <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(148, 163, 184, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#94a3b8' }}>{metrics.coldLeads}</div>
-              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Cold</div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#94a3b8' }}>{metrics.coldLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Cold</div>
             </div>
             <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(249, 226, 175, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f9e2af' }}>{metrics.warmLeads}</div>
-              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Warm</div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#f9e2af' }}>{metrics.warmLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Warm</div>
             </div>
             <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(243, 139, 168, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f38ba8' }}>{metrics.bookedLeads}</div>
-              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Booked</div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#f38ba8' }}>{metrics.bookedLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Booked</div>
             </div>
             <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.closedLeads}</div>
-              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Closed</div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.closedLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Closed</div>
             </div>
           </div>
         </div>
 
         {/* Platform Distribution */}
         <div>
-          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-            <Smartphone size={18} />
+          <h3 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', color: 'var(--color-text)' }}>
+            <Smartphone size={24} />
             Platform Distribution
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--spacing-md)' }}>
             <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.whatsappLeads}</div>
-              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>WhatsApp</div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.whatsappLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>WhatsApp</div>
               <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#a6e3a1', marginTop: '2px' }}>{metrics.whatsappPercentage}%</div>
             </div>
             <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(243, 139, 168, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f38ba8' }}>{metrics.instagramLeads}</div>
-              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Instagram</div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#f38ba8' }}>{metrics.instagramLeads}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Instagram</div>
               <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#f38ba8', marginTop: '2px' }}>{metrics.instagramPercentage}%</div>
             </div>
           </div>
@@ -304,9 +304,6 @@ function Analytics() {
           <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.15)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
             <div style={{ fontSize: '2rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.showRate}%</div>
             <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Show Rate</div>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-              {metrics.showRate >= 95 ? '🎯 Excellent' : metrics.showRate >= 80 ? '✓ Good' : '⚠ Improve'}
-            </div>
           </div>
 
           <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(249, 226, 175, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
@@ -322,18 +319,18 @@ function Analytics() {
 
         {/* Meeting Results */}
         <div>
-          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-            <Target size={18} />
+          <h3 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', color: 'var(--color-text)' }}>
+            <Target size={24} />
             Meeting Results
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 'var(--spacing-md)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--spacing-md)' }}>
             <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.completedMeetings}</div>
-              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Completed</div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.completedMeetings}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Completed</div>
             </div>
             <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(243, 139, 168, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f38ba8' }}>{metrics.noShowMeetings}</div>
-              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>No Show</div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#f38ba8' }}>{metrics.noShowMeetings}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>No Show</div>
             </div>
           </div>
         </div>
@@ -342,14 +339,15 @@ function Analytics() {
       {/* ACTIVITY CHART */}
       <div style={{ marginTop: 'var(--spacing-xl)' }}>
         <h3 style={{
-          fontSize: 'var(--font-size-base)',
-          fontWeight: 600,
+          fontSize: 'var(--font-size-xl)',
+          fontWeight: 700,
           marginBottom: 'var(--spacing-md)',
           display: 'flex',
           alignItems: 'center',
-          gap: 'var(--spacing-sm)'
+          gap: 'var(--spacing-sm)',
+          color: 'var(--color-text)'
         }}>
-          <MessageSquare size={18} />
+          <MessageSquare size={24} />
           {t('analytics.activity')}
         </h3>
         <ChartContainer
