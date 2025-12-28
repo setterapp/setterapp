@@ -167,7 +167,7 @@ function Analytics() {
       {/* Main Analytics Container */}
       <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-xl)', backgroundColor: '#fff' }}>
         {/* Key Metrics */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--spacing-md)', marginBottom: '48px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(140px, 100%), 1fr))', gap: 'var(--spacing-md)', marginBottom: '48px' }}>
           <div style={{ textAlign: 'center', padding: 'var(--spacing-lg)', backgroundColor: 'rgba(137, 180, 250, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
             <div style={{ fontSize: '2rem', fontWeight: 700, color: '#000' }}>{metrics.totalLeads}</div>
             <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Leads</div>
@@ -216,7 +216,7 @@ function Analytics() {
                 color: "#f38ba8",
               },
             } satisfies ChartConfig}
-            style={{ height: '280px' }}
+            style={{ height: 'clamp(200px, 40vh, 280px)', width: '100%' }}
           >
             <BarChart
               accessibilityLayer

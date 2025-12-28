@@ -222,7 +222,7 @@ function SettingsPage() {
   return (
     <div>
       {user ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--spacing-md)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 'var(--spacing-md)' }}>
           {/* Información Personal */}
           <div className="card" style={{ border: '2px solid #000' }}>
             <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>

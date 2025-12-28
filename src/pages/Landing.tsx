@@ -176,18 +176,20 @@ function Landing() {
         >
           {/* Floating Badge */}
           <div
+            className="hero-badge"
             style={{
               position: 'absolute',
-              top: '-20px',
-              right: '20px',
+              top: '-12px',
+              right: 'clamp(10px, 5%, 20px)',
               background: '#a6e3a1',
               border: '2px solid #000',
               borderRadius: '8px',
-              padding: '8px 16px',
+              padding: '6px 12px',
               fontWeight: 700,
-              fontSize: 'var(--font-size-sm)',
-              boxShadow: '3px 3px 0px 0px #000',
+              fontSize: 'var(--font-size-xs)',
+              boxShadow: '2px 2px 0px 0px #000',
               animation: 'floatBadge 3s ease-in-out infinite',
+              zIndex: 1,
             }}
           >
             Save up to 80%
@@ -195,8 +197,8 @@ function Landing() {
 
           <div
             style={{
-              width: '120px',
-              height: '120px',
+              width: 'clamp(80px, 20vw, 120px)',
+              height: 'clamp(80px, 20vw, 120px)',
               background: 'var(--color-primary)',
               border: '2px solid #000',
               borderRadius: '12px',
@@ -208,7 +210,7 @@ function Landing() {
               animation: 'float 3s ease-in-out infinite',
             }}
           >
-            <Logo size={64} variant="icon" />
+            <Logo size={48} variant="icon" />
           </div>
 
           <h1
@@ -274,7 +276,7 @@ function Landing() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(250px, 100%), 1fr))',
               gap: 'var(--spacing-lg)',
             }}
           >
@@ -354,7 +356,7 @@ function Landing() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
               gap: 'var(--spacing-xl)',
             }}
           >
@@ -480,11 +482,12 @@ function Landing() {
           <div
             className="card"
             style={{
-              overflow: 'hidden',
+              overflow: 'auto',
               padding: 0,
+              WebkitOverflowScrolling: 'touch',
             }}
           >
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '400px' }}>
               <thead>
                 <tr style={{ background: 'var(--color-bg-secondary)' }}>
                   <th style={{ padding: 'var(--spacing-md)', textAlign: 'left', borderBottom: '2px solid #000', fontWeight: 700 }}>
@@ -559,7 +562,7 @@ function Landing() {
             className="landing-features-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
               gap: 'var(--spacing-lg)',
             }}
           >
@@ -584,8 +587,8 @@ function Landing() {
               >
                 <div
                   style={{
-                    width: '80px',
-                    height: '80px',
+                    width: 'clamp(60px, 15vw, 80px)',
+                    height: 'clamp(60px, 15vw, 80px)',
                     borderRadius: '12px',
                     background: feature.color,
                     border: '2px solid #000',
@@ -597,9 +600,9 @@ function Landing() {
                   }}
                 >
                   {feature.isComponent ? (
-                    <feature.icon size={40} color="#000" />
+                    <feature.icon size={32} color="#000" />
                   ) : (
-                    <feature.icon size={40} color="#000" strokeWidth={2} />
+                    <feature.icon size={32} color="#000" strokeWidth={2} />
                   )}
                 </div>
                 <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
@@ -665,8 +668,8 @@ function Landing() {
               <div
                 key={index}
                 style={{
-                  flex: '1',
-                  minWidth: '250px',
+                  flex: '1 1 min(250px, 100%)',
+                  minWidth: 0,
                   textAlign: 'center',
                   animation: 'bounceIn 0.6s ease-out',
                   animationDelay: `${index * 0.2}s`,
@@ -675,8 +678,8 @@ function Landing() {
               >
                 <div
                   style={{
-                    width: '100px',
-                    height: '100px',
+                    width: 'clamp(70px, 18vw, 100px)',
+                    height: 'clamp(70px, 18vw, 100px)',
                     background: 'var(--color-primary)',
                     border: '2px solid #000',
                     borderRadius: '50%',
@@ -688,7 +691,7 @@ function Landing() {
                     position: 'relative',
                   }}
                 >
-                  <step.icon size={48} color="#000" strokeWidth={2} />
+                  <step.icon size={36} color="#000" strokeWidth={2} />
                   <div
                     style={{
                       position: 'absolute',
@@ -743,7 +746,7 @@ function Landing() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))',
               gap: 'var(--spacing-lg)',
             }}
           >
@@ -804,7 +807,7 @@ function Landing() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
               gap: 'var(--spacing-lg)',
             }}
           >
@@ -897,7 +900,7 @@ function Landing() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
               gap: 'var(--spacing-lg)',
               alignItems: 'stretch',
             }}
@@ -1087,7 +1090,7 @@ function Landing() {
             maxWidth: '1200px',
             margin: '0 auto',
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))',
             gap: 'var(--spacing-xl)',
           }}
         >

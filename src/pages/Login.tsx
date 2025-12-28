@@ -72,7 +72,7 @@ function Login() {
       <div
         style={{
           width: '100%',
-          maxWidth: '400px',
+          maxWidth: 'min(400px, 100%)',
         }}
       >
         {/* Logo */}
@@ -129,10 +129,10 @@ function Login() {
               </label>
               <div style={{ position: 'relative' }}>
                 <Mail
-                  size={20}
+                  size={18}
                   style={{
                     position: 'absolute',
-                    left: 'var(--spacing-md)',
+                    left: 'var(--spacing-sm)',
                     top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'var(--color-text-secondary)',
@@ -146,7 +146,7 @@ function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="tu@email.com"
-                  style={{ paddingLeft: 'calc(var(--spacing-md) * 2 + 20px)' }}
+                  style={{ paddingLeft: 'calc(var(--spacing-sm) + 26px)' }}
                 />
               </div>
             </div>
@@ -157,10 +157,10 @@ function Login() {
               </label>
               <div style={{ position: 'relative' }}>
                 <Lock
-                  size={20}
+                  size={18}
                   style={{
                     position: 'absolute',
-                    left: 'var(--spacing-md)',
+                    left: 'var(--spacing-sm)',
                     top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'var(--color-text-secondary)',
@@ -174,7 +174,7 @@ function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  style={{ paddingLeft: 'calc(var(--spacing-md) * 2 + 20px)' }}
+                  style={{ paddingLeft: 'calc(var(--spacing-sm) + 26px)' }}
                 />
               </div>
             </div>

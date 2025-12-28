@@ -418,7 +418,7 @@ function Agents() {
                                             rows={2}
                                         />
                                     </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 'var(--spacing-md)' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 100%), 1fr))', gap: 'var(--spacing-md)' }}>
                                         <div className="form-group">
                                             <label htmlFor="activeHoursStart">Hora Inicio</label>
                                             <input
@@ -622,7 +622,7 @@ function Agents() {
                                                 />
                                             </div>
 
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 'var(--spacing-md)' }}>
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 100%), 1fr))', gap: 'var(--spacing-md)' }}>
                                                 <div className="form-group">
                                                     <label htmlFor="meetingDuration">Duración (min)</label>
                                                     <input
@@ -716,7 +716,7 @@ function Agents() {
 
                                             <div className="form-group">
                                                 <label>Días Disponibles</label>
-                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 'var(--spacing-sm)' }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100px, 100%), 1fr))', gap: 'var(--spacing-sm)' }}>
                                                     {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day, index) => {
                                                         const dayValue = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'][index]
                                                         const availableDays = formData.config.meetingAvailableDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
