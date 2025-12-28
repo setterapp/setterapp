@@ -4,8 +4,6 @@ import {
   MessageSquare,
   TrendingUp,
   Calendar,
-  CheckCircle,
-  XCircle,
   Target,
   Zap,
   Smartphone
@@ -322,25 +320,19 @@ function Analytics() {
           </div>
         </div>
 
-        {/* Meeting Distribution */}
-        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+        {/* Meeting Results */}
+        <div>
           <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
             <Target size={18} />
             Meeting Results
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--spacing-md)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 'var(--spacing-md)' }}>
             <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(166, 227, 161, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a6e3a1', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                <CheckCircle size={20} />
-                {metrics.completedMeetings}
-              </div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a6e3a1' }}>{metrics.completedMeetings}</div>
               <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>Completed</div>
             </div>
             <div style={{ textAlign: 'center', padding: 'var(--spacing-md)', backgroundColor: 'rgba(243, 139, 168, 0.1)', border: '2px solid #000', borderRadius: 'var(--border-radius)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f38ba8', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                <XCircle size={20} />
-                {metrics.noShowMeetings}
-              </div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f38ba8' }}>{metrics.noShowMeetings}</div>
               <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '4px' }}>No Show</div>
             </div>
           </div>
@@ -348,11 +340,11 @@ function Analytics() {
       </div>
 
       {/* ACTIVITY CHART */}
-      <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+      <div style={{ marginTop: 'var(--spacing-xl)' }}>
         <h3 style={{
           fontSize: 'var(--font-size-base)',
           fontWeight: 600,
-          marginBottom: 'var(--spacing-lg)',
+          marginBottom: 'var(--spacing-md)',
           display: 'flex',
           alignItems: 'center',
           gap: 'var(--spacing-sm)'
