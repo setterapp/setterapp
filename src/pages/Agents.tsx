@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Brain, Plus, Trash2, MoreVertical, MessageSquare, ArrowRight } from 'lucide-react'
+import { Plus, Trash2, MoreVertical, MessageSquare, ArrowRight } from 'lucide-react'
+import Logo from '../components/Logo'
 import { useAgents, type AgentConfig, type Agent } from '../hooks/useAgents'
 import { Switch } from '../components/ui/switch'
 import Modal from '../components/common/Modal'
@@ -807,7 +808,9 @@ function Agents() {
             {agents.length === 0 ? (
                 <div className="card" style={{ border: '2px solid #000' }}>
                     <div className="empty-state">
-                        <Brain size={48} style={{ margin: '0 auto var(--spacing-md)', opacity: 0.5 }} />
+                        <div style={{ margin: '0 auto var(--spacing-md)', opacity: 0.5 }}>
+                            <Logo size={48} variant="stroke" />
+                        </div>
                         <h3>No hay agentes creados</h3>
                         <p>Crea tu primer agente de IA para comenzar</p>
                     </div>
@@ -853,13 +856,15 @@ function Agents() {
                                             height: '48px',
                                             borderRadius: 'var(--border-radius)',
                                             background: 'var(--color-bg-secondary)',
+                                            border: '2px solid #000',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             flexShrink: 0,
+                                            color: 'var(--color-primary)',
                                         }}
                                     >
-                                        <Brain size={24} color="var(--color-primary)" />
+                                        <Logo size={24} variant="stroke" />
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <h3 style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>

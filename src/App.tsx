@@ -37,7 +37,7 @@ function Layout() {
     { path: '/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/conversations', label: 'Conversations', icon: MessageSquare },
     { path: '/contacts', label: 'Contacts', icon: Users },
-    { path: '/agents', label: 'Setter', icon: Logo, isLogo: true },
+    { path: '/agents', label: 'Setters', icon: Logo, isLogo: true },
     { path: '/meetings', label: 'Meetings', icon: CalendarIcon },
     { path: '/integrations', label: 'Integrations', icon: Plug },
     { path: '/settings', label: 'Settings', icon: Settings },
