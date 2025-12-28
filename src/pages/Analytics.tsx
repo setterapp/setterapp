@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MessageSquare, Zap } from 'lucide-react'
+import { MessageSquare } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { useConversations } from '../hooks/useConversations'
 import { useAgents } from '../hooks/useAgents'
@@ -266,16 +266,6 @@ function Analytics() {
         </div>
       </div>
 
-      {/* Empty State */}
-      {metrics.totalLeads === 0 && (
-        <div className="card" style={{ marginTop: 'var(--spacing-md)', border: '2px solid #000' }}>
-          <div className="empty-state">
-            <Zap size={48} style={{ opacity: 0.3, margin: '0 auto var(--spacing-md)' }} />
-            <h3>{t('analytics.empty.title')}</h3>
-            <p>{t('analytics.empty.description')}</p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
