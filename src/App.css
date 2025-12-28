@@ -13,7 +13,7 @@
   left: var(--spacing-md);
   z-index: 1001;
   background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   border-radius: var(--border-radius-sm);
   padding: var(--spacing-sm);
   color: var(--color-text);
@@ -183,7 +183,7 @@
 
 .card {
   background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   border-radius: var(--border-radius);
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
@@ -284,7 +284,7 @@
 .form-group select {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   border-radius: var(--border-radius-sm);
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
