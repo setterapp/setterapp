@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route, Link, useLocation, Outlet } from 'react-router-dom'
-import { Brain, Plug, BarChart3, MessageSquare, Settings, Menu, X, Users, Calendar as CalendarIcon } from 'lucide-react'
+import { Plug, BarChart3, MessageSquare, Settings, Menu, X, Users, Calendar as CalendarIcon } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
+import DeletionStatus from './pages/DeletionStatus'
 import Agents from './pages/Agents'
 import Integrations from './pages/Integrations'
 import Analytics from './pages/Analytics'
@@ -25,7 +26,6 @@ import { useSupabaseWakeUp } from './hooks/useSupabaseWakeUp'
 import './App.css'
 
 function Layout() {
-  const { t } = useTranslation()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [pressedButton, setPressedButton] = useState<string | null>(null)
@@ -34,13 +34,13 @@ function Layout() {
   useSupabaseWakeUp()
 
   const navItems = [
-    { path: '/analytics', label: t('navigation.analytics'), icon: BarChart3 },
-    { path: '/conversations', label: t('navigation.conversations'), icon: MessageSquare },
-    { path: '/contacts', label: t('navigation.contacts'), icon: Users },
-    { path: '/agents', label: t('navigation.agents'), icon: Brain },
-    { path: '/meetings', label: 'Reuniones', icon: CalendarIcon },
-    { path: '/integrations', label: t('navigation.integrations'), icon: Plug },
-    { path: '/settings', label: t('navigation.settings'), icon: Settings },
+    { path: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { path: '/conversations', label: 'Conversations', icon: MessageSquare },
+    { path: '/contacts', label: 'Contacts', icon: Users },
+    { path: '/agents', label: 'Setter', icon: Logo, isLogo: true },
+    { path: '/meetings', label: 'Meetings', icon: CalendarIcon },
+    { path: '/integrations', label: 'Integrations', icon: Plug },
+    { path: '/settings', label: 'Settings', icon: Settings },
   ]
 
   // Cerrar sidebar cuando cambia la ruta en móvil
@@ -107,6 +107,7 @@ function Layout() {
             const Icon = item.icon
             const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/')
             const isPressed = pressedButton === item.path
+            const isLogo = 'isLogo' in item && item.isLogo
             return (
               <li key={item.path}>
                 <Link
@@ -114,7 +115,7 @@ function Layout() {
                   className={`${isActive ? 'active' : ''} ${isPressed ? 'pressed' : ''}`}
                   onClick={() => handleLinkClick(item.path)}
                 >
-                  <Icon size={18} />
+                  {isLogo ? <Icon size={18} /> : <Icon size={18} />}
                   {item.label}
                 </Link>
               </li>
@@ -137,6 +138,8 @@ function App() {
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/deletion-status" element={<DeletionStatus />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/instagram/callback" element={<InstagramCallback />} />
         <Route path="/auth/facebook/callback" element={<FacebookCallback />} />

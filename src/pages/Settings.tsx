@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { User, LogOut, Globe, Bell, Shield } from 'lucide-react'
+import { User, LogOut, Globe, Bell, Shield, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -26,6 +26,9 @@ function SettingsPage() {
   const { t } = useTranslation()
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
   const [settings, setSettings] = useState<UserSettings>({
     firstName: '',
     lastName: '',
@@ -152,6 +155,56 @@ function SettingsPage() {
     } catch (err: any) {
       console.error('Error al cerrar sesión:', err)
       alert(`Error al cerrar sesión: ${err.message}`)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!user || deleteConfirmText !== 'DELETE') return
+
+    setDeleting(true)
+    try {
+      const userId = user.id
+
+      // Delete all user data in order (respecting foreign keys)
+      // 1. Delete messages from user's conversations
+      const { data: conversations } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('user_id', userId)
+
+      if (conversations && conversations.length > 0) {
+        const conversationIds = conversations.map(c => c.id)
+        await supabase.from('messages').delete().in('conversation_id', conversationIds)
+      }
+
+      // 2. Delete conversations
+      await supabase.from('conversations').delete().eq('user_id', userId)
+
+      // 3. Delete contacts
+      await supabase.from('contacts').delete().eq('user_id', userId)
+
+      // 4. Delete meetings
+      await supabase.from('meetings').delete().eq('user_id', userId)
+
+      // 5. Delete agents
+      await supabase.from('agents').delete().eq('user_id', userId)
+
+      // 6. Delete integrations
+      await supabase.from('integrations').delete().eq('user_id', userId)
+
+      // 7. Delete user preferences
+      await supabase.from('user_preferences').delete().eq('user_id', userId)
+
+      // 8. Clear cache and sign out
+      cacheService.clear()
+      await supabase.auth.signOut()
+
+      // Redirect to home
+      window.location.href = '/'
+    } catch (err: any) {
+      console.error('Error deleting account:', err)
+      alert(`Error al eliminar cuenta: ${err.message}`)
+      setDeleting(false)
     }
   }
 
@@ -406,7 +459,37 @@ function SettingsPage() {
               </div>
             </div>
           </div>
+
+          {/* Danger Zone */}
+          <div className="card" style={{ border: '2px solid #f38ba8', background: 'rgba(243, 139, 168, 0.05)' }}>
+            <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
+              <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0, color: '#f38ba8' }}>
+                <Trash2 size={18} />
+                Danger Zone
+              </h3>
+            </div>
+            <div className="flex flex-col gap-sm">
+              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
+                Once you delete your account, there is no going back. All your data will be permanently deleted.
+              </p>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="btn btn--sm"
+                style={{
+                  width: '100%',
+                  marginTop: 'var(--spacing-sm)',
+                  background: 'transparent',
+                  border: '2px solid #f38ba8',
+                  color: '#f38ba8'
+                }}
+              >
+                <Trash2 size={16} />
+                Delete Account
+              </button>
+            </div>
+          </div>
         </div>
+
       ) : (
         <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
@@ -420,6 +503,70 @@ function SettingsPage() {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: 'var(--spacing-md)'
+        }}>
+          <div style={{
+            background: 'var(--color-bg)',
+            borderRadius: 'var(--border-radius-lg)',
+            padding: 'var(--spacing-xl)',
+            maxWidth: '400px',
+            width: '100%',
+            border: '2px solid #000'
+          }}>
+            <h3 style={{ margin: 0, marginBottom: 'var(--spacing-md)', color: '#f38ba8' }}>
+              Delete Account
+            </h3>
+            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-md)' }}>
+              This action cannot be undone. All your data including conversations, contacts, agents, and integrations will be permanently deleted.
+            </p>
+            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-sm)' }}>
+              Type <strong>DELETE</strong> to confirm:
+            </p>
+            <input
+              type="text"
+              className="input"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+              style={{ marginBottom: 'var(--spacing-md)', width: '100%' }}
+            />
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false)
+                  setDeleteConfirmText('')
+                }}
+                className="btn btn--sm"
+                style={{ flex: 1 }}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="btn btn--danger btn--sm"
+                style={{ flex: 1 }}
+                disabled={deleteConfirmText !== 'DELETE' || deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete Account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
