@@ -115,7 +115,7 @@ function Layout() {
                   className={`${isActive ? 'active' : ''} ${isPressed ? 'pressed' : ''}`}
                   onClick={() => handleLinkClick(item.path)}
                 >
-                  {isLogo ? <Icon size={18} /> : <Icon size={18} />}
+                  {isLogo ? <Icon size={18} variant="stroke" /> : <Icon size={18} />}
                   {item.label}
                 </Link>
               </li>
