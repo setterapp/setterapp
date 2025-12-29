@@ -22,8 +22,8 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
           position: 'relative',
           display: 'inline-flex',
           alignItems: 'center',
-          width: '44px',
-          height: '24px',
+          width: '48px',
+          height: '26px',
           padding: 0,
           border: '2px solid #000',
           borderRadius: '9999px',
@@ -37,8 +37,8 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
         <span
           style={{
             position: 'absolute',
-            width: '16px',
-            height: '16px',
+            width: '18px',
+            height: '18px',
             left: checked ? '24px' : '2px',
             backgroundColor: '#fff',
             border: '2px solid #000',
