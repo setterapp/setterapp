@@ -287,7 +287,6 @@ function Agents() {
                                             onChange={(e) => setFormData({ ...formData, platform: e.target.value as 'whatsapp' | 'instagram' | '' })}
                                         >
                                             <option value="">Sin asignar</option>
-                                            <option value="whatsapp">WhatsApp</option>
                                             <option value="instagram">Instagram</option>
                                         </select>
                                     </div>
@@ -940,8 +939,8 @@ function Agents() {
                                         checked={isActive}
                                         onCheckedChange={(checked) => {
                                             if (checked && !agent.platform) {
-                                                // Si se activa y no tiene plataforma, asignar WhatsApp por defecto
-                                                handleAssignPlatform(agent.id, 'whatsapp')
+                                                // Si se activa y no tiene plataforma, asignar Instagram por defecto
+                                                handleAssignPlatform(agent.id, 'instagram')
                                             } else if (!checked && agent.platform) {
                                                 // Si se desactiva, quitar plataforma
                                                 updateAgent(agent.id, { platform: null })
@@ -989,66 +988,35 @@ function Agents() {
                                                 onClick={(e) => e.stopPropagation()}
                                             >
                                                 {!agent.platform && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => {
-                                                                handleAssignPlatform(agent.id, 'whatsapp')
-                                                                setOpenMenuId(null)
-                                                            }}
-                                                            style={{
-                                                                width: '100%',
-                                                                textAlign: 'left',
-                                                                padding: 'var(--spacing-sm)',
-                                                                background: 'transparent',
-                                                                border: 'none',
-                                                                cursor: 'pointer',
-                                                                fontSize: 'var(--font-size-sm)',
-                                                                color: 'var(--color-text)',
-                                                                borderRadius: 'var(--border-radius-sm)',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: 'var(--spacing-sm)',
-                                                            }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.background = 'var(--color-bg-secondary)'
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.background = 'transparent'
-                                                            }}
-                                                        >
-                                                            <WhatsAppIcon size={16} color="#a6e3a1" />
-                                                            Asignar WhatsApp
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                handleAssignPlatform(agent.id, 'instagram')
-                                                                setOpenMenuId(null)
-                                                            }}
-                                                            style={{
-                                                                width: '100%',
-                                                                textAlign: 'left',
-                                                                padding: 'var(--spacing-sm)',
-                                                                background: 'transparent',
-                                                                border: 'none',
-                                                                cursor: 'pointer',
-                                                                fontSize: 'var(--font-size-sm)',
-                                                                color: 'var(--color-text)',
-                                                                borderRadius: 'var(--border-radius-sm)',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: 'var(--spacing-sm)',
-                                                            }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.background = 'var(--color-bg-secondary)'
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.background = 'transparent'
-                                                            }}
-                                                        >
-                                                            <InstagramIcon size={16} color="#f38ba8" />
-                                                            Asignar Instagram
-                                                        </button>
-                                                    </>
+                                                    <button
+                                                        onClick={() => {
+                                                            handleAssignPlatform(agent.id, 'instagram')
+                                                            setOpenMenuId(null)
+                                                        }}
+                                                        style={{
+                                                            width: '100%',
+                                                            textAlign: 'left',
+                                                            padding: 'var(--spacing-sm)',
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            fontSize: 'var(--font-size-sm)',
+                                                            color: 'var(--color-text)',
+                                                            borderRadius: 'var(--border-radius-sm)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 'var(--spacing-sm)',
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.background = 'var(--color-bg-secondary)'
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.background = 'transparent'
+                                                        }}
+                                                    >
+                                                        <InstagramIcon size={16} color="#f38ba8" />
+                                                        Asignar Instagram
+                                                    </button>
                                                 )}
                                                 <div style={{ height: '1px', background: 'var(--color-border)', margin: 'var(--spacing-xs) 0' }} />
                                                 <button

@@ -334,6 +334,7 @@ function Integrations() {
                   .filter(integration => integration.type !== 'facebook') // Ocultar Facebook por ahora
                   .map((integration) => {
             const isConnected = integration.status === 'connected'
+            const isWhatsApp = integration.type === 'whatsapp'
             const bg = integration.type === 'whatsapp'
               ? '#a6e3a1'
               : integration.type === 'facebook'
@@ -354,6 +355,7 @@ function Integrations() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  opacity: isWhatsApp ? 0.6 : 1,
                 }}
               >
                 {/* Left: Title and metadata */}
@@ -396,134 +398,153 @@ function Integrations() {
 
                 {/* Right: Controls */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                  {/* Active Label */}
-                  {isConnected && (
+                  {/* WhatsApp Coming Soon Badge */}
+                  {isWhatsApp ? (
                     <span
                       style={{
                         fontSize: 'var(--font-size-sm)',
                         fontWeight: 600,
-                        color: 'var(--color-success)',
-                        minWidth: '60px',
-                        textAlign: 'right',
-                      }}
-                    >
-                      {t('integrations.active')}
-                    </span>
-                  )}
-
-                  {/* Toggle Switch */}
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <Switch
-                      checked={isConnected}
-                      onCheckedChange={(checked) => handleToggle(integration.id, integration.type, checked)}
-                    />
-                  </div>
-
-                  {/* Menu Icon */}
-                  <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setOpenMenuId(openMenuId === integration.id ? null : integration.id)
-                      }}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: 'var(--spacing-xs)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
                         color: 'var(--color-text-secondary)',
+                        background: 'var(--color-bg-secondary)',
+                        padding: '4px 12px',
                         borderRadius: 'var(--border-radius-sm)',
+                        border: '1px solid var(--color-border)',
                       }}
                     >
-                      <MoreVertical size={20} />
-                    </button>
-                    {openMenuId === integration.id && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          right: 0,
-                          top: '100%',
-                          marginTop: 'var(--spacing-xs)',
-                          background: 'var(--color-bg)',
-                          border: '1px solid var(--color-border)',
-                          borderRadius: 'var(--border-radius)',
-                          boxShadow: 'var(--shadow-md)',
-                          padding: 'var(--spacing-xs)',
-                          zIndex: 100,
-                          minWidth: '150px',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {isConnected ? (
-                          <button
-                            onClick={() => {
-                              handleToggle(integration.id, integration.type, false)
-                              setOpenMenuId(null)
-                            }}
+                      Coming Soon
+                    </span>
+                  ) : (
+                    <>
+                      {/* Active Label */}
+                      {isConnected && (
+                        <span
+                          style={{
+                            fontSize: 'var(--font-size-sm)',
+                            fontWeight: 600,
+                            color: 'var(--color-success)',
+                            minWidth: '60px',
+                            textAlign: 'right',
+                          }}
+                        >
+                          {t('integrations.active')}
+                        </span>
+                      )}
+
+                      {/* Toggle Switch */}
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Switch
+                          checked={isConnected}
+                          onCheckedChange={(checked) => handleToggle(integration.id, integration.type, checked)}
+                        />
+                      </div>
+
+                      {/* Menu Icon */}
+                      <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setOpenMenuId(openMenuId === integration.id ? null : integration.id)
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 'var(--spacing-xs)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--color-text-secondary)',
+                            borderRadius: 'var(--border-radius-sm)',
+                          }}
+                        >
+                          <MoreVertical size={20} />
+                        </button>
+                        {openMenuId === integration.id && (
+                          <div
                             style={{
-                              width: '100%',
-                              textAlign: 'left',
-                              padding: 'var(--spacing-sm)',
-                              background: 'transparent',
-                              border: 'none',
-                              cursor: 'pointer',
-                              fontSize: 'var(--font-size-sm)',
-                              color: 'var(--color-text)',
-                              borderRadius: 'var(--border-radius-sm)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 'var(--spacing-sm)',
+                              position: 'absolute',
+                              right: 0,
+                              top: '100%',
+                              marginTop: 'var(--spacing-xs)',
+                              background: 'var(--color-bg)',
+                              border: '1px solid var(--color-border)',
+                              borderRadius: 'var(--border-radius)',
+                              boxShadow: 'var(--shadow-md)',
+                              padding: 'var(--spacing-xs)',
+                              zIndex: 100,
+                              minWidth: '150px',
                             }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'var(--color-bg-secondary)'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'transparent'
-                            }}
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <X size={16} />
-                            {t('integrations.disconnect')}
-                          </button>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => {
-                                // WhatsApp / Instagram / Messenger usan OAuth automático
-                                handleToggle(integration.id, integration.type, true)
-                                setOpenMenuId(null)
-                              }}
-                              style={{
-                                width: '100%',
-                                textAlign: 'left',
-                                padding: 'var(--spacing-sm)',
-                                background: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontSize: 'var(--font-size-sm)',
-                                color: 'var(--color-text)',
-                                borderRadius: 'var(--border-radius-sm)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 'var(--spacing-sm)',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'var(--color-bg-secondary)'
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'transparent'
-                              }}
-                            >
-                              <Check size={16} />
-                              {t('integrations.connect')}
-                            </button>
-                          </>
+                            {isConnected ? (
+                              <button
+                                onClick={() => {
+                                  handleToggle(integration.id, integration.type, false)
+                                  setOpenMenuId(null)
+                                }}
+                                style={{
+                                  width: '100%',
+                                  textAlign: 'left',
+                                  padding: 'var(--spacing-sm)',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontSize: 'var(--font-size-sm)',
+                                  color: 'var(--color-text)',
+                                  borderRadius: 'var(--border-radius-sm)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 'var(--spacing-sm)',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'var(--color-bg-secondary)'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent'
+                                }}
+                              >
+                                <X size={16} />
+                                {t('integrations.disconnect')}
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    // WhatsApp / Instagram / Messenger usan OAuth automático
+                                    handleToggle(integration.id, integration.type, true)
+                                    setOpenMenuId(null)
+                                  }}
+                                  style={{
+                                    width: '100%',
+                                    textAlign: 'left',
+                                    padding: 'var(--spacing-sm)',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: 'var(--font-size-sm)',
+                                    color: 'var(--color-text)',
+                                    borderRadius: 'var(--border-radius-sm)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 'var(--spacing-sm)',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'var(--color-bg-secondary)'
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'transparent'
+                                  }}
+                                >
+                                  <Check size={16} />
+                                  {t('integrations.connect')}
+                                </button>
+                              </>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </>
+                  )}
                 </div>
               </div>
             )

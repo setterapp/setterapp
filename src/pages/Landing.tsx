@@ -14,7 +14,6 @@ import {
   DollarSign,
   TrendingUp
 } from 'lucide-react'
-import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import Logo from '../components/Logo'
 
@@ -81,11 +80,11 @@ function Landing() {
   const faqs = [
     {
       question: "How does your AI appointment setter work?",
-      answer: "Our AI appointment setter uses advanced language models to understand and respond to Instagram DMs and WhatsApp messages naturally. It learns from your business context and can handle appointment booking, answer questions, and qualify leads automatically 24/7."
+      answer: "Our AI appointment setter uses advanced language models to understand and respond to Instagram DMs naturally. It learns from your business context and can handle appointment booking, answer questions, and qualify leads automatically 24/7."
     },
     {
       question: "What platforms does your AI setter support?",
-      answer: "Our AI setter currently supports WhatsApp Business automation and Instagram DM automation. The AI appointment setter can handle conversations on both platforms simultaneously, booking appointments around the clock."
+      answer: "Our AI setter currently supports Instagram DM automation. The AI appointment setter can handle conversations and book appointments around the clock. WhatsApp support is coming soon!"
     },
     {
       question: "Can I customize the AI responses for my business?",
@@ -101,7 +100,7 @@ function Landing() {
     },
     {
       question: "How much does an AI appointment setter cost vs a human setter?",
-      answer: "Human setters typically cost $500-2000+ monthly plus 10-30% commissions. Our AI appointment setter starts at just $49/month with zero commissions, saving you up to 80% while providing 24/7 automated appointment booking on Instagram and WhatsApp."
+      answer: "Human setters typically cost $500-2000+ monthly plus 10-30% commissions. Our AI appointment setter starts at just $49/month with zero commissions, saving you up to 80% while providing 24/7 automated appointment booking."
     }
   ]
 
@@ -207,7 +206,7 @@ function Landing() {
             }}
           >
             AI Appointment Setter for{' '}
-            <span style={{ color: 'var(--color-primary)' }}>Instagram & WhatsApp</span>
+            <span style={{ color: 'var(--color-primary)' }}>Instagram</span>
           </h1>
 
           <p
@@ -222,7 +221,7 @@ function Landing() {
             }}
           >
             Automate your appointment booking 24/7 with our AI setter. Handle Instagram DMs
-            and WhatsApp messages automatically, qualify leads, and book meetings while you sleep.
+            automatically, qualify leads, and book meetings while you sleep.
           </p>
 
           <div className="landing-hero-buttons" style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -550,7 +549,6 @@ function Landing() {
             }}
           >
             {[
-              { icon: WhatsAppIcon, title: "WhatsApp Automation", desc: "AI setter for WhatsApp Business - automate conversations and book appointments 24/7", color: "#a6e3a1", isComponent: true },
               { icon: InstagramIcon, title: "Instagram DM Automation", desc: "AI appointment setter for Instagram - handle DMs and schedule meetings automatically", color: "#f38ba8", isComponent: true },
               { icon: Calendar, title: "Automated Appointment Booking", desc: "Integrates with Google Calendar to book appointments automatically in real-time", color: "#89b4fa" },
               { icon: Users, title: "AI Lead Qualification", desc: "Automatically qualify leads and track contacts with built-in CRM", color: "#cba6f7" },
@@ -776,7 +774,7 @@ function Landing() {
             <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg) 0', textAlign: 'left' }}>
               {[
                 "Unlimited messages",
-                "Instagram & WhatsApp",
+                "Instagram DM automation",
                 "Google Calendar integration",
                 "AI lead qualification",
                 "Built-in CRM",
@@ -887,7 +885,7 @@ function Landing() {
               margin: '0 0 var(--spacing-2xl) 0',
             }}
           >
-            Stop losing leads. Start booking appointments 24/7 on Instagram & WhatsApp.
+            Stop losing leads. Start booking appointments 24/7 on Instagram.
           </p>
           <Link
             to="/register"
@@ -925,7 +923,7 @@ function Landing() {
               <span style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>setterapp.ai</span>
             </div>
             <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', margin: 0 }}>
-              AI appointment setter for Instagram and WhatsApp. Automate your booking process 24/7.
+              AI appointment setter for Instagram. Automate your booking process 24/7.
             </p>
           </div>
 
