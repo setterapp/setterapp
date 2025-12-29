@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Check,
   X,
-  MessageSquare,
   Calendar,
   Users,
   BarChart3,
