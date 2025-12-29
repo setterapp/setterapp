@@ -14,6 +14,7 @@ export default function SectionHeader({ title, icon, children }: SectionHeaderPr
         marginBottom: 'var(--spacing-lg)',
         border: '2px solid #000',
         padding: 'var(--spacing-md)',
+        boxShadow: 'none',
       }}
     >
       <div
