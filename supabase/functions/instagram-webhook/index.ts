@@ -519,8 +519,14 @@ async function processInstagramEvent(event: any, pageId: string) {
     try {
         // Processing Instagram messaging event...
 
-        // Solo procesar mensajes entrantes (inbound)
-        if (event.message && !event.message.is_echo) {
+        // Procesar mensajes echo (enviados manualmente desde Instagram)
+        if (event.message && event.message.is_echo) {
+            await processEchoMessage(event, pageId);
+            return;
+        }
+
+        // Procesar mensajes entrantes (inbound)
+        if (event.message) {
             const message = event.message;
             const senderId = event.sender?.id;
             const recipientId = event.recipient?.id;
@@ -814,6 +820,161 @@ async function processInstagramEvent(event: any, pageId: string) {
         }
     } catch (error) {
         console.error('❌ Error processing Instagram event:', error);
+    }
+}
+
+/**
+ * Procesa mensajes echo (enviados manualmente desde Instagram, no desde la app)
+ * Esto permite ver en la app los mensajes que envías directamente desde Instagram
+ */
+async function processEchoMessage(event: any, pageId: string) {
+    try {
+        const message = event.message;
+        const senderId = event.sender?.id; // Tu cuenta de Instagram
+        const recipientId = event.recipient?.id; // El contacto al que enviaste
+        const { timestampInMs, timestampInSeconds } = normalizeWebhookTimestamp(event.timestamp);
+
+        const messageId = message.mid || message.id;
+        const messageText = message.text || '';
+
+        console.log('📤 Echo message (manual send) received:', {
+            messageId,
+            recipientId,
+            timestamp: new Date(timestampInMs).toISOString()
+        });
+
+        // Obtener user_id de la integración
+        const userId = await getUserIdFromPageId(pageId);
+        if (!userId) {
+            console.error('❌ Could not find user_id for pageId:', pageId);
+            return;
+        }
+
+        // Buscar conversación existente con este contacto
+        // El recipientId es el contacto porque nosotros enviamos el mensaje
+        const { data: existingConv, error: findError } = await supabase
+            .from('conversations')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('platform', 'instagram')
+            .eq('platform_conversation_id', recipientId)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (findError) {
+            console.error('❌ Error finding conversation for echo:', findError);
+            return;
+        }
+
+        let conversationId = existingConv?.id;
+
+        // Si no existe conversación, crear una nueva
+        if (!conversationId) {
+            console.log('📝 Creating new conversation for echo message');
+
+            // Crear contacto primero
+            const { data: upsertedContact } = await supabase
+                .from('contacts')
+                .upsert(
+                    {
+                        user_id: userId,
+                        platform: 'instagram',
+                        external_id: recipientId,
+                        display_name: recipientId,
+                        last_message_at: new Date(timestampInMs).toISOString(),
+                        lead_status: 'cold',
+                        updated_at: new Date().toISOString(),
+                    },
+                    { onConflict: 'user_id,platform,external_id' }
+                )
+                .select('id')
+                .single();
+
+            const contactId = upsertedContact?.id || null;
+
+            // Crear conversación
+            const { data: newConv, error: createError } = await supabase
+                .from('conversations')
+                .insert({
+                    user_id: userId,
+                    platform: 'instagram',
+                    platform_conversation_id: recipientId,
+                    platform_page_id: pageId,
+                    contact_id: contactId,
+                    contact: recipientId,
+                    last_message_at: new Date(timestampInMs).toISOString(),
+                    unread_count: 0, // Echo messages don't increase unread count
+                    lead_status: 'cold',
+                })
+                .select('id')
+                .single();
+
+            if (createError) {
+                console.error('❌ Error creating conversation for echo:', createError);
+                return;
+            }
+
+            conversationId = newConv.id;
+            console.log('✅ Created new conversation for echo:', conversationId);
+        } else {
+            // Actualizar last_message_at de la conversación existente
+            await supabase
+                .from('conversations')
+                .update({
+                    last_message_at: new Date(timestampInMs).toISOString(),
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', conversationId);
+        }
+
+        // Guardar el mensaje como outbound (enviado)
+        if (conversationId && messageText) {
+            // Verificar si ya existe
+            const { data: existingMessage } = await supabase
+                .from('messages')
+                .select('id')
+                .eq('user_id', userId)
+                .eq('platform_message_id', messageId)
+                .maybeSingle();
+
+            if (existingMessage) {
+                console.log('ℹ️ Echo message already exists:', messageId);
+                return;
+            }
+
+            const { error: messageError } = await supabase
+                .from('messages')
+                .insert({
+                    conversation_id: conversationId,
+                    user_id: userId,
+                    platform_message_id: messageId,
+                    content: messageText,
+                    direction: 'outbound',
+                    message_type: 'text',
+                    metadata: {
+                        sender_id: senderId,
+                        recipient_id: recipientId,
+                        timestamp: timestampInSeconds,
+                        source: 'instagram_manual', // Marca que fue enviado desde Instagram directamente
+                    },
+                });
+
+            if (messageError) {
+                console.error('❌ Error saving echo message:', messageError);
+                return;
+            }
+
+            console.log('✅ Echo message saved successfully');
+        }
+
+        // Manejar attachments en echo messages
+        if (message.attachments) {
+            console.log('📎 Echo message has attachments:', message.attachments.length);
+        }
+
+    } catch (error) {
+        console.error('❌ Error processing echo message:', error);
     }
 }
 
