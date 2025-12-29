@@ -1,6 +1,7 @@
 import * as React from "react"
 
 interface SwitchProps {
+  id?: string
   checked?: boolean
   onCheckedChange?: (checked: boolean) => void
   disabled?: boolean
@@ -8,62 +9,49 @@ interface SwitchProps {
   style?: React.CSSProperties
 }
 
-const Switch = React.forwardRef<HTMLLabelElement, SwitchProps>(
-  ({ checked = false, onCheckedChange, disabled = false, className, style }, ref) => {
+const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
+  ({ id, checked = false, onCheckedChange, disabled = false, className, style }, ref) => {
     return (
-      <label
+      <button
         ref={ref}
+        id={id}
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
         className={className}
+        onClick={() => !disabled && onCheckedChange?.(!checked)}
         style={{
           position: 'relative',
-          display: 'inline-block',
-          width: '52px',
-          height: '28px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          width: '44px',
+          height: '24px',
+          padding: 0,
           margin: 0,
+          border: '2px solid #000',
+          borderRadius: '24px',
+          backgroundColor: checked ? '#22c55e' : '#e5e5e5',
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.5 : 1,
+          transition: 'background-color 0.2s ease',
+          flexShrink: 0,
           ...style,
         }}
       >
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onCheckedChange?.(e.target.checked)}
-          disabled={disabled}
-          style={{
-            opacity: 0,
-            width: 0,
-            height: 0,
-          }}
-        />
         <span
           style={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: checked ? 'var(--color-primary-hover)' : 'var(--color-border)',
-            borderRadius: '28px',
-            transition: 'var(--transition)',
+            width: '18px',
+            height: '18px',
+            left: checked ? '22px' : '2px',
+            backgroundColor: '#fff',
+            border: '2px solid #000',
+            borderRadius: '50%',
+            transition: 'left 0.2s ease',
           }}
-        >
-          <span
-            style={{
-              position: 'absolute',
-              content: '""',
-              height: '22px',
-              width: '22px',
-              left: checked ? '26px' : '3px',
-              bottom: '3px',
-              backgroundColor: 'var(--color-bg)',
-              borderRadius: '50%',
-              transition: 'var(--transition)',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.4)',
-            }}
-          />
-        </span>
-      </label>
+        />
+      </button>
     )
   }
 )
