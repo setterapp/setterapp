@@ -315,132 +315,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* 3. SOLUTION SECTION */}
-      <section
-        style={{
-          padding: '60px var(--spacing-xl)',
-        }}
-      >
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h2
-            style={{
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: 700,
-              textAlign: 'center',
-              margin: '0 0 var(--spacing-2xl) 0',
-              color: 'var(--color-text)',
-            }}
-          >
-            AI Setter vs Human Setter
-          </h2>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
-              gap: 'var(--spacing-xl)',
-            }}
-          >
-            {/* Before Card */}
-            <div
-              className="card"
-              style={{
-                background: '#fff5f5',
-                animation: 'slideInLeft 0.6s ease-out',
-                animationFillMode: 'both',
-              }}
-            >
-              <div
-                style={{
-                  background: 'var(--color-danger)',
-                  color: '#000',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  display: 'inline-block',
-                  fontWeight: 700,
-                  marginBottom: 'var(--spacing-lg)',
-                  border: '2px solid #000',
-                }}
-              >
-                BEFORE
-              </div>
-              <h3 style={{ fontSize: 'var(--font-size-xl)', margin: '0 0 var(--spacing-md) 0' }}>
-                Human Setters
-              </h3>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {[
-                  "High monthly salaries + commissions",
-                  "Only available 8-10 hours/day",
-                  "Need constant training & supervision",
-                  "High turnover, start over every few months",
-                  "Slow response times = lost leads"
-                ].map((item, i) => (
-                  <li key={i} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--spacing-sm)',
-                    marginBottom: 'var(--spacing-sm)',
-                    color: 'var(--color-text-secondary)'
-                  }}>
-                    <X size={18} color="var(--color-danger)" strokeWidth={3} />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* After Card */}
-            <div
-              className="card"
-              style={{
-                background: '#f0fff4',
-                animation: 'slideInRight 0.6s ease-out',
-                animationDelay: '0.2s',
-                animationFillMode: 'both',
-              }}
-            >
-              <div
-                style={{
-                  background: 'var(--color-success)',
-                  color: '#000',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  display: 'inline-block',
-                  fontWeight: 700,
-                  marginBottom: 'var(--spacing-lg)',
-                  border: '2px solid #000',
-                }}
-              >
-                NOW
-              </div>
-              <h3 style={{ fontSize: 'var(--font-size-xl)', margin: '0 0 var(--spacing-md) 0' }}>
-                SetterApp.ai
-              </h3>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {[
-                  "Fixed low monthly cost, no commissions",
-                  "Available 24/7, never takes a break",
-                  "Set it up once, works forever",
-                  "No turnover, always improving",
-                  "Instant responses = more conversions"
-                ].map((item, i) => (
-                  <li key={i} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--spacing-sm)',
-                    marginBottom: 'var(--spacing-sm)',
-                    color: 'var(--color-text-secondary)'
-                  }}>
-                    <Check size={18} color="var(--color-success)" strokeWidth={3} />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* 4. COMPARISON TABLE */}
       <section
         style={{
@@ -470,14 +344,14 @@ function Landing() {
           >
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '400px' }}>
               <thead>
-                <tr style={{ background: 'var(--color-bg-secondary)' }}>
+                <tr style={{ background: 'var(--color-primary)' }}>
                   <th style={{ padding: 'var(--spacing-md)', textAlign: 'left', borderBottom: '2px solid #000', fontWeight: 700 }}>
                     Aspect
                   </th>
                   <th style={{ padding: 'var(--spacing-md)', textAlign: 'center', borderBottom: '2px solid #000', fontWeight: 700 }}>
                     Human Setter
                   </th>
-                  <th style={{ padding: 'var(--spacing-md)', textAlign: 'center', borderBottom: '2px solid #000', fontWeight: 700, background: '#e8f5e9' }}>
+                  <th style={{ padding: 'var(--spacing-md)', textAlign: 'center', borderBottom: '2px solid #000', fontWeight: 700 }}>
                     SetterApp.ai
                   </th>
                 </tr>
