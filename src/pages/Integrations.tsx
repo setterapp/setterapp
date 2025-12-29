@@ -27,49 +27,21 @@ function Integrations() {
 
 
 
-  // Recargar datos cuando se monta el componente (útil después del callback de OAuth)
+  // Solo hacer refetch extra si venimos de un callback de OAuth
   useEffect(() => {
-    // Verificar si venimos de un callback de OAuth
     const urlParams = new URLSearchParams(location.search)
     const forceRefetch = urlParams.get('refetch') === 'true'
 
-    console.log('[Integrations] Component mounted', {
-      forceRefetch,
-      pathname: location.pathname,
-      search: location.search
-    })
-
-    // Refetch inmediato + delayed para asegurar que la DB se actualice
-    refetch()
-
-    // Si venimos de callback, hacer refetch más agresivo
+    // Solo si venimos de OAuth callback, hacer refetches adicionales
+    // (el hook useIntegrations ya hace el fetch inicial)
     if (forceRefetch) {
-      console.log('[Integrations] Force refetch enabled, scheduling multiple refetches')
       const timers = [
-        setTimeout(() => {
-          console.log('[Integrations] Refetch 1s')
-          refetch()
-        }, 1000),
-        setTimeout(() => {
-          console.log('[Integrations] Refetch 3s')
-          refetch()
-        }, 3000),
-        setTimeout(() => {
-          console.log('[Integrations] Refetch 5s')
-          refetch()
-        }, 5000)
+        setTimeout(() => refetch(), 1000),
+        setTimeout(() => refetch(), 3000),
       ]
-
       return () => timers.forEach(timer => clearTimeout(timer))
-    } else {
-      const timer = setTimeout(() => {
-        console.log('[Integrations] Delayed refetch')
-        refetch()
-      }, 2000)
-
-      return () => clearTimeout(timer)
     }
-  }, []) // Solo al montar
+  }, [location.search])
 
   // Cerrar menú al hacer clic fuera
   useEffect(() => {
