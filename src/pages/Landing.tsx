@@ -598,114 +598,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* 6. HOW IT WORKS */}
-      <section
-        style={{
-          padding: '60px var(--spacing-xl)',
-        }}
-      >
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <h2
-            style={{
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: 700,
-              textAlign: 'center',
-              margin: '0 0 var(--spacing-2xl) 0',
-              color: 'var(--color-text)',
-            }}
-          >
-            Get Started in 3 Steps
-          </h2>
-
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              gap: 'var(--spacing-lg)',
-              flexWrap: 'wrap',
-              position: 'relative',
-            }}
-          >
-            {/* Connecting Line (hidden on mobile) */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '60px',
-                left: '20%',
-                right: '20%',
-                height: '4px',
-                background: '#000',
-                display: 'none',
-              }}
-              className="steps-line"
-            />
-
-            {[
-              { icon: MessageSquare, title: "Connect your channels", desc: "Link your Instagram and WhatsApp accounts in minutes" },
-              { icon: Settings, title: "Configure your agent", desc: "Set up your AI with your business info and preferences" },
-              { icon: Calendar, title: "Start booking", desc: "Watch as your AI handles conversations and books appointments" },
-            ].map((step, index) => (
-              <div
-                key={index}
-                style={{
-                  flex: '1 1 min(250px, 100%)',
-                  minWidth: 0,
-                  textAlign: 'center',
-                  animation: 'bounceIn 0.6s ease-out',
-                  animationDelay: `${index * 0.2}s`,
-                  animationFillMode: 'both',
-                }}
-              >
-                <div
-                  style={{
-                    width: 'clamp(70px, 18vw, 100px)',
-                    height: 'clamp(70px, 18vw, 100px)',
-                    background: 'var(--color-primary)',
-                    border: '2px solid #000',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto var(--spacing-md)',
-                    boxShadow: '3px 3px 0px 0px #000',
-                    position: 'relative',
-                  }}
-                >
-                  <step.icon size={36} color="#000" strokeWidth={2} />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '-10px',
-                      right: '-10px',
-                      width: '36px',
-                      height: '36px',
-                      background: '#000',
-                      color: '#fff',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: 'var(--font-size-lg)',
-                    }}
-                  >
-                    {index + 1}
-                  </div>
-                </div>
-                <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
-                  {step.title}
-                </h4>
-                <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
       {/* 9. PRICING */}
       <section
         style={{
@@ -739,7 +631,7 @@ function Landing() {
             className="card"
             style={{
               position: 'relative',
-              background: 'var(--color-primary)',
+              background: '#fff',
               animation: 'fadeInScale 0.5s ease-out',
               textAlign: 'center',
             }}
@@ -799,18 +691,11 @@ function Landing() {
             </ul>
             <Link
               to="/register"
-              className="btn btn--secondary"
+              className="btn btn--primary"
               style={{ width: '100%', justifyContent: 'center' }}
             >
-              Start 14-Day Free Trial
+              Start Free
             </Link>
-            <p style={{
-              margin: 'var(--spacing-md) 0 0 0',
-              fontSize: 'var(--font-size-xs)',
-              color: 'var(--color-text-secondary)'
-            }}>
-              No credit card required
-            </p>
           </div>
         </div>
       </section>
@@ -896,7 +781,7 @@ function Landing() {
               animation: 'pulse 2s ease-in-out infinite',
             }}
           >
-            Start 14-Day Free Trial
+            Start Free
             <ArrowRight size={20} />
           </Link>
         </div>
