@@ -174,7 +174,7 @@ function Landing() {
               zIndex: 1,
             }}
           >
-            Save up to 80%
+            Early Access — $49/mo forever
           </div>
 
           <div
@@ -712,7 +712,7 @@ function Landing() {
           padding: '60px var(--spacing-xl)',
         }}
       >
-        <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '380px', margin: '0 auto' }}>
           <h2
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -722,17 +722,17 @@ function Landing() {
               color: 'var(--color-text)',
             }}
           >
-            Simple Pricing
+            Early Access Pricing
           </h2>
           <p
             style={{
               textAlign: 'center',
               color: 'var(--color-text-secondary)',
               margin: '0 0 var(--spacing-2xl) 0',
-              fontSize: 'var(--font-size-lg)',
+              fontSize: 'var(--font-size-base)',
             }}
           >
-            No hidden fees. Cancel anytime.
+            Join now and lock in this price forever
           </p>
 
           <div
@@ -760,26 +760,27 @@ function Landing() {
             >
               EARLY ACCESS
             </div>
-            <p style={{ margin: '0 0 var(--spacing-md) 0' }}>
-              <span style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', fontWeight: 700 }}>$49</span>
+            <p style={{ margin: '0 0 var(--spacing-xs) 0' }}>
+              <span style={{ fontSize: 'clamp(2.5rem, 5vw, 3rem)', fontWeight: 700 }}>$49</span>
               <span style={{ color: 'var(--color-text-secondary)' }}>/month</span>
             </p>
             <p style={{
               margin: '0 0 var(--spacing-lg) 0',
               color: 'var(--color-text-secondary)',
-              fontSize: 'var(--font-size-sm)'
+              fontSize: 'var(--font-size-sm)',
+              fontWeight: 500,
             }}>
-              Lock in this price before we raise it
+              forever — includes all future integrations
             </p>
             <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg) 0', textAlign: 'left' }}>
               {[
                 "Unlimited messages",
                 "Instagram DM automation",
+                "WhatsApp (coming soon)",
                 "Google Calendar integration",
                 "AI lead qualification",
                 "Built-in CRM",
-                "24/7 automated responses",
-                "Email support"
+                "All future integrations included"
               ].map((feature, i) => (
                 <li
                   key={i}
@@ -788,9 +789,10 @@ function Landing() {
                     alignItems: 'center',
                     gap: 'var(--spacing-sm)',
                     marginBottom: 'var(--spacing-sm)',
+                    fontSize: 'var(--font-size-sm)',
                   }}
                 >
-                  <Check size={18} color="var(--color-success)" strokeWidth={3} />
+                  <Check size={16} color="var(--color-success)" strokeWidth={3} />
                   {feature}
                 </li>
               ))}
@@ -866,7 +868,7 @@ function Landing() {
               border: '2px solid #000',
             }}
           >
-            14-day free trial
+            Early Access — $49/mo forever
           </div>
           <h2
             style={{
@@ -876,7 +878,7 @@ function Landing() {
               color: 'var(--color-text)',
             }}
           >
-            Get Your AI Appointment Setter Today
+            Lock In Your Price Before We Raise It
           </h2>
           <p
             style={{
@@ -885,7 +887,7 @@ function Landing() {
               margin: '0 0 var(--spacing-2xl) 0',
             }}
           >
-            Stop losing leads. Start booking appointments 24/7 on Instagram.
+            Join now and get all future integrations included at no extra cost.
           </p>
           <Link
             to="/register"
@@ -894,7 +896,7 @@ function Landing() {
               animation: 'pulse 2s ease-in-out infinite',
             }}
           >
-            Start Free Trial
+            Start 14-Day Free Trial
             <ArrowRight size={20} />
           </Link>
         </div>
