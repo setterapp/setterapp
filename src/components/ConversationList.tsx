@@ -90,7 +90,7 @@ function ConversationItem({
             borderRadius: '50%',
             overflow: 'hidden',
             flexShrink: 0,
-            border: '3px solid var(--color-border)',
+            border: '2px solid #000',
             background: hasProfilePicture ? 'transparent' : 'var(--color-bg-secondary)',
             display: 'flex',
             alignItems: 'center',
