@@ -578,15 +578,23 @@ async function processInstagramEvent(event: any, pageId: string) {
                 // No romper el webhook por debug
             }
 
-            // TEMPORARY: Skip profile fetching until app review is approved
-            // Username requires additional permissions from Meta
-            // For now, use sender ID as display name
-            const userProfile = null; // Disabled until app review
-            console.log('ℹ️ Profile fetching disabled (pending app review), using ID');
+            // Obtener perfil del usuario (requiere App Review aprobado)
+            // Para habilitar: cambiar APP_REVIEW_APPROVED a true
+            const APP_REVIEW_APPROVED = false; // ⬅️ CAMBIAR A true DESPUÉS DEL APP REVIEW
 
-            // Usar directamente el senderId como nombre hasta app review
-            const displayName = senderId;
-            const contactName = senderId;
+            let userProfile = null;
+            if (APP_REVIEW_APPROVED) {
+                userProfile = await getInstagramUserProfile(userId, senderId);
+                if (userProfile?.username) {
+                    console.log('✅ Username obtenido:', userProfile.username);
+                }
+            } else {
+                console.log('ℹ️ Profile fetching disabled (APP_REVIEW_APPROVED = false)');
+            }
+
+            // Usar username si está disponible, sino el senderId
+            const displayName = userProfile?.username || userProfile?.name || senderId;
+            const contactName = displayName;
 
             // Upsert contacto (CRM) y obtener contact_id
             let contactId: string | null = null;
