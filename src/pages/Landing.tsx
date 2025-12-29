@@ -10,7 +10,6 @@ import {
   BarChart3,
   Settings,
   ChevronDown,
-  Star,
   Clock,
   DollarSign,
   TrendingUp
@@ -106,26 +105,6 @@ function Landing() {
     }
   ]
 
-  const testimonials = [
-    {
-      name: "Sarah M.",
-      business: "Fitness Coach",
-      quote: "I used to spend 3 hours a day responding to Instagram DMs. Now the AI appointment setter handles everything and I've increased my bookings by 40%.",
-      color: "#a6e3a1"
-    },
-    {
-      name: "Carlos R.",
-      business: "Real Estate Agent",
-      quote: "The 24/7 AI setter is a game changer. I'm booking appointments on WhatsApp while I sleep. Best investment for automated lead qualification.",
-      color: "#89b4fa"
-    },
-    {
-      name: "Emma L.",
-      business: "Beauty Salon Owner",
-      quote: "No more missed leads at night. The AI appointment setter responds instantly on Instagram and my clients love how fast they get answers.",
-      color: "#f38ba8"
-    }
-  ]
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg-secondary)' }}>
@@ -728,149 +707,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* 7. METRICS SECTION */}
-      <section
-        style={{
-          padding: '60px var(--spacing-xl)',
-        }}
-      >
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h2
-            style={{
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: 700,
-              textAlign: 'center',
-              margin: '0 0 var(--spacing-2xl) 0',
-              color: 'var(--color-text)',
-            }}
-          >
-            Numbers That Speak
-          </h2>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))',
-              gap: 'var(--spacing-lg)',
-            }}
-          >
-            {[
-              { value: "5,000+", label: "Conversations automated" },
-              { value: "<3s", label: "Average response time" },
-              { value: "85%", label: "Booking rate" },
-              { value: "0%", label: "Commissions paid" },
-            ].map((metric, index) => (
-              <div
-                key={index}
-                className="card"
-                style={{
-                  textAlign: 'center',
-                  animation: 'fadeInScale 0.5s ease-out',
-                  animationDelay: `${index * 0.1}s`,
-                  animationFillMode: 'both',
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: 'clamp(2rem, 5vw, 3rem)',
-                    fontWeight: 700,
-                    margin: '0 0 var(--spacing-xs) 0',
-                    color: 'var(--color-primary)',
-                  }}
-                >
-                  {metric.value}
-                </p>
-                <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
-                  {metric.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 8. TESTIMONIALS */}
-      <section
-        style={{
-          padding: '60px var(--spacing-xl)',
-        }}
-      >
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h2
-            style={{
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: 700,
-              textAlign: 'center',
-              margin: '0 0 var(--spacing-2xl) 0',
-              color: 'var(--color-text)',
-            }}
-          >
-            What Our Users Say
-          </h2>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
-              gap: 'var(--spacing-lg)',
-            }}
-          >
-            {testimonials.map((testimonial, index) => (
-              <div
-                key={index}
-                className="card"
-                style={{
-                  background: testimonial.color + '20',
-                  animation: 'slideInUp 0.5s ease-out',
-                  animationDelay: `${index * 0.1}s`,
-                  animationFillMode: 'both',
-                }}
-              >
-                <div style={{ display: 'flex', gap: '4px', marginBottom: 'var(--spacing-md)' }}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} size={20} fill="#f9e2af" color="#000" />
-                  ))}
-                </div>
-                <p
-                  style={{
-                    fontSize: 'var(--font-size-base)',
-                    color: 'var(--color-text)',
-                    margin: '0 0 var(--spacing-lg) 0',
-                    fontStyle: 'italic',
-                    lineHeight: 1.6,
-                  }}
-                >
-                  "{testimonial.quote}"
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      background: testimonial.color,
-                      border: '2px solid #000',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: 'var(--font-size-lg)',
-                    }}
-                  >
-                    {testimonial.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, fontWeight: 600 }}>{testimonial.name}</p>
-                    <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                      {testimonial.business}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* 9. PRICING */}
       <section
@@ -878,7 +714,7 @@ function Landing() {
           padding: '60px var(--spacing-xl)',
         }}
       >
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '500px', margin: '0 auto' }}>
           <h2
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -888,7 +724,7 @@ function Landing() {
               color: 'var(--color-text)',
             }}
           >
-            Simple & Transparent
+            Simple Pricing
           </h2>
           <p
             style={{
@@ -898,99 +734,83 @@ function Landing() {
               fontSize: 'var(--font-size-lg)',
             }}
           >
-            No hidden fees. No surprises. Cancel anytime.
+            No hidden fees. Cancel anytime.
           </p>
 
           <div
+            className="card"
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
-              gap: 'var(--spacing-lg)',
-              alignItems: 'stretch',
+              position: 'relative',
+              background: 'var(--color-primary)',
+              animation: 'fadeInScale 0.5s ease-out',
+              textAlign: 'center',
             }}
           >
-            {[
-              {
-                name: "Starter",
-                price: "$49",
-                features: ["500 messages/month", "1 channel", "Basic analytics", "Email support"],
-                popular: false
-              },
-              {
-                name: "Pro",
-                price: "$99",
-                features: ["2,000 messages/month", "All channels", "Advanced analytics", "Priority support", "Calendar integration"],
-                popular: true
-              },
-              {
-                name: "Business",
-                price: "$199",
-                features: ["Unlimited messages", "All channels", "Full analytics", "Dedicated support", "API access", "Custom integrations"],
-                popular: false
-              },
-            ].map((plan, index) => (
-              <div
-                key={index}
-                className="card"
-                style={{
-                  position: 'relative',
-                  background: plan.popular ? 'var(--color-primary)' : 'var(--color-bg)',
-                  transform: plan.popular ? 'scale(1.05)' : 'scale(1)',
-                  animation: 'fadeInScale 0.5s ease-out',
-                  animationDelay: `${index * 0.1}s`,
-                  animationFillMode: 'both',
-                }}
-              >
-                {plan.popular && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '-12px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      background: '#000',
-                      color: '#fff',
-                      padding: '4px 16px',
-                      borderRadius: '20px',
-                      fontSize: 'var(--font-size-xs)',
-                      fontWeight: 700,
-                    }}
-                  >
-                    MOST POPULAR
-                  </div>
-                )}
-                <h3 style={{ fontSize: 'var(--font-size-xl)', margin: '0 0 var(--spacing-sm) 0', fontWeight: 700 }}>
-                  {plan.name}
-                </h3>
-                <p style={{ margin: '0 0 var(--spacing-lg) 0' }}>
-                  <span style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 700 }}>{plan.price}</span>
-                  <span style={{ color: 'var(--color-text-secondary)' }}>/mo</span>
-                </p>
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg) 0' }}>
-                  {plan.features.map((feature, i) => (
-                    <li
-                      key={i}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--spacing-sm)',
-                        marginBottom: 'var(--spacing-sm)',
-                      }}
-                    >
-                      <Check size={18} color="var(--color-success)" strokeWidth={3} />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/register"
-                  className={`btn ${plan.popular ? 'btn--secondary' : 'btn--primary'}`}
-                  style={{ width: '100%', justifyContent: 'center' }}
+            <div
+              style={{
+                position: 'absolute',
+                top: '-12px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: '#000',
+                color: '#fff',
+                padding: '4px 16px',
+                borderRadius: '20px',
+                fontSize: 'var(--font-size-xs)',
+                fontWeight: 700,
+              }}
+            >
+              EARLY ACCESS
+            </div>
+            <p style={{ margin: '0 0 var(--spacing-md) 0' }}>
+              <span style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', fontWeight: 700 }}>$49</span>
+              <span style={{ color: 'var(--color-text-secondary)' }}>/month</span>
+            </p>
+            <p style={{
+              margin: '0 0 var(--spacing-lg) 0',
+              color: 'var(--color-text-secondary)',
+              fontSize: 'var(--font-size-sm)'
+            }}>
+              Lock in this price before we raise it
+            </p>
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg) 0', textAlign: 'left' }}>
+              {[
+                "Unlimited messages",
+                "Instagram & WhatsApp",
+                "Google Calendar integration",
+                "AI lead qualification",
+                "Built-in CRM",
+                "24/7 automated responses",
+                "Email support"
+              ].map((feature, i) => (
+                <li
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-sm)',
+                    marginBottom: 'var(--spacing-sm)',
+                  }}
                 >
-                  Get Started
-                </Link>
-              </div>
-            ))}
+                  <Check size={18} color="var(--color-success)" strokeWidth={3} />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/register"
+              className="btn btn--secondary"
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              Start 14-Day Free Trial
+            </Link>
+            <p style={{
+              margin: 'var(--spacing-md) 0 0 0',
+              fontSize: 'var(--font-size-xs)',
+              color: 'var(--color-text-secondary)'
+            }}>
+              No credit card required
+            </p>
           </div>
         </div>
       </section>
@@ -1048,7 +868,7 @@ function Landing() {
               border: '2px solid #000',
             }}
           >
-            Join +500 businesses
+            14-day free trial
           </div>
           <h2
             style={{
@@ -1067,7 +887,7 @@ function Landing() {
               margin: '0 0 var(--spacing-2xl) 0',
             }}
           >
-            Start automating Instagram DMs and WhatsApp messages. 14-day free trial, no credit card required.
+            Stop losing leads. Start booking appointments 24/7 on Instagram & WhatsApp.
           </p>
           <Link
             to="/register"
