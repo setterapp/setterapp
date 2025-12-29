@@ -7,8 +7,9 @@ import type { Contact } from '../hooks/useContacts'
 import { formatDate } from '../utils/date'
 import PlatformBadge from '../components/badges/PlatformBadge'
 import LeadStatusBadge from '../components/badges/LeadStatusBadge'
-import { Download, Copy } from 'lucide-react'
+import { Download, Copy, Users } from 'lucide-react'
 import { Checkbox } from '../components/ui/checkbox'
+import SectionHeader from '../components/SectionHeader'
 
 function Contacts() {
   const { t } = useTranslation()
@@ -209,6 +210,8 @@ function Contacts() {
 
   return (
     <div>
+      <SectionHeader title="Contactos" icon={<Users size={24} />} />
+
       {loading && contacts.length === 0 ? (
         <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">

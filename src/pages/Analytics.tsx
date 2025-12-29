@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, BarChart3 } from 'lucide-react'
+import SectionHeader from '../components/SectionHeader'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { useConversations } from '../hooks/useConversations'
 import { useAgents } from '../hooks/useAgents'
@@ -139,30 +140,25 @@ function Analytics() {
 
   return (
     <div>
-      {/* Time Filter */}
-      <div className="card" style={{ marginBottom: 'var(--spacing-lg)', border: '2px solid #000', padding: 'var(--spacing-md)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--spacing-sm)' }}>
-          <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text)' }}>
-            {t('analytics.period')}
-          </span>
-          {(['today', 'week', 'month', 'all'] as TimeRange[]).map((range) => (
-            <button
-              key={range}
-              onClick={() => setTimeRange(range)}
-              className="btn btn--sm"
-              style={{
-                fontSize: 'var(--font-size-xs)',
-                padding: '6px 12px',
-                backgroundColor: timeRange === range ? 'var(--color-primary)' : 'transparent',
-                color: timeRange === range ? '#000' : 'var(--color-text)',
-                fontWeight: 600
-              }}
-            >
-              {t(`analytics.${range}`)}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Section Header with Time Filter */}
+      <SectionHeader title="Analytics" icon={<BarChart3 size={24} />}>
+        {(['today', 'week', 'month', 'all'] as TimeRange[]).map((range) => (
+          <button
+            key={range}
+            onClick={() => setTimeRange(range)}
+            className="btn btn--sm"
+            style={{
+              fontSize: 'var(--font-size-xs)',
+              padding: '6px 12px',
+              backgroundColor: timeRange === range ? 'var(--color-primary)' : 'transparent',
+              color: timeRange === range ? '#000' : 'var(--color-text)',
+              fontWeight: 600
+            }}
+          >
+            {t(`analytics.${range}`)}
+          </button>
+        ))}
+      </SectionHeader>
 
       {/* Main Analytics Container */}
       <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-xl)', backgroundColor: '#fff' }}>

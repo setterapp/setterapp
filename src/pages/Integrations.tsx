@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Check, X, MoreVertical, AlertTriangle } from 'lucide-react'
+import { Check, X, MoreVertical, AlertTriangle, Link2 } from 'lucide-react'
+import SectionHeader from '../components/SectionHeader'
 import { useTranslation } from 'react-i18next'
 import { useIntegrations } from '../hooks/useIntegrations'
 import { instagramService } from '../services/facebook/instagram'
@@ -314,6 +315,8 @@ function Integrations() {
 
   return (
     <div>
+      <SectionHeader title="Integraciones" icon={<Link2 size={24} />} />
+
       {loading ? (
         <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, MoreVertical, MessageSquare, ArrowRight } from 'lucide-react'
+import { Plus, Trash2, MoreVertical, MessageSquare, ArrowRight, Bot } from 'lucide-react'
 import Logo from '../components/Logo'
+import SectionHeader from '../components/SectionHeader'
 import { useAgents, type AgentConfig, type Agent } from '../hooks/useAgents'
 import { Switch } from '../components/ui/switch'
 import Modal from '../components/common/Modal'
@@ -183,16 +184,16 @@ function Agents() {
 
     return (
         <div>
-            <div style={{ marginBottom: 'var(--spacing-md)', display: 'flex', justifyContent: 'flex-end' }}>
+            <SectionHeader title="Agentes" icon={<Bot size={24} />}>
                 <button className="btn btn--primary" onClick={() => {
-                    setCurrentStep(1) // Siempre empezar desde el primer paso
-                    setIsTransitioning(false) // Resetear flag de transición
+                    setCurrentStep(1)
+                    setIsTransitioning(false)
                     setShowForm(true)
                 }}>
                     <Plus size={18} />
                     Crear Agente
                 </button>
-            </div>
+            </SectionHeader>
 
             <Modal
                 isOpen={showForm}
