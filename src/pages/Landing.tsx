@@ -631,7 +631,7 @@ function Landing() {
             style={{
               position: 'relative',
               background: '#fff',
-              animation: 'fadeInScale 0.5s ease-out',
+              animation: 'float 3s ease-in-out infinite',
               textAlign: 'center',
             }}
           >
