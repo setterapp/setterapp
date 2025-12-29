@@ -801,12 +801,25 @@ async function processInstagramEvent(event: any, pageId: string) {
 
                 console.log('✅ Message saved successfully with ID:', savedMessage.id);
 
-                // 🤖 Generar y enviar respuesta automática con IA
-                generateAndSendAutoReply(userId, conversationId, senderId, messageText)
-                    .catch(error => {
-                        console.error('❌ Error en respuesta automática:', error);
-                        // No lanzar el error para no afectar el webhook
-                    });
+                // 🤖 Verificar si AI está habilitada para esta conversación
+                const { data: convData } = await supabase
+                    .from('conversations')
+                    .select('ai_enabled')
+                    .eq('id', conversationId)
+                    .single();
+
+                const isAiEnabled = convData?.ai_enabled !== false; // Default true if null/undefined
+
+                if (isAiEnabled) {
+                    // Generar y enviar respuesta automática con IA
+                    generateAndSendAutoReply(userId, conversationId, senderId, messageText)
+                        .catch(error => {
+                            console.error('❌ Error en respuesta automática:', error);
+                            // No lanzar el error para no afectar el webhook
+                        });
+                } else {
+                    console.log('ℹ️ AI disabled for this conversation, skipping auto-reply');
+                }
 
                 // Clasificación automática de lead status removida - ahora es manual por el usuario
             }

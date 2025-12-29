@@ -25,6 +25,7 @@ export interface Conversation {
   created_at: string
   updated_at: string
   lead_status?: 'cold' | 'warm' | 'booked' | 'closed' | 'not_closed' | null
+  ai_enabled?: boolean
   contact_metadata?: {
     username?: string
     name?: string

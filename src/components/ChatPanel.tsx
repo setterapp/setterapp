@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, User } from 'lucide-react'
+import { ArrowLeft, User, Bot } from 'lucide-react'
 import type { Conversation } from '../hooks/useConversations'
 import { useMessages } from '../hooks/useMessages'
 import MessageBubble from './MessageBubble'
@@ -21,10 +21,17 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
     conversation.contact_ref?.lead_status || null
   )
 
+  // Local state for AI enabled toggle
+  const [aiEnabled, setAiEnabled] = useState<boolean>(conversation.ai_enabled !== false)
+
   // Sync with prop changes (e.g., when Realtime updates arrive)
   useEffect(() => {
     setOptimisticLeadStatus(conversation.contact_ref?.lead_status || null)
   }, [conversation.contact_ref?.lead_status])
+
+  useEffect(() => {
+    setAiEnabled(conversation.ai_enabled !== false)
+  }, [conversation.ai_enabled])
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -202,6 +209,51 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
             <option value="closed">Closed</option>
             <option value="not_closed">Not Closed</option>
           </select>
+
+          {/* AI Toggle */}
+          <button
+            onClick={async () => {
+              const newValue = !aiEnabled
+              setAiEnabled(newValue)
+
+              try {
+                const { error } = await supabase
+                  .from('conversations')
+                  .update({
+                    ai_enabled: newValue,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', conversationId)
+
+                if (error) {
+                  console.error('❌ Error updating ai_enabled:', error)
+                  setAiEnabled(!newValue) // Revert on error
+                }
+              } catch (err) {
+                console.error('❌ Error updating ai_enabled:', err)
+                setAiEnabled(!newValue)
+              }
+            }}
+            title={aiEnabled ? 'AI activada - Click para desactivar' : 'AI desactivada - Click para activar'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 8px',
+              borderRadius: 'var(--border-radius-sm)',
+              border: '2px solid #000',
+              background: aiEnabled ? '#22c55e' : '#94a3b8',
+              cursor: 'pointer',
+              fontSize: 'var(--font-size-sm)',
+              fontWeight: 600,
+              color: '#000',
+              flexShrink: 0,
+              transition: 'background 0.2s ease',
+            }}
+          >
+            <Bot size={14} />
+            <span>{aiEnabled ? 'AI' : 'AI'}</span>
+          </button>
         </div>
       </div>
 
