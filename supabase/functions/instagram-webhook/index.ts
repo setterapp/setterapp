@@ -1826,21 +1826,7 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
  * Builds the system prompt using agent configuration and contact context
  */
 function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null): string {
-    // START with critical rules so they take precedence
-    let prompt = `REGLAS OBLIGATORIAS (DEBES SEGUIR):
-1. Responde con 2-3 mensajes CORTOS separados por [MSG]
-2. Cada mensaje max 15 palabras
-3. NO preguntes "quieres saber más" o "te puedo ayudar en algo más" NUNCA
-4. NO uses emojis ni signos de exclamación
-5. Tono casual, como amigo
-6. Solo usa ? al final (nunca ¿)
-
-FORMATO CORRECTO: "si claro[MSG]para que lo necesitas"
-FORMATO INCORRECTO: "Sí, por supuesto. Te puedo ayudar con eso. ¿Te gustaría saber más?"
-
----
-
-${description || `You are ${agentName}.`}`;
+    let prompt = `${description || `You are ${agentName}.`}`;
 
     // Add identity information if configured
     if (config?.assistantName || config?.companyName || config?.ownerName) {
@@ -1896,36 +1882,15 @@ ${description || `You are ${agentName}.`}`;
         prompt += `\n\nCALENDAR: Now is ${currentDateTime} (${timezone}). Work hours: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'}. Use check_availability before proposing times. Ask for email before scheduling.`;
     }
 
-    // CRITICAL: These rules go at the END so the AI follows them
+    // Simple rules at the end
     prompt += `
 
-#####################
-MANDATORY RULES - FOLLOW OR FAIL
-#####################
-
-FORMAT: You MUST use [MSG] to separate messages. Write 2-3 short messages.
-EXAMPLE: "si claro[MSG]con que te puedo ayudar"
-EXAMPLE: "ah ok[MSG]cuéntame más"
-
-PROHIBIDO / FORBIDDEN:
-- NO emojis
-- NO exclamation marks (!)
-- NO "¿" - only use "?" at the end
-- NO asking "quieres saber más?" or "te gustaría más info?" - NEVER
-- NO long paragraphs
-- NO formal/robotic language
-
-OBLIGATORIO:
-- Mensajes CORTOS (max 15 palabras cada uno)
+REGLAS:
+- Respuestas cortas (max 20 palabras)
 - Tono casual, como amigo
-- Si haces pregunta, termina ahí el mensaje
-- Usa [MSG] entre cada mensaje
-
-EJEMPLO CORRECTO:
-si, funciona con instagram[MSG]lo usas para tu negocio?
-
-EJEMPLO INCORRECTO:
-Sí, setterapp puede integrarse con Instagram para ayudarte a gestionar leads. ¿Te gustaría saber más sobre cómo funciona?`;
+- Sin emojis
+- Sin "quieres saber más?" ni "te ayudo en algo más?"
+- Solo usa ? (nunca ¿)`;
 
     return prompt;
 }
