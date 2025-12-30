@@ -7,7 +7,6 @@ import {
   Calendar,
   Users,
   BarChart3,
-  Settings,
   ChevronDown,
   Clock,
   DollarSign,
@@ -426,7 +425,6 @@ function Landing() {
               { icon: Calendar, title: "Automated Appointment Booking", desc: "Integrates with Google Calendar to book appointments automatically in real-time", color: "#89b4fa" },
               { icon: Users, title: "AI Lead Qualification", desc: "Automatically qualify leads and track contacts with built-in CRM", color: "#cba6f7" },
               { icon: BarChart3, title: "Conversion Analytics", desc: "Monitor AI setter performance, response times, and booking conversion rates", color: "#f9e2af" },
-              { icon: Settings, title: "Customizable AI Agent", desc: "Customize your AI appointment setter's personality, responses, and business rules", color: "#94e2d5" },
             ].map((feature, index) => (
               <div
                 key={index}
