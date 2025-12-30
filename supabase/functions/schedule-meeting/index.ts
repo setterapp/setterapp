@@ -150,6 +150,65 @@ Deno.serve(async (req: Request) => {
       lead_email: lead_email || 'no proporcionado'
     });
 
+    // DUPLICATE PREVENTION: Check if there's already a meeting for this conversation recently
+    const { data: existingMeetings } = await supabase
+      .from('meetings')
+      .select('id, meeting_date, status')
+      .eq('conversation_id', conversation_id)
+      .eq('status', 'scheduled')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (existingMeetings && existingMeetings.length > 0) {
+      const existingMeeting = existingMeetings[0];
+      const existingDate = new Date(existingMeeting.meeting_date);
+      const proposedDate = new Date(meeting_date);
+
+      // If there's already a meeting within 24 hours of the proposed time, reject
+      const timeDiff = Math.abs(proposedDate.getTime() - existingDate.getTime());
+      const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+      if (hoursDiff < 24) {
+        console.log(`[schedule-meeting] ⚠️ DUPLICATE PREVENTED - Already have meeting for this conversation`);
+        const errorResponse = {
+          error: `Ya hay una reunión agendada para esta conversación el ${existingDate.toLocaleString('es-ES')}. No se puede crear otra.`,
+          success: false,
+          existing_meeting: existingMeeting
+        };
+        await saveDebugLog(user_id, conversation_id, requestBody, errorResponse, 400, 'Duplicate meeting prevented');
+        return new Response(
+          JSON.stringify(errorResponse),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Also check for meetings at the exact same time for this user
+    const proposedStart = new Date(meeting_date);
+    const proposedEnd = new Date(proposedStart.getTime() + (duration_minutes * 60 * 1000));
+
+    const { data: conflictingMeetings } = await supabase
+      .from('meetings')
+      .select('id, meeting_date, lead_name')
+      .eq('user_id', user_id)
+      .eq('status', 'scheduled')
+      .gte('meeting_date', new Date(proposedStart.getTime() - 30 * 60 * 1000).toISOString()) // 30 min before
+      .lte('meeting_date', proposedEnd.toISOString());
+
+    if (conflictingMeetings && conflictingMeetings.length > 0) {
+      console.log(`[schedule-meeting] ⚠️ TIME CONFLICT - Already have meeting at this time`);
+      const errorResponse = {
+        error: `Ya tienes una reunión agendada a esa hora con ${conflictingMeetings[0].lead_name}. Propone otro horario.`,
+        success: false,
+        conflicting_meeting: conflictingMeetings[0]
+      };
+      await saveDebugLog(user_id, conversation_id, requestBody, errorResponse, 400, 'Time conflict');
+      return new Response(
+        JSON.stringify(errorResponse),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Obtener integración de Google Calendar
     const { data: integration, error: integrationError } = await supabase
       .from('integrations')
