@@ -59,10 +59,13 @@ export function useIntegrations() {
     }
   }
 
-  const fetchIntegrations = async () => {
+  const fetchIntegrations = async (showLoading = false) => {
     const fetchId = ++activeFetchIdRef.current
     try {
-      setLoading(true)
+      // Solo mostrar loading si no hay datos previos o se solicita explícitamente
+      if (showLoading || integrations.length === 0) {
+        setLoading(true)
+      }
       setError(null)
 
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -73,9 +76,7 @@ export function useIntegrations() {
         throw new Error('Usuario no autenticado')
       }
 
-      // Asegurar que existan las integraciones por defecto (incluye Messenger)
-      // Importante: antes solo se inicializaba si no había ninguna fila; eso hacía que usuarios existentes
-      // nunca vieran nuevas integraciones añadidas en el futuro.
+      // Asegurar que existan las integraciones por defecto
       await initializeIntegrations()
 
       const controller = new AbortController()
@@ -144,7 +145,7 @@ export function useIntegrations() {
         setLoading(false)
         return
       }
-      await fetchIntegrations()
+      await fetchIntegrations(true) // Primera carga: mostrar loading
     }
 
     checkAuthAndFetch()

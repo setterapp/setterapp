@@ -23,10 +23,13 @@ export function useContacts() {
   const [error, setError] = useState<string | null>(null)
   const activeFetchIdRef = useRef(0)
 
-  const fetchContacts = async () => {
+  const fetchContacts = async (showLoading = false) => {
     const fetchId = ++activeFetchIdRef.current
     try {
-      setLoading(true)
+      // Solo mostrar loading si no hay datos previos o se solicita explícitamente
+      if (showLoading || contacts.length === 0) {
+        setLoading(true)
+      }
       setError(null)
 
       const controller = new AbortController()
@@ -59,7 +62,7 @@ export function useContacts() {
         setLoading(false)
         return
       }
-      await fetchContacts()
+      await fetchContacts(true) // Primera carga: mostrar loading
     }
 
     start()

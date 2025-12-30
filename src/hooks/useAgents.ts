@@ -52,14 +52,17 @@ export function useAgents() {
   const activeFetchIdRef = useRef(0)
   const channelKeyRef = useRef<string | null>(null)
 
-  const fetchAgents = async () => {
+  const fetchAgents = async (showLoading = false) => {
     const fetchId = ++activeFetchIdRef.current
     if (fetchAbortRef.current) fetchAbortRef.current.abort()
     const controller = new AbortController()
     fetchAbortRef.current = controller
     const timeoutId = window.setTimeout(() => controller.abort(), 12000)
     try {
-      setLoading(true)
+      // Solo mostrar loading si no hay datos previos o se solicita explícitamente
+      if (showLoading || agents.length === 0) {
+        setLoading(true)
+      }
       setError(null)
 
       const { data, error: fetchError } = await supabase
@@ -157,7 +160,7 @@ export function useAgents() {
         return
       }
 
-      await fetchAgents()
+      await fetchAgents(true) // Primera carga: mostrar loading
       await setupRealtime()
 
       const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((_event, newSession) => {

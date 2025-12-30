@@ -67,14 +67,17 @@ export function useConversations() {
     })
   }
 
-  const fetchConversations = async () => {
+  const fetchConversations = async (showLoading = false) => {
     const fetchId = ++activeFetchIdRef.current
     if (fetchAbortRef.current) fetchAbortRef.current.abort()
     const controller = new AbortController()
     fetchAbortRef.current = controller
     const timeoutId = window.setTimeout(() => controller.abort(), 12000)
     try {
-      setLoading(true)
+      // Solo mostrar loading si no hay datos previos o se solicita explícitamente
+      if (showLoading || conversations.length === 0) {
+        setLoading(true)
+      }
       setError(null)
 
       const { data, error: fetchError } = await supabase
@@ -176,7 +179,7 @@ export function useConversations() {
         setLoading(false)
         return
       }
-      await fetchConversations()
+      await fetchConversations(true) // Primera carga: mostrar loading
     }
 
     checkAuthAndFetch()
