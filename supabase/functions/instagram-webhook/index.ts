@@ -1563,10 +1563,55 @@ async function generateAndSendAutoReply(
 
         // 7. Enviar respuesta final al usuario
         if (finalResponse) {
-            const sendResult = await sendInstagramMessage(userId, recipientId, finalResponse);
-            if (sendResult) {
-                await saveOutboundMessage(conversationId, userId, finalResponse, agent.id);
-                console.log('✅ Respuesta final enviada');
+            // Verificar si el estilo humano está habilitado (múltiples mensajes)
+            const humanStyleEnabled = agent.config?.enableHumanStyle !== false;
+
+            if (humanStyleEnabled && finalResponse.includes('[MSG]')) {
+                // Dividir la respuesta en múltiples mensajes
+                const messages = finalResponse
+                    .split('[MSG]')
+                    .map((msg: string) => msg.trim())
+                    .filter((msg: string) => msg.length > 0);
+
+                console.log(`📨 Enviando ${messages.length} mensajes separados (estilo humano)`);
+
+                let allSent = true;
+                const fullContent: string[] = [];
+
+                for (let i = 0; i < messages.length; i++) {
+                    const msg = messages[i];
+                    fullContent.push(msg);
+
+                    // Pequeña pausa entre mensajes para simular escritura humana
+                    if (i > 0) {
+                        // Pausa proporcional a la longitud del mensaje anterior (simula tiempo de escritura)
+                        const prevMsgLength = messages[i - 1].length;
+                        const typingDelay = Math.min(Math.max(prevMsgLength * 20, 300), 2000);
+                        await new Promise(resolve => setTimeout(resolve, typingDelay));
+                    }
+
+                    const sendResult = await sendInstagramMessage(userId, recipientId, msg);
+                    if (!sendResult) {
+                        console.error(`❌ Error enviando mensaje ${i + 1}/${messages.length}`);
+                        allSent = false;
+                        break;
+                    }
+
+                    console.log(`✅ Mensaje ${i + 1}/${messages.length} enviado`);
+                }
+
+                // Guardar todos los mensajes como uno solo para el historial
+                if (allSent) {
+                    await saveOutboundMessage(conversationId, userId, fullContent.join('\n'), agent.id);
+                    console.log('✅ Todos los mensajes enviados correctamente');
+                }
+            } else {
+                // Modo normal: un solo mensaje
+                const sendResult = await sendInstagramMessage(userId, recipientId, finalResponse);
+                if (sendResult) {
+                    await saveOutboundMessage(conversationId, userId, finalResponse, agent.id);
+                    console.log('✅ Respuesta final enviada');
+                }
             }
         } else {
             console.warn('⚠️ No se obtuvo respuesta final del agente (máx iteraciones alcanzadas)');
@@ -1726,15 +1771,70 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
 function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null): string {
     let prompt = description || `Eres ${agentName}.`;
 
+    // Añadir información de identidad si está configurada
+    if (config?.assistantName || config?.companyName || config?.ownerName) {
+        prompt += `\n\n=== IDENTIDAD ===`;
+        if (config.assistantName) prompt += `\nTu nombre: ${config.assistantName}`;
+        if (config.companyName) prompt += `\nEmpresa: ${config.companyName}`;
+        if (config.ownerName) prompt += `\nDueño/Jefe: ${config.ownerName}`;
+    }
+
+    // Añadir información del negocio si está configurada
+    if (config?.businessNiche || config?.clientGoals || config?.offerDetails) {
+        prompt += `\n\n=== NEGOCIO ===`;
+        if (config.businessNiche) prompt += `\nNicho: ${config.businessNiche}`;
+        if (config.clientGoals) prompt += `\nObjetivos que ayudamos a lograr: ${config.clientGoals}`;
+        if (config.offerDetails) prompt += `\nOferta/Servicios: ${config.offerDetails}`;
+    }
+
+    // Añadir guías de tono si están configuradas
+    if (config?.toneGuidelines) {
+        prompt += `\n\n=== ESTILO DE COMUNICACIÓN ===\n${config.toneGuidelines}`;
+    }
+
+    // Añadir contexto adicional si existe
+    if (config?.additionalContext) {
+        prompt += `\n\n=== CONTEXTO ADICIONAL ===\n${config.additionalContext}`;
+    }
+
+    // Si tiene habilitado el estilo humano, añadir instrucciones
+    const humanStyleEnabled = config?.enableHumanStyle !== false; // Default true
+    if (humanStyleEnabled) {
+        prompt += `\n\n=== FORMATO DE RESPUESTA ===
+IMPORTANTE: Responde como una persona REAL en chat. Esto significa:
+- Envía MÚLTIPLES mensajes cortos en lugar de uno largo
+- Separa cada mensaje con el marcador [MSG]
+- Usa frases cortas y naturales
+- Añade reacciones y expresiones humanas ("jaja", "oh", "mmm", "ah")
+- Haz pausas naturales entre ideas
+- NO escribas párrafos largos
+
+EJEMPLO de formato correcto:
+"Hey! 👋[MSG]Qué bueno que escribes[MSG]Cuéntame, ¿qué estás buscando?"
+
+EJEMPLO incorrecto (NO hacer):
+"Hola, gracias por escribirme. Me alegra que te hayas comunicado conmigo. Cuéntame por favor qué es lo que estás buscando para poder ayudarte de la mejor manera posible."`;
+    }
+
+    // Añadir ejemplos de conversación si existen
+    if (config?.conversationExamples) {
+        prompt += `\n\n=== EJEMPLOS DE CONVERSACIÓN ===
+Aquí hay ejemplos de cómo deberías responder. Aprende el estilo y tono:
+
+${config.conversationExamples}
+
+Usa estos ejemplos como guía para tu estilo de comunicación.`;
+    }
+
     // Si hay contexto guardado del contacto, incluirlo
     if (contactContext) {
         prompt += `\n\n=== TU MEMORIA SOBRE ESTE LEAD ===
 ${contactContext}
 
-IMPORTANTE: Esta es información que ya aprendiste sobre este lead en conversaciones anteriores. Úsala para personalizar tus respuestas. Si aprendes información nueva importante, usa la función update_context para actualizar tu memoria.`
+IMPORTANTE: Esta es información que ya aprendiste sobre este lead en conversaciones anteriores. Úsala para personalizar tus respuestas. Si aprendes información nueva importante, usa la función update_context para actualizar tu memoria.`;
     } else {
         prompt += `\n\n=== MEMORIA ===
-Es tu primera conversación con este lead o no tienes información guardada. Cuando aprendas datos importantes (nombre, qué busca, país, objeciones, etc.), usa la función update_context para guardarlos en tu memoria.`
+Es tu primera conversación con este lead o no tienes información guardada. Cuando aprendas datos importantes (nombre, qué busca, país, objeciones, etc.), usa la función update_context para guardarlos en tu memoria.`;
     }
 
     // Si tiene calendar capabilities activadas, agregar contexto mínimo

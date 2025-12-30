@@ -1,24 +1,46 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
+// Tipos de agente predefinidos
+export type AgentType = 'setter' | 'support' | 'sales' | 'custom'
+
 export interface AgentConfig {
+  // Tipo de agente (preset)
+  agentType?: AgentType
+
+  // Identidad
   assistantName?: string
   companyName?: string
   ownerName?: string
+
+  // Negocio
   clientGoals?: string
   offerDetails?: string
   businessNiche?: string
   importantLinks?: string[]
+
+  // Comportamiento
   openingQuestion?: string
   activeHoursStart?: string
   activeHoursEnd?: string
   responseInterval?: number
+
+  // Calificación de leads
   enableQualification?: boolean
   qualifyingQuestion?: string
   qualificationCriteria?: string
   disqualifyMessage?: string
+
+  // Personalización
   toneGuidelines?: string
   additionalContext?: string
+
+  // Ejemplos de conversación para que la IA aprenda el estilo
+  conversationExamples?: string
+
+  // Estilo de mensajes humanos (múltiples mensajes cortos)
+  enableHumanStyle?: boolean
+
   // Configuración de reuniones con Google Calendar
   enableMeetingScheduling?: boolean
   meetingEmail?: string // email del agente para recibir las reuniones
