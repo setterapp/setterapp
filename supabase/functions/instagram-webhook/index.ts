@@ -1347,6 +1347,7 @@ async function generateAndSendAutoReply(
 
         // 4. Construir system prompt con el contexto
         const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config, contactContext);
+        console.log('📋 SYSTEM PROMPT (first 500 chars):', systemPrompt.substring(0, 500));
 
         // 5. Definir tools para el agente
         let tools: any[] = [
@@ -1728,8 +1729,8 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
         const requestBody: any = {
             model: 'gpt-4o-mini',
             messages: messages,
-            temperature: 0.7,
-            max_tokens: 150
+            temperature: 0.3,
+            max_tokens: 100
         };
 
         // Agregar tools si están disponibles
@@ -1765,7 +1766,21 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
  * Builds the system prompt using agent configuration and contact context
  */
 function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null): string {
-    let prompt = description || `You are ${agentName}.`;
+    // START with critical rules so they take precedence
+    let prompt = `REGLAS OBLIGATORIAS (DEBES SEGUIR):
+1. Responde con 2-3 mensajes CORTOS separados por [MSG]
+2. Cada mensaje max 15 palabras
+3. NO preguntes "quieres saber más" o "te puedo ayudar en algo más" NUNCA
+4. NO uses emojis ni signos de exclamación
+5. Tono casual, como amigo
+6. Solo usa ? al final (nunca ¿)
+
+FORMATO CORRECTO: "si claro[MSG]para que lo necesitas"
+FORMATO INCORRECTO: "Sí, por supuesto. Te puedo ayudar con eso. ¿Te gustaría saber más?"
+
+---
+
+${description || `You are ${agentName}.`}`;
 
     // Add identity information if configured
     if (config?.assistantName || config?.companyName || config?.ownerName) {
