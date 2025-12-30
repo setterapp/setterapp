@@ -11,164 +11,164 @@ import InstagramIcon from '../components/icons/InstagramIcon'
 import { formatDate, formatFullDate } from '../utils/date'
 import { Checkbox } from '../components/ui/checkbox'
 
-// Configuraciones predefinidas para cada tipo de agente
+// Predefined configurations for each agent type
 const AGENT_PRESETS: Record<AgentType, { name: string; icon: any; description: string; basePrompt: string }> = {
     setter: {
         name: 'Appointment Setter',
         icon: Calendar,
-        description: 'Especializado en calificar leads y agendar reuniones con prospectos interesados.',
-        basePrompt: `Eres un appointment setter profesional. Tu objetivo principal es:
-1. Generar rapport y conexión con el prospecto
-2. Calificar si el prospecto es ideal para nuestro servicio
-3. Agendar una llamada/reunión con el equipo de ventas
+        description: 'Specialized in qualifying leads and scheduling meetings with interested prospects.',
+        basePrompt: `You are a professional appointment setter. Your main objective is:
+1. Build rapport and connection with the prospect
+2. Qualify if the prospect is ideal for our service
+3. Schedule a call/meeting with the sales team
 
-REGLAS DE COMUNICACIÓN:
-- Escribe mensajes cortos y naturales, como un humano real
-- Usa un tono amigable pero profesional
-- No seas robótico ni uses respuestas genéricas
-- Haz preguntas abiertas para entender las necesidades
-- No presiones, genera curiosidad genuina
-- Valida las objeciones antes de responderlas`,
+COMMUNICATION RULES:
+- Write short, natural messages like a real human
+- Use a friendly but professional tone
+- Don't be robotic or use generic responses
+- Ask open-ended questions to understand needs
+- Don't pressure, create genuine curiosity
+- Validate objections before responding to them`,
     },
     support: {
         name: 'Customer Support',
         icon: Headphones,
-        description: 'Especializado en resolver dudas y problemas de clientes actuales.',
-        basePrompt: `Eres un agente de soporte al cliente excepcional. Tu objetivo es:
-1. Resolver problemas y dudas de forma rápida y eficiente
-2. Asegurar la satisfacción del cliente
-3. Escalar casos complejos cuando sea necesario
+        description: 'Specialized in solving questions and problems from current customers.',
+        basePrompt: `You are an exceptional customer support agent. Your objective is:
+1. Solve problems and questions quickly and efficiently
+2. Ensure customer satisfaction
+3. Escalate complex cases when necessary
 
-REGLAS DE COMUNICACIÓN:
-- Sé empático y comprensivo con las frustraciones
-- Escribe de forma clara y directa
-- Ofrece soluciones concretas
-- Si no sabes algo, admítelo y ofrece escalar
-- Confirma que el problema quedó resuelto
-- Agradece la paciencia del cliente`,
+COMMUNICATION RULES:
+- Be empathetic and understanding with frustrations
+- Write clearly and directly
+- Offer concrete solutions
+- If you don't know something, admit it and offer to escalate
+- Confirm that the problem was resolved
+- Thank the customer for their patience`,
     },
     sales: {
         name: 'Sales Assistant',
         icon: Briefcase,
-        description: 'Especializado en presentar productos/servicios y cerrar ventas.',
-        basePrompt: `Eres un asistente de ventas consultivo. Tu objetivo es:
-1. Entender las necesidades del cliente
-2. Presentar soluciones relevantes
-3. Manejar objeciones con empatía
-4. Guiar hacia la decisión de compra
+        description: 'Specialized in presenting products/services and closing sales.',
+        basePrompt: `You are a consultative sales assistant. Your objective is:
+1. Understand the customer's needs
+2. Present relevant solutions
+3. Handle objections with empathy
+4. Guide towards purchase decision
 
-REGLAS DE COMUNICACIÓN:
-- Escucha más de lo que hablas
-- Haz preguntas para entender antes de vender
-- Presenta beneficios, no características
-- Usa historias y ejemplos reales
-- No presiones, genera urgencia natural
-- Ofrece próximos pasos claros`,
+COMMUNICATION RULES:
+- Listen more than you talk
+- Ask questions to understand before selling
+- Present benefits, not features
+- Use real stories and examples
+- Don't pressure, create natural urgency
+- Offer clear next steps`,
     },
     custom: {
-        name: 'Personalizado',
+        name: 'Custom',
         icon: Bot,
-        description: 'Configura el agente desde cero con tu propio prompt.',
+        description: 'Configure the agent from scratch with your own prompt.',
         basePrompt: '',
     },
 }
 
-// Lista completa de zonas horarias por continente
+// Complete list of timezones by continent
 const TIMEZONES = {
-    'América del Norte': [
-        { value: 'America/New_York', label: 'Nueva York (EST/EDT)' },
+    'North America': [
+        { value: 'America/New_York', label: 'New York (EST/EDT)' },
         { value: 'America/Chicago', label: 'Chicago (CST/CDT)' },
         { value: 'America/Denver', label: 'Denver (MST/MDT)' },
-        { value: 'America/Los_Angeles', label: 'Los Ángeles (PST/PDT)' },
+        { value: 'America/Los_Angeles', label: 'Los Angeles (PST/PDT)' },
         { value: 'America/Phoenix', label: 'Phoenix (MST)' },
         { value: 'America/Toronto', label: 'Toronto (EST/EDT)' },
         { value: 'America/Vancouver', label: 'Vancouver (PST/PDT)' },
-        { value: 'America/Mexico_City', label: 'Ciudad de México (CST)' },
+        { value: 'America/Mexico_City', label: 'Mexico City (CST)' },
         { value: 'America/Monterrey', label: 'Monterrey (CST)' },
         { value: 'America/Tijuana', label: 'Tijuana (PST/PDT)' },
     ],
-    'América del Sur': [
+    'South America': [
         { value: 'America/Argentina/Buenos_Aires', label: 'Argentina (Buenos Aires)' },
-        { value: 'America/Sao_Paulo', label: 'Brasil (São Paulo)' },
+        { value: 'America/Sao_Paulo', label: 'Brazil (São Paulo)' },
         { value: 'America/Santiago', label: 'Chile (Santiago)' },
         { value: 'America/Bogota', label: 'Colombia (Bogotá)' },
-        { value: 'America/Lima', label: 'Perú (Lima)' },
+        { value: 'America/Lima', label: 'Peru (Lima)' },
         { value: 'America/Caracas', label: 'Venezuela (Caracas)' },
         { value: 'America/Guayaquil', label: 'Ecuador (Guayaquil)' },
         { value: 'America/La_Paz', label: 'Bolivia (La Paz)' },
         { value: 'America/Montevideo', label: 'Uruguay (Montevideo)' },
         { value: 'America/Asuncion', label: 'Paraguay (Asunción)' },
     ],
-    'América Central y Caribe': [
+    'Central America & Caribbean': [
         { value: 'America/Guatemala', label: 'Guatemala' },
         { value: 'America/El_Salvador', label: 'El Salvador' },
         { value: 'America/Tegucigalpa', label: 'Honduras (Tegucigalpa)' },
         { value: 'America/Managua', label: 'Nicaragua (Managua)' },
         { value: 'America/Costa_Rica', label: 'Costa Rica' },
-        { value: 'America/Panama', label: 'Panamá' },
-        { value: 'America/Havana', label: 'Cuba (La Habana)' },
-        { value: 'America/Santo_Domingo', label: 'República Dominicana' },
+        { value: 'America/Panama', label: 'Panama' },
+        { value: 'America/Havana', label: 'Cuba (Havana)' },
+        { value: 'America/Santo_Domingo', label: 'Dominican Republic' },
         { value: 'America/Puerto_Rico', label: 'Puerto Rico' },
     ],
-    'Europa Occidental': [
-        { value: 'Europe/London', label: 'Reino Unido (Londres)' },
-        { value: 'Europe/Dublin', label: 'Irlanda (Dublín)' },
-        { value: 'Europe/Lisbon', label: 'Portugal (Lisboa)' },
-        { value: 'Atlantic/Canary', label: 'España (Islas Canarias)' },
+    'Western Europe': [
+        { value: 'Europe/London', label: 'United Kingdom (London)' },
+        { value: 'Europe/Dublin', label: 'Ireland (Dublin)' },
+        { value: 'Europe/Lisbon', label: 'Portugal (Lisbon)' },
+        { value: 'Atlantic/Canary', label: 'Spain (Canary Islands)' },
     ],
-    'Europa Central': [
-        { value: 'Europe/Madrid', label: 'España (Madrid)' },
-        { value: 'Europe/Paris', label: 'Francia (París)' },
-        { value: 'Europe/Berlin', label: 'Alemania (Berlín)' },
-        { value: 'Europe/Rome', label: 'Italia (Roma)' },
-        { value: 'Europe/Amsterdam', label: 'Países Bajos (Ámsterdam)' },
-        { value: 'Europe/Brussels', label: 'Bélgica (Bruselas)' },
-        { value: 'Europe/Vienna', label: 'Austria (Viena)' },
-        { value: 'Europe/Zurich', label: 'Suiza (Zúrich)' },
-        { value: 'Europe/Warsaw', label: 'Polonia (Varsovia)' },
-        { value: 'Europe/Prague', label: 'República Checa (Praga)' },
-        { value: 'Europe/Stockholm', label: 'Suecia (Estocolmo)' },
-        { value: 'Europe/Oslo', label: 'Noruega (Oslo)' },
-        { value: 'Europe/Copenhagen', label: 'Dinamarca (Copenhague)' },
+    'Central Europe': [
+        { value: 'Europe/Madrid', label: 'Spain (Madrid)' },
+        { value: 'Europe/Paris', label: 'France (Paris)' },
+        { value: 'Europe/Berlin', label: 'Germany (Berlin)' },
+        { value: 'Europe/Rome', label: 'Italy (Rome)' },
+        { value: 'Europe/Amsterdam', label: 'Netherlands (Amsterdam)' },
+        { value: 'Europe/Brussels', label: 'Belgium (Brussels)' },
+        { value: 'Europe/Vienna', label: 'Austria (Vienna)' },
+        { value: 'Europe/Zurich', label: 'Switzerland (Zurich)' },
+        { value: 'Europe/Warsaw', label: 'Poland (Warsaw)' },
+        { value: 'Europe/Prague', label: 'Czech Republic (Prague)' },
+        { value: 'Europe/Stockholm', label: 'Sweden (Stockholm)' },
+        { value: 'Europe/Oslo', label: 'Norway (Oslo)' },
+        { value: 'Europe/Copenhagen', label: 'Denmark (Copenhagen)' },
     ],
-    'Europa Oriental': [
-        { value: 'Europe/Moscow', label: 'Rusia (Moscú)' },
-        { value: 'Europe/Kiev', label: 'Ucrania (Kiev)' },
-        { value: 'Europe/Bucharest', label: 'Rumania (Bucarest)' },
-        { value: 'Europe/Athens', label: 'Grecia (Atenas)' },
-        { value: 'Europe/Istanbul', label: 'Turquía (Estambul)' },
-        { value: 'Europe/Helsinki', label: 'Finlandia (Helsinki)' },
+    'Eastern Europe': [
+        { value: 'Europe/Moscow', label: 'Russia (Moscow)' },
+        { value: 'Europe/Kiev', label: 'Ukraine (Kyiv)' },
+        { value: 'Europe/Bucharest', label: 'Romania (Bucharest)' },
+        { value: 'Europe/Athens', label: 'Greece (Athens)' },
+        { value: 'Europe/Istanbul', label: 'Turkey (Istanbul)' },
+        { value: 'Europe/Helsinki', label: 'Finland (Helsinki)' },
     ],
     'Asia': [
-        { value: 'Asia/Dubai', label: 'Emiratos Árabes (Dubái)' },
-        { value: 'Asia/Riyadh', label: 'Arabia Saudita (Riad)' },
-        { value: 'Asia/Jerusalem', label: 'Israel (Jerusalén)' },
-        { value: 'Asia/Kolkata', label: 'India (Calcuta/Mumbai)' },
-        { value: 'Asia/Bangkok', label: 'Tailandia (Bangkok)' },
-        { value: 'Asia/Singapore', label: 'Singapur' },
+        { value: 'Asia/Dubai', label: 'UAE (Dubai)' },
+        { value: 'Asia/Riyadh', label: 'Saudi Arabia (Riyadh)' },
+        { value: 'Asia/Jerusalem', label: 'Israel (Jerusalem)' },
+        { value: 'Asia/Kolkata', label: 'India (Kolkata/Mumbai)' },
+        { value: 'Asia/Bangkok', label: 'Thailand (Bangkok)' },
+        { value: 'Asia/Singapore', label: 'Singapore' },
         { value: 'Asia/Hong_Kong', label: 'Hong Kong' },
-        { value: 'Asia/Shanghai', label: 'China (Shanghái)' },
-        { value: 'Asia/Tokyo', label: 'Japón (Tokio)' },
-        { value: 'Asia/Seoul', label: 'Corea del Sur (Seúl)' },
-        { value: 'Asia/Manila', label: 'Filipinas (Manila)' },
-        { value: 'Asia/Jakarta', label: 'Indonesia (Yakarta)' },
-        { value: 'Asia/Kuala_Lumpur', label: 'Malasia (Kuala Lumpur)' },
+        { value: 'Asia/Shanghai', label: 'China (Shanghai)' },
+        { value: 'Asia/Tokyo', label: 'Japan (Tokyo)' },
+        { value: 'Asia/Seoul', label: 'South Korea (Seoul)' },
+        { value: 'Asia/Manila', label: 'Philippines (Manila)' },
+        { value: 'Asia/Jakarta', label: 'Indonesia (Jakarta)' },
+        { value: 'Asia/Kuala_Lumpur', label: 'Malaysia (Kuala Lumpur)' },
         { value: 'Asia/Ho_Chi_Minh', label: 'Vietnam (Ho Chi Minh)' },
     ],
-    'Oceanía': [
-        { value: 'Australia/Sydney', label: 'Australia (Sídney)' },
+    'Oceania': [
+        { value: 'Australia/Sydney', label: 'Australia (Sydney)' },
         { value: 'Australia/Melbourne', label: 'Australia (Melbourne)' },
         { value: 'Australia/Brisbane', label: 'Australia (Brisbane)' },
         { value: 'Australia/Perth', label: 'Australia (Perth)' },
-        { value: 'Pacific/Auckland', label: 'Nueva Zelanda (Auckland)' },
-        { value: 'Pacific/Fiji', label: 'Fiyi' },
+        { value: 'Pacific/Auckland', label: 'New Zealand (Auckland)' },
+        { value: 'Pacific/Fiji', label: 'Fiji' },
     ],
-    'África': [
-        { value: 'Africa/Cairo', label: 'Egipto (El Cairo)' },
-        { value: 'Africa/Johannesburg', label: 'Sudáfrica (Johannesburgo)' },
+    'Africa': [
+        { value: 'Africa/Cairo', label: 'Egypt (Cairo)' },
+        { value: 'Africa/Johannesburg', label: 'South Africa (Johannesburg)' },
         { value: 'Africa/Lagos', label: 'Nigeria (Lagos)' },
-        { value: 'Africa/Nairobi', label: 'Kenia (Nairobi)' },
-        { value: 'Africa/Casablanca', label: 'Marruecos (Casablanca)' },
+        { value: 'Africa/Nairobi', label: 'Kenya (Nairobi)' },
+        { value: 'Africa/Casablanca', label: 'Morocco (Casablanca)' },
     ],
 }
 
@@ -310,13 +310,13 @@ function Agents() {
         )
     }
 
-    // Vista de formulario de agente (página completa con scroll)
+    // Agent form view (full page with scroll)
     if (showForm) {
         return (
             <div>
-                {/* Header con botón de volver */}
+                {/* Header with back button */}
                 <SectionHeader
-                    title={editingAgent ? 'Editar Agente' : 'Nuevo Agente'}
+                    title={editingAgent ? 'Edit Agent' : 'New Agent'}
                     icon={
                         <button
                             onClick={handleBack}
@@ -342,17 +342,17 @@ function Agents() {
                         style={{ opacity: saving ? 0.7 : 1 }}
                     >
                         <Save size={18} />
-                        {saving ? 'Guardando...' : (editingAgent ? 'Guardar' : 'Crear Agente')}
+                        {saving ? 'Saving...' : (editingAgent ? 'Save' : 'Create Agent')}
                     </button>
                 </SectionHeader>
 
-                {/* Formulario con scroll - todo vertical */}
+                {/* Form with scroll - all vertical */}
                 <form id="agent-form" onSubmit={handleSubmit}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-                        {/* Tipo de Agente */}
+                        {/* Agent Type */}
                         <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
                             <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                Tipo de Agente
+                                Agent Type
                             </h3>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-md)' }}>
                                 {(Object.keys(AGENT_PRESETS) as AgentType[]).map((type) => {
@@ -389,13 +389,13 @@ function Agents() {
                             </div>
                         </div>
 
-                        {/* Información Básica */}
+                        {/* Basic Information */}
                         <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
                             <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                Información Básica
+                                Basic Information
                             </h3>
                             <div className="form-group">
-                                <label htmlFor="name">Nombre del Agente *</label>
+                                <label htmlFor="name">Agent Name *</label>
                                 <input
                                     id="name"
                                     type="text"
@@ -403,15 +403,15 @@ function Agents() {
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     required
-                                    placeholder="Ej: Asistente de Ventas"
+                                    placeholder="E.g.: Sales Assistant"
                                 />
                             </div>
                             <div className="form-group">
                                 <label htmlFor="description">
-                                    Prompt Base / Descripción *
+                                    Base Prompt / Description *
                                     {formData.config.agentType && formData.config.agentType !== 'custom' && (
                                         <span style={{ fontWeight: 400, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginLeft: 'var(--spacing-sm)' }}>
-                                            (Pre-configurado para {AGENT_PRESETS[formData.config.agentType].name})
+                                            (Pre-configured for {AGENT_PRESETS[formData.config.agentType].name})
                                         </span>
                                     )}
                                 </label>
@@ -421,141 +421,141 @@ function Agents() {
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     required
-                                    placeholder="Describe las capacidades y personalidad del agente..."
+                                    placeholder="Describe the agent's capabilities and personality..."
                                     rows={6}
                                     style={{ fontFamily: 'monospace', fontSize: 'var(--font-size-sm)' }}
                                 />
                                 <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-                                    Este es el prompt base que define la personalidad y comportamiento del agente.
+                                    This is the base prompt that defines the agent's personality and behavior.
                                 </small>
                             </div>
                             <div className="form-group">
-                                <label htmlFor="platform">Plataforma</label>
+                                <label htmlFor="platform">Platform</label>
                                 <select
                                     id="platform"
                                     className="input select"
                                     value={formData.platform}
                                     onChange={(e) => setFormData({ ...formData, platform: e.target.value as 'whatsapp' | 'instagram' | '' })}
                                 >
-                                    <option value="">Sin asignar</option>
+                                    <option value="">Not assigned</option>
                                     <option value="instagram">Instagram</option>
                                 </select>
                             </div>
                         </div>
 
-                        {/* Identidad del Asistente */}
+                        {/* Assistant Identity */}
                         <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
                             <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                Identidad del Asistente
+                                Assistant Identity
                             </h3>
                             <div className="form-group">
-                                <label htmlFor="assistantName">Nombre del Asistente</label>
+                                <label htmlFor="assistantName">Assistant Name</label>
                                 <input
                                     id="assistantName"
                                     type="text"
                                     className="input"
                                     value={formData.config.assistantName || ''}
                                     onChange={(e) => updateConfig('assistantName', e.target.value)}
-                                    placeholder="Ej: Juan, María, etc."
+                                    placeholder="E.g.: John, Sarah, etc."
                                 />
                                 <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-                                    Nombre que verán tus clientes
+                                    Name your customers will see
                                 </small>
                             </div>
                             <div className="form-group">
-                                <label htmlFor="companyName">Nombre de la Empresa</label>
+                                <label htmlFor="companyName">Company Name</label>
                                 <input
                                     id="companyName"
                                     type="text"
                                     className="input"
                                     value={formData.config.companyName || ''}
                                     onChange={(e) => updateConfig('companyName', e.target.value)}
-                                    placeholder="Ej: Mi Empresa"
+                                    placeholder="E.g.: My Company"
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="ownerName">Nombre del Propietario</label>
+                                <label htmlFor="ownerName">Owner Name</label>
                                 <input
                                     id="ownerName"
                                     type="text"
                                     className="input"
                                     value={formData.config.ownerName || ''}
                                     onChange={(e) => updateConfig('ownerName', e.target.value)}
-                                    placeholder="Tu nombre"
+                                    placeholder="Your name"
                                 />
                             </div>
                         </div>
 
-                        {/* Información del Negocio */}
+                        {/* Business Information */}
                         <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
                             <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                Información del Negocio
+                                Business Information
                             </h3>
                             <div className="form-group">
-                                <label htmlFor="businessNiche">Nicho de Negocio</label>
+                                <label htmlFor="businessNiche">Business Niche</label>
                                 <input
                                     id="businessNiche"
                                     type="text"
                                     className="input"
                                     value={formData.config.businessNiche || ''}
                                     onChange={(e) => updateConfig('businessNiche', e.target.value)}
-                                    placeholder="Ej: Coaching, Fitness, E-commerce"
+                                    placeholder="E.g.: Coaching, Fitness, E-commerce"
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="clientGoals">Objetivos del Cliente</label>
+                                <label htmlFor="clientGoals">Client Goals</label>
                                 <textarea
                                     id="clientGoals"
                                     className="input textarea"
                                     value={formData.config.clientGoals || ''}
                                     onChange={(e) => updateConfig('clientGoals', e.target.value)}
-                                    placeholder="¿Qué objetivos ayuda tu servicio a lograr?"
+                                    placeholder="What goals does your service help achieve?"
                                     rows={2}
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="offerDetails">Detalles de la Oferta</label>
+                                <label htmlFor="offerDetails">Offer Details</label>
                                 <textarea
                                     id="offerDetails"
                                     className="input textarea"
                                     value={formData.config.offerDetails || ''}
                                     onChange={(e) => updateConfig('offerDetails', e.target.value)}
-                                    placeholder="¿Qué paquetes o servicios ofreces?"
+                                    placeholder="What packages or services do you offer?"
                                     rows={2}
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="importantLinks">Enlaces Importantes</label>
+                                <label htmlFor="importantLinks">Important Links</label>
                                 <textarea
                                     id="importantLinks"
                                     className="input textarea"
                                     value={(formData.config.importantLinks || []).join('\n')}
                                     onChange={(e) => updateConfig('importantLinks', e.target.value.split('\n').filter(l => l.trim()))}
-                                    placeholder="Un enlace por línea"
+                                    placeholder="One link per line"
                                     rows={2}
                                 />
                             </div>
                         </div>
 
-                        {/* Comportamiento y Horarios */}
+                        {/* Behavior and Schedule */}
                         <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
                             <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                Comportamiento
+                                Behavior
                             </h3>
                             <div className="form-group">
-                                <label htmlFor="openingQuestion">Pregunta de Apertura</label>
+                                <label htmlFor="openingQuestion">Opening Question</label>
                                 <textarea
                                     id="openingQuestion"
                                     className="input textarea"
                                     value={formData.config.openingQuestion || ''}
                                     onChange={(e) => updateConfig('openingQuestion', e.target.value)}
-                                    placeholder="Primera pregunta que hará el asistente"
+                                    placeholder="First question the assistant will ask"
                                     rows={2}
                                 />
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--spacing-md)' }}>
                                 <div className="form-group">
-                                    <label htmlFor="activeHoursStart">Hora Inicio</label>
+                                    <label htmlFor="activeHoursStart">Start Time</label>
                                     <input
                                         id="activeHoursStart"
                                         type="time"
@@ -565,7 +565,7 @@ function Agents() {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="activeHoursEnd">Hora Fin</label>
+                                    <label htmlFor="activeHoursEnd">End Time</label>
                                     <input
                                         id="activeHoursEnd"
                                         type="time"
@@ -575,7 +575,7 @@ function Agents() {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="responseInterval">Intervalo (min)</label>
+                                    <label htmlFor="responseInterval">Interval (min)</label>
                                     <input
                                         id="responseInterval"
                                         type="number"
@@ -588,14 +588,14 @@ function Agents() {
                             </div>
                         </div>
 
-                        {/* Calificación de Leads */}
+                        {/* Lead Qualification */}
                         <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
                             <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
                                 <UserCheck size={20} style={{ display: 'inline', marginRight: 'var(--spacing-sm)', verticalAlign: 'middle' }} />
-                                Calificación de Leads
+                                Lead Qualification
                             </h3>
                             <p style={{ marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                                Configura criterios para que el agente determine si un lead es ideal para tu servicio antes de agendar una llamada.
+                                Configure criteria for the agent to determine if a lead is ideal for your service before scheduling a call.
                             </p>
                             <div className="form-group" style={{ background: 'var(--color-bg-secondary)', padding: 'var(--spacing-md)', borderRadius: 'var(--border-radius)', marginBottom: 'var(--spacing-md)' }}>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer' }}>
@@ -603,154 +603,154 @@ function Agents() {
                                         checked={formData.config.enableQualification || false}
                                         onCheckedChange={(checked) => updateConfig('enableQualification', checked)}
                                     />
-                                    <span style={{ fontWeight: 600 }}>Habilitar calificación automática</span>
+                                    <span style={{ fontWeight: 600 }}>Enable automatic qualification</span>
                                 </label>
                             </div>
                             {formData.config.enableQualification && (
                                 <>
                                     <div className="form-group">
-                                        <label htmlFor="qualifyingQuestion">Pregunta de Calificación</label>
+                                        <label htmlFor="qualifyingQuestion">Qualifying Question</label>
                                         <textarea
                                             id="qualifyingQuestion"
                                             className="input textarea"
                                             value={formData.config.qualifyingQuestion || ''}
                                             onChange={(e) => updateConfig('qualifyingQuestion', e.target.value)}
-                                            placeholder="Ej: ¿Cuánto estás dispuesto a invertir en mejorar esto?"
+                                            placeholder="E.g.: How much are you willing to invest in improving this?"
                                             rows={2}
                                         />
                                         <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-                                            La pregunta clave que el agente usará para determinar si el lead califica.
+                                            The key question the agent will use to determine if the lead qualifies.
                                         </small>
                                     </div>
                                     <div className="form-group">
-                                        <label htmlFor="qualificationCriteria">Criterios de Calificación</label>
+                                        <label htmlFor="qualificationCriteria">Qualification Criteria</label>
                                         <textarea
                                             id="qualificationCriteria"
                                             className="input textarea"
                                             value={formData.config.qualificationCriteria || ''}
                                             onChange={(e) => updateConfig('qualificationCriteria', e.target.value)}
-                                            placeholder={`Ej:
-- Presupuesto mínimo: $500 USD
-- Tiene un negocio activo
-- Dispuesto a empezar en los próximos 30 días
-- No busca resultados "mágicos" o inmediatos`}
+                                            placeholder={`E.g.:
+- Minimum budget: $500 USD
+- Has an active business
+- Willing to start within 30 days
+- Not looking for "magic" or immediate results`}
                                             rows={4}
                                         />
                                         <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-                                            Lista los criterios que el lead debe cumplir para calificar. Sé específico.
+                                            List the criteria the lead must meet to qualify. Be specific.
                                         </small>
                                     </div>
                                     <div className="form-group">
-                                        <label htmlFor="disqualifyMessage">Mensaje para Leads No Calificados</label>
+                                        <label htmlFor="disqualifyMessage">Message for Unqualified Leads</label>
                                         <textarea
                                             id="disqualifyMessage"
                                             className="input textarea"
                                             value={formData.config.disqualifyMessage || ''}
                                             onChange={(e) => updateConfig('disqualifyMessage', e.target.value)}
-                                            placeholder="Ej: Entiendo perfectamente, parece que en este momento no sería el mejor fit para lo que ofrecemos. Te deseo mucho éxito y si en el futuro cambia tu situación, aquí estaremos!"
+                                            placeholder="E.g.: I completely understand, it seems like right now wouldn't be the best fit for what we offer. I wish you the best of luck and if things change in the future, we'll be here!"
                                             rows={3}
                                         />
                                         <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-                                            Mensaje amable para leads que no cumplen los criterios. Mantén la puerta abierta.
+                                            Friendly message for leads who don't meet the criteria. Keep the door open.
                                         </small>
                                     </div>
                                 </>
                             )}
                         </div>
 
-                        {/* Personalización */}
+                        {/* Personalization */}
                         <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
                             <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                Personalización
+                                Personalization
                             </h3>
 
-                            {/* Estilo Humano */}
+                            {/* Human Style */}
                             <div className="form-group" style={{ background: 'var(--color-bg-secondary)', padding: 'var(--spacing-md)', borderRadius: 'var(--border-radius)', marginBottom: 'var(--spacing-lg)' }}>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer', marginBottom: 'var(--spacing-xs)' }}>
                                     <Checkbox
                                         checked={formData.config.enableHumanStyle !== false}
                                         onCheckedChange={(checked) => updateConfig('enableHumanStyle', checked)}
                                     />
-                                    <span style={{ fontWeight: 600 }}>Estilo de Mensajes Humano</span>
+                                    <span style={{ fontWeight: 600 }}>Human-Style Messaging</span>
                                 </label>
                                 <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                                    Cuando está activo, el agente envía múltiples mensajes cortos como una persona real,
-                                    en lugar de un solo mensaje largo. Por ejemplo: "Hola!" seguido de "¿Cómo estás?"
-                                    en mensajes separados. Esto hace la conversación más natural.
+                                    When active, the agent sends multiple short messages like a real person,
+                                    instead of one long message. For example: "Hey!" followed by "How are you?"
+                                    in separate messages. This makes the conversation more natural.
                                 </p>
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="toneGuidelines">Guías de Tono</label>
+                                <label htmlFor="toneGuidelines">Tone Guidelines</label>
                                 <textarea
                                     id="toneGuidelines"
                                     className="input textarea"
                                     value={formData.config.toneGuidelines || ''}
                                     onChange={(e) => updateConfig('toneGuidelines', e.target.value)}
-                                    placeholder="Ej: Usa un tono casual y amigable. Tutea al cliente. Usa expresiones locales de España."
+                                    placeholder="E.g.: Use a casual and friendly tone. Use local expressions. Be conversational."
                                     rows={3}
                                 />
                                 <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-                                    Describe cómo debe comunicarse el agente: formal/informal, expresiones, idioma, etc.
+                                    Describe how the agent should communicate: formal/informal, expressions, language, etc.
                                 </small>
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="additionalContext">Contexto Adicional</label>
+                                <label htmlFor="additionalContext">Additional Context</label>
                                 <textarea
                                     id="additionalContext"
                                     className="input textarea"
                                     value={formData.config.additionalContext || ''}
                                     onChange={(e) => updateConfig('additionalContext', e.target.value)}
-                                    placeholder="Información adicional que el agente debe conocer..."
+                                    placeholder="Additional information the agent should know..."
                                     rows={3}
                                 />
                             </div>
                         </div>
 
-                        {/* Ejemplos de Conversación */}
+                        {/* Conversation Examples */}
                         <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
                             <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                Ejemplos de Conversación
+                                Conversation Examples
                             </h3>
                             <p style={{ marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                                Proporciona ejemplos de cómo debería responder el agente. Esto ayuda a la IA a entender mejor el estilo y tono que quieres.
+                                Provide examples of how the agent should respond. This helps the AI understand the style and tone you want.
                             </p>
                             <div className="form-group">
-                                <label htmlFor="conversationExamples">Ejemplos</label>
+                                <label htmlFor="conversationExamples">Examples</label>
                                 <textarea
                                     id="conversationExamples"
                                     className="input textarea"
                                     value={formData.config.conversationExamples || ''}
                                     onChange={(e) => updateConfig('conversationExamples', e.target.value)}
-                                    placeholder={`Ejemplo de formato:
+                                    placeholder={`Example format:
 
-Lead: Hola, me interesa saber más sobre el servicio
-Agente: Hey! 👋
-Agente: Qué bueno que escribes
-Agente: ¿Qué te llamó la atención de lo que viste?
+Lead: Hi, I'm interested in learning more about the service
+Agent: Hey! 👋
+Agent: Great to hear from you
+Agent: What caught your attention about what you saw?
 
-Lead: Vi tu anuncio de coaching
-Agente: Genial!
-Agente: Cuéntame un poco más, ¿qué es lo que estás buscando mejorar?
+Lead: I saw your coaching ad
+Agent: Awesome!
+Agent: Tell me a bit more, what are you looking to improve?
 
-Lead: Quiero mejorar mis ventas
-Agente: Perfecto, eso es justo lo que ayudamos a lograr
-Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
+Lead: I want to improve my sales
+Agent: Perfect, that's exactly what we help with
+Agent: Do you have your own business or work in sales?`}
                                     rows={12}
                                     style={{ fontFamily: 'monospace', fontSize: 'var(--font-size-sm)' }}
                                 />
                                 <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-                                    Usa "Lead:" para los mensajes del cliente y "Agente:" para las respuestas del agente.
-                                    Puedes poner múltiples líneas de "Agente:" seguidas para mostrar mensajes separados.
+                                    Use "Lead:" for customer messages and "Agent:" for agent responses.
+                                    You can use multiple "Agent:" lines in a row to show separate messages.
                                 </small>
                             </div>
                         </div>
 
-                        {/* Generación de Reuniones */}
+                        {/* Meeting Scheduling */}
                         <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
                             <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                Generación de Reuniones
+                                Meeting Scheduling
                             </h3>
                             <div className="form-group">
                                 <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer' }}>
@@ -758,49 +758,49 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
                                         checked={formData.config.enableMeetingScheduling || false}
                                         onCheckedChange={(checked) => updateConfig('enableMeetingScheduling', checked)}
                                     />
-                                    <span>Habilitar generación automática de reuniones con Google Calendar</span>
+                                    <span>Enable automatic meeting scheduling with Google Calendar</span>
                                 </label>
                             </div>
 
                             {formData.config.enableMeetingScheduling && (
                                 <>
                                     <div className="form-group">
-                                        <label htmlFor="meetingEmail">Email para Reuniones *</label>
+                                        <label htmlFor="meetingEmail">Meeting Email *</label>
                                         <input
                                             id="meetingEmail"
                                             type="email"
                                             className="input"
                                             value={formData.config.meetingEmail || ''}
                                             onChange={(e) => updateConfig('meetingEmail', e.target.value)}
-                                            placeholder="tu-email@ejemplo.com"
+                                            placeholder="your-email@example.com"
                                             required={formData.config.enableMeetingScheduling}
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label htmlFor="meetingTitle">Título de la Reunión</label>
+                                        <label htmlFor="meetingTitle">Meeting Title</label>
                                         <input
                                             id="meetingTitle"
                                             type="text"
                                             className="input"
                                             value={formData.config.meetingTitle || ''}
                                             onChange={(e) => updateConfig('meetingTitle', e.target.value)}
-                                            placeholder="Ej: Llamada con {nombre}"
+                                            placeholder="E.g.: Call with {name}"
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label htmlFor="meetingDescription">Descripción</label>
+                                        <label htmlFor="meetingDescription">Description</label>
                                         <textarea
                                             id="meetingDescription"
                                             className="input textarea"
                                             value={formData.config.meetingDescription || ''}
                                             onChange={(e) => updateConfig('meetingDescription', e.target.value)}
-                                            placeholder="Propósito de la reunión"
+                                            placeholder="Purpose of the meeting"
                                             rows={2}
                                         />
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
                                         <div className="form-group">
-                                            <label htmlFor="meetingDuration">Duración (min)</label>
+                                            <label htmlFor="meetingDuration">Duration (min)</label>
                                             <input
                                                 id="meetingDuration"
                                                 type="number"
@@ -825,7 +825,7 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
                                         </div>
                                     </div>
                                     <div className="form-group">
-                                        <label htmlFor="meetingTimezone">Zona Horaria</label>
+                                        <label htmlFor="meetingTimezone">Timezone</label>
                                         <select
                                             id="meetingTimezone"
                                             className="input select"
@@ -845,7 +845,7 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
                                         <div className="form-group">
-                                            <label htmlFor="meetingAvailableHoursStart">Horario Inicio</label>
+                                            <label htmlFor="meetingAvailableHoursStart">Start Time</label>
                                             <input
                                                 id="meetingAvailableHoursStart"
                                                 type="time"
@@ -855,7 +855,7 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
                                             />
                                         </div>
                                         <div className="form-group">
-                                            <label htmlFor="meetingAvailableHoursEnd">Horario Fin</label>
+                                            <label htmlFor="meetingAvailableHoursEnd">End Time</label>
                                             <input
                                                 id="meetingAvailableHoursEnd"
                                                 type="time"
@@ -866,9 +866,9 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
                                         </div>
                                     </div>
                                     <div className="form-group">
-                                        <label>Días Disponibles</label>
+                                        <label>Available Days</label>
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
-                                            {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day, index) => {
+                                            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, index) => {
                                                 const dayValue = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'][index]
                                                 const availableDays = formData.config.meetingAvailableDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
                                                 return (
@@ -897,13 +897,13 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
         )
     }
 
-    // Vista de lista de agentes
+    // Agent list view
     return (
         <div>
-            <SectionHeader title="Agentes" icon={<Bot size={24} />}>
+            <SectionHeader title="Agents" icon={<Bot size={24} />}>
                 <button className="btn btn--primary" onClick={() => setShowForm(true)}>
                     <Plus size={18} />
-                    Crear Agente
+                    Create Agent
                 </button>
             </SectionHeader>
 
@@ -913,8 +913,8 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
                         <div style={{ margin: '0 auto var(--spacing-md)', opacity: 0.5 }}>
                             <Logo size={48} variant="stroke" />
                         </div>
-                        <h3>No hay agentes creados</h3>
-                        <p>Crea tu primer agente de IA para comenzar</p>
+                        <h3>No agents created</h3>
+                        <p>Create your first AI agent to get started</p>
                     </div>
                 </div>
             ) : (
@@ -973,11 +973,11 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
                                         </h3>
                                         <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
                                             {agent.updated_at && (
-                                                <>Última actualización {formatDate(agent.updated_at)}</>
+                                                <>Last updated {formatDate(agent.updated_at)}</>
                                             )}
                                             {agent.created_at && agent.updated_at && ' | '}
                                             {agent.created_at && (
-                                                <>Creado {formatFullDate(agent.created_at)}</>
+                                                <>Created {formatFullDate(agent.created_at)}</>
                                             )}
                                         </p>
                                     </div>
@@ -1017,7 +1017,7 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
                                         </span>
                                     ) : (
                                         <span style={{ background: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '6px', border: '2px solid var(--color-border)', padding: '4px 8px', borderRadius: 'var(--border-radius-sm)', fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
-                                            Sin asignar
+                                            Not assigned
                                         </span>
                                     )}
 
@@ -1032,7 +1032,7 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
                                                 textAlign: 'right',
                                             }}
                                         >
-                                            Activo
+                                            Active
                                         </span>
                                     )}
 
@@ -1146,7 +1146,7 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
                                                     }}
                                                 >
                                                     <MessageSquare size={16} />
-                                                    Probar Agente
+                                                    Test Agent
                                                 </button>
                                                 <div style={{ height: '1px', background: 'var(--color-border)', margin: 'var(--spacing-xs) 0' }} />
                                                 <button
@@ -1176,7 +1176,7 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
                                                     }}
                                                 >
                                                     <Trash2 size={16} />
-                                                    Eliminar
+                                                    Delete
                                                 </button>
                                             </div>
                                         )}
@@ -1188,7 +1188,7 @@ Agente: ¿Tienes un negocio propio o trabajas en ventas?`}
                 </div>
             )}
 
-            {/* Modal de prueba de agente */}
+            {/* Agent test modal */}
             <Modal
                 isOpen={!!testingAgent}
                 onClose={() => setTestingAgent(null)}

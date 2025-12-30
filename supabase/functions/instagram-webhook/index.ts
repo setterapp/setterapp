@@ -1766,82 +1766,82 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
 }
 
 /**
- * Construye el system prompt usando la configuración del agente y el contexto del contacto
+ * Builds the system prompt using agent configuration and contact context
  */
 function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null): string {
-    let prompt = description || `Eres ${agentName}.`;
+    let prompt = description || `You are ${agentName}.`;
 
-    // Añadir información de identidad si está configurada
+    // Add identity information if configured
     if (config?.assistantName || config?.companyName || config?.ownerName) {
-        prompt += `\n\n=== IDENTIDAD ===`;
-        if (config.assistantName) prompt += `\nTu nombre: ${config.assistantName}`;
-        if (config.companyName) prompt += `\nEmpresa: ${config.companyName}`;
-        if (config.ownerName) prompt += `\nDueño/Jefe: ${config.ownerName}`;
+        prompt += `\n\n=== IDENTITY ===`;
+        if (config.assistantName) prompt += `\nYour name: ${config.assistantName}`;
+        if (config.companyName) prompt += `\nCompany: ${config.companyName}`;
+        if (config.ownerName) prompt += `\nOwner/Boss: ${config.ownerName}`;
     }
 
-    // Añadir información del negocio si está configurada
+    // Add business information if configured
     if (config?.businessNiche || config?.clientGoals || config?.offerDetails) {
-        prompt += `\n\n=== NEGOCIO ===`;
-        if (config.businessNiche) prompt += `\nNicho: ${config.businessNiche}`;
-        if (config.clientGoals) prompt += `\nObjetivos que ayudamos a lograr: ${config.clientGoals}`;
-        if (config.offerDetails) prompt += `\nOferta/Servicios: ${config.offerDetails}`;
+        prompt += `\n\n=== BUSINESS ===`;
+        if (config.businessNiche) prompt += `\nNiche: ${config.businessNiche}`;
+        if (config.clientGoals) prompt += `\nGoals we help achieve: ${config.clientGoals}`;
+        if (config.offerDetails) prompt += `\nOffer/Services: ${config.offerDetails}`;
     }
 
-    // Añadir guías de tono si están configuradas
+    // Add tone guidelines if configured
     if (config?.toneGuidelines) {
-        prompt += `\n\n=== ESTILO DE COMUNICACIÓN ===\n${config.toneGuidelines}`;
+        prompt += `\n\n=== COMMUNICATION STYLE ===\n${config.toneGuidelines}`;
     }
 
-    // Añadir contexto adicional si existe
+    // Add additional context if exists
     if (config?.additionalContext) {
-        prompt += `\n\n=== CONTEXTO ADICIONAL ===\n${config.additionalContext}`;
+        prompt += `\n\n=== ADDITIONAL CONTEXT ===\n${config.additionalContext}`;
     }
 
-    // Si tiene habilitado el estilo humano, añadir instrucciones
+    // If human style is enabled, add instructions
     const humanStyleEnabled = config?.enableHumanStyle !== false; // Default true
     if (humanStyleEnabled) {
-        prompt += `\n\n=== FORMATO DE RESPUESTA ===
-IMPORTANTE: Responde como una persona REAL en chat. Esto significa:
-- Envía MÚLTIPLES mensajes cortos en lugar de uno largo
-- Separa cada mensaje con el marcador [MSG]
-- Usa frases cortas y naturales
-- Añade reacciones y expresiones humanas ("jaja", "oh", "mmm", "ah")
-- Haz pausas naturales entre ideas
-- NO escribas párrafos largos
+        prompt += `\n\n=== RESPONSE FORMAT ===
+IMPORTANT: Respond like a REAL person in chat. This means:
+- Send MULTIPLE short messages instead of one long one
+- Separate each message with the marker [MSG]
+- Use short, natural phrases
+- Add human reactions and expressions ("haha", "oh", "hmm", "ah")
+- Make natural pauses between ideas
+- DO NOT write long paragraphs
 
-EJEMPLO de formato correcto:
-"Hey! 👋[MSG]Qué bueno que escribes[MSG]Cuéntame, ¿qué estás buscando?"
+CORRECT format example:
+"Hey! 👋[MSG]Great to hear from you[MSG]Tell me, what are you looking for?"
 
-EJEMPLO incorrecto (NO hacer):
-"Hola, gracias por escribirme. Me alegra que te hayas comunicado conmigo. Cuéntame por favor qué es lo que estás buscando para poder ayudarte de la mejor manera posible."`;
+INCORRECT format (DON'T do this):
+"Hello, thank you for reaching out. I'm glad you contacted me. Please tell me what you're looking for so I can help you in the best way possible."`;
     }
 
-    // Añadir ejemplos de conversación si existen
+    // Add conversation examples if they exist
     if (config?.conversationExamples) {
-        prompt += `\n\n=== EJEMPLOS DE CONVERSACIÓN ===
-Aquí hay ejemplos de cómo deberías responder. Aprende el estilo y tono:
+        prompt += `\n\n=== CONVERSATION EXAMPLES ===
+Here are examples of how you should respond. Learn the style and tone:
 
 ${config.conversationExamples}
 
-Usa estos ejemplos como guía para tu estilo de comunicación.`;
+Use these examples as a guide for your communication style.`;
     }
 
-    // Si hay contexto guardado del contacto, incluirlo
+    // If there's saved context about the contact, include it
     if (contactContext) {
-        prompt += `\n\n=== TU MEMORIA SOBRE ESTE LEAD ===
+        prompt += `\n\n=== YOUR MEMORY ABOUT THIS LEAD ===
 ${contactContext}
 
-IMPORTANTE: Esta es información que ya aprendiste sobre este lead en conversaciones anteriores. Úsala para personalizar tus respuestas. Si aprendes información nueva importante, usa la función update_context para actualizar tu memoria.`;
+IMPORTANT: This is information you already learned about this lead in previous conversations. Use it to personalize your responses. If you learn new important information, use the update_context function to update your memory.`;
     } else {
-        prompt += `\n\n=== MEMORIA ===
-Es tu primera conversación con este lead o no tienes información guardada. Cuando aprendas datos importantes (nombre, qué busca, país, objeciones, etc.), usa la función update_context para guardarlos en tu memoria.`;
+        prompt += `\n\n=== MEMORY ===
+This is your first conversation with this lead or you don't have saved information. When you learn important data (name, what they're looking for, country, objections, etc.), use the update_context function to save it to your memory.`;
     }
 
-    // Si tiene calendar capabilities activadas, agregar contexto mínimo
+    // If calendar capabilities are enabled, add minimal context
     if (config?.enableMeetingScheduling === true) {
         const now = new Date();
         const timezone = config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
-        const currentDateTime = now.toLocaleString('es-AR', {
+        const currentDateTime = now.toLocaleString('en-US', {
             timeZone: timezone,
             weekday: 'long',
             year: 'numeric',
@@ -1852,36 +1852,36 @@ Es tu primera conversación con este lead o no tienes información guardada. Cua
             hour12: false
         });
 
-        prompt += `\n\n=== CALENDARIO ===
-Ahora: ${currentDateTime}
-Mi zona horaria: ${timezone}
-Horario laboral: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'} (en mi zona horaria)
+        prompt += `\n\n=== CALENDAR ===
+Now: ${currentDateTime}
+My timezone: ${timezone}
+Work hours: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'} (in my timezone)
 
-WORKFLOW DE AGENDAMIENTO (SIGUE ESTOS PASOS EN ORDEN):
-1. Lead pregunta por reunión → PREGUNTA DE QUÉ PAÍS ES (ej: "¿Desde qué país me escribes? Así coordino bien el horario")
-2. Lead dice su país → llama check_availability
-3. check_availability devuelve eventos ocupados en MI zona horaria
-4. CONVIERTE los horarios disponibles a la zona horaria del lead y proponlos
-5. Lead confirma un horario → PIDE SU EMAIL (ej: "Perfecto! Para enviarte la invitación, ¿cuál es tu email?")
-6. Lead da su email → llama schedule_meeting con fecha EN UTC, nombre Y email
-7. Confirmas la reunión indicando la hora en AMBAS zonas horarias
+SCHEDULING WORKFLOW (FOLLOW THESE STEPS IN ORDER):
+1. Lead asks about meeting → ASK WHAT COUNTRY THEY'RE FROM (e.g., "What country are you writing from? So I can coordinate the time properly")
+2. Lead says their country → call check_availability
+3. check_availability returns busy events in MY timezone
+4. CONVERT available times to the lead's timezone and propose them
+5. Lead confirms a time → ASK FOR THEIR EMAIL (e.g., "Perfect! To send you the invitation, what's your email?")
+6. Lead gives email → call schedule_meeting with date IN UTC, name AND email
+7. Confirm the meeting showing the time in BOTH timezones
 
-IMPORTANTE SOBRE ZONAS HORARIAS:
-- Mi horario laboral está en MI zona horaria (${timezone})
-- SIEMPRE pregunta el país del lead ANTES de proponer horarios
-- Cuando propongas horarios, indica la hora EN LA ZONA DEL LEAD
-- Al confirmar, menciona "X:XX tu hora / Y:YY mi hora"
-- Si la diferencia horaria hace imposible reunirse en horario laboral, explícalo amablemente
+IMPORTANT ABOUT TIMEZONES:
+- My work hours are in MY timezone (${timezone})
+- ALWAYS ask the lead's country BEFORE proposing times
+- When proposing times, show the time IN THE LEAD'S TIMEZONE
+- When confirming, mention "X:XX your time / Y:YY my time"
+- If the time difference makes it impossible to meet during work hours, explain kindly
 
-REGLAS GENERALES:
-- NUNCA inventes eventos - usa SOLO lo que check_availability devuelve
-- SIEMPRE pide el email ANTES de llamar schedule_meeting
-- NO llames schedule_meeting sin tener el email del lead`;
+GENERAL RULES:
+- NEVER invent events - use ONLY what check_availability returns
+- ALWAYS ask for email BEFORE calling schedule_meeting
+- DO NOT call schedule_meeting without having the lead's email`;
     }
 
     return prompt;
 }
 
-// Función de detección automática de lead status removida - ahora es manual por el usuario
-// La clasificación de leads se hace manualmente desde la UI mediante un selector dropdown
+// Automatic lead status detection function removed - now manual by user
+// Lead classification is done manually from the UI via a dropdown selector
 
