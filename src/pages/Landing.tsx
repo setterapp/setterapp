@@ -530,36 +530,12 @@ function Landing() {
                 </p>
               </div>
 
-              {/* Key Metrics */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 'var(--spacing-sm)',
-                marginBottom: 'var(--spacing-lg)',
-                padding: 'var(--spacing-md)',
-                background: '#f8f9fa',
-                borderRadius: 'var(--border-radius)',
-              }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>1</div>
-                  <div style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Agent</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>2K</div>
-                  <div style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Messages</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>1</div>
-                  <div style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>KB</div>
-                </div>
-              </div>
-
               {/* Features */}
               <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 'var(--spacing-sm)' }}>
-                  Includes
-                </div>
                 {[
+                  "1 AI Agent",
+                  "2,000 messages/month",
+                  "1 Knowledge Base",
                   "Instagram DM automation",
                   "Google Calendar sync",
                   "Built-in CRM",
@@ -571,12 +547,12 @@ function Landing() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 'var(--spacing-sm)',
-                      marginBottom: '10px',
+                      marginBottom: '12px',
                       fontSize: 'var(--font-size-sm)',
                       color: '#444',
                     }}
                   >
-                    <Check size={16} color="#10b981" strokeWidth={2.5} />
+                    <Check size={16} color="#10b981" strokeWidth={2.5} style={{ flexShrink: 0 }} />
                     {feature}
                   </div>
                 ))}
@@ -641,39 +617,15 @@ function Landing() {
                 </p>
               </div>
 
-              {/* Key Metrics */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 'var(--spacing-sm)',
-                marginBottom: 'var(--spacing-lg)',
-                padding: 'var(--spacing-md)',
-                background: 'linear-gradient(135deg, #fef9c3 0%, #fef08a 100%)',
-                borderRadius: 'var(--border-radius)',
-                border: '2px solid #000',
-              }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>3</div>
-                  <div style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Agents</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>10K</div>
-                  <div style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Messages</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>3</div>
-                  <div style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>KB</div>
-                </div>
-              </div>
-
               {/* Features */}
               <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 'var(--spacing-sm)' }}>
-                  Everything in Starter, plus
-                </div>
                 {[
-                  "5x more messages",
-                  "Multiple AI agents",
+                  "3 AI Agents",
+                  "10,000 messages/month",
+                  "3 Knowledge Bases",
+                  "Instagram DM automation",
+                  "Google Calendar sync",
+                  "Built-in CRM",
                   "Priority support",
                 ].map((feature, i) => (
                   <div
@@ -682,12 +634,12 @@ function Landing() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 'var(--spacing-sm)',
-                      marginBottom: '10px',
+                      marginBottom: '12px',
                       fontSize: 'var(--font-size-sm)',
                       color: '#444',
                     }}
                   >
-                    <Check size={16} color="#10b981" strokeWidth={2.5} />
+                    <Check size={16} color="#10b981" strokeWidth={2.5} style={{ flexShrink: 0 }} />
                     {feature}
                   </div>
                 ))}
@@ -748,38 +700,15 @@ function Landing() {
                 </p>
               </div>
 
-              {/* Key Metrics */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 'var(--spacing-sm)',
-                marginBottom: 'var(--spacing-lg)',
-                padding: 'var(--spacing-md)',
-                background: 'rgba(255,255,255,0.1)',
-                borderRadius: 'var(--border-radius)',
-                border: '1px solid rgba(255,255,255,0.2)',
-              }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: '#f9e2af' }}>10</div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Agents</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: '#f9e2af' }}>∞</div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Messages</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: '#f9e2af' }}>10</div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>KB</div>
-                </div>
-              </div>
-
               {/* Features */}
               <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 'var(--spacing-sm)' }}>
-                  Everything in Growth, plus
-                </div>
                 {[
+                  "10 AI Agents",
                   "Unlimited messages",
+                  "10 Knowledge Bases",
+                  "Instagram DM automation",
+                  "Google Calendar sync",
+                  "Built-in CRM",
                   "VIP 24/7 support",
                   "Personalized onboarding",
                   "Early access to features",
@@ -790,12 +719,12 @@ function Landing() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 'var(--spacing-sm)',
-                      marginBottom: '10px',
+                      marginBottom: '12px',
                       fontSize: 'var(--font-size-sm)',
                       color: 'rgba(255,255,255,0.85)',
                     }}
                   >
-                    <Check size={16} color="#a6e3a1" strokeWidth={2.5} />
+                    <Check size={16} color="#a6e3a1" strokeWidth={2.5} style={{ flexShrink: 0 }} />
                     {feature}
                   </div>
                 ))}
@@ -818,44 +747,6 @@ function Landing() {
             </div>
           </div>
 
-          {/* All plans include */}
-          <div style={{
-            marginTop: 'var(--spacing-2xl)',
-            textAlign: 'center',
-            padding: 'var(--spacing-lg)',
-            background: '#fff',
-            borderRadius: 'var(--border-radius)',
-            border: '2px solid #eee',
-          }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#999', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 'var(--spacing-md)' }}>
-              All plans include
-            </div>
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              gap: 'var(--spacing-lg)',
-            }}>
-              {[
-                "Instagram DM Automation",
-                "Google Calendar Sync",
-                "Built-in CRM",
-                "AI Lead Qualification",
-                "Real-time Analytics",
-              ].map((feature, i) => (
-                <div key={i} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: 'var(--font-size-sm)',
-                  color: '#666',
-                }}>
-                  <Check size={14} color="#10b981" strokeWidth={2.5} />
-                  {feature}
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
