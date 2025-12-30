@@ -3,8 +3,8 @@ import { initReactI18next } from 'react-i18next'
 import es from './locales/es.json'
 import en from './locales/en.json'
 
-// Obtener idioma guardado o usar español por defecto
-const savedLanguage = localStorage.getItem('userLanguage') || 'es'
+// Get saved language or use English by default
+const savedLanguage = localStorage.getItem('userLanguage') || 'en'
 
 i18n
   .use(initReactI18next)
@@ -14,7 +14,7 @@ i18n
       en: { translation: en },
     },
     lng: savedLanguage,
-    fallbackLng: 'es',
+    fallbackLng: 'en',
     interpolation: {
       escapeValue: false,
     },

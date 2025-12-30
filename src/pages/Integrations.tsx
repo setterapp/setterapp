@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Check, X, MoreVertical, AlertTriangle, Link2 } from 'lucide-react'
+import { Check, X, MoreVertical, Link2 } from 'lucide-react'
 import SectionHeader from '../components/SectionHeader'
 import { useTranslation } from 'react-i18next'
 import { useIntegrations } from '../hooks/useIntegrations'
@@ -20,7 +20,7 @@ function Integrations() {
   const location = useLocation()
   const { integrations, loading, error, updateIntegration, refetch } = useIntegrations()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-  const [showInstagramWarning, setShowInstagramWarning] = useState(false)
+  // Instagram warning modal removed - direct connect now
   // const [showFacebookWarning, setShowFacebookWarning] = useState(false) // COMENTADO - Facebook oculto
   const [showWhatsAppWarning, setShowWhatsAppWarning] = useState(false)
   const [showGoogleCalendarWarning, setShowGoogleCalendarWarning] = useState(false)
@@ -62,8 +62,8 @@ function Integrations() {
 
       if (type === 'instagram') {
         if (checked) {
-          // Mostrar advertencia antes de conectar
-          setShowInstagramWarning(true)
+          // Conectar directamente sin modal
+          await handleInstagramConnect()
         } else {
           // Desconectar
           await handleInstagramDisconnect(id)
@@ -116,14 +116,14 @@ function Integrations() {
       await instagramService.connectInstagram()
     } catch (error: any) {
       console.error('Error connecting Instagram:', error)
-      alert(`Error al conectar Instagram: ${error.message || 'Error desconocido'}`)
+      alert(`Error connecting Instagram: ${error.message || 'Unknown error'}`)
       refetch() // Refetch para revertir el toggle si la conexión falló
     }
   }
 
   async function handleInstagramDisconnect(integrationId?: string) {
     try {
-      if (!confirm('¿Desconectar Instagram?')) {
+      if (!confirm('Disconnect Instagram?')) {
         refetch()
         return
       }
@@ -133,7 +133,7 @@ function Integrations() {
         : integrations.find(i => i.type === 'instagram')
 
       if (!integration) {
-        alert('No se encontró la integración de Instagram')
+        alert('Instagram integration not found')
         refetch()
         return
       }
@@ -148,7 +148,7 @@ function Integrations() {
       refetch()
     } catch (error: any) {
       console.error('Error disconnecting Instagram:', error)
-      alert(`Error al desconectar: ${error.message || 'Error desconocido'}`)
+      alert(`Error disconnecting: ${error.message || 'Unknown error'}`)
       refetch()
     }
   }
@@ -160,14 +160,14 @@ function Integrations() {
       // Después volverá a /integrations
     } catch (error: any) {
       console.error('Error connecting WhatsApp:', error)
-      alert(`Error al conectar con Facebook/WhatsApp: ${error.message || 'Error desconocido'}`)
+      alert(`Error connecting WhatsApp: ${error.message || 'Unknown error'}`)
       refetch() // Refetch para revertir el toggle si la conexión falló
     }
   }
 
   async function handleWhatsAppDisconnect(integrationId?: string) {
     try {
-      if (!confirm('¿Desconectar WhatsApp?')) {
+      if (!confirm('Disconnect WhatsApp?')) {
         refetch()
         return
       }
@@ -177,7 +177,7 @@ function Integrations() {
         : integrations.find(i => i.type === 'whatsapp')
 
       if (!integration) {
-        alert('No se encontró la integración de WhatsApp')
+        alert('WhatsApp integration not found')
         refetch()
         return
       }
@@ -192,7 +192,7 @@ function Integrations() {
       refetch()
     } catch (error: any) {
       console.error('Error disconnecting WhatsApp:', error)
-      alert(`Error al desconectar: ${error.message || 'Error desconocido'}`)
+      alert(`Error disconnecting: ${error.message || 'Unknown error'}`)
       refetch()
     }
   }
@@ -248,14 +248,14 @@ function Integrations() {
       // Después volverá a /integrations via el callback
     } catch (error: any) {
       console.error('Error connecting Google Calendar:', error)
-      alert(`Error al conectar Google Calendar: ${error.message || 'Error desconocido'}`)
+      alert(`Error connecting Google Calendar: ${error.message || 'Unknown error'}`)
       refetch() // Refetch para revertir el toggle si la conexión falló
     }
   }
 
   async function handleGoogleCalendarDisconnect(integrationId?: string) {
     try {
-      if (!confirm('¿Desconectar Google Calendar?')) {
+      if (!confirm('Disconnect Google Calendar?')) {
         refetch()
         return
       }
@@ -265,7 +265,7 @@ function Integrations() {
         : integrations.find(i => i.type === 'google-calendar')
 
       if (!integration) {
-        alert('No se encontró la integración de Google Calendar')
+        alert('Google Calendar integration not found')
         refetch()
         return
       }
@@ -280,14 +280,14 @@ function Integrations() {
       refetch()
     } catch (error: any) {
       console.error('Error disconnecting Google Calendar:', error)
-      alert(`Error al desconectar: ${error.message || 'Error desconocido'}`)
+      alert(`Error disconnecting: ${error.message || 'Unknown error'}`)
       refetch()
     }
   }
 
   return (
     <div>
-      <SectionHeader title="Integraciones" icon={<Link2 size={24} />} />
+      <SectionHeader title="Integrations" icon={<Link2 size={24} />} />
 
       {loading ? (
         <div className="card" style={{ border: '2px solid #000' }}>
@@ -558,61 +558,7 @@ function Integrations() {
         </div>
       )}
 
-      {/* Modal de advertencia para Instagram */}
-      <Modal
-        isOpen={showInstagramWarning}
-        onClose={() => setShowInstagramWarning(false)}
-        title={t('integrations.modals.instagram.title')}
-      >
-        <div style={{ padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-md)', padding: 'var(--spacing-md)', background: '#fef3c7', border: '2px solid #f59e0b', borderRadius: 'var(--border-radius)' }}>
-            <AlertTriangle size={24} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
-            <div>
-              <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)', color: '#92400e' }}>
-                {t('integrations.modals.instagram.limitationTitle')}
-              </h4>
-              <p style={{ margin: 0, color: '#78350f', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }} dangerouslySetInnerHTML={{ __html: t('integrations.modals.instagram.limitationText') }} />
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-            <div>
-              <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
-                {t('integrations.modals.instagram.stepsTitle')}
-              </h4>
-              <ol style={{ margin: 0, paddingLeft: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
-                <li dangerouslySetInnerHTML={{ __html: t('integrations.modals.instagram.step1') }} />
-                <li dangerouslySetInnerHTML={{ __html: t('integrations.modals.instagram.step2') }} />
-                <li dangerouslySetInnerHTML={{ __html: t('integrations.modals.instagram.step3') }} />
-              </ol>
-            </div>
-
-            <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
-              <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                <strong>{t('integrations.modals.instagram.noteTitle')}</strong> {t('integrations.modals.instagram.noteText')}
-              </p>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end', marginTop: 'var(--spacing-md)' }}>
-            <button
-              onClick={() => setShowInstagramWarning(false)}
-              className="btn btn--secondary"
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              onClick={async () => {
-                setShowInstagramWarning(false)
-                await handleInstagramConnect()
-              }}
-              className="btn btn--primary"
-            >
-              {t('integrations.modals.instagram.understood')}
-            </button>
-          </div>
-        </div>
-      </Modal>
+      {/* Instagram modal removed - direct connect now */}
 
       {/* Modal de advertencia para Facebook - COMENTADO TEMPORALMENTE
       <Modal
