@@ -474,10 +474,11 @@ function Landing() {
       {/* 9. PRICING */}
       <section
         style={{
-          padding: '60px var(--spacing-xl)',
+          padding: '80px var(--spacing-xl)',
+          background: 'linear-gradient(180deg, #fafafa 0%, #fff 100%)',
         }}
       >
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <h2
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -494,7 +495,7 @@ function Landing() {
               textAlign: 'center',
               color: 'var(--color-text-secondary)',
               margin: '0 0 var(--spacing-2xl) 0',
-              fontSize: 'var(--font-size-base)',
+              fontSize: 'var(--font-size-lg)',
             }}
           >
             Choose the plan that fits your business
@@ -503,8 +504,8 @@ function Landing() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
-              gap: 'var(--spacing-lg)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))',
+              gap: 'var(--spacing-xl)',
               alignItems: 'stretch',
             }}
           >
@@ -514,54 +515,84 @@ function Landing() {
               style={{
                 position: 'relative',
                 background: '#fff',
-                textAlign: 'center',
                 display: 'flex',
                 flexDirection: 'column',
+                padding: 'var(--spacing-xl)',
               }}
             >
-              <h3 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, margin: '0 0 var(--spacing-sm) 0' }}>
-                Starter
-              </h3>
-              <p style={{ margin: '0 0 var(--spacing-md) 0' }}>
-                <span style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 700 }}>$49</span>
-                <span style={{ color: 'var(--color-text-secondary)' }}>/month</span>
-              </p>
-              <p style={{
-                margin: '0 0 var(--spacing-lg) 0',
-                color: 'var(--color-text-secondary)',
-                fontSize: 'var(--font-size-sm)',
+              <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 4px 0', color: '#666' }}>
+                  Starter
+                </h3>
+                <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1 }}>$49</span>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>/month</span>
+                </p>
+              </div>
+
+              {/* Key Metrics */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 'var(--spacing-sm)',
+                marginBottom: 'var(--spacing-lg)',
+                padding: 'var(--spacing-md)',
+                background: '#f8f9fa',
+                borderRadius: 'var(--border-radius)',
               }}>
-                Perfect for getting started
-              </p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg) 0', textAlign: 'left', flex: 1 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>1</div>
+                  <div style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Agent</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>2K</div>
+                  <div style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Messages</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>1</div>
+                  <div style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>KB</div>
+                </div>
+              </div>
+
+              {/* Features */}
+              <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 'var(--spacing-sm)' }}>
+                  Includes
+                </div>
                 {[
-                  "1 AI Agent",
-                  "2,000 messages/month",
-                  "1 Knowledge Base",
                   "Instagram DM automation",
-                  "Google Calendar integration",
+                  "Google Calendar sync",
                   "Built-in CRM",
                   "Email support",
                 ].map((feature, i) => (
-                  <li
+                  <div
                     key={i}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 'var(--spacing-sm)',
-                      marginBottom: 'var(--spacing-sm)',
+                      marginBottom: '10px',
                       fontSize: 'var(--font-size-sm)',
+                      color: '#444',
                     }}
                   >
-                    <Check size={16} color="var(--color-success)" strokeWidth={3} />
+                    <Check size={16} color="#10b981" strokeWidth={2.5} />
                     {feature}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
+
               <Link
                 to="/register"
-                className="btn btn--secondary"
-                style={{ width: '100%', justifyContent: 'center' }}
+                className="btn"
+                style={{
+                  width: '100%',
+                  justifyContent: 'center',
+                  background: '#fff',
+                  color: '#000',
+                  border: '2px solid #000',
+                  fontWeight: 600,
+                }}
               >
                 Start Free
               </Link>
@@ -573,73 +604,103 @@ function Landing() {
               style={{
                 position: 'relative',
                 background: '#fff',
-                textAlign: 'center',
                 display: 'flex',
                 flexDirection: 'column',
+                padding: 'var(--spacing-xl)',
                 border: '3px solid var(--color-primary)',
-                boxShadow: '6px 6px 0px 0px #000',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                transform: 'scale(1.02)',
               }}
             >
               <div
                 style={{
                   position: 'absolute',
-                  top: '-12px',
+                  top: '-14px',
                   left: '50%',
                   transform: 'translateX(-50%)',
                   background: 'var(--color-primary)',
                   color: '#000',
-                  padding: '4px 16px',
+                  padding: '6px 20px',
                   borderRadius: '20px',
-                  fontSize: 'var(--font-size-xs)',
+                  fontSize: '11px',
                   fontWeight: 700,
                   border: '2px solid #000',
+                  letterSpacing: '0.5px',
                 }}
               >
                 MOST POPULAR
               </div>
-              <h3 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, margin: '0 0 var(--spacing-sm) 0' }}>
-                Growth
-              </h3>
-              <p style={{ margin: '0 0 var(--spacing-md) 0' }}>
-                <span style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 700 }}>$99</span>
-                <span style={{ color: 'var(--color-text-secondary)' }}>/month</span>
-              </p>
-              <p style={{
-                margin: '0 0 var(--spacing-lg) 0',
-                color: 'var(--color-text-secondary)',
-                fontSize: 'var(--font-size-sm)',
+
+              <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 4px 0', color: '#666' }}>
+                  Growth
+                </h3>
+                <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1 }}>$99</span>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>/month</span>
+                </p>
+              </div>
+
+              {/* Key Metrics */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 'var(--spacing-sm)',
+                marginBottom: 'var(--spacing-lg)',
+                padding: 'var(--spacing-md)',
+                background: 'linear-gradient(135deg, #fef9c3 0%, #fef08a 100%)',
+                borderRadius: 'var(--border-radius)',
+                border: '2px solid #000',
               }}>
-                For growing businesses
-              </p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg) 0', textAlign: 'left', flex: 1 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>3</div>
+                  <div style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Agents</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>10K</div>
+                  <div style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Messages</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>3</div>
+                  <div style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>KB</div>
+                </div>
+              </div>
+
+              {/* Features */}
+              <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 'var(--spacing-sm)' }}>
+                  Everything in Starter, plus
+                </div>
                 {[
-                  "3 AI Agents",
-                  "10,000 messages/month",
-                  "3 Knowledge Bases",
-                  "Instagram DM automation",
-                  "Google Calendar integration",
-                  "Built-in CRM",
+                  "5x more messages",
+                  "Multiple AI agents",
                   "Priority support",
                 ].map((feature, i) => (
-                  <li
+                  <div
                     key={i}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 'var(--spacing-sm)',
-                      marginBottom: 'var(--spacing-sm)',
+                      marginBottom: '10px',
                       fontSize: 'var(--font-size-sm)',
+                      color: '#444',
                     }}
                   >
-                    <Check size={16} color="var(--color-success)" strokeWidth={3} />
+                    <Check size={16} color="#10b981" strokeWidth={2.5} />
                     {feature}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
+
               <Link
                 to="/register"
                 className="btn btn--primary"
-                style={{ width: '100%', justifyContent: 'center' }}
+                style={{
+                  width: '100%',
+                  justifyContent: 'center',
+                  fontWeight: 600,
+                }}
               >
                 Start Free
               </Link>
@@ -650,84 +711,149 @@ function Landing() {
               className="card"
               style={{
                 position: 'relative',
-                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%)',
                 color: '#fff',
-                textAlign: 'center',
                 display: 'flex',
                 flexDirection: 'column',
+                padding: 'var(--spacing-xl)',
+                border: '2px solid #333',
               }}
             >
               <div
                 style={{
                   position: 'absolute',
-                  top: '-12px',
+                  top: '-14px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: '#f9e2af',
+                  background: 'linear-gradient(135deg, #f9e2af 0%, #f59e0b 100%)',
                   color: '#000',
-                  padding: '4px 16px',
+                  padding: '6px 20px',
                   borderRadius: '20px',
-                  fontSize: 'var(--font-size-xs)',
+                  fontSize: '11px',
                   fontWeight: 700,
                   border: '2px solid #000',
+                  letterSpacing: '0.5px',
                 }}
               >
                 BEST VALUE
               </div>
-              <h3 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, margin: '0 0 var(--spacing-sm) 0' }}>
-                Premium
-              </h3>
-              <p style={{ margin: '0 0 var(--spacing-md) 0' }}>
-                <span style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 700 }}>$347</span>
-                <span style={{ color: 'rgba(255,255,255,0.7)' }}>/month</span>
-              </p>
-              <p style={{
-                margin: '0 0 var(--spacing-lg) 0',
-                color: 'rgba(255,255,255,0.7)',
-                fontSize: 'var(--font-size-sm)',
+
+              <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 4px 0', color: 'rgba(255,255,255,0.6)' }}>
+                  Premium
+                </h3>
+                <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1 }}>$347</span>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 'var(--font-size-sm)' }}>/month</span>
+                </p>
+              </div>
+
+              {/* Key Metrics */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 'var(--spacing-sm)',
+                marginBottom: 'var(--spacing-lg)',
+                padding: 'var(--spacing-md)',
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: 'var(--border-radius)',
+                border: '1px solid rgba(255,255,255,0.2)',
               }}>
-                For scaling teams
-              </p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg) 0', textAlign: 'left', flex: 1 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: '#f9e2af' }}>10</div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Agents</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: '#f9e2af' }}>∞</div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Messages</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: '#f9e2af' }}>10</div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>KB</div>
+                </div>
+              </div>
+
+              {/* Features */}
+              <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 'var(--spacing-sm)' }}>
+                  Everything in Growth, plus
+                </div>
                 {[
-                  "10 AI Agents",
                   "Unlimited messages",
-                  "10 Knowledge Bases",
-                  "Instagram DM automation",
-                  "Google Calendar integration",
-                  "Built-in CRM",
                   "VIP 24/7 support",
                   "Personalized onboarding",
-                  "Early access to new features",
+                  "Early access to features",
                 ].map((feature, i) => (
-                  <li
+                  <div
                     key={i}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 'var(--spacing-sm)',
-                      marginBottom: 'var(--spacing-sm)',
+                      marginBottom: '10px',
                       fontSize: 'var(--font-size-sm)',
+                      color: 'rgba(255,255,255,0.85)',
                     }}
                   >
-                    <Check size={16} color="#a6e3a1" strokeWidth={3} />
+                    <Check size={16} color="#a6e3a1" strokeWidth={2.5} />
                     {feature}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
+
               <Link
                 to="/register"
                 className="btn"
                 style={{
                   width: '100%',
                   justifyContent: 'center',
-                  background: '#f9e2af',
+                  background: 'linear-gradient(135deg, #f9e2af 0%, #f59e0b 100%)',
                   color: '#000',
                   border: '2px solid #000',
+                  fontWeight: 600,
                 }}
               >
                 Start Free
               </Link>
+            </div>
+          </div>
+
+          {/* All plans include */}
+          <div style={{
+            marginTop: 'var(--spacing-2xl)',
+            textAlign: 'center',
+            padding: 'var(--spacing-lg)',
+            background: '#fff',
+            borderRadius: 'var(--border-radius)',
+            border: '2px solid #eee',
+          }}>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#999', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 'var(--spacing-md)' }}>
+              All plans include
+            </div>
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: 'var(--spacing-lg)',
+            }}>
+              {[
+                "Instagram DM Automation",
+                "Google Calendar Sync",
+                "Built-in CRM",
+                "AI Lead Qualification",
+                "Real-time Analytics",
+              ].map((feature, i) => (
+                <div key={i} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: 'var(--font-size-sm)',
+                  color: '#666',
+                }}>
+                  <Check size={14} color="#10b981" strokeWidth={2.5} />
+                  {feature}
+                </div>
+              ))}
             </div>
           </div>
         </div>
