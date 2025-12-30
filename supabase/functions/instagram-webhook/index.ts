@@ -1565,48 +1565,34 @@ async function generateAndSendAutoReply(
 
         // 7. Send final response to user
         if (finalResponse) {
-            // Check if human style is enabled (multiple messages)
-            const humanStyleEnabled = agent.config?.enableHumanStyle !== false;
+            // Split response on . and ? to send as separate messages (Instagram style)
+            // Keep the ? at the end of questions, remove periods
+            const messages = finalResponse
+                .split(/(?<=\?)\s*|(?<=\.)\s*/)  // Split after ? or .
+                .map((msg: string) => msg.trim().replace(/\.$/, ''))  // Remove trailing periods
+                .filter((msg: string) => msg.length > 0);
 
-            if (humanStyleEnabled && finalResponse.includes('[MSG]')) {
-                // Split response into multiple messages
-                const messages = finalResponse
-                    .split('[MSG]')
-                    .map((msg: string) => msg.trim())
-                    .filter((msg: string) => msg.length > 0);
+            console.log(`📨 Sending ${messages.length} message(s)`);
 
-                console.log(`📨 Sending ${messages.length} separate messages (human style)`);
+            for (let i = 0; i < messages.length; i++) {
+                const msg = messages[i];
 
-                for (let i = 0; i < messages.length; i++) {
-                    const msg = messages[i];
-
-                    // Small pause between messages to simulate human typing
-                    if (i > 0) {
-                        const prevMsgLength = messages[i - 1].length;
-                        const typingDelay = Math.min(Math.max(prevMsgLength * 20, 300), 2000);
-                        await new Promise(resolve => setTimeout(resolve, typingDelay));
-                    }
-
-                    const sendResult = await sendInstagramMessage(userId, recipientId, msg);
-                    if (!sendResult) {
-                        console.error(`❌ Error sending message ${i + 1}/${messages.length}`);
-                        break;
-                    }
-
-                    // Save EACH message separately to DB using Instagram's message_id to prevent duplicates from echo webhook
-                    const platformMsgId = sendResult?.message_id;
-                    await saveOutboundMessage(conversationId, userId, msg, agent.id, platformMsgId);
-                    console.log(`✅ Message ${i + 1}/${messages.length} sent and saved (id: ${platformMsgId})`);
+                // Small pause between messages to simulate human typing
+                if (i > 0) {
+                    const typingDelay = Math.min(Math.max(messages[i - 1].length * 25, 400), 1500);
+                    await new Promise(resolve => setTimeout(resolve, typingDelay));
                 }
-            } else {
-                // Normal mode: single message
-                const sendResult = await sendInstagramMessage(userId, recipientId, finalResponse);
-                if (sendResult) {
-                    // Use Instagram's message_id to prevent duplicates from echo webhook
-                    const platformMsgId = sendResult?.message_id;
-                    await saveOutboundMessage(conversationId, userId, finalResponse, agent.id, platformMsgId);
-                    console.log('✅ Final response sent (id: ' + platformMsgId + ')');
+
+                const sendResult = await sendInstagramMessage(userId, recipientId, msg);
+                if (!sendResult) {
+                    console.error(`❌ Error sending message ${i + 1}/${messages.length}`);
+                    break;
                 }
+
+                // Save each message separately
+                const platformMsgId = sendResult?.message_id;
+                await saveOutboundMessage(conversationId, userId, msg, agent.id, platformMsgId);
+                console.log(`✅ Message ${i + 1}/${messages.length} sent (id: ${platformMsgId})`);
             }
         } else {
             console.warn('⚠️ No final response from agent (max iterations reached)');
