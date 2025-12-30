@@ -19,9 +19,13 @@ export interface Message {
   created_at: string
 }
 
+// Caché a nivel de módulo por conversación
+const cachedMessages: Map<string, Message[]> = new Map()
+
 export function useMessages(conversationId: string | null) {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [loading, setLoading] = useState(true)
+  const cached = conversationId ? cachedMessages.get(conversationId) : undefined
+  const [messages, setMessages] = useState<Message[]>(cached || [])
+  const [loading, setLoading] = useState(!cached)
   const [error, setError] = useState<string | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const isIntentionalCloseRef = useRef(false)
@@ -42,7 +46,11 @@ export function useMessages(conversationId: string | null) {
     fetchAbortRef.current = controller
     const timeoutId = window.setTimeout(() => controller.abort(), 12000)
     try {
-      setLoading(true)
+      // Solo mostrar loading si NO hay caché para esta conversación
+      const cached = cachedMessages.get(conversationId)
+      if (!cached) {
+        setLoading(true)
+      }
       setError(null)
 
       const { data, error: fetchError } = await supabase
@@ -53,7 +61,11 @@ export function useMessages(conversationId: string | null) {
         .abortSignal(controller.signal)
       if (fetchError) throw fetchError
       if (fetchId !== activeFetchIdRef.current) return
-      setMessages(data || [])
+
+      // Actualizar estado y caché
+      const newData = data || []
+      cachedMessages.set(conversationId, newData)
+      setMessages(newData)
     } catch (err: any) {
       if (fetchId !== activeFetchIdRef.current) return
       const msg = err?.name === 'AbortError'
@@ -132,9 +144,11 @@ export function useMessages(conversationId: string | null) {
                 setMessages(prev => {
                   if (prev.find(m => m.id === newMessage.id)) return prev
                   const updated = [...prev, newMessage]
-                  return updated.sort((a, b) => {
+                  const sorted = updated.sort((a, b) => {
                     return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
                   })
+                  if (conversationId) cachedMessages.set(conversationId, sorted)
+                  return sorted
                 })
 
                 // Clasificación automática de lead status removida - ahora es manual por el usuario
@@ -142,19 +156,25 @@ export function useMessages(conversationId: string | null) {
                 const updatedMessage = payload.new as Message
                 setMessages(prev => {
                   const index = prev.findIndex(m => m.id === updatedMessage.id)
+                  let updated: Message[]
                   if (index === -1) {
-                    const updated = [...prev, updatedMessage]
-                    return updated.sort((a, b) => {
+                    updated = [...prev, updatedMessage].sort((a, b) => {
                       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
                     })
+                  } else {
+                    updated = [...prev]
+                    updated[index] = updatedMessage
                   }
-                  const updated = [...prev]
-                  updated[index] = updatedMessage
+                  if (conversationId) cachedMessages.set(conversationId, updated)
                   return updated
                 })
               } else if (payload.eventType === 'DELETE') {
                 const deletedId = payload.old.id
-                setMessages(prev => prev.filter(m => m.id !== deletedId))
+                setMessages(prev => {
+                  const updated = prev.filter(m => m.id !== deletedId)
+                  if (conversationId) cachedMessages.set(conversationId, updated)
+                  return updated
+                })
               }
             }
           )

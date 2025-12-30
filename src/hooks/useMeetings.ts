@@ -19,15 +19,23 @@ export interface Meeting {
   updated_at: string
 }
 
+// Caché a nivel de módulo para persistir datos entre navegaciones
+let cachedMeetings: Meeting[] | null = null
+
 export function useMeetings() {
-  const [meetings, setMeetings] = useState<Meeting[]>([])
-  const [loading, setLoading] = useState(true)
+  const [meetings, setMeetings] = useState<Meeting[]>(cachedMeetings || [])
+  const [loading, setLoading] = useState(!cachedMeetings)
   const [error, setError] = useState<string | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const activeFetchIdRef = useRef(0)
 
   const fetchMeetings = async () => {
+    const fetchId = ++activeFetchIdRef.current
     try {
-      setLoading(true)
+      // Solo mostrar loading si NO hay caché
+      if (!cachedMeetings) {
+        setLoading(true)
+      }
       setError(null)
 
       const { data, error: fetchError } = await supabase
@@ -36,12 +44,19 @@ export function useMeetings() {
         .order('meeting_date', { ascending: true })
 
       if (fetchError) throw fetchError
+      if (fetchId !== activeFetchIdRef.current) return
 
-      setMeetings((data || []) as Meeting[])
+      // Actualizar estado y caché
+      const newData = (data || []) as Meeting[]
+      cachedMeetings = newData
+      setMeetings(newData)
     } catch (err: any) {
+      if (fetchId !== activeFetchIdRef.current) return
       setError(err?.message || 'Error fetching meetings')
     } finally {
-      setLoading(false)
+      if (fetchId === activeFetchIdRef.current) {
+        setLoading(false)
+      }
     }
   }
 
@@ -108,10 +123,12 @@ export function useMeetings() {
 
       if (error) throw error
 
-      // Update local state
-      setMeetings(prev => prev.map(m =>
-        m.id === meetingId ? { ...m, status } : m
-      ))
+      // Update local state and cache
+      setMeetings(prev => {
+        const newList = prev.map(m => m.id === meetingId ? { ...m, status } : m)
+        cachedMeetings = newList
+        return newList
+      })
 
       return true
     } catch (err: any) {

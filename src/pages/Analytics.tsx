@@ -23,7 +23,9 @@ function Analytics() {
 
   const [timeRange, setTimeRange] = useState<TimeRange>('week')
 
-  const loading = conversationsLoading || meetingsLoading
+  // Solo mostrar loading si no hay datos (primera carga)
+  const loading = (conversationsLoading && conversations.length === 0) ||
+                  (meetingsLoading && meetings.length === 0)
 
   const metrics = useMemo(() => {
     const now = new Date()

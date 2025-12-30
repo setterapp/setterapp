@@ -23,31 +23,54 @@ interface UserSettings {
   theme: 'light' | 'dark' | 'auto'
 }
 
+// Caché a nivel de módulo para persistir datos entre navegaciones
+let cachedSettings: UserSettings | null = null
+let cachedUser: SupabaseUser | null = null
+
+const defaultSettings: UserSettings = {
+  firstName: '',
+  lastName: '',
+  phone: '',
+  language: 'es',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  notifications: {
+    email: true,
+    push: true,
+    newConversation: true,
+    newMessage: true,
+  },
+  theme: 'light',
+}
+
 function SettingsPage() {
   const { t } = useTranslation()
-  const [user, setUser] = useState<SupabaseUser | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<SupabaseUser | null>(cachedUser)
+  const [loading, setLoading] = useState(!cachedSettings)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
-  const [settings, setSettings] = useState<UserSettings>({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    language: 'es',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    notifications: {
-      email: true,
-      push: true,
-      newConversation: true,
-      newMessage: true,
-    },
-    theme: 'light',
-  })
+  const [settings, setSettingsState] = useState<UserSettings>(cachedSettings || defaultSettings)
+
+  // Wrapper para actualizar estado y caché
+  const setSettings = (newSettings: UserSettings | ((prev: UserSettings) => UserSettings)) => {
+    setSettingsState(prev => {
+      const updated = typeof newSettings === 'function' ? newSettings(prev) : newSettings
+      cachedSettings = updated
+      return updated
+    })
+  }
 
   useEffect(() => {
+    // Si ya tenemos caché, no mostrar loading
+    if (cachedSettings && cachedUser) {
+      setLoading(false)
+    }
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setUser(session?.user ?? null)
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      cachedUser = currentUser
+
       if (session?.user) {
         const savedLanguage = localStorage.getItem('userLanguage') || 'es'
         const { data: preferences, error } = await supabase
