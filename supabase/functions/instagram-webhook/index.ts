@@ -1561,30 +1561,25 @@ async function generateAndSendAutoReply(
             // Continuar el loop para que OpenAI procese los resultados
         }
 
-        // 7. Enviar respuesta final al usuario
+        // 7. Send final response to user
         if (finalResponse) {
-            // Verificar si el estilo humano está habilitado (múltiples mensajes)
+            // Check if human style is enabled (multiple messages)
             const humanStyleEnabled = agent.config?.enableHumanStyle !== false;
 
             if (humanStyleEnabled && finalResponse.includes('[MSG]')) {
-                // Dividir la respuesta en múltiples mensajes
+                // Split response into multiple messages
                 const messages = finalResponse
                     .split('[MSG]')
                     .map((msg: string) => msg.trim())
                     .filter((msg: string) => msg.length > 0);
 
-                console.log(`📨 Enviando ${messages.length} mensajes separados (estilo humano)`);
-
-                let allSent = true;
-                const fullContent: string[] = [];
+                console.log(`📨 Sending ${messages.length} separate messages (human style)`);
 
                 for (let i = 0; i < messages.length; i++) {
                     const msg = messages[i];
-                    fullContent.push(msg);
 
-                    // Pequeña pausa entre mensajes para simular escritura humana
+                    // Small pause between messages to simulate human typing
                     if (i > 0) {
-                        // Pausa proporcional a la longitud del mensaje anterior (simula tiempo de escritura)
                         const prevMsgLength = messages[i - 1].length;
                         const typingDelay = Math.min(Math.max(prevMsgLength * 20, 300), 2000);
                         await new Promise(resolve => setTimeout(resolve, typingDelay));
@@ -1592,29 +1587,24 @@ async function generateAndSendAutoReply(
 
                     const sendResult = await sendInstagramMessage(userId, recipientId, msg);
                     if (!sendResult) {
-                        console.error(`❌ Error enviando mensaje ${i + 1}/${messages.length}`);
-                        allSent = false;
+                        console.error(`❌ Error sending message ${i + 1}/${messages.length}`);
                         break;
                     }
 
-                    console.log(`✅ Mensaje ${i + 1}/${messages.length} enviado`);
-                }
-
-                // Guardar todos los mensajes como uno solo para el historial
-                if (allSent) {
-                    await saveOutboundMessage(conversationId, userId, fullContent.join('\n'), agent.id);
-                    console.log('✅ Todos los mensajes enviados correctamente');
+                    // Save EACH message separately to DB
+                    await saveOutboundMessage(conversationId, userId, msg, agent.id);
+                    console.log(`✅ Message ${i + 1}/${messages.length} sent and saved`);
                 }
             } else {
-                // Modo normal: un solo mensaje
+                // Normal mode: single message
                 const sendResult = await sendInstagramMessage(userId, recipientId, finalResponse);
                 if (sendResult) {
                     await saveOutboundMessage(conversationId, userId, finalResponse, agent.id);
-                    console.log('✅ Respuesta final enviada');
+                    console.log('✅ Final response sent');
                 }
             }
         } else {
-            console.warn('⚠️ No se obtuvo respuesta final del agente (máx iteraciones alcanzadas)');
+            console.warn('⚠️ No final response from agent (max iterations reached)');
         }
 
     } catch (error) {
@@ -1797,7 +1787,32 @@ function buildSystemPrompt(agentName: string, description: string, config: any, 
         prompt += `\n\n=== ADDITIONAL CONTEXT ===\n${config.additionalContext}`;
     }
 
-    // If human style is enabled, add instructions
+    // Add communication rules (always applied)
+    prompt += `\n\n=== COMMUNICATION RULES ===
+CRITICAL RULES - FOLLOW STRICTLY:
+
+1. NO EMOJIS: Never use emojis in your messages. Not a single one.
+
+2. NO EXCLAMATION MARKS: Do not use exclamation marks (!). Keep it calm and casual.
+
+3. QUESTIONS END THE MESSAGE: If you ask a question, it MUST be the LAST thing in the message. Never continue writing after a question mark.
+
+4. ONLY USE ?: Never use ¿ (inverted question mark). Always use just ? at the end.
+
+5. CONVERSATIONAL FLOW:
+   - Do NOT propose meetings or sales in the first message
+   - First understand the lead's situation, needs, and context
+   - Ask questions to learn about them
+   - Slowly guide them toward wanting to book or buy
+   - Be patient, build rapport first
+
+6. CASUAL TONE:
+   - Talk like a normal person, not a robot or salesperson
+   - Use informal, friendly language
+   - Short sentences, simple words
+   - Be helpful but relaxed`;
+
+    // If human style is enabled, add multi-message instructions
     const humanStyleEnabled = config?.enableHumanStyle !== false; // Default true
     if (humanStyleEnabled) {
         prompt += `\n\n=== RESPONSE FORMAT ===
@@ -1805,15 +1820,16 @@ IMPORTANT: Respond like a REAL person in chat. This means:
 - Send MULTIPLE short messages instead of one long one
 - Separate each message with the marker [MSG]
 - Use short, natural phrases
-- Add human reactions and expressions ("haha", "oh", "hmm", "ah")
+- Add natural reactions and expressions ("haha", "oh", "hmm", "ah")
 - Make natural pauses between ideas
 - DO NOT write long paragraphs
+- Remember: no emojis, no exclamation marks
 
 CORRECT format example:
-"Hey! 👋[MSG]Great to hear from you[MSG]Tell me, what are you looking for?"
+"hey[MSG]nice to hear from you[MSG]what are you looking for"
 
 INCORRECT format (DON'T do this):
-"Hello, thank you for reaching out. I'm glad you contacted me. Please tell me what you're looking for so I can help you in the best way possible."`;
+"Hello! Thank you for reaching out! I'm glad you contacted me! Please tell me what you're looking for so I can help you in the best way possible!"`;
     }
 
     // Add conversation examples if they exist
