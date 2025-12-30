@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, MoreVertical, MessageSquare, ArrowRight, Bot } from 'lucide-react'
+import { Plus, Trash2, MoreVertical, MessageSquare, ArrowRight, Bot, ArrowLeft } from 'lucide-react'
 import Logo from '../components/Logo'
 import SectionHeader from '../components/SectionHeader'
 import { useAgents, type AgentConfig, type Agent } from '../hooks/useAgents'
@@ -29,21 +29,9 @@ function Agents() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        console.log('[Agents] handleSubmit called, currentStep:', currentStep, 'totalSteps:', totalSteps, 'isTransitioning:', isTransitioning)
 
-        // Prevenir submit durante transiciones entre pasos
-        if (isTransitioning) {
-            console.log('[Agents] Currently transitioning, ignoring submit')
-            return
-        }
-
-        // Solo permitir submit en el último paso
-        if (currentStep !== totalSteps) {
-            console.log('[Agents] Not on last step, preventing submit')
-            return
-        }
-
-        console.log('[Agents] On last step, proceeding with submit')
+        if (isTransitioning) return
+        if (currentStep !== totalSteps) return
 
         try {
             const agentData = {
@@ -61,7 +49,7 @@ function Agents() {
             }
             setFormData({ name: '', description: '', platform: '', config: {} })
             setCurrentStep(1)
-            setIsTransitioning(false) // Resetear flag de transición
+            setIsTransitioning(false)
             setShowForm(false)
         } catch (err) {
             console.error('Error saving agent:', err)
@@ -77,35 +65,32 @@ function Agents() {
             config: agent.config || {},
         })
         setEditingAgent(agent.id)
-        setCurrentStep(1) // Siempre empezar desde el primer paso
-        setIsTransitioning(false) // Resetear flag de transición
+        setCurrentStep(1)
+        setIsTransitioning(false)
         setShowForm(true)
     }
 
+    const handleBack = () => {
+        setShowForm(false)
+        setEditingAgent(null)
+        setFormData({ name: '', description: '', platform: '', config: {} })
+        setCurrentStep(1)
+        setIsTransitioning(false)
+    }
+
     const nextStep = () => {
-        console.log('[Agents] nextStep called, currentStep:', currentStep, 'totalSteps:', totalSteps)
         if (currentStep < totalSteps) {
             setIsTransitioning(true)
             setCurrentStep(currentStep + 1)
-            console.log('[Agents] Moving to step:', currentStep + 1)
-
-            // Desactivar la bandera de transición después de un breve delay
             setTimeout(() => {
                 setIsTransitioning(false)
-                console.log('[Agents] Transition complete')
             }, 300)
-        } else {
-            console.log('[Agents] Already at last step, not advancing')
         }
     }
 
     const prevStep = () => {
-        console.log('[Agents] prevStep called, currentStep:', currentStep)
         if (currentStep > 1) {
             setCurrentStep(currentStep - 1)
-            console.log('[Agents] Moving to step:', currentStep - 1)
-        } else {
-            console.log('[Agents] Already at first step, not going back')
         }
     }
 
@@ -113,7 +98,6 @@ function Agents() {
         setFormData((prev) => {
             const newConfig = { ...prev.config, [key]: value }
 
-            // Si se está habilitando el agendamiento de reuniones, establecer valores por defecto
             if (key === 'enableMeetingScheduling' && value === true) {
                 newConfig.meetingDuration = newConfig.meetingDuration ?? 30
                 newConfig.meetingBufferMinutes = newConfig.meetingBufferMinutes ?? 0
@@ -146,12 +130,6 @@ function Agents() {
         }
     }
 
-    // Monitorear cambios en currentStep
-    useEffect(() => {
-        console.log('[Agents] currentStep changed to:', currentStep)
-    }, [currentStep])
-
-    // Cerrar menú al hacer clic fuera
     useEffect(() => {
         const handleClickOutside = () => setOpenMenuId(null)
         if (openMenuId) {
@@ -160,7 +138,7 @@ function Agents() {
         }
     }, [openMenuId])
 
-    if (loading) {
+    if (loading && agents.length === 0) {
         return (
             <div className="card" style={{ border: '2px solid #000' }}>
                 <div className="empty-state">
@@ -182,46 +160,38 @@ function Agents() {
         )
     }
 
-    return (
-        <div>
-            <SectionHeader title="Agentes" icon={<Bot size={24} />}>
-                <button className="btn btn--primary" onClick={() => {
-                    setCurrentStep(1)
-                    setIsTransitioning(false)
-                    setShowForm(true)
-                }}>
-                    <Plus size={18} />
-                    Crear Agente
-                </button>
-            </SectionHeader>
+    // Vista de formulario de agente (página completa)
+    if (showForm) {
+        return (
+            <div>
+                {/* Header con botón de volver */}
+                <SectionHeader
+                    title={editingAgent ? 'Editar Agente' : 'Nuevo Agente'}
+                    icon={
+                        <button
+                            onClick={handleBack}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                color: 'var(--color-text)',
+                            }}
+                        >
+                            <ArrowLeft size={24} />
+                        </button>
+                    }
+                />
 
-            <Modal
-                isOpen={showForm}
-                onClose={() => {
-                    setShowForm(false)
-                    setEditingAgent(null)
-                    setFormData({ name: '', description: '', platform: '', config: {} })
-                    setCurrentStep(1)
-                    setIsTransitioning(false)
-                }}
-                title={editingAgent ? 'Editar Agente' : 'Nuevo Agente'}
-            >
-                <form
-                    onSubmit={handleSubmit}
-                    style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '80vh' }}
-                >
-                    {/* Form Content - Scrollable */}
-                    <div style={{
-                        flex: 1,
-                        overflowY: 'auto',
-                        overflowX: 'hidden',
-                        padding: 'var(--spacing-lg)',
-                        paddingBottom: 'var(--spacing-md)',
-                    }}>
+                {/* Formulario */}
+                <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-xl)' }}>
+                    <form onSubmit={handleSubmit}>
                         {/* Progress Indicator */}
                         <div style={{
-                            marginBottom: 'var(--spacing-lg)',
-                            paddingBottom: 'var(--spacing-md)',
+                            marginBottom: 'var(--spacing-xl)',
+                            paddingBottom: 'var(--spacing-lg)',
                             borderBottom: '2px solid var(--color-border)'
                         }}>
                             <p style={{
@@ -250,7 +220,7 @@ function Agents() {
 
                         {/* Step 1: Información Básica */}
                         {currentStep === 1 && (
-                            <div>
+                            <div style={{ maxWidth: '600px' }}>
                                 <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
                                     Información Básica
                                 </h3>
@@ -297,7 +267,7 @@ function Agents() {
 
                         {/* Step 2: Identidad del Asistente */}
                         {currentStep === 2 && (
-                            <div>
+                            <div style={{ maxWidth: '600px' }}>
                                 <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
                                     Identidad del Asistente
                                 </h3>
@@ -344,7 +314,7 @@ function Agents() {
 
                         {/* Step 3: Información del Negocio */}
                         {currentStep === 3 && (
-                            <div>
+                            <div style={{ maxWidth: '600px' }}>
                                 <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
                                     Información del Negocio
                                 </h3>
@@ -402,7 +372,7 @@ function Agents() {
 
                         {/* Step 4: Comportamiento */}
                         {currentStep === 4 && (
-                            <div>
+                            <div style={{ maxWidth: '600px' }}>
                                 <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
                                     Comportamiento y Horarios
                                 </h3>
@@ -457,7 +427,7 @@ function Agents() {
 
                         {/* Step 5: Calificación de Leads */}
                         {currentStep === 5 && (
-                            <div>
+                            <div style={{ maxWidth: '600px' }}>
                                 <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
                                     Calificación de Leads
                                 </h3>
@@ -514,7 +484,7 @@ function Agents() {
 
                         {/* Step 6: Personalización */}
                         {currentStep === 6 && (
-                            <div>
+                            <div style={{ maxWidth: '600px' }}>
                                 <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
                                     Personalización Avanzada
                                 </h3>
@@ -547,7 +517,7 @@ function Agents() {
 
                         {/* Step 7: Configuración de Reuniones */}
                         {currentStep === 7 && (
-                            <div>
+                            <div style={{ maxWidth: '600px' }}>
                                 <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
                                     Generación de Reuniones (Opcional)
                                 </h3>
@@ -559,7 +529,7 @@ function Agents() {
                                     border: '2px solid var(--color-border)'
                                 }}>
                                     <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                                        🎉 <strong>¡Último paso!</strong> Esta configuración es opcional. Si no deseas habilitar reuniones automáticas,
+                                        Esta configuración es opcional. Si no deseas habilitar reuniones automáticas,
                                         puedes hacer clic en "{editingAgent ? 'Guardar Cambios' : 'Crear Agente'}" para finalizar.
                                     </p>
                                 </div>
@@ -742,68 +712,77 @@ function Agents() {
                                 </div>
                             </div>
                         )}
-                    </div>
 
-                    {/* Navigation Buttons */}
-                    <div style={{
-                        display: 'flex',
-                        gap: 'var(--spacing-md)',
-                        justifyContent: 'space-between',
-                        padding: 'var(--spacing-lg)',
-                        paddingTop: 'var(--spacing-md)',
-                        borderTop: '2px solid #000',
-                        flexShrink: 0,
-                        background: 'var(--color-bg)',
-                    }}>
-                        <button
-                            type="button"
-                            className="btn btn--secondary"
-                            onClick={() => {
-                                setShowForm(false)
-                                setEditingAgent(null)
-                                setFormData({ name: '', description: '', platform: '', config: {} })
-                                setCurrentStep(1)
-                            }}
-                        >
-                            Cancelar
-                        </button>
-                        <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
-                            {currentStep > 1 && (
-                                <button
-                                    type="button"
-                                    className="btn btn--secondary"
-                                    onClick={prevStep}
-                                >
-                                    Atrás
-                                </button>
-                            )}
-                            {currentStep < totalSteps ? (
-                                <button
-                                    type="button"
-                                    className="btn btn--primary"
-                                    onClick={nextStep}
-                                >
-                                    Continuar
-                                    <ArrowRight size={18} />
-                                </button>
-                            ) : (
-                                <button
-                                    type="submit"
-                                    className="btn btn--primary"
-                                    disabled={isTransitioning}
-                                    style={{
-                                        opacity: isTransitioning ? 0.5 : 1,
-                                        cursor: isTransitioning ? 'not-allowed' : 'pointer'
-                                    }}
-                                >
-                                    <Plus size={18} />
-                                    {editingAgent ? 'Guardar Cambios' : 'Crear Agente'}
-                                </button>
-                            )}
+                        {/* Navigation Buttons */}
+                        <div style={{
+                            display: 'flex',
+                            gap: 'var(--spacing-md)',
+                            justifyContent: 'space-between',
+                            marginTop: 'var(--spacing-xl)',
+                            paddingTop: 'var(--spacing-lg)',
+                            borderTop: '2px solid var(--color-border)',
+                        }}>
+                            <button
+                                type="button"
+                                className="btn btn--secondary"
+                                onClick={handleBack}
+                            >
+                                Cancelar
+                            </button>
+                            <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+                                {currentStep > 1 && (
+                                    <button
+                                        type="button"
+                                        className="btn btn--secondary"
+                                        onClick={prevStep}
+                                    >
+                                        Atrás
+                                    </button>
+                                )}
+                                {currentStep < totalSteps ? (
+                                    <button
+                                        type="button"
+                                        className="btn btn--primary"
+                                        onClick={nextStep}
+                                    >
+                                        Continuar
+                                        <ArrowRight size={18} />
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="submit"
+                                        className="btn btn--primary"
+                                        disabled={isTransitioning}
+                                        style={{
+                                            opacity: isTransitioning ? 0.5 : 1,
+                                            cursor: isTransitioning ? 'not-allowed' : 'pointer'
+                                        }}
+                                    >
+                                        <Plus size={18} />
+                                        {editingAgent ? 'Guardar Cambios' : 'Crear Agente'}
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                </form>
-            </Modal>
+                    </form>
+                </div>
+            </div>
+        )
+    }
+
+    // Vista de lista de agentes
+    return (
+        <div>
+            <SectionHeader title="Agentes" icon={<Bot size={24} />}>
+                <button className="btn btn--primary" onClick={() => {
+                    setCurrentStep(1)
+                    setIsTransitioning(false)
+                    setShowForm(true)
+                }}>
+                    <Plus size={18} />
+                    Crear Agente
+                </button>
+            </SectionHeader>
 
             {agents.length === 0 ? (
                 <div className="card" style={{ border: '2px solid #000' }}>
@@ -824,7 +803,6 @@ function Agents() {
                             <div
                                 key={agent.id}
                                 onClick={(e) => {
-                                    // No abrir edición si se hace clic en el menú o el toggle
                                     if ((e.target as HTMLElement).closest('button, label')) return
                                     handleEdit(agent)
                                 }}
@@ -844,7 +822,7 @@ function Agents() {
                                     e.currentTarget.style.boxShadow = '0 4px 12px rgba(35, 131, 226, 0.1)'
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.currentTarget.style.borderColor = 'var(--color-border)'
+                                    e.currentTarget.style.borderColor = '#000'
                                     e.currentTarget.style.boxShadow = 'none'
                                 }}
                             >
@@ -884,7 +862,7 @@ function Agents() {
 
                                 {/* Right: Controls */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                                    {/* Platform Badge (WhatsApp/Instagram) */}
+                                    {/* Platform Badge */}
                                     {agent.platform ? (
                                         <span
                                             style={{
@@ -940,10 +918,8 @@ function Agents() {
                                         checked={isActive}
                                         onCheckedChange={(checked) => {
                                             if (checked && !agent.platform) {
-                                                // Si se activa y no tiene plataforma, asignar Instagram por defecto
                                                 handleAssignPlatform(agent.id, 'instagram')
                                             } else if (!checked && agent.platform) {
-                                                // Si se desactiva, quitar plataforma
                                                 updateAgent(agent.id, { platform: null })
                                             }
                                         }}
