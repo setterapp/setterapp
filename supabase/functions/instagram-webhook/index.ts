@@ -1721,12 +1721,31 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
         const contents = messages
             .filter((m: any) => m.role !== 'system')
             .map((m: any) => {
+                // Handle tool results
                 if (m.role === 'tool') {
                     return {
-                        role: 'function',
-                        parts: [{ functionResponse: { name: 'tool_result', response: { content: m.content } } }]
+                        role: 'user',
+                        parts: [{
+                            functionResponse: {
+                                name: m.tool_call_id || 'tool_result',
+                                response: { content: m.content }
+                            }
+                        }]
                     };
                 }
+                // Handle assistant messages with tool_calls
+                if (m.role === 'assistant' && m.tool_calls && m.tool_calls.length > 0) {
+                    return {
+                        role: 'model',
+                        parts: m.tool_calls.map((tc: any) => ({
+                            functionCall: {
+                                name: tc.function.name,
+                                args: JSON.parse(tc.function.arguments || '{}')
+                            }
+                        }))
+                    };
+                }
+                // Regular text messages
                 return {
                     role: m.role === 'assistant' ? 'model' : 'user',
                     parts: [{ text: m.content || '' }]
