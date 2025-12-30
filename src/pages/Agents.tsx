@@ -172,305 +172,296 @@ function Agents() {
                     </button>
                 </SectionHeader>
 
-                {/* Formulario con scroll */}
+                {/* Formulario con scroll - todo vertical */}
                 <form id="agent-form" onSubmit={handleSubmit}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(400px, 100%), 1fr))', gap: 'var(--spacing-lg)' }}>
-
-                        {/* Columna 1: Información Básica + Identidad */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-                            {/* Información Básica */}
-                            <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
-                                <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                    Información Básica
-                                </h3>
-                                <div className="form-group">
-                                    <label htmlFor="name">Nombre del Agente *</label>
-                                    <input
-                                        id="name"
-                                        type="text"
-                                        className="input"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        required
-                                        placeholder="Ej: Asistente de Ventas"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="description">Descripción *</label>
-                                    <textarea
-                                        id="description"
-                                        className="input textarea"
-                                        value={formData.description}
-                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        required
-                                        placeholder="Describe las capacidades y personalidad del agente..."
-                                        rows={3}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="platform">Plataforma</label>
-                                    <select
-                                        id="platform"
-                                        className="input select"
-                                        value={formData.platform}
-                                        onChange={(e) => setFormData({ ...formData, platform: e.target.value as 'whatsapp' | 'instagram' | '' })}
-                                    >
-                                        <option value="">Sin asignar</option>
-                                        <option value="instagram">Instagram</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Identidad del Asistente */}
-                            <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
-                                <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                    Identidad del Asistente
-                                </h3>
-                                <div className="form-group">
-                                    <label htmlFor="assistantName">Nombre del Asistente</label>
-                                    <input
-                                        id="assistantName"
-                                        type="text"
-                                        className="input"
-                                        value={formData.config.assistantName || ''}
-                                        onChange={(e) => updateConfig('assistantName', e.target.value)}
-                                        placeholder="Ej: Juan, María, etc."
-                                    />
-                                    <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-                                        Nombre que verán tus clientes
-                                    </small>
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="companyName">Nombre de la Empresa</label>
-                                    <input
-                                        id="companyName"
-                                        type="text"
-                                        className="input"
-                                        value={formData.config.companyName || ''}
-                                        onChange={(e) => updateConfig('companyName', e.target.value)}
-                                        placeholder="Ej: Mi Empresa"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="ownerName">Nombre del Propietario</label>
-                                    <input
-                                        id="ownerName"
-                                        type="text"
-                                        className="input"
-                                        value={formData.config.ownerName || ''}
-                                        onChange={(e) => updateConfig('ownerName', e.target.value)}
-                                        placeholder="Tu nombre"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Comportamiento y Horarios */}
-                            <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
-                                <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                    Comportamiento
-                                </h3>
-                                <div className="form-group">
-                                    <label htmlFor="openingQuestion">Pregunta de Apertura</label>
-                                    <textarea
-                                        id="openingQuestion"
-                                        className="input textarea"
-                                        value={formData.config.openingQuestion || ''}
-                                        onChange={(e) => updateConfig('openingQuestion', e.target.value)}
-                                        placeholder="Primera pregunta que hará el asistente"
-                                        rows={2}
-                                    />
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--spacing-md)' }}>
-                                    <div className="form-group">
-                                        <label htmlFor="activeHoursStart">Hora Inicio</label>
-                                        <input
-                                            id="activeHoursStart"
-                                            type="time"
-                                            className="input"
-                                            value={formData.config.activeHoursStart || '09:00'}
-                                            onChange={(e) => updateConfig('activeHoursStart', e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="activeHoursEnd">Hora Fin</label>
-                                        <input
-                                            id="activeHoursEnd"
-                                            type="time"
-                                            className="input"
-                                            value={formData.config.activeHoursEnd || '18:00'}
-                                            onChange={(e) => updateConfig('activeHoursEnd', e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="responseInterval">Intervalo (min)</label>
-                                        <input
-                                            id="responseInterval"
-                                            type="number"
-                                            className="input"
-                                            min="1"
-                                            value={formData.config.responseInterval || 3}
-                                            onChange={(e) => updateConfig('responseInterval', parseInt(e.target.value) || 3)}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Columna 2: Negocio + Calificación + Personalización */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-                            {/* Información del Negocio */}
-                            <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
-                                <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                    Información del Negocio
-                                </h3>
-                                <div className="form-group">
-                                    <label htmlFor="businessNiche">Nicho de Negocio</label>
-                                    <input
-                                        id="businessNiche"
-                                        type="text"
-                                        className="input"
-                                        value={formData.config.businessNiche || ''}
-                                        onChange={(e) => updateConfig('businessNiche', e.target.value)}
-                                        placeholder="Ej: Coaching, Fitness, E-commerce"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="clientGoals">Objetivos del Cliente</label>
-                                    <textarea
-                                        id="clientGoals"
-                                        className="input textarea"
-                                        value={formData.config.clientGoals || ''}
-                                        onChange={(e) => updateConfig('clientGoals', e.target.value)}
-                                        placeholder="¿Qué objetivos ayuda tu servicio a lograr?"
-                                        rows={2}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="offerDetails">Detalles de la Oferta</label>
-                                    <textarea
-                                        id="offerDetails"
-                                        className="input textarea"
-                                        value={formData.config.offerDetails || ''}
-                                        onChange={(e) => updateConfig('offerDetails', e.target.value)}
-                                        placeholder="¿Qué paquetes o servicios ofreces?"
-                                        rows={2}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="importantLinks">Enlaces Importantes</label>
-                                    <textarea
-                                        id="importantLinks"
-                                        className="input textarea"
-                                        value={(formData.config.importantLinks || []).join('\n')}
-                                        onChange={(e) => updateConfig('importantLinks', e.target.value.split('\n').filter(l => l.trim()))}
-                                        placeholder="Un enlace por línea"
-                                        rows={2}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Calificación de Leads */}
-                            <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
-                                <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                    Calificación de Leads
-                                </h3>
-                                <div className="form-group">
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer' }}>
-                                        <Checkbox
-                                            checked={formData.config.enableQualification || false}
-                                            onCheckedChange={(checked) => updateConfig('enableQualification', checked)}
-                                        />
-                                        <span>Habilitar calificación de leads</span>
-                                    </label>
-                                </div>
-                                {formData.config.enableQualification && (
-                                    <>
-                                        <div className="form-group">
-                                            <label htmlFor="qualifyingQuestion">Pregunta de Calificación</label>
-                                            <textarea
-                                                id="qualifyingQuestion"
-                                                className="input textarea"
-                                                value={formData.config.qualifyingQuestion || ''}
-                                                onChange={(e) => updateConfig('qualifyingQuestion', e.target.value)}
-                                                placeholder="Pregunta para calificar al lead"
-                                                rows={2}
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label htmlFor="qualificationCriteria">Criterios</label>
-                                            <textarea
-                                                id="qualificationCriteria"
-                                                className="input textarea"
-                                                value={formData.config.qualificationCriteria || ''}
-                                                onChange={(e) => updateConfig('qualificationCriteria', e.target.value)}
-                                                placeholder="Ej: Mínimo $5000 disponible"
-                                                rows={2}
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label htmlFor="disqualifyMessage">Mensaje para Descalificados</label>
-                                            <textarea
-                                                id="disqualifyMessage"
-                                                className="input textarea"
-                                                value={formData.config.disqualifyMessage || ''}
-                                                onChange={(e) => updateConfig('disqualifyMessage', e.target.value)}
-                                                placeholder="Mensaje para leads no calificados"
-                                                rows={2}
-                                            />
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-
-                            {/* Personalización */}
-                            <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
-                                <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                                    Personalización
-                                </h3>
-                                <div className="form-group">
-                                    <label htmlFor="toneGuidelines">Guías de Tono</label>
-                                    <textarea
-                                        id="toneGuidelines"
-                                        className="input textarea"
-                                        value={formData.config.toneGuidelines || ''}
-                                        onChange={(e) => updateConfig('toneGuidelines', e.target.value)}
-                                        placeholder="Instrucciones sobre el tono de comunicación"
-                                        rows={2}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="additionalContext">Contexto Adicional</label>
-                                    <textarea
-                                        id="additionalContext"
-                                        className="input textarea"
-                                        value={formData.config.additionalContext || ''}
-                                        onChange={(e) => updateConfig('additionalContext', e.target.value)}
-                                        placeholder="Información adicional para el asistente"
-                                        rows={2}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Sección de Reuniones (ancho completo) */}
-                    <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)', marginTop: 'var(--spacing-lg)' }}>
-                        <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
-                            Generación de Reuniones
-                        </h3>
-                        <div className="form-group">
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer' }}>
-                                <Checkbox
-                                    checked={formData.config.enableMeetingScheduling || false}
-                                    onCheckedChange={(checked) => updateConfig('enableMeetingScheduling', checked)}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
+                        {/* Información Básica */}
+                        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+                            <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
+                                Información Básica
+                            </h3>
+                            <div className="form-group">
+                                <label htmlFor="name">Nombre del Agente *</label>
+                                <input
+                                    id="name"
+                                    type="text"
+                                    className="input"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    required
+                                    placeholder="Ej: Asistente de Ventas"
                                 />
-                                <span>Habilitar generación automática de reuniones con Google Calendar</span>
-                            </label>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="description">Descripción *</label>
+                                <textarea
+                                    id="description"
+                                    className="input textarea"
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    required
+                                    placeholder="Describe las capacidades y personalidad del agente..."
+                                    rows={3}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="platform">Plataforma</label>
+                                <select
+                                    id="platform"
+                                    className="input select"
+                                    value={formData.platform}
+                                    onChange={(e) => setFormData({ ...formData, platform: e.target.value as 'whatsapp' | 'instagram' | '' })}
+                                >
+                                    <option value="">Sin asignar</option>
+                                    <option value="instagram">Instagram</option>
+                                </select>
+                            </div>
                         </div>
 
-                        {formData.config.enableMeetingScheduling && (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 'var(--spacing-lg)', marginTop: 'var(--spacing-md)' }}>
-                                <div>
+                        {/* Identidad del Asistente */}
+                        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+                            <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
+                                Identidad del Asistente
+                            </h3>
+                            <div className="form-group">
+                                <label htmlFor="assistantName">Nombre del Asistente</label>
+                                <input
+                                    id="assistantName"
+                                    type="text"
+                                    className="input"
+                                    value={formData.config.assistantName || ''}
+                                    onChange={(e) => updateConfig('assistantName', e.target.value)}
+                                    placeholder="Ej: Juan, María, etc."
+                                />
+                                <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
+                                    Nombre que verán tus clientes
+                                </small>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="companyName">Nombre de la Empresa</label>
+                                <input
+                                    id="companyName"
+                                    type="text"
+                                    className="input"
+                                    value={formData.config.companyName || ''}
+                                    onChange={(e) => updateConfig('companyName', e.target.value)}
+                                    placeholder="Ej: Mi Empresa"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="ownerName">Nombre del Propietario</label>
+                                <input
+                                    id="ownerName"
+                                    type="text"
+                                    className="input"
+                                    value={formData.config.ownerName || ''}
+                                    onChange={(e) => updateConfig('ownerName', e.target.value)}
+                                    placeholder="Tu nombre"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Información del Negocio */}
+                        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+                            <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
+                                Información del Negocio
+                            </h3>
+                            <div className="form-group">
+                                <label htmlFor="businessNiche">Nicho de Negocio</label>
+                                <input
+                                    id="businessNiche"
+                                    type="text"
+                                    className="input"
+                                    value={formData.config.businessNiche || ''}
+                                    onChange={(e) => updateConfig('businessNiche', e.target.value)}
+                                    placeholder="Ej: Coaching, Fitness, E-commerce"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="clientGoals">Objetivos del Cliente</label>
+                                <textarea
+                                    id="clientGoals"
+                                    className="input textarea"
+                                    value={formData.config.clientGoals || ''}
+                                    onChange={(e) => updateConfig('clientGoals', e.target.value)}
+                                    placeholder="¿Qué objetivos ayuda tu servicio a lograr?"
+                                    rows={2}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="offerDetails">Detalles de la Oferta</label>
+                                <textarea
+                                    id="offerDetails"
+                                    className="input textarea"
+                                    value={formData.config.offerDetails || ''}
+                                    onChange={(e) => updateConfig('offerDetails', e.target.value)}
+                                    placeholder="¿Qué paquetes o servicios ofreces?"
+                                    rows={2}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="importantLinks">Enlaces Importantes</label>
+                                <textarea
+                                    id="importantLinks"
+                                    className="input textarea"
+                                    value={(formData.config.importantLinks || []).join('\n')}
+                                    onChange={(e) => updateConfig('importantLinks', e.target.value.split('\n').filter(l => l.trim()))}
+                                    placeholder="Un enlace por línea"
+                                    rows={2}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Comportamiento y Horarios */}
+                        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+                            <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
+                                Comportamiento
+                            </h3>
+                            <div className="form-group">
+                                <label htmlFor="openingQuestion">Pregunta de Apertura</label>
+                                <textarea
+                                    id="openingQuestion"
+                                    className="input textarea"
+                                    value={formData.config.openingQuestion || ''}
+                                    onChange={(e) => updateConfig('openingQuestion', e.target.value)}
+                                    placeholder="Primera pregunta que hará el asistente"
+                                    rows={2}
+                                />
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--spacing-md)' }}>
+                                <div className="form-group">
+                                    <label htmlFor="activeHoursStart">Hora Inicio</label>
+                                    <input
+                                        id="activeHoursStart"
+                                        type="time"
+                                        className="input"
+                                        value={formData.config.activeHoursStart || '09:00'}
+                                        onChange={(e) => updateConfig('activeHoursStart', e.target.value)}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="activeHoursEnd">Hora Fin</label>
+                                    <input
+                                        id="activeHoursEnd"
+                                        type="time"
+                                        className="input"
+                                        value={formData.config.activeHoursEnd || '18:00'}
+                                        onChange={(e) => updateConfig('activeHoursEnd', e.target.value)}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="responseInterval">Intervalo (min)</label>
+                                    <input
+                                        id="responseInterval"
+                                        type="number"
+                                        className="input"
+                                        min="1"
+                                        value={formData.config.responseInterval || 3}
+                                        onChange={(e) => updateConfig('responseInterval', parseInt(e.target.value) || 3)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Calificación de Leads */}
+                        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+                            <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
+                                Calificación de Leads
+                            </h3>
+                            <div className="form-group">
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer' }}>
+                                    <Checkbox
+                                        checked={formData.config.enableQualification || false}
+                                        onCheckedChange={(checked) => updateConfig('enableQualification', checked)}
+                                    />
+                                    <span>Habilitar calificación de leads</span>
+                                </label>
+                            </div>
+                            {formData.config.enableQualification && (
+                                <>
+                                    <div className="form-group">
+                                        <label htmlFor="qualifyingQuestion">Pregunta de Calificación</label>
+                                        <textarea
+                                            id="qualifyingQuestion"
+                                            className="input textarea"
+                                            value={formData.config.qualifyingQuestion || ''}
+                                            onChange={(e) => updateConfig('qualifyingQuestion', e.target.value)}
+                                            placeholder="Pregunta para calificar al lead"
+                                            rows={2}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="qualificationCriteria">Criterios</label>
+                                        <textarea
+                                            id="qualificationCriteria"
+                                            className="input textarea"
+                                            value={formData.config.qualificationCriteria || ''}
+                                            onChange={(e) => updateConfig('qualificationCriteria', e.target.value)}
+                                            placeholder="Ej: Mínimo $5000 disponible"
+                                            rows={2}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="disqualifyMessage">Mensaje para Descalificados</label>
+                                        <textarea
+                                            id="disqualifyMessage"
+                                            className="input textarea"
+                                            value={formData.config.disqualifyMessage || ''}
+                                            onChange={(e) => updateConfig('disqualifyMessage', e.target.value)}
+                                            placeholder="Mensaje para leads no calificados"
+                                            rows={2}
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Personalización */}
+                        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+                            <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
+                                Personalización
+                            </h3>
+                            <div className="form-group">
+                                <label htmlFor="toneGuidelines">Guías de Tono</label>
+                                <textarea
+                                    id="toneGuidelines"
+                                    className="input textarea"
+                                    value={formData.config.toneGuidelines || ''}
+                                    onChange={(e) => updateConfig('toneGuidelines', e.target.value)}
+                                    placeholder="Instrucciones sobre el tono de comunicación"
+                                    rows={2}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="additionalContext">Contexto Adicional</label>
+                                <textarea
+                                    id="additionalContext"
+                                    className="input textarea"
+                                    value={formData.config.additionalContext || ''}
+                                    onChange={(e) => updateConfig('additionalContext', e.target.value)}
+                                    placeholder="Información adicional para el asistente"
+                                    rows={2}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Generación de Reuniones */}
+                        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+                            <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
+                                Generación de Reuniones
+                            </h3>
+                            <div className="form-group">
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer' }}>
+                                    <Checkbox
+                                        checked={formData.config.enableMeetingScheduling || false}
+                                        onCheckedChange={(checked) => updateConfig('enableMeetingScheduling', checked)}
+                                    />
+                                    <span>Habilitar generación automática de reuniones con Google Calendar</span>
+                                </label>
+                            </div>
+
+                            {formData.config.enableMeetingScheduling && (
+                                <>
                                     <div className="form-group">
                                         <label htmlFor="meetingEmail">Email para Reuniones *</label>
                                         <input
@@ -505,8 +496,6 @@ function Agents() {
                                             rows={2}
                                         />
                                     </div>
-                                </div>
-                                <div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
                                         <div className="form-group">
                                             <label htmlFor="meetingDuration">Duración (min)</label>
@@ -580,11 +569,9 @@ function Agents() {
                                             />
                                         </div>
                                     </div>
-                                </div>
-                                <div>
                                     <div className="form-group">
                                         <label>Días Disponibles</label>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)' }}>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
                                             {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day, index) => {
                                                 const dayValue = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'][index]
                                                 const availableDays = formData.config.meetingAvailableDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
@@ -605,9 +592,9 @@ function Agents() {
                                             })}
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        )}
+                                </>
+                            )}
+                        </div>
                     </div>
                 </form>
             </div>
