@@ -107,12 +107,32 @@ Deno.serve(async (req: Request) => {
       console.warn('⚠️ Long-lived exchange failed:', e);
     }
 
+    // 3) Fetch user profile to get username
+    let username: string | null = null;
+    try {
+      const profileResponse = await fetch(
+        `https://graph.instagram.com/me?fields=id,username&access_token=${encodeURIComponent(finalAccessToken)}`,
+        { method: 'GET' }
+      );
+
+      if (profileResponse.ok) {
+        const profile = await profileResponse.json();
+        username = profile.username || null;
+        console.log('✅ Got Instagram username:', username);
+      } else {
+        const errorText = await profileResponse.text();
+        console.warn('⚠️ Could not fetch Instagram profile:', errorText);
+      }
+    } catch (e) {
+      console.warn('⚠️ Profile fetch failed:', e);
+    }
+
     // Return token data
     return new Response(
       JSON.stringify({
         access_token: finalAccessToken,
         user_id: data.user_id || null,
-        username: data.username || null,
+        username: username,
         expires_in: expiresIn,
         token_type: tokenType,
       }),
