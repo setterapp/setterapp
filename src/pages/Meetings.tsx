@@ -1,49 +1,16 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Calendar, Clock, ExternalLink, CheckCircle, XCircle } from 'lucide-react'
 import { useMeetings, type Meeting } from '../hooks/useMeetings'
 import { formatDate } from '../utils/date'
-
-type TimeFilter = 'today' | 'week' | 'month'
+import SectionHeader from '../components/SectionHeader'
 
 export default function Meetings() {
   const { t } = useTranslation()
   const { meetings, loading, error, updateMeetingStatus } = useMeetings()
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('week')
 
   const now = new Date()
-
-  const filterMeetingsByTime = (meetings: Meeting[], filter: TimeFilter) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-
-    const weekStart = new Date(today)
-    weekStart.setDate(weekStart.getDate() - today.getDay()) // Start of week (Sunday)
-
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
-
-    return meetings.filter(m => {
-      const meetingDate = new Date(m.meeting_date)
-      meetingDate.setHours(0, 0, 0, 0)
-
-      switch (filter) {
-        case 'today':
-          return meetingDate >= today && meetingDate < tomorrow
-        case 'week':
-          return meetingDate >= weekStart
-        case 'month':
-          return meetingDate >= monthStart
-        default:
-          return true
-      }
-    })
-  }
-
-  const filteredMeetings = filterMeetingsByTime(meetings, timeFilter)
-  const upcomingMeetings = filteredMeetings.filter(m => new Date(m.meeting_date) >= now)
-  const pastMeetings = filteredMeetings.filter(m => new Date(m.meeting_date) < now)
+  const upcomingMeetings = meetings.filter(m => new Date(m.meeting_date) >= now)
+  const pastMeetings = meetings.filter(m => new Date(m.meeting_date) < now)
 
   const handleStatusChange = async (meetingId: string, newStatus: Meeting['status']) => {
     const success = await updateMeetingStatus(meetingId, newStatus)
@@ -79,23 +46,9 @@ export default function Meetings() {
 
   return (
     <div>
-      {/* Time filter tabs */}
-      <div className="card" style={{ marginBottom: 'var(--spacing-md)', border: '2px solid #000' }}>
-        <div className="flex items-center" style={{ flexWrap: 'wrap', gap: 'var(--spacing-sm)' }}>
-          {(['today', 'week', 'month'] as TimeFilter[]).map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setTimeFilter(filter)}
-              className={`btn ${timeFilter === filter ? 'btn--primary' : 'btn--ghost'}`}
-              style={{ fontSize: 'var(--font-size-sm)', padding: 'var(--spacing-xs) var(--spacing-md)' }}
-            >
-              {t(`meetings.filters.${filter}`)}
-            </button>
-          ))}
-        </div>
-      </div>
+      <SectionHeader title="Meetings" icon={<Calendar size={24} />} />
 
-      {filteredMeetings.length === 0 ? (
+      {meetings.length === 0 ? (
         <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <Calendar size={64} style={{ opacity: 0.3, margin: '0 auto var(--spacing-md)' }} />
@@ -107,7 +60,7 @@ export default function Meetings() {
         </div>
       ) : (
         <>
-          {/* Upcoming meetings table */}
+          {/* Upcoming meetings */}
           {upcomingMeetings.length > 0 && (
             <div style={{ marginBottom: 'var(--spacing-xl)' }}>
               <h2 style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--spacing-md)', fontWeight: 600 }}>
@@ -121,7 +74,7 @@ export default function Meetings() {
             </div>
           )}
 
-          {/* Past meetings table */}
+          {/* Past meetings */}
           {pastMeetings.length > 0 && (
             <div>
               <h2 style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--spacing-md)', fontWeight: 600 }}>
