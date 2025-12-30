@@ -1727,7 +1727,7 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
 
     try {
         const requestBody: any = {
-            model: 'gpt-4o',
+            model: 'gpt-5-mini',
             messages: messages,
             temperature: 0.3,
             max_tokens: 100
