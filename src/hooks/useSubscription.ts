@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
+// Admin emails that bypass subscription checks
+const ADMIN_EMAILS = ['info@setterapp.ai']
+
 export type SubscriptionPlan = 'starter' | 'growth' | 'premium'
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'inactive'
 
@@ -36,6 +39,7 @@ export function useSubscription() {
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
 
   const fetchSubscription = async () => {
     try {
@@ -45,8 +49,11 @@ export function useSubscription() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         setSubscription(null)
+        setUserEmail(null)
         return
       }
+
+      setUserEmail(session.user.email || null)
 
       const { data, error: fetchError } = await supabase
         .from('subscriptions')
@@ -80,21 +87,24 @@ export function useSubscription() {
     }
   }, [])
 
+  // Check if user is admin
+  const isAdmin = userEmail ? ADMIN_EMAILS.includes(userEmail.toLowerCase()) : false
+
   // Check if subscription is active
   const isActive = subscription?.status === 'active' || subscription?.status === 'trialing'
 
   // Check if subscription is expiring soon (cancelled but still active)
   const isExpiring = subscription?.cancel_at_period_end === true && isActive
 
-  // Check if user has access (active subscription or within grace period)
-  const hasAccess = isActive || (
+  // Check if user has access (admin, active subscription, or within grace period)
+  const hasAccess = isAdmin || isActive || (
     subscription?.status === 'canceled' &&
     subscription?.current_period_end &&
     new Date(subscription.current_period_end) > new Date()
   )
 
-  // Get current plan limits
-  const limits = subscription?.plan ? PLAN_LIMITS[subscription.plan] : null
+  // Get current plan limits (admins get premium limits)
+  const limits = isAdmin ? PLAN_LIMITS.premium : (subscription?.plan ? PLAN_LIMITS[subscription.plan] : null)
 
   // Create checkout session
   const createCheckout = async (plan: SubscriptionPlan) => {
@@ -146,11 +156,12 @@ export function useSubscription() {
     subscription,
     loading,
     error,
+    isAdmin,
     isActive,
     isExpiring,
     hasAccess,
     limits,
-    plan: subscription?.plan || null,
+    plan: isAdmin ? 'premium' as SubscriptionPlan : (subscription?.plan || null),
     createCheckout,
     openPortal,
     refetch: fetchSubscription,
