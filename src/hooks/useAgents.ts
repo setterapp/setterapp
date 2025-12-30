@@ -42,9 +42,13 @@ export interface Agent {
   updated_at: string
 }
 
+// Caché a nivel de módulo para persistir datos entre navegaciones
+let cachedAgents: Agent[] | null = null
+
 export function useAgents() {
-  const [agents, setAgents] = useState<Agent[]>([])
-  const [loading, setLoading] = useState(true)
+  // Usar datos cacheados si existen, sin mostrar loading
+  const [agents, setAgents] = useState<Agent[]>(cachedAgents || [])
+  const [loading, setLoading] = useState(!cachedAgents)
   const [error, setError] = useState<string | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const isIntentionalCloseRef = useRef(false)
@@ -52,15 +56,15 @@ export function useAgents() {
   const activeFetchIdRef = useRef(0)
   const channelKeyRef = useRef<string | null>(null)
 
-  const fetchAgents = async (showLoading = false) => {
+  const fetchAgents = async () => {
     const fetchId = ++activeFetchIdRef.current
     if (fetchAbortRef.current) fetchAbortRef.current.abort()
     const controller = new AbortController()
     fetchAbortRef.current = controller
     const timeoutId = window.setTimeout(() => controller.abort(), 12000)
     try {
-      // Solo mostrar loading si no hay datos previos o se solicita explícitamente
-      if (showLoading || agents.length === 0) {
+      // Solo mostrar loading si NO hay caché
+      if (!cachedAgents) {
         setLoading(true)
       }
       setError(null)
@@ -72,7 +76,11 @@ export function useAgents() {
         .abortSignal(controller.signal)
       if (fetchError) throw fetchError
       if (fetchId !== activeFetchIdRef.current) return
-      setAgents(data || [])
+
+      // Actualizar estado y caché
+      const newData = data || []
+      cachedAgents = newData
+      setAgents(newData)
     } catch (err: any) {
       if (fetchId !== activeFetchIdRef.current) return
       const msg = err?.name === 'AbortError'
@@ -160,7 +168,7 @@ export function useAgents() {
         return
       }
 
-      await fetchAgents(true) // Primera carga: mostrar loading
+      await fetchAgents()
       await setupRealtime()
 
       const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((_event, newSession) => {
@@ -231,7 +239,11 @@ export function useAgents() {
 
       if (insertError) throw insertError
       if (data) {
-        setAgents((prev) => [data, ...prev])
+        setAgents((prev) => {
+          const newList = [data, ...prev]
+          cachedAgents = newList
+          return newList
+        })
       }
       return data
     } catch (err: any) {
@@ -251,7 +263,11 @@ export function useAgents() {
 
       if (updateError) throw updateError
       if (data) {
-        setAgents((prev) => prev.map((agent) => (agent.id === id ? data : agent)))
+        setAgents((prev) => {
+          const newList = prev.map((agent) => (agent.id === id ? data : agent))
+          cachedAgents = newList
+          return newList
+        })
       }
       return data
     } catch (err: any) {
@@ -268,7 +284,11 @@ export function useAgents() {
         .eq('id', id)
 
       if (deleteError) throw deleteError
-      setAgents((prev) => prev.filter((agent) => agent.id !== id))
+      setAgents((prev) => {
+        const newList = prev.filter((agent) => agent.id !== id)
+        cachedAgents = newList
+        return newList
+      })
     } catch (err: any) {
       setError(err.message)
       throw err

@@ -19,9 +19,12 @@ const DEFAULT_INTEGRATIONS = [
   { name: 'Google Calendar', type: 'google-calendar' as const },
 ]
 
+// Caché a nivel de módulo para persistir datos entre navegaciones
+let cachedIntegrations: Integration[] | null = null
+
 export function useIntegrations() {
-  const [integrations, setIntegrations] = useState<Integration[]>([])
-  const [loading, setLoading] = useState(true)
+  const [integrations, setIntegrations] = useState<Integration[]>(cachedIntegrations || [])
+  const [loading, setLoading] = useState(!cachedIntegrations)
   const [error, setError] = useState<string | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const isIntentionalCloseRef = useRef(false)
@@ -59,11 +62,11 @@ export function useIntegrations() {
     }
   }
 
-  const fetchIntegrations = async (showLoading = false) => {
+  const fetchIntegrations = async () => {
     const fetchId = ++activeFetchIdRef.current
     try {
-      // Solo mostrar loading si no hay datos previos o se solicita explícitamente
-      if (showLoading || integrations.length === 0) {
+      // Solo mostrar loading si NO hay caché
+      if (!cachedIntegrations) {
         setLoading(true)
       }
       setError(null)
@@ -92,7 +95,11 @@ export function useIntegrations() {
       if (fetchError) throw fetchError
 
       if (fetchId !== activeFetchIdRef.current) return
-      setIntegrations(data || [])
+
+      // Actualizar estado y caché
+      const newData = data || []
+      cachedIntegrations = newData
+      setIntegrations(newData)
     } catch (err: any) {
       if (fetchId !== activeFetchIdRef.current) return
       const msg = err?.name === 'AbortError'
@@ -130,7 +137,11 @@ export function useIntegrations() {
       if (updateError) throw updateError
       if (!data) throw new Error('No se pudo actualizar la integración')
 
-      setIntegrations((prev) => prev.map((integration) => (integration.id === id ? data : integration)))
+      setIntegrations((prev) => {
+        const newList = prev.map((integration) => (integration.id === id ? data : integration))
+        cachedIntegrations = newList
+        return newList
+      })
       return data
     } catch (err: any) {
       setError(err.message)
@@ -145,7 +156,7 @@ export function useIntegrations() {
         setLoading(false)
         return
       }
-      await fetchIntegrations(true) // Primera carga: mostrar loading
+      await fetchIntegrations()
     }
 
     checkAuthAndFetch()

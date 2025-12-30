@@ -33,9 +33,12 @@ export interface Conversation {
   }
 }
 
+// Caché a nivel de módulo para persistir datos entre navegaciones
+let cachedConversations: Conversation[] | null = null
+
 export function useConversations() {
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [loading, setLoading] = useState(true)
+  const [conversations, setConversations] = useState<Conversation[]>(cachedConversations || [])
+  const [loading, setLoading] = useState(!cachedConversations)
   const [error, setError] = useState<string | null>(null)
   const conversationsRef = useRef<Conversation[]>([])
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
@@ -60,22 +63,28 @@ export function useConversations() {
   const upsertConversationInState = (conv: Conversation) => {
     setConversations(prev => {
       const idx = prev.findIndex(c => c.id === conv.id)
-      if (idx === -1) return sortConversations([conv, ...prev])
-      const next = [...prev]
-      next[idx] = conv
-      return sortConversations(next)
+      let newList: Conversation[]
+      if (idx === -1) {
+        newList = sortConversations([conv, ...prev])
+      } else {
+        const next = [...prev]
+        next[idx] = conv
+        newList = sortConversations(next)
+      }
+      cachedConversations = newList
+      return newList
     })
   }
 
-  const fetchConversations = async (showLoading = false) => {
+  const fetchConversations = async () => {
     const fetchId = ++activeFetchIdRef.current
     if (fetchAbortRef.current) fetchAbortRef.current.abort()
     const controller = new AbortController()
     fetchAbortRef.current = controller
     const timeoutId = window.setTimeout(() => controller.abort(), 12000)
     try {
-      // Solo mostrar loading si no hay datos previos o se solicita explícitamente
-      if (showLoading || conversations.length === 0) {
+      // Solo mostrar loading si NO hay caché
+      if (!cachedConversations) {
         setLoading(true)
       }
       setError(null)
@@ -88,7 +97,10 @@ export function useConversations() {
         .abortSignal(controller.signal)
       if (fetchError) throw fetchError
       if (fetchId !== activeFetchIdRef.current) return
+
+      // Actualizar estado y caché
       const list = (data || []) as Conversation[]
+      cachedConversations = list
       setConversations(list)
 
       // Best-effort: si hay conversaciones de Instagram con "ID numérico", intentamos resolver @username/name
@@ -112,7 +124,11 @@ export function useConversations() {
             })
             const updatedConv = (resolved as any)?.conversation as Conversation | undefined
             if (updatedConv?.id) {
-              setConversations(prev => prev.map(x => (x.id === updatedConv.id ? updatedConv : x)))
+              setConversations(prev => {
+                const newList = prev.map(x => (x.id === updatedConv.id ? updatedConv : x))
+                cachedConversations = newList
+                return newList
+              })
             }
           } catch {
             // sin logs
@@ -160,7 +176,11 @@ export function useConversations() {
   const markConversationRead = async (conversationId: string) => {
     if (!conversationId) return
     // UI optimista: ocultar badge inmediatamente
-    setConversations(prev => prev.map(c => (c.id === conversationId ? { ...c, unread_count: 0 } : c)))
+    setConversations(prev => {
+      const newList = prev.map(c => (c.id === conversationId ? { ...c, unread_count: 0 } : c))
+      cachedConversations = newList
+      return newList
+    })
     // Best-effort persist
     try {
       await supabase
@@ -179,7 +199,7 @@ export function useConversations() {
         setLoading(false)
         return
       }
-      await fetchConversations(true) // Primera carga: mostrar loading
+      await fetchConversations()
     }
 
     checkAuthAndFetch()

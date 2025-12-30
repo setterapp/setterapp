@@ -17,17 +17,20 @@ export type Contact = {
   updated_at: string
 }
 
+// Caché a nivel de módulo para persistir datos entre navegaciones
+let cachedContacts: Contact[] | null = null
+
 export function useContacts() {
-  const [contacts, setContacts] = useState<Contact[]>([])
-  const [loading, setLoading] = useState(true)
+  const [contacts, setContacts] = useState<Contact[]>(cachedContacts || [])
+  const [loading, setLoading] = useState(!cachedContacts)
   const [error, setError] = useState<string | null>(null)
   const activeFetchIdRef = useRef(0)
 
-  const fetchContacts = async (showLoading = false) => {
+  const fetchContacts = async () => {
     const fetchId = ++activeFetchIdRef.current
     try {
-      // Solo mostrar loading si no hay datos previos o se solicita explícitamente
-      if (showLoading || contacts.length === 0) {
+      // Solo mostrar loading si NO hay caché
+      if (!cachedContacts) {
         setLoading(true)
       }
       setError(null)
@@ -43,7 +46,11 @@ export function useContacts() {
 
       if (fetchError) throw fetchError
       if (fetchId !== activeFetchIdRef.current) return
-      setContacts((data || []) as Contact[])
+
+      // Actualizar estado y caché
+      const newData = (data || []) as Contact[]
+      cachedContacts = newData
+      setContacts(newData)
     } catch (err: any) {
       if (fetchId !== activeFetchIdRef.current) return
       const msg = err?.name === 'AbortError'
@@ -62,7 +69,7 @@ export function useContacts() {
         setLoading(false)
         return
       }
-      await fetchContacts(true) // Primera carga: mostrar loading
+      await fetchContacts()
     }
 
     start()
