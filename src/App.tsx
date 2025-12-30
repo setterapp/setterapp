@@ -22,7 +22,7 @@ import GoogleCalendarCallback from './pages/GoogleCalendarCallback'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import Logo from './components/Logo'
-import Paywall from './components/Paywall'
+import Pricing from './pages/Pricing'
 import { useSupabaseWakeUp } from './hooks/useSupabaseWakeUp'
 import { useSubscription } from './hooks/useSubscription'
 import './App.css'
@@ -86,9 +86,9 @@ function Layout() {
     )
   }
 
-  // Show paywall if no access
+  // Show pricing page if no access
   if (!hasAccess) {
-    return <Paywall />
+    return <Pricing />
   }
 
   return (
