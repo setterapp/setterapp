@@ -1749,8 +1749,8 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
             contents,
             systemInstruction: { parts: [{ text: systemInstruction }] },
             generationConfig: {
-                temperature: 0.3,
-                maxOutputTokens: 256,
+                temperature: 0.4,
+                maxOutputTokens: 1024,
             }
         };
 
@@ -1871,11 +1871,12 @@ function buildSystemPrompt(agentName: string, description: string, config: any, 
     // Simple rules at the end
     prompt += `
 
-REGLAS:
-- Respuestas cortas (max 20 palabras)
-- Tono casual, como amigo
+ESTILO:
+- Habla como un amigo por Instagram, casual y directo
+- Respuestas cortas la mayoría del tiempo (5-15 palabras)
+- Si necesitas explicar algo, puedes usar 2-3 oraciones
 - Sin emojis
-- Sin "quieres saber más?" ni "te ayudo en algo más?"
+- Nunca preguntes "quieres saber más?" ni "te ayudo en algo más?"
 - Solo usa ? (nunca ¿)`;
 
     return prompt;
