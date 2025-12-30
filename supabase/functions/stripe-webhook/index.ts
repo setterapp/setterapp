@@ -49,13 +49,36 @@ Deno.serve(async (req) => {
         if (session.mode === "subscription" && session.subscription) {
           // Get subscription details
           const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-          const userId = session.metadata?.supabase_user_id || subscription.metadata?.supabase_user_id;
+          let userId = session.metadata?.supabase_user_id || subscription.metadata?.supabase_user_id;
           const priceId = subscription.items.data[0]?.price.id;
           const plan = session.metadata?.plan || PLAN_FROM_PRICE[priceId] || "starter";
 
+          // If no user ID in metadata (payment link case), find user by email
           if (!userId) {
-            console.error("❌ No user ID in metadata");
-            return new Response(JSON.stringify({ error: "No user ID" }), { status: 400 });
+            console.log("🔍 No user ID in metadata, looking up by email...");
+
+            // Get customer email from Stripe
+            const customer = await stripe.customers.retrieve(session.customer as string);
+            const customerEmail = (customer as Stripe.Customer).email;
+
+            if (customerEmail) {
+              // Find user in Supabase by email
+              const { data: users, error: userError } = await supabase.auth.admin.listUsers();
+
+              if (!userError && users?.users) {
+                const matchedUser = users.users.find(u => u.email?.toLowerCase() === customerEmail.toLowerCase());
+                if (matchedUser) {
+                  userId = matchedUser.id;
+                  console.log(`✅ Found user by email: ${customerEmail} -> ${userId}`);
+                }
+              }
+            }
+          }
+
+          if (!userId) {
+            console.error("❌ Could not find user for subscription");
+            // Still return 200 to acknowledge webhook, but log the issue
+            return new Response(JSON.stringify({ received: true, warning: "No user found" }), { status: 200 });
           }
 
           // Upsert subscription record
