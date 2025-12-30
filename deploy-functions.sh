@@ -30,5 +30,10 @@ supabase functions deploy instagram-facebook-setup --no-verify-jwt
 # Only instagram-resolve-profile may use JWT
 supabase functions deploy instagram-resolve-profile --no-verify-jwt
 
+# Deploy Stripe functions
+supabase functions deploy stripe-checkout --no-verify-jwt
+supabase functions deploy stripe-webhook --no-verify-jwt
+supabase functions deploy stripe-portal --no-verify-jwt
+
 echo "✅ All functions deployed"
 echo "⚠️  Remember: NEVER manually enable JWT in the Supabase dashboard!"

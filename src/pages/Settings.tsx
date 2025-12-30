@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { User, LogOut, Globe, Bell, Shield, Trash2, Settings } from 'lucide-react'
+import { User, LogOut, Globe, Bell, Shield, Trash2, Settings, CreditCard } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { useTranslation } from 'react-i18next'
 import { Checkbox } from '../components/ui/checkbox'
 import SectionHeader from '../components/SectionHeader'
+import { useSubscription, PLAN_LIMITS } from '../hooks/useSubscription'
 import i18n from '../i18n'
 
 interface UserSettings {
@@ -40,6 +41,97 @@ const defaultSettings: UserSettings = {
     newMessage: true,
   },
   theme: 'light',
+}
+
+function SubscriptionSection() {
+  const { subscription, plan, isActive, isExpiring, openPortal, loading } = useSubscription()
+
+  const planNames: Record<string, string> = {
+    starter: 'Starter',
+    growth: 'Growth',
+    premium: 'Premium',
+  }
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return '-'
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
+
+  return (
+    <div>
+      <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 var(--spacing-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+        <CreditCard size={18} />
+        Subscription
+      </h3>
+
+      {loading ? (
+        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>Loading...</p>
+      ) : subscription ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+            <span
+              style={{
+                padding: '4px 12px',
+                borderRadius: 'var(--border-radius-sm)',
+                fontSize: 'var(--font-size-xs)',
+                fontWeight: 700,
+                background: plan === 'premium' ? 'linear-gradient(135deg, #f9e2af 0%, #f59e0b 100%)' :
+                           plan === 'growth' ? 'var(--color-primary)' : '#e2e8f0',
+                color: '#000',
+                border: '2px solid #000',
+              }}
+            >
+              {planNames[plan || 'starter']}
+            </span>
+            <span
+              style={{
+                padding: '4px 8px',
+                borderRadius: 'var(--border-radius-sm)',
+                fontSize: 'var(--font-size-xs)',
+                fontWeight: 600,
+                background: isActive ? '#a6e3a1' : '#f38ba8',
+                color: '#000',
+              }}
+            >
+              {isActive ? 'Active' : subscription.status}
+            </span>
+          </div>
+
+          {isExpiring && (
+            <p style={{ fontSize: 'var(--font-size-xs)', color: '#f59e0b', margin: 0 }}>
+              Your subscription will end on {formatDate(subscription.current_period_end)}
+            </p>
+          )}
+
+          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+            <p style={{ margin: '0 0 4px 0' }}>
+              <strong>Limits:</strong> {PLAN_LIMITS[plan || 'starter'].agents} agents, {PLAN_LIMITS[plan || 'starter'].messages === Infinity ? 'Unlimited' : PLAN_LIMITS[plan || 'starter'].messages.toLocaleString()} messages, {PLAN_LIMITS[plan || 'starter'].knowledgeBases} KB
+            </p>
+            <p style={{ margin: 0 }}>
+              <strong>Renews:</strong> {formatDate(subscription.current_period_end)}
+            </p>
+          </div>
+
+          <button
+            onClick={() => openPortal()}
+            className="btn btn--sm"
+            style={{ marginTop: 'var(--spacing-xs)', alignSelf: 'flex-start' }}
+          >
+            <CreditCard size={14} />
+            Manage Subscription
+          </button>
+        </div>
+      ) : (
+        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+          No active subscription
+        </p>
+      )}
+    </div>
+  )
 }
 
 function SettingsPage() {
@@ -385,6 +477,9 @@ function SettingsPage() {
                 </p>
               </div>
             </div>
+
+            {/* Subscription */}
+            <SubscriptionSection />
 
             {/* Danger Zone */}
             <div style={{ marginTop: 'auto', paddingTop: 'var(--spacing-md)', borderTop: '2px solid #f38ba8' }}>

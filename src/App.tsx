@@ -22,7 +22,9 @@ import GoogleCalendarCallback from './pages/GoogleCalendarCallback'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import Logo from './components/Logo'
+import Paywall from './components/Paywall'
 import { useSupabaseWakeUp } from './hooks/useSupabaseWakeUp'
+import { useSubscription } from './hooks/useSubscription'
 import './App.css'
 
 function Layout() {
@@ -32,6 +34,9 @@ function Layout() {
 
   // Hook global para "despertar" Supabase cuando el usuario vuelve a la pestaña
   useSupabaseWakeUp()
+
+  // Check subscription status
+  const { hasAccess, loading: subLoading } = useSubscription()
 
   const navItems = [
     { path: '/analytics', label: 'Analytics', icon: BarChart3 },
@@ -70,6 +75,20 @@ function Layout() {
   const handleLinkClick = (path: string) => {
     setPressedButton(path)
     setSidebarOpen(false)
+  }
+
+  // Show loading while checking subscription
+  if (subLoading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+        <div className="spinner" />
+      </div>
+    )
+  }
+
+  // Show paywall if no access
+  if (!hasAccess) {
+    return <Paywall />
   }
 
   return (
