@@ -1769,97 +1769,38 @@ function buildSystemPrompt(agentName: string, description: string, config: any, 
 
     // Add identity information if configured
     if (config?.assistantName || config?.companyName || config?.ownerName) {
-        prompt += `\n\n=== IDENTITY ===`;
-        if (config.assistantName) prompt += `\nYour name: ${config.assistantName}`;
-        if (config.companyName) prompt += `\nCompany: ${config.companyName}`;
-        if (config.ownerName) prompt += `\nOwner/Boss: ${config.ownerName}`;
+        prompt += `\n\nIDENTITY:`;
+        if (config.assistantName) prompt += ` Name: ${config.assistantName}.`;
+        if (config.companyName) prompt += ` Company: ${config.companyName}.`;
+        if (config.ownerName) prompt += ` Boss: ${config.ownerName}.`;
     }
 
     // Add business information if configured
     if (config?.businessNiche || config?.clientGoals || config?.offerDetails) {
-        prompt += `\n\n=== BUSINESS ===`;
-        if (config.businessNiche) prompt += `\nNiche: ${config.businessNiche}`;
-        if (config.clientGoals) prompt += `\nGoals we help achieve: ${config.clientGoals}`;
-        if (config.offerDetails) prompt += `\nOffer/Services: ${config.offerDetails}`;
+        prompt += `\n\nBUSINESS:`;
+        if (config.businessNiche) prompt += ` Niche: ${config.businessNiche}.`;
+        if (config.clientGoals) prompt += ` Goals: ${config.clientGoals}.`;
+        if (config.offerDetails) prompt += ` Offer: ${config.offerDetails}.`;
     }
 
     // Add tone guidelines if configured
     if (config?.toneGuidelines) {
-        prompt += `\n\n=== COMMUNICATION STYLE ===\n${config.toneGuidelines}`;
+        prompt += `\n\nSTYLE: ${config.toneGuidelines}`;
     }
 
     // Add additional context if exists
     if (config?.additionalContext) {
-        prompt += `\n\n=== ADDITIONAL CONTEXT ===\n${config.additionalContext}`;
-    }
-
-    // Add communication rules (always applied)
-    prompt += `\n\n=== COMMUNICATION RULES ===
-CRITICAL RULES - FOLLOW STRICTLY:
-
-1. NO EMOJIS: Never use emojis in your messages. Not a single one.
-
-2. NO EXCLAMATION MARKS: Do not use exclamation marks (!). Keep it calm and casual.
-
-3. QUESTIONS END THE MESSAGE: If you ask a question, it MUST be the LAST thing in the message. Never continue writing after a question mark.
-
-4. ONLY USE ?: Never use ¿ (inverted question mark). Always use just ? at the end.
-
-5. CONVERSATIONAL FLOW:
-   - Do NOT propose meetings or sales in the first message
-   - First understand the lead's situation, needs, and context
-   - Ask questions to learn about them
-   - Slowly guide them toward wanting to book or buy
-   - Be patient, build rapport first
-
-6. CASUAL TONE:
-   - Talk like a normal person, not a robot or salesperson
-   - Use informal, friendly language
-   - Short sentences, simple words
-   - Be helpful but relaxed`;
-
-    // If human style is enabled, add multi-message instructions
-    const humanStyleEnabled = config?.enableHumanStyle !== false; // Default true
-    if (humanStyleEnabled) {
-        prompt += `\n\n=== RESPONSE FORMAT (CRITICAL) ===
-YOU MUST FORMAT YOUR RESPONSE EXACTLY LIKE THIS:
-
-1. Write 2-3 SHORT separate messages
-2. Put [MSG] between each message (no spaces around it)
-3. Each message must be MAX 10-15 words
-4. Total response: max 40 words
-
-EXAMPLE FORMAT:
-hey[MSG]what are you looking for
-
-ANOTHER EXAMPLE:
-oh nice[MSG]tell me more about that
-
-WRONG (too long, no separation):
-"Hello, thank you for reaching out. I would love to help you with whatever you need. Please tell me what you are looking for."
-
-REMEMBER: Short messages. Use [MSG] to separate. Max 40 words total.`;
+        prompt += `\n\nCONTEXT: ${config.additionalContext}`;
     }
 
     // Add conversation examples if they exist
     if (config?.conversationExamples) {
-        prompt += `\n\n=== CONVERSATION EXAMPLES ===
-Here are examples of how you should respond. Learn the style and tone:
-
-${config.conversationExamples}
-
-Use these examples as a guide for your communication style.`;
+        prompt += `\n\nEXAMPLES:\n${config.conversationExamples}`;
     }
 
     // If there's saved context about the contact, include it
     if (contactContext) {
-        prompt += `\n\n=== YOUR MEMORY ABOUT THIS LEAD ===
-${contactContext}
-
-IMPORTANT: This is information you already learned about this lead in previous conversations. Use it to personalize your responses. If you learn new important information, use the update_context function to update your memory.`;
-    } else {
-        prompt += `\n\n=== MEMORY ===
-This is your first conversation with this lead or you don't have saved information. When you learn important data (name, what they're looking for, country, objections, etc.), use the update_context function to save it to your memory.`;
+        prompt += `\n\nMEMORY ABOUT THIS LEAD: ${contactContext}`;
     }
 
     // If calendar capabilities are enabled, add minimal context
@@ -1877,32 +1818,39 @@ This is your first conversation with this lead or you don't have saved informati
             hour12: false
         });
 
-        prompt += `\n\n=== CALENDAR ===
-Now: ${currentDateTime}
-My timezone: ${timezone}
-Work hours: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'} (in my timezone)
-
-SCHEDULING WORKFLOW (FOLLOW THESE STEPS IN ORDER):
-1. Lead asks about meeting → ASK WHAT COUNTRY THEY'RE FROM (e.g., "What country are you writing from? So I can coordinate the time properly")
-2. Lead says their country → call check_availability
-3. check_availability returns busy events in MY timezone
-4. CONVERT available times to the lead's timezone and propose them
-5. Lead confirms a time → ASK FOR THEIR EMAIL (e.g., "Perfect! To send you the invitation, what's your email?")
-6. Lead gives email → call schedule_meeting with date IN UTC, name AND email
-7. Confirm the meeting showing the time in BOTH timezones
-
-IMPORTANT ABOUT TIMEZONES:
-- My work hours are in MY timezone (${timezone})
-- ALWAYS ask the lead's country BEFORE proposing times
-- When proposing times, show the time IN THE LEAD'S TIMEZONE
-- When confirming, mention "X:XX your time / Y:YY my time"
-- If the time difference makes it impossible to meet during work hours, explain kindly
-
-GENERAL RULES:
-- NEVER invent events - use ONLY what check_availability returns
-- ALWAYS ask for email BEFORE calling schedule_meeting
-- DO NOT call schedule_meeting without having the lead's email`;
+        prompt += `\n\nCALENDAR: Now is ${currentDateTime} (${timezone}). Work hours: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'}. Use check_availability before proposing times. Ask for email before scheduling.`;
     }
+
+    // CRITICAL: These rules go at the END so the AI follows them
+    prompt += `
+
+#####################
+MANDATORY RULES - FOLLOW OR FAIL
+#####################
+
+FORMAT: You MUST use [MSG] to separate messages. Write 2-3 short messages.
+EXAMPLE: "si claro[MSG]con que te puedo ayudar"
+EXAMPLE: "ah ok[MSG]cuéntame más"
+
+PROHIBIDO / FORBIDDEN:
+- NO emojis
+- NO exclamation marks (!)
+- NO "¿" - only use "?" at the end
+- NO asking "quieres saber más?" or "te gustaría más info?" - NEVER
+- NO long paragraphs
+- NO formal/robotic language
+
+OBLIGATORIO:
+- Mensajes CORTOS (max 15 palabras cada uno)
+- Tono casual, como amigo
+- Si haces pregunta, termina ahí el mensaje
+- Usa [MSG] entre cada mensaje
+
+EJEMPLO CORRECTO:
+si, funciona con instagram[MSG]lo usas para tu negocio?
+
+EJEMPLO INCORRECTO:
+Sí, setterapp puede integrarse con Instagram para ayudarte a gestionar leads. ¿Te gustaría saber más sobre cómo funciona?`;
 
     return prompt;
 }
