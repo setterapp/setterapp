@@ -1079,6 +1079,36 @@ async function getInstagramAgent(userId: string) {
 }
 
 /**
+ * Obtiene las knowledge bases asociadas a un agent
+ */
+async function getAgentKnowledgeBases(agentId: string): Promise<string[]> {
+    try {
+        const { data: knowledgeBases, error } = await supabase
+            .from('knowledge_bases')
+            .select('name, content')
+            .eq('agent_id', agentId)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('❌ Error getting knowledge bases:', error);
+            return [];
+        }
+
+        if (!knowledgeBases || knowledgeBases.length === 0) {
+            return [];
+        }
+
+        console.log(`📚 Found ${knowledgeBases.length} knowledge base(s) for agent`);
+
+        // Return formatted knowledge base content
+        return knowledgeBases.map(kb => `[${kb.name}]\n${kb.content}`);
+    } catch (error) {
+        console.error('❌ Error getting knowledge bases:', error);
+        return [];
+    }
+}
+
+/**
  * Obtiene el historial de conversación para generar contexto
  * Limitado a 25 mensajes para mantener el contexto manejable
  */
@@ -1346,8 +1376,11 @@ async function generateAndSendAutoReply(
             console.log('📝 Contexto del contacto cargado:', contactContext.substring(0, 100) + '...');
         }
 
+        // 3.5 Obtener knowledge bases del agente
+        const knowledgeBases = await getAgentKnowledgeBases(agent.id);
+
         // 4. Construir system prompt con el contexto
-        const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config, contactContext);
+        const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config, contactContext, knowledgeBases);
         console.log('📋 SYSTEM PROMPT (first 500 chars):', systemPrompt.substring(0, 500));
 
         // 5. Definir tools para el agente
@@ -1850,9 +1883,9 @@ function getAccentInstructions(languageAccent: string): string {
 }
 
 /**
- * Builds the system prompt using agent configuration and contact context
+ * Builds the system prompt using agent configuration, contact context and knowledge bases
  */
-function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null): string {
+function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null, knowledgeBases?: string[]): string {
     let prompt = `${description || `You are ${agentName}.`}`;
 
     // Add language/accent based on config
@@ -1891,6 +1924,11 @@ function buildSystemPrompt(agentName: string, description: string, config: any, 
     // Add conversation examples if they exist
     if (config?.conversationExamples) {
         prompt += `\n\nEXAMPLES:\n${config.conversationExamples}`;
+    }
+
+    // Add knowledge bases content if available
+    if (knowledgeBases && knowledgeBases.length > 0) {
+        prompt += `\n\nKNOWLEDGE BASE (use this information to answer questions):\n${knowledgeBases.join('\n\n')}`;
     }
 
     // If there's saved context about the contact, include it

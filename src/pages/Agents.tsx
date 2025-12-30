@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, MoreVertical, MessageSquare, Bot, ArrowLeft, Save, Calendar, UserCheck, Headphones, Briefcase } from 'lucide-react'
+import { Plus, Trash2, MoreVertical, MessageSquare, Bot, ArrowLeft, Save, Calendar, UserCheck, Headphones, Briefcase, FileText, X } from 'lucide-react'
 import Logo from '../components/Logo'
 import SectionHeader from '../components/SectionHeader'
 import { useAgents, type AgentConfig, type Agent, type AgentType } from '../hooks/useAgents'
+import { useKnowledgeBases } from '../hooks/useKnowledgeBases'
 import { Switch } from '../components/ui/switch'
 import Modal from '../components/common/Modal'
 import AgentTestChat from '../components/AgentTestChat'
@@ -191,11 +192,15 @@ const LANGUAGE_ACCENTS = [
 
 function Agents() {
     const { agents, loading, error, createAgent, updateAgent, deleteAgent } = useAgents()
+    const { knowledgeBases, createKnowledgeBase, deleteKnowledgeBase } = useKnowledgeBases()
     const [showForm, setShowForm] = useState(false)
     const [editingAgent, setEditingAgent] = useState<string | null>(null)
     const [openMenuId, setOpenMenuId] = useState<string | null>(null)
     const [testingAgent, setTestingAgent] = useState<Agent | null>(null)
     const [saving, setSaving] = useState(false)
+    const [showKnowledgeBaseForm, setShowKnowledgeBaseForm] = useState(false)
+    const [newKnowledgeBase, setNewKnowledgeBase] = useState({ name: '', content: '' })
+    const [savingKB, setSavingKB] = useState(false)
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -781,6 +786,151 @@ Agent: Do you have your own business or work in sales?`}
                                     You can use multiple "Agent:" lines in a row to show separate messages.
                                 </small>
                             </div>
+                        </div>
+
+                        {/* Knowledge Bases */}
+                        <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+                            <h3 style={{ marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
+                                <FileText size={20} style={{ display: 'inline', marginRight: 'var(--spacing-sm)', verticalAlign: 'middle' }} />
+                                Knowledge Bases
+                            </h3>
+                            <p style={{ marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                                Add documents that the AI can reference when answering questions. Great for FAQs, product catalogs, pricing info, etc.
+                            </p>
+
+                            {/* Existing knowledge bases */}
+                            {knowledgeBases.filter(kb => kb.agent_id === editingAgent).length > 0 && (
+                                <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                                    {knowledgeBases.filter(kb => kb.agent_id === editingAgent).map((kb) => (
+                                        <div
+                                            key={kb.id}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                padding: 'var(--spacing-md)',
+                                                background: 'var(--color-bg-secondary)',
+                                                borderRadius: 'var(--border-radius)',
+                                                marginBottom: 'var(--spacing-sm)',
+                                                border: '1px solid var(--color-border)',
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                                                <FileText size={18} style={{ color: 'var(--color-primary)' }} />
+                                                <div>
+                                                    <div style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>{kb.name}</div>
+                                                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                                                        {Math.round(kb.content.length / 1000)}KB
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => deleteKnowledgeBase(kb.id)}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    color: 'var(--color-danger)',
+                                                    padding: 'var(--spacing-xs)',
+                                                }}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Add new knowledge base form */}
+                            {showKnowledgeBaseForm ? (
+                                <div style={{ background: 'var(--color-bg-secondary)', padding: 'var(--spacing-md)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
+                                        <h4 style={{ margin: 0, fontSize: 'var(--font-size-base)', fontWeight: 600 }}>Add Knowledge Base</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowKnowledgeBaseForm(false)
+                                                setNewKnowledgeBase({ name: '', content: '' })
+                                            }}
+                                            style={{
+                                                background: 'transparent',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                padding: 'var(--spacing-xs)',
+                                            }}
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="kbName">Document Name</label>
+                                        <input
+                                            id="kbName"
+                                            type="text"
+                                            className="input"
+                                            value={newKnowledgeBase.name}
+                                            onChange={(e) => setNewKnowledgeBase({ ...newKnowledgeBase, name: e.target.value })}
+                                            placeholder="E.g.: Pricing FAQ, Product Catalog"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="kbContent">Content</label>
+                                        <textarea
+                                            id="kbContent"
+                                            className="input textarea"
+                                            value={newKnowledgeBase.content}
+                                            onChange={(e) => setNewKnowledgeBase({ ...newKnowledgeBase, content: e.target.value })}
+                                            placeholder="Paste the content here... The AI will use this information to answer questions."
+                                            rows={8}
+                                            style={{ fontFamily: 'monospace', fontSize: 'var(--font-size-sm)' }}
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="btn btn--primary"
+                                        disabled={!newKnowledgeBase.name || !newKnowledgeBase.content || savingKB}
+                                        onClick={async () => {
+                                            if (!editingAgent) return
+                                            setSavingKB(true)
+                                            try {
+                                                await createKnowledgeBase({
+                                                    agent_id: editingAgent,
+                                                    name: newKnowledgeBase.name,
+                                                    content: newKnowledgeBase.content,
+                                                    file_type: 'text',
+                                                    file_size: newKnowledgeBase.content.length,
+                                                })
+                                                setNewKnowledgeBase({ name: '', content: '' })
+                                                setShowKnowledgeBaseForm(false)
+                                            } catch (err) {
+                                                console.error('Error creating knowledge base:', err)
+                                            } finally {
+                                                setSavingKB(false)
+                                            }
+                                        }}
+                                    >
+                                        {savingKB ? 'Saving...' : 'Save Knowledge Base'}
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="btn btn--secondary"
+                                    onClick={() => setShowKnowledgeBaseForm(true)}
+                                    disabled={!editingAgent}
+                                    style={{ opacity: editingAgent ? 1 : 0.5 }}
+                                >
+                                    <Plus size={16} />
+                                    Add Knowledge Base
+                                </button>
+                            )}
+
+                            {!editingAgent && (
+                                <p style={{ marginTop: 'var(--spacing-sm)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                                    Save the agent first to add knowledge bases.
+                                </p>
+                            )}
                         </div>
 
                         {/* Meeting Scheduling */}

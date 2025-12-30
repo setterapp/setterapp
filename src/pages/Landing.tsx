@@ -99,7 +99,7 @@ function Landing() {
     },
     {
       question: "How much does an AI appointment setter cost vs a human setter?",
-      answer: "Human setters typically cost $500-2000+ monthly plus 10-30% commissions. Our AI appointment setter starts at just $49/month with zero commissions, saving you up to 80% while providing 24/7 automated appointment booking."
+      answer: "Human setters typically cost $500-2000+ monthly plus 10-30% commissions. Our AI appointment setter starts at just $49/month (Starter plan) with zero commissions, saving you up to 80% while providing 24/7 automated appointment booking. We also offer Growth ($99/mo) and Premium ($347/mo) plans for larger teams."
     }
   ]
 
@@ -173,7 +173,7 @@ function Landing() {
               zIndex: 1,
             }}
           >
-            Early Access — $49/mo forever
+            Plans from $49/mo
           </div>
 
           <div
@@ -477,7 +477,7 @@ function Landing() {
           padding: '60px var(--spacing-xl)',
         }}
       >
-        <div style={{ maxWidth: '380px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h2
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -487,7 +487,7 @@ function Landing() {
               color: 'var(--color-text)',
             }}
           >
-            Early Access Pricing
+            Simple, Transparent Pricing
           </h2>
           <p
             style={{
@@ -497,78 +497,238 @@ function Landing() {
               fontSize: 'var(--font-size-base)',
             }}
           >
-            Join now and lock in this price forever
+            Choose the plan that fits your business
           </p>
 
           <div
-            className="card"
             style={{
-              position: 'relative',
-              background: '#fff',
-              animation: 'float 3s ease-in-out infinite',
-              textAlign: 'center',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
+              gap: 'var(--spacing-lg)',
+              alignItems: 'stretch',
             }}
           >
+            {/* Starter Plan */}
             <div
+              className="card"
               style={{
-                position: 'absolute',
-                top: '-12px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: '#000',
-                color: '#fff',
-                padding: '4px 16px',
-                borderRadius: '20px',
-                fontSize: 'var(--font-size-xs)',
-                fontWeight: 700,
+                position: 'relative',
+                background: '#fff',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
-              EARLY ACCESS
+              <h3 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, margin: '0 0 var(--spacing-sm) 0' }}>
+                Starter
+              </h3>
+              <p style={{ margin: '0 0 var(--spacing-md) 0' }}>
+                <span style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 700 }}>$49</span>
+                <span style={{ color: 'var(--color-text-secondary)' }}>/month</span>
+              </p>
+              <p style={{
+                margin: '0 0 var(--spacing-lg) 0',
+                color: 'var(--color-text-secondary)',
+                fontSize: 'var(--font-size-sm)',
+              }}>
+                Perfect for getting started
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg) 0', textAlign: 'left', flex: 1 }}>
+                {[
+                  "1 AI Agent",
+                  "2,000 messages/month",
+                  "1 Knowledge Base",
+                  "Instagram DM automation",
+                  "Google Calendar integration",
+                  "Built-in CRM",
+                  "Email support",
+                ].map((feature, i) => (
+                  <li
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--spacing-sm)',
+                      marginBottom: 'var(--spacing-sm)',
+                      fontSize: 'var(--font-size-sm)',
+                    }}
+                  >
+                    <Check size={16} color="var(--color-success)" strokeWidth={3} />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/register"
+                className="btn btn--secondary"
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                Start Free
+              </Link>
             </div>
-            <p style={{ margin: '0 0 var(--spacing-xs) 0' }}>
-              <span style={{ fontSize: 'clamp(2.5rem, 5vw, 3rem)', fontWeight: 700 }}>$49</span>
-              <span style={{ color: 'var(--color-text-secondary)' }}>/month</span>
-            </p>
-            <p style={{
-              margin: '0 0 var(--spacing-lg) 0',
-              color: 'var(--color-text-secondary)',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: 500,
-            }}>
-              forever — includes all future integrations
-            </p>
-            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg) 0', textAlign: 'left' }}>
-              {[
-                "Unlimited messages",
-                "Instagram DM automation",
-                "WhatsApp (coming soon)",
-                "Google Calendar integration",
-                "AI lead qualification",
-                "Built-in CRM",
-                "All future integrations included"
-              ].map((feature, i) => (
-                <li
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--spacing-sm)',
-                    marginBottom: 'var(--spacing-sm)',
-                    fontSize: 'var(--font-size-sm)',
-                  }}
-                >
-                  <Check size={16} color="var(--color-success)" strokeWidth={3} />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-            <Link
-              to="/register"
-              className="btn btn--primary"
-              style={{ width: '100%', justifyContent: 'center' }}
+
+            {/* Growth Plan */}
+            <div
+              className="card"
+              style={{
+                position: 'relative',
+                background: '#fff',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                border: '3px solid var(--color-primary)',
+                boxShadow: '6px 6px 0px 0px #000',
+              }}
             >
-              Start Free
-            </Link>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-12px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'var(--color-primary)',
+                  color: '#000',
+                  padding: '4px 16px',
+                  borderRadius: '20px',
+                  fontSize: 'var(--font-size-xs)',
+                  fontWeight: 700,
+                  border: '2px solid #000',
+                }}
+              >
+                MOST POPULAR
+              </div>
+              <h3 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, margin: '0 0 var(--spacing-sm) 0' }}>
+                Growth
+              </h3>
+              <p style={{ margin: '0 0 var(--spacing-md) 0' }}>
+                <span style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 700 }}>$99</span>
+                <span style={{ color: 'var(--color-text-secondary)' }}>/month</span>
+              </p>
+              <p style={{
+                margin: '0 0 var(--spacing-lg) 0',
+                color: 'var(--color-text-secondary)',
+                fontSize: 'var(--font-size-sm)',
+              }}>
+                For growing businesses
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg) 0', textAlign: 'left', flex: 1 }}>
+                {[
+                  "3 AI Agents",
+                  "10,000 messages/month",
+                  "3 Knowledge Bases",
+                  "Instagram DM automation",
+                  "Google Calendar integration",
+                  "Built-in CRM",
+                  "Priority support",
+                ].map((feature, i) => (
+                  <li
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--spacing-sm)',
+                      marginBottom: 'var(--spacing-sm)',
+                      fontSize: 'var(--font-size-sm)',
+                    }}
+                  >
+                    <Check size={16} color="var(--color-success)" strokeWidth={3} />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/register"
+                className="btn btn--primary"
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                Start Free
+              </Link>
+            </div>
+
+            {/* Premium Plan */}
+            <div
+              className="card"
+              style={{
+                position: 'relative',
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                color: '#fff',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-12px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: '#f9e2af',
+                  color: '#000',
+                  padding: '4px 16px',
+                  borderRadius: '20px',
+                  fontSize: 'var(--font-size-xs)',
+                  fontWeight: 700,
+                  border: '2px solid #000',
+                }}
+              >
+                BEST VALUE
+              </div>
+              <h3 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, margin: '0 0 var(--spacing-sm) 0' }}>
+                Premium
+              </h3>
+              <p style={{ margin: '0 0 var(--spacing-md) 0' }}>
+                <span style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 700 }}>$347</span>
+                <span style={{ color: 'rgba(255,255,255,0.7)' }}>/month</span>
+              </p>
+              <p style={{
+                margin: '0 0 var(--spacing-lg) 0',
+                color: 'rgba(255,255,255,0.7)',
+                fontSize: 'var(--font-size-sm)',
+              }}>
+                For scaling teams
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg) 0', textAlign: 'left', flex: 1 }}>
+                {[
+                  "10 AI Agents",
+                  "Unlimited messages",
+                  "10 Knowledge Bases",
+                  "Instagram DM automation",
+                  "Google Calendar integration",
+                  "Built-in CRM",
+                  "VIP 24/7 support",
+                  "Personalized onboarding",
+                  "Early access to new features",
+                ].map((feature, i) => (
+                  <li
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--spacing-sm)',
+                      marginBottom: 'var(--spacing-sm)',
+                      fontSize: 'var(--font-size-sm)',
+                    }}
+                  >
+                    <Check size={16} color="#a6e3a1" strokeWidth={3} />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/register"
+                className="btn"
+                style={{
+                  width: '100%',
+                  justifyContent: 'center',
+                  background: '#f9e2af',
+                  color: '#000',
+                  border: '2px solid #000',
+                }}
+              >
+                Start Free
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -626,7 +786,7 @@ function Landing() {
               border: '2px solid #000',
             }}
           >
-            Early Access — $49/mo forever
+            Start Free Today
           </div>
           <h2
             style={{
@@ -636,7 +796,7 @@ function Landing() {
               color: 'var(--color-text)',
             }}
           >
-            Lock In Your Price Before We Raise It
+            Ready to Automate Your Appointment Booking?
           </h2>
           <p
             style={{
@@ -645,7 +805,7 @@ function Landing() {
               margin: '0 0 var(--spacing-2xl) 0',
             }}
           >
-            Join now and get all future integrations included at no extra cost.
+            Join thousands of businesses using AI to book more appointments 24/7.
           </p>
           <Link
             to="/register"
