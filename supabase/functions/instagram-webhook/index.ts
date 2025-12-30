@@ -596,13 +596,41 @@ async function processInstagramEvent(event: any, pageId: string) {
             const displayName = userProfile?.username || userProfile?.name || senderId;
             const contactName = displayName;
 
-            // Upsert contacto (CRM) y obtener contact_id
+            // Crear o actualizar contacto (CRM) - NO sobrescribir lead_status si ya existe
             let contactId: string | null = null;
             try {
-                const { data: upsertedContact } = await supabase
+                // Primero buscar si el contacto ya existe
+                const { data: existingContact } = await supabase
                     .from('contacts')
-                    .upsert(
-                        {
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('platform', 'instagram')
+                    .eq('external_id', senderId)
+                    .maybeSingle();
+
+                if (existingContact) {
+                    // Contacto existe: actualizar SIN tocar lead_status
+                    await supabase
+                        .from('contacts')
+                        .update({
+                            display_name: contactName,
+                            username: userProfile?.username || null,
+                            profile_picture: userProfile?.profile_picture || null,
+                            last_message_at: new Date(timestampInMs).toISOString(),
+                            metadata: userProfile ? {
+                                username: userProfile.username,
+                                name: userProfile.name,
+                                profile_picture: userProfile.profile_picture,
+                            } : {},
+                            updated_at: new Date().toISOString(),
+                        })
+                        .eq('id', existingContact.id);
+                    contactId = existingContact.id;
+                } else {
+                    // Contacto nuevo: crear con lead_status: 'cold'
+                    const { data: newContact } = await supabase
+                        .from('contacts')
+                        .insert({
                             user_id: userId,
                             platform: 'instagram',
                             external_id: senderId,
@@ -610,20 +638,17 @@ async function processInstagramEvent(event: any, pageId: string) {
                             username: userProfile?.username || null,
                             profile_picture: userProfile?.profile_picture || null,
                             last_message_at: new Date(timestampInMs).toISOString(),
-                            lead_status: 'cold', // Estado inicial para nuevos contactos
+                            lead_status: 'cold',
                             metadata: userProfile ? {
                                 username: userProfile.username,
                                 name: userProfile.name,
                                 profile_picture: userProfile.profile_picture,
                             } : {},
-                            updated_at: new Date().toISOString(),
-                        },
-                        { onConflict: 'user_id,platform,external_id' }
-                    )
-                    .select('id')
-                    .single();
-
-                contactId = upsertedContact?.id || null;
+                        })
+                        .select('id')
+                        .single();
+                    contactId = newContact?.id || null;
+                }
             } catch {
                 // No romper el webhook por CRM
             }
@@ -894,25 +919,42 @@ async function processEchoMessage(event: any, pageId: string) {
         if (!conversationId) {
             console.log('📝 Creating new conversation for echo message');
 
-            // Crear contacto primero
-            const { data: upsertedContact } = await supabase
+            // Crear o actualizar contacto - NO sobrescribir lead_status
+            let contactId: string | null = null;
+            const { data: existingEchoContact } = await supabase
                 .from('contacts')
-                .upsert(
-                    {
+                .select('id')
+                .eq('user_id', userId)
+                .eq('platform', 'instagram')
+                .eq('external_id', recipientId)
+                .maybeSingle();
+
+            if (existingEchoContact) {
+                // Actualizar solo last_message_at
+                await supabase
+                    .from('contacts')
+                    .update({
+                        last_message_at: new Date(timestampInMs).toISOString(),
+                        updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', existingEchoContact.id);
+                contactId = existingEchoContact.id;
+            } else {
+                // Crear contacto nuevo
+                const { data: newEchoContact } = await supabase
+                    .from('contacts')
+                    .insert({
                         user_id: userId,
                         platform: 'instagram',
                         external_id: recipientId,
                         display_name: recipientId,
                         last_message_at: new Date(timestampInMs).toISOString(),
                         lead_status: 'cold',
-                        updated_at: new Date().toISOString(),
-                    },
-                    { onConflict: 'user_id,platform,external_id' }
-                )
-                .select('id')
-                .single();
-
-            const contactId = upsertedContact?.id || null;
+                    })
+                    .select('id')
+                    .single();
+                contactId = newEchoContact?.id || null;
+            }
 
             // Crear conversación
             const { data: newConv, error: createError } = await supabase

@@ -130,24 +130,47 @@ async function processWhatsAppEvent(event: any, value: any, phoneNumberId: strin
                 return;
             }
 
-            // Upsert contact
+            // Crear o actualizar contacto - NO sobrescribir lead_status si ya existe
             let contactId: string | null = null;
             try {
-                const { data: upsertedContact } = await supabase
+                // Primero buscar si el contacto ya existe
+                const { data: existingContact } = await supabase
                     .from('contacts')
-                    .upsert({
-                        user_id: userId,
-                        platform: 'whatsapp',
-                        external_id: senderId,
-                        display_name: contactName,
-                        phone: senderId,
-                        last_message_at: new Date(timestamp).toISOString(),
-                        lead_status: 'cold',
-                        updated_at: new Date().toISOString(),
-                    }, { onConflict: 'user_id,platform,external_id' })
                     .select('id')
-                    .single();
-                contactId = upsertedContact?.id || null;
+                    .eq('user_id', userId)
+                    .eq('platform', 'whatsapp')
+                    .eq('external_id', senderId)
+                    .maybeSingle();
+
+                if (existingContact) {
+                    // Contacto existe: actualizar SIN tocar lead_status
+                    await supabase
+                        .from('contacts')
+                        .update({
+                            display_name: contactName,
+                            phone: senderId,
+                            last_message_at: new Date(timestamp).toISOString(),
+                            updated_at: new Date().toISOString(),
+                        })
+                        .eq('id', existingContact.id);
+                    contactId = existingContact.id;
+                } else {
+                    // Contacto nuevo: crear con lead_status: 'cold'
+                    const { data: newContact } = await supabase
+                        .from('contacts')
+                        .insert({
+                            user_id: userId,
+                            platform: 'whatsapp',
+                            external_id: senderId,
+                            display_name: contactName,
+                            phone: senderId,
+                            last_message_at: new Date(timestamp).toISOString(),
+                            lead_status: 'cold',
+                        })
+                        .select('id')
+                        .single();
+                    contactId = newContact?.id || null;
+                }
             } catch { }
 
             // Find or create conversation
