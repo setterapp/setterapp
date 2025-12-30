@@ -1764,7 +1764,7 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
             systemInstruction: { parts: [{ text: systemInstruction }] },
             generationConfig: {
                 temperature: 0.3,
-                maxOutputTokens: 100,
+                maxOutputTokens: 256,
             }
         };
 
