@@ -130,7 +130,7 @@ function Landing() {
             Log In
           </Link>
           <Link to="/register" className="btn btn--primary">
-            Start Free
+            Get Started
           </Link>
         </div>
       </header>
@@ -224,7 +224,7 @@ function Landing() {
 
           <div className="landing-hero-buttons" style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/register" className="btn btn--primary btn--lg" style={{ animation: 'slideInUp 0.8s ease-out' }}>
-              Start Free
+              Get Started
               <ArrowRight size={20} />
             </Link>
             <Link to="/login" className="btn btn--secondary btn--lg" style={{ animation: 'slideInUp 1s ease-out' }}>
@@ -568,7 +568,7 @@ function Landing() {
                   fontWeight: 600,
                 }}
               >
-                Start Free
+                Get Started
               </Link>
             </div>
 
@@ -652,7 +652,7 @@ function Landing() {
                   fontWeight: 600,
                 }}
               >
-                Start Free
+                Get Started
               </Link>
             </div>
 
@@ -740,7 +740,7 @@ function Landing() {
                   fontWeight: 600,
                 }}
               >
-                Start Free
+                Get Started
               </Link>
             </div>
           </div>
@@ -801,7 +801,7 @@ function Landing() {
               border: '2px solid #000',
             }}
           >
-            Start Free Today
+            Plans from $49/mo
           </div>
           <h2
             style={{
@@ -829,7 +829,7 @@ function Landing() {
               animation: 'pulse 2s ease-in-out infinite',
             }}
           >
-            Start Free
+            Get Started
             <ArrowRight size={20} />
           </Link>
         </div>

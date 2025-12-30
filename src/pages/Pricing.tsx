@@ -134,7 +134,7 @@ export default function Pricing() {
                   textDecoration: 'none',
                 }}
               >
-                Select Starter
+                Get Started
               </a>
             </div>
 
@@ -218,7 +218,7 @@ export default function Pricing() {
                   textDecoration: 'none',
                 }}
               >
-                Select Growth
+                Get Started
               </a>
             </div>
 
@@ -306,7 +306,7 @@ export default function Pricing() {
                   textDecoration: 'none',
                 }}
               >
-                Select Premium
+                Get Started
               </a>
             </div>
           </div>
