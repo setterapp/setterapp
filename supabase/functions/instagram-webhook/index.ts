@@ -6,6 +6,7 @@ const VERIFY_TOKEN = Deno.env.get('INSTAGRAM_WEBHOOK_VERIFY_TOKEN');
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? '';
+const GOOGLE_AI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY') ?? '';
 
 if (!VERIFY_TOKEN) {
     console.error('❌ INSTAGRAM_WEBHOOK_VERIFY_TOKEN must be configured');
@@ -1720,42 +1721,101 @@ async function saveOutboundMessage(conversationId: string, userId: string, conte
 }
 
 /**
- * Genera una respuesta usando OpenAI con soporte para tools
+ * Genera una respuesta usando Gemini 3 Flash con soporte para tools
  */
 async function generateAIResponse(messages: any[], tools?: any[]) {
-    if (!OPENAI_API_KEY) return null;
+    if (!GOOGLE_AI_API_KEY) {
+        console.error('❌ GOOGLE_AI_API_KEY not configured');
+        return null;
+    }
 
     try {
-        const requestBody: any = {
-            model: 'gpt-5-mini',
-            messages: messages,
-            temperature: 0.3,
-            max_tokens: 100
-        };
+        // Convert OpenAI message format to Gemini format
+        const systemInstruction = messages.find((m: any) => m.role === 'system')?.content || '';
+        const contents = messages
+            .filter((m: any) => m.role !== 'system')
+            .map((m: any) => {
+                if (m.role === 'tool') {
+                    return {
+                        role: 'function',
+                        parts: [{ functionResponse: { name: 'tool_result', response: { content: m.content } } }]
+                    };
+                }
+                return {
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: m.content || '' }]
+                };
+            });
 
-        // Agregar tools si están disponibles
+        // Convert OpenAI tools to Gemini function declarations
+        let toolConfig = undefined;
+        let toolDeclarations = undefined;
         if (tools && tools.length > 0) {
-            requestBody.tools = tools;
-            requestBody.tool_choice = 'auto';
+            toolDeclarations = tools.map((t: any) => ({
+                name: t.function.name,
+                description: t.function.description,
+                parameters: t.function.parameters
+            }));
+            toolConfig = { functionCallingConfig: { mode: 'AUTO' } };
         }
 
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
-            },
-            body: JSON.stringify(requestBody)
-        });
+        const requestBody: any = {
+            contents,
+            systemInstruction: { parts: [{ text: systemInstruction }] },
+            generationConfig: {
+                temperature: 0.3,
+                maxOutputTokens: 100,
+            }
+        };
+
+        if (toolDeclarations) {
+            requestBody.tools = [{ functionDeclarations: toolDeclarations }];
+            requestBody.toolConfig = toolConfig;
+        }
+
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GOOGLE_AI_API_KEY}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            }
+        );
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            console.error('❌ OpenAI API error:', errorData);
+            console.error('❌ Gemini API error:', errorData);
             return null;
         }
 
         const data = await response.json();
-        return data.choices[0].message;
+        const candidate = data.candidates?.[0];
+
+        if (!candidate) {
+            console.error('❌ No response candidate from Gemini');
+            return null;
+        }
+
+        // Check for function calls
+        const functionCall = candidate.content?.parts?.find((p: any) => p.functionCall);
+        if (functionCall) {
+            return {
+                content: null,
+                tool_calls: [{
+                    id: `call_${Date.now()}`,
+                    type: 'function',
+                    function: {
+                        name: functionCall.functionCall.name,
+                        arguments: JSON.stringify(functionCall.functionCall.args || {})
+                    }
+                }]
+            };
+        }
+
+        // Return text response
+        const textContent = candidate.content?.parts?.map((p: any) => p.text).join('') || '';
+        return { content: textContent, tool_calls: null };
+
     } catch (error) {
         console.error('❌ Error generating AI response:', error);
         return null;
