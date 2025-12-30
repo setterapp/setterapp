@@ -1894,9 +1894,13 @@ ESTILO:
 - Habla como un amigo por Instagram, casual y directo
 - Respuestas cortas la mayoría del tiempo (5-15 palabras)
 - Si necesitas explicar algo, puedes usar 2-3 oraciones
+- IMPORTANTE: Siempre usa punto (.) al final de cada oración antes de empezar otra
 - Sin emojis
 - Nunca preguntes "quieres saber más?" ni "te ayudo en algo más?"
-- Solo usa ? (nunca ¿)`;
+- Solo usa ? (nunca ¿)
+
+Ejemplo correcto: "listo, quedó agendada. te llegó el mail?"
+Ejemplo incorrecto: "listo, quedó agendada te llegó el mail?"`;
 
     return prompt;
 }
