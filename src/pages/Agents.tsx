@@ -172,6 +172,23 @@ const TIMEZONES = {
     ],
 }
 
+// Language/Accent options
+const LANGUAGE_ACCENTS = [
+    { value: 'es-ES', label: 'Spanish (Spain)' },
+    { value: 'es-MX', label: 'Spanish (Mexico)' },
+    { value: 'es-AR', label: 'Spanish (Argentina)' },
+    { value: 'es-CO', label: 'Spanish (Colombia)' },
+    { value: 'es-CL', label: 'Spanish (Chile)' },
+    { value: 'es-PE', label: 'Spanish (Peru)' },
+    { value: 'en-US', label: 'English (USA)' },
+    { value: 'en-GB', label: 'English (UK)' },
+    { value: 'pt-BR', label: 'Portuguese (Brazil)' },
+    { value: 'pt-PT', label: 'Portuguese (Portugal)' },
+    { value: 'fr-FR', label: 'French (France)' },
+    { value: 'de-DE', label: 'German (Germany)' },
+    { value: 'it-IT', label: 'Italian (Italy)' },
+]
+
 function Agents() {
     const { agents, loading, error, createAgent, updateAgent, deleteAgent } = useAgents()
     const [showForm, setShowForm] = useState(false)
@@ -678,6 +695,25 @@ function Agents() {
                                     instead of one long message. For example: "Hey!" followed by "How are you?"
                                     in separate messages. This makes the conversation more natural.
                                 </p>
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="languageAccent">Language & Accent</label>
+                                <select
+                                    id="languageAccent"
+                                    className="input select"
+                                    value={formData.config.languageAccent || 'es-ES'}
+                                    onChange={(e) => updateConfig('languageAccent', e.target.value)}
+                                >
+                                    {LANGUAGE_ACCENTS.map((lang) => (
+                                        <option key={lang.value} value={lang.value}>
+                                            {lang.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
+                                    The AI will use expressions and accent from this region.
+                                </small>
                             </div>
 
                             <div className="form-group">

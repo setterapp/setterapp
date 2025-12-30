@@ -1828,33 +1828,25 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
 }
 
 /**
- * Maps timezone to country/accent for the AI
+ * Maps language code to accent instructions
  */
-function getCountryFromTimezone(timezone: string): string {
-    const tzMap: Record<string, string> = {
-        // Spain
-        'Europe/Madrid': 'España',
-        'Atlantic/Canary': 'España',
-        // Mexico
-        'America/Mexico_City': 'México',
-        'America/Monterrey': 'México',
-        'America/Tijuana': 'México',
-        // Argentina
-        'America/Argentina/Buenos_Aires': 'Argentina',
-        // Colombia
-        'America/Bogota': 'Colombia',
-        // Chile
-        'America/Santiago': 'Chile',
-        // Peru
-        'America/Lima': 'Perú',
-        // USA
-        'America/New_York': 'USA',
-        'America/Chicago': 'USA',
-        'America/Denver': 'USA',
-        'America/Los_Angeles': 'USA',
-        // Default
+function getAccentInstructions(languageAccent: string): string {
+    const accentMap: Record<string, string> = {
+        'es-ES': 'Habla español de España. Usa "tú" y expresiones españolas.',
+        'es-MX': 'Habla español de México. Usa expresiones mexicanas.',
+        'es-AR': 'Habla español de Argentina. Usa "vos" y expresiones argentinas.',
+        'es-CO': 'Habla español de Colombia. Usa expresiones colombianas.',
+        'es-CL': 'Habla español de Chile. Usa expresiones chilenas.',
+        'es-PE': 'Habla español de Perú. Usa expresiones peruanas.',
+        'en-US': 'Speak American English.',
+        'en-GB': 'Speak British English.',
+        'pt-BR': 'Fale português do Brasil.',
+        'pt-PT': 'Fale português de Portugal.',
+        'fr-FR': 'Parle français.',
+        'de-DE': 'Sprich Deutsch.',
+        'it-IT': 'Parla italiano.',
     };
-    return tzMap[timezone] || 'internacional';
+    return accentMap[languageAccent] || '';
 }
 
 /**
@@ -1863,11 +1855,11 @@ function getCountryFromTimezone(timezone: string): string {
 function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null): string {
     let prompt = `${description || `You are ${agentName}.`}`;
 
-    // Add country/accent based on timezone
-    const timezone = config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
-    const country = getCountryFromTimezone(timezone);
-    if (country !== 'internacional') {
-        prompt += `\n\nIDIOMA: Habla español de ${country}. Usa expresiones y acento de ${country}.`;
+    // Add language/accent based on config
+    const languageAccent = config?.languageAccent || 'es-ES';
+    const accentInstructions = getAccentInstructions(languageAccent);
+    if (accentInstructions) {
+        prompt += `\n\nIDIOMA: ${accentInstructions}`;
     }
 
     // Add identity information if configured

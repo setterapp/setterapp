@@ -34,6 +34,7 @@ export interface AgentConfig {
   // Personalización
   toneGuidelines?: string
   additionalContext?: string
+  languageAccent?: string // ej: "es-ES", "es-MX", "es-AR", "en-US"
 
   // Ejemplos de conversación para que la IA aprenda el estilo
   conversationExamples?: string
