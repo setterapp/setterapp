@@ -1591,16 +1591,19 @@ async function generateAndSendAutoReply(
                         break;
                     }
 
-                    // Save EACH message separately to DB
-                    await saveOutboundMessage(conversationId, userId, msg, agent.id);
-                    console.log(`✅ Message ${i + 1}/${messages.length} sent and saved`);
+                    // Save EACH message separately to DB using Instagram's message_id to prevent duplicates from echo webhook
+                    const platformMsgId = sendResult?.message_id;
+                    await saveOutboundMessage(conversationId, userId, msg, agent.id, platformMsgId);
+                    console.log(`✅ Message ${i + 1}/${messages.length} sent and saved (id: ${platformMsgId})`);
                 }
             } else {
                 // Normal mode: single message
                 const sendResult = await sendInstagramMessage(userId, recipientId, finalResponse);
                 if (sendResult) {
-                    await saveOutboundMessage(conversationId, userId, finalResponse, agent.id);
-                    console.log('✅ Final response sent');
+                    // Use Instagram's message_id to prevent duplicates from echo webhook
+                    const platformMsgId = sendResult?.message_id;
+                    await saveOutboundMessage(conversationId, userId, finalResponse, agent.id, platformMsgId);
+                    console.log('✅ Final response sent (id: ' + platformMsgId + ')');
                 }
             }
         } else {
@@ -1694,17 +1697,20 @@ async function executeUpdateContactEmail(
 }
 
 // Helper para guardar mensaje outbound
-async function saveOutboundMessage(conversationId: string, userId: string, content: string, agentId: string) {
+async function saveOutboundMessage(conversationId: string, userId: string, content: string, agentId: string, platformMessageId?: string) {
     const metadata = {
         generated_by: 'ai',
         agent_id: agentId,
         model: 'gpt-4o-mini'
     };
 
+    // Use the platform message ID from Instagram if available, otherwise generate one
+    const messageId = platformMessageId || `ai_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
     await supabase.from('messages').upsert({
         conversation_id: conversationId,
         user_id: userId,
-        platform_message_id: Date.now().toString(),
+        platform_message_id: messageId,
         content: content,
         direction: 'outbound',
         message_type: 'text',
