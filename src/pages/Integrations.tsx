@@ -368,6 +368,37 @@ function Integrations() {
                     <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: '1.4' }}>
                       {getIntegrationDescription(integration.type)}
                     </p>
+                    {/* Show connected account info */}
+                    {isConnected && integration.config?.instagram_username && (
+                      <p style={{
+                        margin: 0,
+                        marginTop: 'var(--spacing-xs)',
+                        fontSize: 'var(--font-size-sm)',
+                        color: 'var(--color-text)',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-xs)'
+                      }}>
+                        <span style={{ color: 'var(--color-success)' }}>●</span>
+                        @{integration.config.instagram_username}
+                      </p>
+                    )}
+                    {isConnected && integration.config?.calendar_email && (
+                      <p style={{
+                        margin: 0,
+                        marginTop: 'var(--spacing-xs)',
+                        fontSize: 'var(--font-size-sm)',
+                        color: 'var(--color-text)',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-xs)'
+                      }}>
+                        <span style={{ color: 'var(--color-success)' }}>●</span>
+                        {integration.config.calendar_email}
+                      </p>
+                    )}
                   </div>
                 </div>
 
