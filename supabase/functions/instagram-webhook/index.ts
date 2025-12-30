@@ -1828,10 +1828,47 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
 }
 
 /**
+ * Maps timezone to country/accent for the AI
+ */
+function getCountryFromTimezone(timezone: string): string {
+    const tzMap: Record<string, string> = {
+        // Spain
+        'Europe/Madrid': 'España',
+        'Atlantic/Canary': 'España',
+        // Mexico
+        'America/Mexico_City': 'México',
+        'America/Monterrey': 'México',
+        'America/Tijuana': 'México',
+        // Argentina
+        'America/Argentina/Buenos_Aires': 'Argentina',
+        // Colombia
+        'America/Bogota': 'Colombia',
+        // Chile
+        'America/Santiago': 'Chile',
+        // Peru
+        'America/Lima': 'Perú',
+        // USA
+        'America/New_York': 'USA',
+        'America/Chicago': 'USA',
+        'America/Denver': 'USA',
+        'America/Los_Angeles': 'USA',
+        // Default
+    };
+    return tzMap[timezone] || 'internacional';
+}
+
+/**
  * Builds the system prompt using agent configuration and contact context
  */
 function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null): string {
     let prompt = `${description || `You are ${agentName}.`}`;
+
+    // Add country/accent based on timezone
+    const timezone = config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
+    const country = getCountryFromTimezone(timezone);
+    if (country !== 'internacional') {
+        prompt += `\n\nIDIOMA: Habla español de ${country}. Usa expresiones y acento de ${country}.`;
+    }
 
     // Add identity information if configured
     if (config?.assistantName || config?.companyName || config?.ownerName) {
