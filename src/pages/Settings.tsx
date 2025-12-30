@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { User, LogOut, Globe, Bell, Shield, Trash2 } from 'lucide-react'
+import { User, LogOut, Globe, Bell, Shield, Trash2, Settings } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { useTranslation } from 'react-i18next'
 import { Checkbox } from '../components/ui/checkbox'
+import SectionHeader from '../components/SectionHeader'
 import i18n from '../i18n'
 
 interface UserSettings {
@@ -45,14 +46,10 @@ function SettingsPage() {
   })
 
   useEffect(() => {
-    // Verificar si hay una sesión activa
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        // Obtener idioma de localStorage como fallback
         const savedLanguage = localStorage.getItem('userLanguage') || 'es'
-
-        // Cargar preferencias desde Supabase
         const { data: preferences, error } = await supabase
           .from('user_preferences')
           .select('*')
@@ -60,7 +57,6 @@ function SettingsPage() {
           .single()
 
         if (!error && preferences) {
-          // Usar preferencias de Supabase
           const userSettings = {
             firstName: preferences.first_name || '',
             lastName: preferences.last_name || '',
@@ -76,34 +72,24 @@ function SettingsPage() {
             theme: preferences.theme || 'light',
           }
           setSettings(userSettings)
-          // Aplicar idioma guardado
           i18n.changeLanguage(userSettings.language)
         } else {
-          // Si no hay preferencias en Supabase, usar localStorage
-          setSettings(prev => ({
-            ...prev,
-            language: savedLanguage
-          }))
+          setSettings(prev => ({ ...prev, language: savedLanguage }))
           i18n.changeLanguage(savedLanguage)
         }
       }
       setLoading(false)
     })
 
-    // Escuchar cambios en la autenticación
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  // Función para guardar automáticamente en Supabase
   const saveToSupabase = async (updates: Partial<UserSettings>) => {
     if (!user) return
-
     try {
       const settingsToSave = { ...settings, ...updates }
       await supabase
@@ -117,9 +103,7 @@ function SettingsPage() {
           timezone: settingsToSave.timezone,
           notifications: settingsToSave.notifications,
           theme: settingsToSave.theme,
-        }, {
-          onConflict: 'user_id'
-        })
+        }, { onConflict: 'user_id' })
     } catch (err: any) {
       console.error('Error al guardar configuración:', err)
     }
@@ -131,78 +115,43 @@ function SettingsPage() {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
+          queryParams: { access_type: 'offline', prompt: 'consent' },
         },
       })
-      if (error) {
-        console.error('Error al iniciar sesión:', error)
-        alert(`Error al iniciar sesión: ${error.message}`)
-      }
+      if (error) alert(`Error al iniciar sesión: ${error.message}`)
     } catch (err: any) {
-      console.error('Error inesperado:', err)
       alert(`Error inesperado: ${err.message}`)
     }
   }
 
   const handleLogout = async () => {
     try {
-      // Limpiar caché al cerrar sesión
       cacheService.clear()
       await supabase.auth.signOut()
     } catch (err: any) {
-      console.error('Error al cerrar sesión:', err)
       alert(`Error al cerrar sesión: ${err.message}`)
     }
   }
 
   const handleDeleteAccount = async () => {
     if (!user || deleteConfirmText !== 'DELETE') return
-
     setDeleting(true)
     try {
       const userId = user.id
-
-      // Delete all user data in order (respecting foreign keys)
-      // 1. Delete messages from user's conversations
-      const { data: conversations } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('user_id', userId)
-
+      const { data: conversations } = await supabase.from('conversations').select('id').eq('user_id', userId)
       if (conversations && conversations.length > 0) {
-        const conversationIds = conversations.map(c => c.id)
-        await supabase.from('messages').delete().in('conversation_id', conversationIds)
+        await supabase.from('messages').delete().in('conversation_id', conversations.map(c => c.id))
       }
-
-      // 2. Delete conversations
       await supabase.from('conversations').delete().eq('user_id', userId)
-
-      // 3. Delete contacts
       await supabase.from('contacts').delete().eq('user_id', userId)
-
-      // 4. Delete meetings
       await supabase.from('meetings').delete().eq('user_id', userId)
-
-      // 5. Delete agents
       await supabase.from('agents').delete().eq('user_id', userId)
-
-      // 6. Delete integrations
       await supabase.from('integrations').delete().eq('user_id', userId)
-
-      // 7. Delete user preferences
       await supabase.from('user_preferences').delete().eq('user_id', userId)
-
-      // 8. Clear cache and sign out
       cacheService.clear()
       await supabase.auth.signOut()
-
-      // Redirect to home
       window.location.href = '/'
     } catch (err: any) {
-      console.error('Error deleting account:', err)
       alert(`Error al eliminar cuenta: ${err.message}`)
       setDeleting(false)
     }
@@ -219,278 +168,10 @@ function SettingsPage() {
     )
   }
 
-  return (
-    <div>
-      {user ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 'var(--spacing-md)' }}>
-          {/* Información Personal */}
-          <div className="card" style={{ border: '2px solid #000' }}>
-            <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
-              <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
-                <User size={18} />
-                {t('settings.personalInfo')}
-              </h3>
-            </div>
-            <div className="flex flex-col gap-sm">
-              <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.email')}</label>
-                <p className="text-secondary" style={{ fontSize: 'var(--font-size-sm)', margin: 0 }}>{user.email}</p>
-              </div>
-              <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label htmlFor="firstName" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.firstName')}</label>
-                <input
-                  id="firstName"
-                  type="text"
-                  className="input"
-                  value={settings.firstName}
-                  onChange={(e) => setSettings({ ...settings, firstName: e.target.value })}
-                  onBlur={() => saveToSupabase({ firstName: settings.firstName })}
-                  placeholder={t('settings.firstName')}
-                  style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
-                />
-              </div>
-              <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label htmlFor="lastName" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.lastName')}</label>
-                <input
-                  id="lastName"
-                  type="text"
-                  className="input"
-                  value={settings.lastName}
-                  onChange={(e) => setSettings({ ...settings, lastName: e.target.value })}
-                  onBlur={() => saveToSupabase({ lastName: settings.lastName })}
-                  placeholder={t('settings.lastName')}
-                  style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
-                />
-              </div>
-              <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label htmlFor="phone" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.phone')}</label>
-                <input
-                  id="phone"
-                  type="tel"
-                  className="input"
-                  value={settings.phone}
-                  onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                  onBlur={() => saveToSupabase({ phone: settings.phone })}
-                  placeholder="+34 123 456 789"
-                  style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Preferencias */}
-          <div className="card" style={{ border: '2px solid #000' }}>
-            <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
-              <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
-                <Globe size={18} />
-                {t('settings.profile')}
-              </h3>
-            </div>
-            <div className="flex flex-col gap-sm">
-              <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label htmlFor="language" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.language')}</label>
-                <select
-                  id="language"
-                  className="input select"
-                  value={settings.language}
-                  onChange={async (e) => {
-                    const newLanguage = e.target.value
-                    setSettings({ ...settings, language: newLanguage })
-                    // Cambiar idioma inmediatamente
-                    localStorage.setItem('userLanguage', newLanguage)
-                    i18n.changeLanguage(newLanguage)
-
-                    // Guardar automáticamente en Supabase
-                    if (user) {
-                      await supabase
-                        .from('user_preferences')
-                        .upsert({
-                          user_id: user.id,
-                          language: newLanguage,
-                          first_name: settings.firstName,
-                          last_name: settings.lastName,
-                          phone: settings.phone,
-                          timezone: settings.timezone,
-                          notifications: settings.notifications,
-                          theme: settings.theme,
-                        }, {
-                          onConflict: 'user_id'
-                        })
-                    }
-                  }}
-                  style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
-                >
-                  <option value="es">Español</option>
-                  <option value="en">English</option>
-                </select>
-              </div>
-              <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label htmlFor="timezone" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.timezone')}</label>
-                <select
-                  id="timezone"
-                  className="input select"
-                  value={settings.timezone}
-                  onChange={(e) => {
-                    const newTimezone = e.target.value
-                    setSettings({ ...settings, timezone: newTimezone })
-                    saveToSupabase({ timezone: newTimezone })
-                  }}
-                  style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
-                >
-                  <option value="Europe/Madrid">Madrid (GMT+1)</option>
-                  <option value="America/New_York">New York (GMT-5)</option>
-                  <option value="America/Los_Angeles">Los Angeles (GMT-8)</option>
-                  <option value="America/Mexico_City">México (GMT-6)</option>
-                  <option value="America/Buenos_Aires">Buenos Aires (GMT-3)</option>
-                  <option value="Europe/London">London (GMT+0)</option>
-                </select>
-              </div>
-              <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label htmlFor="theme" className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>{t('settings.theme')}</label>
-                <select
-                  id="theme"
-                  className="input select"
-                  value={settings.theme}
-                  onChange={(e) => {
-                    const newTheme = e.target.value as 'light' | 'dark' | 'auto'
-                    setSettings({ ...settings, theme: newTheme })
-                    saveToSupabase({ theme: newTheme })
-                    // Aplicar tema inmediatamente
-                    if (newTheme === 'dark') {
-                      document.documentElement.classList.add('dark')
-                    } else {
-                      document.documentElement.classList.remove('dark')
-                    }
-                  }}
-                  style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
-                >
-                  <option value="light">{t('settings.themeSettings.light')}</option>
-                  <option value="dark">{t('settings.themeSettings.dark')}</option>
-                  <option value="auto">{t('settings.themeSettings.system')}</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Notificaciones */}
-          <div className="card" style={{ border: '2px solid #000' }}>
-            <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
-              <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
-                <Bell size={18} />
-                {t('settings.notifications')}
-              </h3>
-            </div>
-            <div className="flex flex-col gap-sm">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', padding: 'var(--spacing-xs) 0' }}>
-                <Checkbox
-                  checked={settings.notifications.email}
-                  onCheckedChange={(checked) => {
-                    const newNotifications = { ...settings.notifications, email: checked as boolean }
-                    setSettings({ ...settings, notifications: newNotifications })
-                    saveToSupabase({ notifications: newNotifications })
-                  }}
-                />
-                <label style={{ fontSize: 'var(--font-size-sm)', cursor: 'pointer', userSelect: 'none' }}>
-                  {t('settings.notificationSettings.email')}
-                </label>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', padding: 'var(--spacing-xs) 0' }}>
-                <Checkbox
-                  checked={settings.notifications.push}
-                  onCheckedChange={(checked) => {
-                    const newNotifications = { ...settings.notifications, push: checked as boolean }
-                    setSettings({ ...settings, notifications: newNotifications })
-                    saveToSupabase({ notifications: newNotifications })
-                  }}
-                />
-                <label style={{ fontSize: 'var(--font-size-sm)', cursor: 'pointer', userSelect: 'none' }}>
-                  {t('settings.notificationSettings.push')}
-                </label>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', padding: 'var(--spacing-xs) 0' }}>
-                <Checkbox
-                  checked={settings.notifications.newConversation}
-                  onCheckedChange={(checked) => {
-                    const newNotifications = { ...settings.notifications, newConversation: checked as boolean }
-                    setSettings({ ...settings, notifications: newNotifications })
-                    saveToSupabase({ notifications: newNotifications })
-                  }}
-                />
-                <label style={{ fontSize: 'var(--font-size-sm)', cursor: 'pointer', userSelect: 'none' }}>
-                  {t('settings.notificationSettings.newConversation')}
-                </label>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', padding: 'var(--spacing-xs) 0' }}>
-                <Checkbox
-                  checked={settings.notifications.newMessage}
-                  onCheckedChange={(checked) => {
-                    const newNotifications = { ...settings.notifications, newMessage: checked as boolean }
-                    setSettings({ ...settings, notifications: newNotifications })
-                    saveToSupabase({ notifications: newNotifications })
-                  }}
-                />
-                <label style={{ fontSize: 'var(--font-size-sm)', cursor: 'pointer', userSelect: 'none' }}>
-                  {t('settings.notificationSettings.newMessage')}
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Cuenta y Seguridad */}
-          <div className="card" style={{ border: '2px solid #000' }}>
-            <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
-              <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
-                <Shield size={18} />
-                {t('settings.account')}
-              </h3>
-            </div>
-            <div className="flex flex-col gap-sm">
-              <div className="form-group" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <label className="label" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-xs)' }}>User ID</label>
-                <p className="text-secondary text-sm" style={{ fontFamily: 'monospace', fontSize: 'var(--font-size-xs)', margin: 0, wordBreak: 'break-all' }}>
-                  {user.id}
-                </p>
-              </div>
-              <div style={{ marginTop: 'var(--spacing-sm)', paddingTop: 'var(--spacing-sm)', borderTop: '2px solid #000' }}>
-                <button onClick={handleLogout} className="btn btn--danger btn--sm" style={{ width: '100%' }}>
-                  <LogOut size={16} />
-                  {t('settings.logout')}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Danger Zone */}
-          <div className="card" style={{ border: '2px solid #f38ba8', background: 'rgba(243, 139, 168, 0.05)' }}>
-            <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
-              <h3 className="card-title flex items-center gap-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0, color: '#f38ba8' }}>
-                <Trash2 size={18} />
-                Danger Zone
-              </h3>
-            </div>
-            <div className="flex flex-col gap-sm">
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
-                Once you delete your account, there is no going back. All your data will be permanently deleted.
-              </p>
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="btn btn--sm"
-                style={{
-                  width: '100%',
-                  marginTop: 'var(--spacing-sm)',
-                  background: 'transparent',
-                  border: '2px solid #f38ba8',
-                  color: '#f38ba8'
-                }}
-              >
-                <Trash2 size={16} />
-                Delete Account
-              </button>
-            </div>
-          </div>
-        </div>
-
-      ) : (
+  if (!user) {
+    return (
+      <div>
+        <SectionHeader title="Configuración" icon={<Settings size={24} />} />
         <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <User size={48} style={{ margin: '0 auto var(--spacing-md)', opacity: 0.5 }} />
@@ -501,39 +182,222 @@ function SettingsPage() {
             </button>
           </div>
         </div>
-      )}
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <SectionHeader title="Configuración" icon={<Settings size={24} />}>
+        <button onClick={handleLogout} className="btn btn--sm" style={{ background: '#f38ba8', color: '#000' }}>
+          <LogOut size={16} />
+          {t('settings.logout')}
+        </button>
+      </SectionHeader>
+
+      <div className="card" style={{ border: '2px solid #000', padding: 'var(--spacing-lg)' }}>
+        {/* Grid de 2 columnas */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 'var(--spacing-xl)' }}>
+
+          {/* Columna 1: Perfil y Preferencias */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
+            {/* Información Personal */}
+            <div>
+              <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 var(--spacing-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                <User size={18} />
+                {t('settings.personalInfo')}
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+                <div>
+                  <label style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: '4px' }}>{t('settings.email')}</label>
+                  <p style={{ fontSize: 'var(--font-size-sm)', margin: 0 }}>{user.email}</p>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-sm)' }}>
+                  <div>
+                    <label style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>{t('settings.firstName')}</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={settings.firstName}
+                      onChange={(e) => setSettings({ ...settings, firstName: e.target.value })}
+                      onBlur={() => saveToSupabase({ firstName: settings.firstName })}
+                      style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>{t('settings.lastName')}</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={settings.lastName}
+                      onChange={(e) => setSettings({ ...settings, lastName: e.target.value })}
+                      onBlur={() => saveToSupabase({ lastName: settings.lastName })}
+                      style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>{t('settings.phone')}</label>
+                  <input
+                    type="tel"
+                    className="input"
+                    value={settings.phone}
+                    onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                    onBlur={() => saveToSupabase({ phone: settings.phone })}
+                    placeholder="+34 123 456 789"
+                    style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Preferencias */}
+            <div>
+              <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 var(--spacing-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                <Globe size={18} />
+                {t('settings.profile')}
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-sm)' }}>
+                  <div>
+                    <label style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>{t('settings.language')}</label>
+                    <select
+                      className="input select"
+                      value={settings.language}
+                      onChange={async (e) => {
+                        const newLanguage = e.target.value
+                        setSettings({ ...settings, language: newLanguage })
+                        localStorage.setItem('userLanguage', newLanguage)
+                        i18n.changeLanguage(newLanguage)
+                        saveToSupabase({ language: newLanguage })
+                      }}
+                      style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
+                    >
+                      <option value="es">Español</option>
+                      <option value="en">English</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>{t('settings.theme')}</label>
+                    <select
+                      className="input select"
+                      value={settings.theme}
+                      onChange={(e) => {
+                        const newTheme = e.target.value as 'light' | 'dark' | 'auto'
+                        setSettings({ ...settings, theme: newTheme })
+                        saveToSupabase({ theme: newTheme })
+                        document.documentElement.classList.toggle('dark', newTheme === 'dark')
+                      }}
+                      style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
+                    >
+                      <option value="light">{t('settings.themeSettings.light')}</option>
+                      <option value="dark">{t('settings.themeSettings.dark')}</option>
+                      <option value="auto">{t('settings.themeSettings.system')}</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>{t('settings.timezone')}</label>
+                  <select
+                    className="input select"
+                    value={settings.timezone}
+                    onChange={(e) => {
+                      setSettings({ ...settings, timezone: e.target.value })
+                      saveToSupabase({ timezone: e.target.value })
+                    }}
+                    style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px' }}
+                  >
+                    <option value="America/Argentina/Buenos_Aires">Buenos Aires (GMT-3)</option>
+                    <option value="America/Mexico_City">México (GMT-6)</option>
+                    <option value="Europe/Madrid">Madrid (GMT+1)</option>
+                    <option value="America/New_York">New York (GMT-5)</option>
+                    <option value="America/Los_Angeles">Los Angeles (GMT-8)</option>
+                    <option value="Europe/London">London (GMT+0)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Columna 2: Notificaciones y Cuenta */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
+            {/* Notificaciones */}
+            <div>
+              <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 var(--spacing-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                <Bell size={18} />
+                {t('settings.notifications')}
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-xs)' }}>
+                {[
+                  { key: 'email', label: t('settings.notificationSettings.email') },
+                  { key: 'push', label: t('settings.notificationSettings.push') },
+                  { key: 'newConversation', label: t('settings.notificationSettings.newConversation') },
+                  { key: 'newMessage', label: t('settings.notificationSettings.newMessage') },
+                ].map(({ key, label }) => (
+                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', padding: '6px 0' }}>
+                    <Checkbox
+                      checked={settings.notifications[key as keyof typeof settings.notifications]}
+                      onCheckedChange={(checked) => {
+                        const newNotifications = { ...settings.notifications, [key]: checked as boolean }
+                        setSettings({ ...settings, notifications: newNotifications })
+                        saveToSupabase({ notifications: newNotifications })
+                      }}
+                    />
+                    <label style={{ fontSize: 'var(--font-size-sm)', cursor: 'pointer' }}>{label}</label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Cuenta */}
+            <div>
+              <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 var(--spacing-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                <Shield size={18} />
+                {t('settings.account')}
+              </h3>
+              <div>
+                <label style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: '4px' }}>User ID</label>
+                <p style={{ fontFamily: 'monospace', fontSize: 'var(--font-size-xs)', margin: 0, wordBreak: 'break-all', color: 'var(--color-text-secondary)' }}>
+                  {user.id}
+                </p>
+              </div>
+            </div>
+
+            {/* Danger Zone */}
+            <div style={{ marginTop: 'auto', paddingTop: 'var(--spacing-md)', borderTop: '2px solid #f38ba8' }}>
+              <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 var(--spacing-sm) 0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', color: '#f38ba8' }}>
+                <Trash2 size={18} />
+                Danger Zone
+              </h3>
+              <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', margin: '0 0 var(--spacing-sm) 0' }}>
+                Esta acción es irreversible. Se eliminarán todos tus datos.
+              </p>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="btn btn--sm"
+                style={{ background: 'transparent', border: '2px solid #f38ba8', color: '#f38ba8' }}
+              >
+                <Trash2 size={14} />
+                Eliminar Cuenta
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: 'var(--spacing-md)'
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 'var(--spacing-md)'
         }}>
-          <div style={{
-            background: 'var(--color-bg)',
-            borderRadius: 'var(--border-radius-lg)',
-            padding: 'var(--spacing-xl)',
-            maxWidth: '400px',
-            width: '100%',
-            border: '2px solid #000'
-          }}>
-            <h3 style={{ margin: 0, marginBottom: 'var(--spacing-md)', color: '#f38ba8' }}>
-              Delete Account
-            </h3>
+          <div style={{ background: 'var(--color-bg)', borderRadius: 'var(--border-radius-lg)', padding: 'var(--spacing-xl)', maxWidth: '400px', width: '100%', border: '2px solid #000' }}>
+            <h3 style={{ margin: 0, marginBottom: 'var(--spacing-md)', color: '#f38ba8' }}>Eliminar Cuenta</h3>
             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-md)' }}>
-              This action cannot be undone. All your data including conversations, contacts, agents, and integrations will be permanently deleted.
+              Esta acción no se puede deshacer. Todos tus datos serán eliminados permanentemente.
             </p>
             <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-sm)' }}>
-              Type <strong>DELETE</strong> to confirm:
+              Escribe <strong>DELETE</strong> para confirmar:
             </p>
             <input
               type="text"
@@ -545,15 +409,12 @@ function SettingsPage() {
             />
             <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
               <button
-                onClick={() => {
-                  setShowDeleteConfirm(false)
-                  setDeleteConfirmText('')
-                }}
+                onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText('') }}
                 className="btn btn--sm"
                 style={{ flex: 1 }}
                 disabled={deleting}
               >
-                Cancel
+                Cancelar
               </button>
               <button
                 onClick={handleDeleteAccount}
@@ -561,7 +422,7 @@ function SettingsPage() {
                 style={{ flex: 1 }}
                 disabled={deleteConfirmText !== 'DELETE' || deleting}
               >
-                {deleting ? 'Deleting...' : 'Delete Account'}
+                {deleting ? 'Eliminando...' : 'Eliminar'}
               </button>
             </div>
           </div>
