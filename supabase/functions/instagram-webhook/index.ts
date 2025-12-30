@@ -1729,7 +1729,7 @@ async function generateAIResponse(messages: any[], tools?: any[]) {
             model: 'gpt-4o-mini',
             messages: messages,
             temperature: 0.7,
-            max_tokens: 500
+            max_tokens: 150
         };
 
         // Agregar tools si están disponibles
@@ -1821,21 +1821,24 @@ CRITICAL RULES - FOLLOW STRICTLY:
     // If human style is enabled, add multi-message instructions
     const humanStyleEnabled = config?.enableHumanStyle !== false; // Default true
     if (humanStyleEnabled) {
-        prompt += `\n\n=== RESPONSE FORMAT ===
-IMPORTANT: Respond like a REAL person in chat. This means:
-- Send MULTIPLE short messages instead of one long one
-- Separate each message with the marker [MSG]
-- Use short, natural phrases
-- Add natural reactions and expressions ("haha", "oh", "hmm", "ah")
-- Make natural pauses between ideas
-- DO NOT write long paragraphs
-- Remember: no emojis, no exclamation marks
+        prompt += `\n\n=== RESPONSE FORMAT (CRITICAL) ===
+YOU MUST FORMAT YOUR RESPONSE EXACTLY LIKE THIS:
 
-CORRECT format example:
-"hey[MSG]nice to hear from you[MSG]what are you looking for"
+1. Write 2-3 SHORT separate messages
+2. Put [MSG] between each message (no spaces around it)
+3. Each message must be MAX 10-15 words
+4. Total response: max 40 words
 
-INCORRECT format (DON'T do this):
-"Hello! Thank you for reaching out! I'm glad you contacted me! Please tell me what you're looking for so I can help you in the best way possible!"`;
+EXAMPLE FORMAT:
+hey[MSG]what are you looking for
+
+ANOTHER EXAMPLE:
+oh nice[MSG]tell me more about that
+
+WRONG (too long, no separation):
+"Hello, thank you for reaching out. I would love to help you with whatever you need. Please tell me what you are looking for."
+
+REMEMBER: Short messages. Use [MSG] to separate. Max 40 words total.`;
     }
 
     // Add conversation examples if they exist
