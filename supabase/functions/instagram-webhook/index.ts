@@ -1227,7 +1227,7 @@ function splitMessage(message: string, maxLength: number = 950): string[] {
 }
 
 /**
- * Envía un mensaje a Instagram (con soporte para mensajes largos)
+ * Envía un mensaje a Instagram (con soporte para mensajes largos y reintentos)
  */
 async function sendInstagramMessage(userId: string, recipientId: string, message: string) {
     try {
@@ -1246,12 +1246,26 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
         }
 
         const accessToken = integration?.config?.access_token;
-        const instagramUserId = integration?.config?.instagram_user_id || integration?.config?.instagram_page_id;
+        // Usar instagram_user_id que es el scoped ID correcto para enviar mensajes
+        // También verificar instagram_business_account_id como fallback
+        const instagramUserId = integration?.config?.instagram_user_id ||
+            integration?.config?.instagram_business_account_id ||
+            integration?.config?.instagram_page_id;
 
         if (!accessToken || !instagramUserId) {
-            console.error('❌ Faltan credenciales de Instagram');
+            console.error('❌ Faltan credenciales de Instagram. Config:', {
+                has_token: !!accessToken,
+                instagram_user_id: integration?.config?.instagram_user_id,
+                instagram_business_account_id: integration?.config?.instagram_business_account_id,
+            });
             return null;
         }
+
+        console.log('📤 Enviando mensaje a Instagram:', {
+            instagramUserId: instagramUserId.substring(0, 10) + '...',
+            recipientId: recipientId.substring(0, 10) + '...',
+            messageLength: message.length
+        });
 
         // Dividir mensaje si es muy largo (Instagram tiene límite de 1000 caracteres)
         const messageParts = splitMessage(message, 950);
@@ -1270,25 +1284,48 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
 
-            // Enviar mensaje usando Instagram Messaging API
-            const response = await fetch(
-                `https://graph.instagram.com/v21.0/${instagramUserId}/messages`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        recipient: { id: recipientId },
-                        message: { text: part }
-                    })
-                }
-            );
+            // Reintentos para errores transitorios (code 2)
+            let attempts = 0;
+            const maxAttempts = 3;
+            let lastError = null;
 
-            if (!response.ok) {
+            while (attempts < maxAttempts) {
+                attempts++;
+
+                // Enviar mensaje usando Instagram Messaging API
+                const response = await fetch(
+                    `https://graph.instagram.com/v21.0/${instagramUserId}/messages`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            recipient: { id: recipientId },
+                            message: { text: part }
+                        })
+                    }
+                );
+
+                if (response.ok) {
+                    lastResult = await response.json();
+                    console.log(`✅ Mensaje parte ${i + 1}/${messageParts.length} enviado`);
+                    break;
+                }
+
                 const errorData = await response.json().catch(() => ({}));
-                console.error(`❌ Error enviando mensaje parte ${i + 1}/${messageParts.length} a Instagram:`, errorData);
+                lastError = errorData;
+
+                // Si es error transitorio (code 2), reintentar
+                if (errorData.error?.is_transient === true || errorData.error?.code === 2) {
+                    console.warn(`⚠️ Error transitorio (intento ${attempts}/${maxAttempts}):`, errorData.error?.message);
+                    if (attempts < maxAttempts) {
+                        // Esperar antes de reintentar (backoff exponencial)
+                        await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+                        continue;
+                    }
+                }
 
                 // Si el token ha expirado (error code 190), marcar la integración como desconectada
                 if (errorData.error?.code === 190 || errorData.error?.code === '190') {
@@ -1298,12 +1335,19 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
                         .update({ status: 'disconnected' })
                         .eq('type', 'instagram')
                         .eq('user_id', userId);
+                    return null;
                 }
 
+                // Otro error no transitorio
+                console.error(`❌ Error enviando mensaje parte ${i + 1}/${messageParts.length}:`, errorData);
                 return null;
             }
 
-            lastResult = await response.json();
+            // Si agotamos los reintentos
+            if (attempts >= maxAttempts && lastError) {
+                console.error(`❌ Agotados reintentos. Último error:`, lastError);
+                return null;
+            }
         }
 
         return lastResult;
