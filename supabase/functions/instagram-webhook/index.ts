@@ -1295,20 +1295,22 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
                 attempts++;
 
                 // Enviar mensaje usando Instagram Messaging API
-                // Según la documentación de Meta: POST /me/messages con access_token como query param
-                const response = await fetch(
-                    `https://graph.facebook.com/v21.0/me/messages?access_token=${encodeURIComponent(accessToken)}`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            recipient: { id: String(recipientId) },
-                            message: { text: part }
-                        })
-                    }
-                );
+                // Para Instagram Business Login: POST /{ig-user-id}/messages
+                // El ig-user-id es el instagram_user_id (scoped ID) del OAuth
+                const sendUrl = `https://graph.instagram.com/v21.0/${instagramUserId}/messages`;
+                console.log(`📡 POST ${sendUrl.replace(accessToken, '***')}`);
+
+                const response = await fetch(sendUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        recipient: { id: String(recipientId) },
+                        message: { text: part }
+                    })
+                });
 
                 if (response.ok) {
                     lastResult = await response.json();

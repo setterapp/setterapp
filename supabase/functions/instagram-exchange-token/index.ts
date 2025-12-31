@@ -81,30 +81,40 @@ Deno.serve(async (req: Request) => {
 
     const data = await response.json();
 
-    // 2) Exchange short-lived token for long-lived token (improves expiry issues)
+    // 2) Exchange short-lived token for long-lived token (60 days instead of 1 hour)
     let finalAccessToken = data.access_token;
     let expiresIn: number | null = null;
     let tokenType: string | null = null;
 
+    console.log('🔄 Exchanging short-lived token for long-lived token...');
+
     try {
-      const longLived = await fetch(
-        `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(INSTAGRAM_APP_SECRET)}&access_token=${encodeURIComponent(data.access_token)}`,
-        { method: 'GET' }
-      );
+      const longLivedUrl = `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(INSTAGRAM_APP_SECRET)}&access_token=${encodeURIComponent(data.access_token)}`;
+      const longLived = await fetch(longLivedUrl, { method: 'GET' });
+
+      const llText = await longLived.text();
+      console.log('📡 Long-lived token response:', longLived.status, llText.substring(0, 200));
 
       if (longLived.ok) {
-        const ll = await longLived.json();
-        if (ll?.access_token) {
-          finalAccessToken = ll.access_token;
-          expiresIn = typeof ll.expires_in === 'number' ? ll.expires_in : null;
-          tokenType = ll.token_type || null;
+        try {
+          const ll = JSON.parse(llText);
+          if (ll?.access_token) {
+            finalAccessToken = ll.access_token;
+            expiresIn = typeof ll.expires_in === 'number' ? ll.expires_in : null;
+            tokenType = ll.token_type || null;
+            const expiryDays = expiresIn ? Math.round(expiresIn / 86400) : 'unknown';
+            console.log(`✅ Got long-lived token! Expires in ${expiryDays} days`);
+          } else {
+            console.warn('⚠️ Long-lived response missing access_token:', ll);
+          }
+        } catch (parseErr) {
+          console.warn('⚠️ Could not parse long-lived token response:', parseErr);
         }
       } else {
-        const t = await longLived.text();
-        console.warn('⚠️ Could not exchange to long-lived token:', t);
+        console.error('❌ Long-lived token exchange failed:', longLived.status, llText);
       }
     } catch (e) {
-      console.warn('⚠️ Long-lived exchange failed:', e);
+      console.error('❌ Long-lived exchange exception:', e);
     }
 
     // 3) Fetch user profile to get username AND instagram_business_account_id
