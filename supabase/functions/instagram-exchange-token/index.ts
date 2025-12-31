@@ -79,7 +79,19 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const data = await response.json();
+    // IMPORTANT: Parse as text first to preserve large integer precision
+    // JSON.parse() corrupts integers > 2^53 (like Instagram user IDs)
+    const responseText = await response.text();
+
+    // Extract user_id as string BEFORE JSON.parse corrupts it
+    const userIdMatch = responseText.match(/"user_id"\s*:\s*(\d+)/);
+    const preservedUserId = userIdMatch ? userIdMatch[1] : null;
+
+    const data = JSON.parse(responseText);
+
+    // Use the preserved string version instead of the corrupted number
+    const safeUserId = preservedUserId || (data.user_id != null ? String(data.user_id) : null);
+    console.log('🔑 User ID preserved from raw response:', preservedUserId);
 
     // 2) Exchange short-lived token for long-lived token (60 days instead of 1 hour)
     let finalAccessToken = data.access_token;
@@ -183,12 +195,11 @@ Deno.serve(async (req: Request) => {
     }
 
     // Return token data including instagram_business_account_id for webhook matching
-    // IMPORTANT: Convert all IDs to strings to avoid JavaScript number precision loss
-    // (JS loses precision for numbers > 2^53, and Instagram IDs are larger)
+    // IMPORTANT: Use safeUserId which was extracted as string before JSON.parse corrupted it
     return new Response(
       JSON.stringify({
         access_token: finalAccessToken,
-        user_id: data.user_id != null ? String(data.user_id) : null,
+        user_id: safeUserId,
         username: username,
         instagram_business_account_id: instagramBusinessAccountId != null ? String(instagramBusinessAccountId) : null,
         expires_in: expiresIn,
