@@ -305,6 +305,8 @@ export const instagramDirectService = {
         throw findError
       }
 
+      // IMPORTANT: Convert all IDs to strings to avoid JavaScript number precision loss
+      // Instagram IDs are larger than Number.MAX_SAFE_INTEGER (2^53)
       const integrationData = {
         user_id: userId,
         type: 'instagram',
@@ -313,11 +315,11 @@ export const instagramDirectService = {
         connected_at: new Date().toISOString(),
         config: {
           access_token: accessToken,
-          instagram_user_id: userData.user_id,
+          instagram_user_id: userData.user_id != null ? String(userData.user_id) : null,
           instagram_username: userData.username,
           // CRITICAL: instagram_business_account_id is the ID that Meta sends in webhooks (entry.id)
           // Without this, webhook messages won't be matched to the correct user
-          instagram_business_account_id: userData.instagram_business_account_id || null,
+          instagram_business_account_id: userData.instagram_business_account_id != null ? String(userData.instagram_business_account_id) : null,
           // Guardar expiry si viene (token long-lived)
           expires_at: userData.expires_in ? (Math.floor(Date.now() / 1000) + Number(userData.expires_in)) : null,
           token_type: userData.token_type || null,

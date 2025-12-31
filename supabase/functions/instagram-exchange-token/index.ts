@@ -183,12 +183,14 @@ Deno.serve(async (req: Request) => {
     }
 
     // Return token data including instagram_business_account_id for webhook matching
+    // IMPORTANT: Convert all IDs to strings to avoid JavaScript number precision loss
+    // (JS loses precision for numbers > 2^53, and Instagram IDs are larger)
     return new Response(
       JSON.stringify({
         access_token: finalAccessToken,
-        user_id: data.user_id || null,
+        user_id: data.user_id != null ? String(data.user_id) : null,
         username: username,
-        instagram_business_account_id: instagramBusinessAccountId,
+        instagram_business_account_id: instagramBusinessAccountId != null ? String(instagramBusinessAccountId) : null,
         expires_in: expiresIn,
         token_type: tokenType,
       }),
