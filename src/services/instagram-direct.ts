@@ -244,12 +244,15 @@ export const instagramDirectService = {
 
       const data = await response.json()
 
-      // Instagram OAuth direct endpoint returns access_token, user_id, and sometimes username
+      // Instagram OAuth direct endpoint returns access_token, user_id, username, and instagram_business_account_id
       if (data.access_token) {
         return {
           access_token: data.access_token,
           user_id: data.user_id || null,
           username: data.username || null,
+          // CRITICAL: instagram_business_account_id is the ID that Meta sends in webhooks (entry.id)
+          // This MUST be saved to correctly match incoming webhook messages to the right user
+          instagram_business_account_id: data.instagram_business_account_id || null,
           expires_in: data.expires_in || null,
           token_type: data.token_type || null,
         }
@@ -289,6 +292,9 @@ export const instagramDirectService = {
           access_token: accessToken,
           instagram_user_id: userData.user_id,
           instagram_username: userData.username,
+          // CRITICAL: instagram_business_account_id is the ID that Meta sends in webhooks (entry.id)
+          // Without this, webhook messages won't be matched to the correct user
+          instagram_business_account_id: userData.instagram_business_account_id || null,
           // Guardar expiry si viene (token long-lived)
           expires_at: userData.expires_in ? (Math.floor(Date.now() / 1000) + Number(userData.expires_in)) : null,
           token_type: userData.token_type || null,

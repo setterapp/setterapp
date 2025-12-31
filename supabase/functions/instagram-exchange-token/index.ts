@@ -107,18 +107,26 @@ Deno.serve(async (req: Request) => {
       console.warn('⚠️ Long-lived exchange failed:', e);
     }
 
-    // 3) Fetch user profile to get username
+    // 3) Fetch user profile to get username AND instagram_business_account_id
     let username: string | null = null;
+    let instagramBusinessAccountId: string | null = null;
     try {
+      // Request both id, username, and user_id (which is the Instagram Business Account ID)
       const profileResponse = await fetch(
-        `https://graph.instagram.com/me?fields=id,username&access_token=${encodeURIComponent(finalAccessToken)}`,
+        `https://graph.instagram.com/me?fields=id,username,user_id&access_token=${encodeURIComponent(finalAccessToken)}`,
         { method: 'GET' }
       );
 
       if (profileResponse.ok) {
         const profile = await profileResponse.json();
         username = profile.username || null;
-        console.log('✅ Got Instagram username:', username);
+        // user_id is the Instagram Business Account ID that Meta sends in webhooks
+        instagramBusinessAccountId = profile.user_id || null;
+        console.log('✅ Got Instagram profile:', {
+          username,
+          scoped_user_id: profile.id,
+          instagram_business_account_id: instagramBusinessAccountId
+        });
       } else {
         const errorText = await profileResponse.text();
         console.warn('⚠️ Could not fetch Instagram profile:', errorText);
@@ -127,12 +135,13 @@ Deno.serve(async (req: Request) => {
       console.warn('⚠️ Profile fetch failed:', e);
     }
 
-    // Return token data
+    // Return token data including instagram_business_account_id for webhook matching
     return new Response(
       JSON.stringify({
         access_token: finalAccessToken,
         user_id: data.user_id || null,
         username: username,
+        instagram_business_account_id: instagramBusinessAccountId,
         expires_in: expiresIn,
         token_type: tokenType,
       }),
