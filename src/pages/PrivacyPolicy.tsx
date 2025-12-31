@@ -28,80 +28,80 @@ function PrivacyPolicy() {
               marginBottom: 'var(--spacing-lg)'
             }}
           >
-            ← Volver al inicio
+            ← Back to Home
           </Link>
           <h1 style={{ margin: 0, marginBottom: 'var(--spacing-md)', color: 'var(--color-text)' }}>
-            Política de Privacidad
+            Privacy Policy
           </h1>
           <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
-            Última actualización: {new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+            Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
 
         <div style={{ lineHeight: 1.8, color: 'var(--color-text)' }}>
           <section style={{ marginBottom: 'var(--spacing-xl)' }}>
-            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>1. Información que Recopilamos</h2>
+            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>1. Information We Collect</h2>
             <p>
-              En setterapp.ai, recopilamos y procesamos la siguiente información para brindar nuestros servicios:
+              At setterapp.ai, we collect and process the following information to provide our services:
             </p>
             <ul style={{ paddingLeft: 'var(--spacing-lg)', marginTop: 'var(--spacing-md)' }}>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong>Información de cuenta:</strong> Email, nombre de usuario y datos de autenticación cuando te registras.
+                <strong>Account information:</strong> Email, username, and authentication data when you sign up.
               </li>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong>Datos de integraciones:</strong> Información de tus cuentas conectadas (WhatsApp Business, Instagram, Google Calendar) necesaria para proporcionar nuestros servicios.
+                <strong>Integration data:</strong> Information from your connected accounts (WhatsApp Business, Instagram, Google Calendar) necessary to provide our services.
               </li>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong>Conversaciones y mensajes:</strong> Mensajes y conversaciones gestionadas a través de nuestros agentes de IA para permitir la automatización y respuesta automática.
+                <strong>Conversations and messages:</strong> Messages and conversations managed through our AI agents to enable automation and automatic responses.
               </li>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong>Configuración de agentes:</strong> Configuraciones y preferencias de tus agentes de IA personalizados.
+                <strong>Agent configuration:</strong> Settings and preferences for your customized AI agents.
               </li>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong>Datos de uso:</strong> Información sobre cómo usas nuestra plataforma, incluyendo métricas y estadísticas.
+                <strong>Usage data:</strong> Information about how you use our platform, including metrics and statistics.
               </li>
             </ul>
           </section>
 
           <section style={{ marginBottom: 'var(--spacing-xl)' }}>
-            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>2. Cómo Usamos tu Información</h2>
-            <p>Utilizamos la información recopilada para:</p>
+            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>2. How We Use Your Information</h2>
+            <p>We use the collected information to:</p>
             <ul style={{ paddingLeft: 'var(--spacing-lg)', marginTop: 'var(--spacing-md)' }}>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Proporcionar, mantener y mejorar nuestros servicios</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Gestionar y responder mensajes automáticamente a través de agentes de IA</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Personalizar la experiencia del usuario</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Enviar notificaciones y actualizaciones sobre nuestros servicios</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Analizar el uso de la plataforma para mejorar nuestros servicios</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Cumplir con obligaciones legales y proteger nuestros derechos</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Provide, maintain, and improve our services</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Manage and respond to messages automatically through AI agents</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Personalize the user experience</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Send notifications and updates about our services</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Analyze platform usage to improve our services</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Comply with legal obligations and protect our rights</li>
             </ul>
           </section>
 
           <section style={{ marginBottom: 'var(--spacing-xl)' }}>
-            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>3. Servicios de Terceros</h2>
+            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>3. Third-Party Services</h2>
             <p>
-              Utilizamos los siguientes servicios de terceros que pueden recopilar información:
+              We use the following third-party services that may collect information:
             </p>
             <ul style={{ paddingLeft: 'var(--spacing-lg)', marginTop: 'var(--spacing-md)' }}>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong>Supabase:</strong> Para autenticación, base de datos y almacenamiento. Consulta su política de privacidad en{' '}
+                <strong>Supabase:</strong> For authentication, database, and storage. See their privacy policy at{' '}
                 <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>
                   https://supabase.com/privacy
                 </a>
               </li>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong>Meta/Facebook:</strong> Para integración con WhatsApp Business e Instagram. Consulta su política de privacidad en{' '}
+                <strong>Meta/Facebook:</strong> For WhatsApp Business and Instagram integration. See their privacy policy at{' '}
                 <a href="https://www.facebook.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>
                   https://www.facebook.com/privacy
                 </a>
               </li>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong>Google:</strong> Para integración con Google Calendar. Consulta su política de privacidad en{' '}
+                <strong>Google:</strong> For Google Calendar integration. See their privacy policy at{' '}
                 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>
                   https://policies.google.com/privacy
                 </a>
               </li>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong>OpenAI:</strong> Para servicios de IA y procesamiento de lenguaje natural. Consulta su política de privacidad en{' '}
+                <strong>OpenAI:</strong> For AI and natural language processing services. See their privacy policy at{' '}
                 <a href="https://openai.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>
                   https://openai.com/privacy
                 </a>
@@ -110,52 +110,52 @@ function PrivacyPolicy() {
           </section>
 
           <section style={{ marginBottom: 'var(--spacing-xl)' }}>
-            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>4. Seguridad de los Datos</h2>
+            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>4. Data Security</h2>
             <p>
-              Implementamos medidas de seguridad técnicas y organizativas para proteger tu información personal contra acceso no autorizado, alteración, divulgación o destrucción. Esto incluye:
+              We implement technical and organizational security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. This includes:
             </p>
             <ul style={{ paddingLeft: 'var(--spacing-lg)', marginTop: 'var(--spacing-md)' }}>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Encriptación de datos en tránsito y en reposo</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Autenticación segura y control de acceso</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Monitoreo regular de seguridad</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Almacenamiento seguro en infraestructura de terceros confiables</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Data encryption in transit and at rest</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Secure authentication and access control</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Regular security monitoring</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Secure storage on trusted third-party infrastructure</li>
             </ul>
           </section>
 
           <section style={{ marginBottom: 'var(--spacing-xl)' }}>
-            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>5. Tus Derechos</h2>
-            <p>Tienes derecho a:</p>
+            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>5. Your Rights</h2>
+            <p>You have the right to:</p>
             <ul style={{ paddingLeft: 'var(--spacing-lg)', marginTop: 'var(--spacing-md)' }}>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Acceder a tu información personal</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Corregir información inexacta</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Solicitar la eliminación de tus datos</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Exportar tus datos</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Retirar tu consentimiento en cualquier momento</li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Desconectar integraciones en cualquier momento desde la configuración</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Access your personal information</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Correct inaccurate information</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Request deletion of your data</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Export your data</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Withdraw your consent at any time</li>
+              <li style={{ marginBottom: 'var(--spacing-sm)' }}>Disconnect integrations at any time from settings</li>
             </ul>
             <p style={{ marginTop: 'var(--spacing-md)' }}>
-              Para ejercer estos derechos, puedes contactarnos a través de la configuración de tu cuenta o eliminando tu cuenta directamente.
+              To exercise these rights, you can contact us through your account settings or by deleting your account directly.
             </p>
           </section>
 
           <section style={{ marginBottom: 'var(--spacing-xl)' }}>
-            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>6. Retención de Datos</h2>
+            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>6. Data Retention</h2>
             <p>
-              Conservamos tu información personal mientras tu cuenta esté activa o según sea necesario para brindar nuestros servicios. Cuando eliminas tu cuenta, eliminamos o anonimizamos tu información personal, excepto cuando la ley nos obligue a conservarla.
+              We retain your personal information for as long as your account is active or as needed to provide our services. When you delete your account, we delete or anonymize your personal information, except where the law requires us to retain it.
             </p>
           </section>
 
           <section style={{ marginBottom: 'var(--spacing-xl)' }}>
-            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>7. Cambios a esta Política</h2>
+            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>7. Changes to This Policy</h2>
             <p>
-              Podemos actualizar esta Política de Privacidad ocasionalmente. Te notificaremos sobre cambios importantes publicando la nueva política en esta página y actualizando la fecha de "Última actualización". Te recomendamos revisar esta política periódicamente.
+              We may update this Privacy Policy from time to time. We will notify you of significant changes by posting the new policy on this page and updating the "Last updated" date. We recommend reviewing this policy periodically.
             </p>
           </section>
 
           <section style={{ marginBottom: 'var(--spacing-xl)' }}>
-            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>8. Contacto</h2>
+            <h2 style={{ color: 'var(--color-text)', marginBottom: 'var(--spacing-md)' }}>8. Contact</h2>
             <p>
-              Si tienes preguntas sobre esta Política de Privacidad o sobre cómo manejamos tus datos, puedes contactarnos a través de tu cuenta en la plataforma o visitando{' '}
+              If you have questions about this Privacy Policy or how we handle your data, you can contact us through your account on the platform or by visiting{' '}
               <a href="https://setterapp.ai" style={{ color: 'var(--color-primary)' }}>setterapp.ai</a>.
             </p>
           </section>
