@@ -33,5 +33,11 @@ supabase functions deploy stripe-checkout --no-verify-jwt
 supabase functions deploy stripe-webhook --no-verify-jwt
 supabase functions deploy stripe-portal --no-verify-jwt
 
+# Deploy cron functions
+supabase functions deploy renew-calendar-watches --no-verify-jwt
+
+# Deploy Meta GDPR compliance
+supabase functions deploy data-deletion-callback --no-verify-jwt
+
 echo "✅ All functions deployed"
 echo "⚠️  Remember: NEVER manually enable JWT in the Supabase dashboard!"
