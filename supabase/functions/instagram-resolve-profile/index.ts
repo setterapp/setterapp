@@ -66,18 +66,33 @@ async function getInstagramUserProfileViaUserProfileApi(params: {
   try {
     // User Profile API (IGSID -> name/username/profile_pic)
     // https://developers.facebook.com/docs/messenger-platform/instagram/features/user-profile/
+    console.log('📡 Calling User Profile API for senderId:', senderId);
     const res = await fetch(
-      `https://graph.facebook.com/v24.0/${senderId}?fields=name,username,profile_pic&access_token=${encodeURIComponent(pageAccessToken)}`,
+      `https://graph.facebook.com/v21.0/${senderId}?fields=name,username,profile_pic&access_token=${encodeURIComponent(pageAccessToken)}`,
       { method: 'GET' }
     );
-    const data = await res.json().catch(() => null);
-    if (!res.ok || !data || data.error) return null;
+    const responseText = await res.text();
+    console.log('📡 User Profile API response:', res.status, responseText.substring(0, 500));
+
+    if (!res.ok) {
+      console.warn('⚠️ User Profile API failed:', res.status, responseText.substring(0, 300));
+      return null;
+    }
+
+    const data = JSON.parse(responseText);
+    if (data.error) {
+      console.warn('⚠️ User Profile API error:', JSON.stringify(data.error));
+      return null;
+    }
+
+    console.log('✅ Profile data received:', { name: data.name, username: data.username, has_pic: !!data.profile_pic });
     return {
       name: data.name ?? null,
       username: data.username ?? null,
-      profile_picture: data.profile_pic ?? null,
+      profile_picture: data.profile_pic ?? data.profile_picture_url ?? null,
     };
-  } catch {
+  } catch (e) {
+    console.warn('⚠️ User Profile API exception:', e);
     return null;
   }
 }

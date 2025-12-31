@@ -273,37 +273,45 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         // Método 1 (PRINCIPAL): User Profile API con access token de Instagram
         // Este es el método más confiable para obtener perfiles de usuarios que te enviaron mensajes
         // https://developers.facebook.com/docs/messenger-platform/instagram/features/user-profile/
+        // Fields: name, username, profile_pic (también puede ser profile_picture_url en versiones nuevas)
         try {
-            console.log('📡 Intentando User Profile API (graph.facebook.com/v24.0)...');
+            console.log('📡 Intentando User Profile API (graph.facebook.com/v21.0)...');
+            // Usamos v21.0 que es más estable, con ambos formatos de campo de imagen
             const response = await fetch(
-                `https://graph.facebook.com/v24.0/${senderId}?fields=name,username,profile_pic&access_token=${accessToken}`,
+                `https://graph.facebook.com/v21.0/${senderId}?fields=name,username,profile_pic&access_token=${accessToken}`,
                 { method: 'GET' }
             );
 
+            const responseText = await response.text();
+            console.log('📡 User Profile API response:', response.status, responseText.substring(0, 500));
+
             if (response.ok) {
-                const data = await response.json();
-                if (!data.error && (data.username || data.name)) {
-                    console.log('✅ Perfil obtenido via User Profile API:', {
-                        username: data.username,
-                        name: data.name,
-                        has_pic: !!data.profile_pic
-                    });
-                    return {
-                        name: data.name || null,
-                        username: data.username || null,
-                        profile_picture: data.profile_pic || null,
-                    };
-                }
-                if (data.error) {
-                    console.warn('⚠️ User Profile API error:', data.error?.message || data.error);
-                    if (isTokenExpiredError(data)) {
-                        console.warn('⚠️ Token expirado/inválido');
-                        return null;
+                try {
+                    const data = JSON.parse(responseText);
+                    if (!data.error && (data.username || data.name)) {
+                        console.log('✅ Perfil obtenido via User Profile API:', {
+                            username: data.username,
+                            name: data.name,
+                            has_pic: !!(data.profile_pic || data.profile_picture_url)
+                        });
+                        return {
+                            name: data.name || null,
+                            username: data.username || null,
+                            profile_picture: data.profile_pic || data.profile_picture_url || null,
+                        };
                     }
+                    if (data.error) {
+                        console.warn('⚠️ User Profile API error:', JSON.stringify(data.error));
+                        if (isTokenExpiredError(data)) {
+                            console.warn('⚠️ Token expirado/inválido');
+                            return null;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('⚠️ Error parsing response:', e);
                 }
             } else {
-                const errorText = await response.text();
-                console.warn('⚠️ User Profile API falló:', response.status, errorText.substring(0, 200));
+                console.warn('⚠️ User Profile API falló:', response.status, responseText.substring(0, 300));
             }
         } catch (error) {
             console.warn('⚠️ Error en User Profile API:', error);

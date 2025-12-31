@@ -37,12 +37,17 @@ const INSTAGRAM_REDIRECT_URI = getRedirectUri()
 // En producción evitamos logs por seguridad. Si falta configuración crítica, se lanzará error al intentar conectar.
 
 // Scopes for Instagram Business API
+// Includes both new instagram_business_* scopes AND legacy scopes for User Profile API
 const INSTAGRAM_SCOPES = [
+  // New Instagram Business API scopes
   'instagram_business_basic',
   'instagram_business_manage_messages',
   'instagram_business_manage_comments',
   'instagram_business_content_publish',
   'instagram_business_manage_insights',
+  // Legacy scopes needed for User Profile API (get sender username/name)
+  'instagram_basic',
+  'instagram_manage_messages',
 ]
 
 export const instagramDirectService = {
