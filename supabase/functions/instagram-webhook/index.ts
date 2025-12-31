@@ -1294,9 +1294,9 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
             while (attempts < maxAttempts) {
                 attempts++;
 
-                // Enviar mensaje usando Instagram Messaging API via Facebook Graph
-                // Según documentación de Meta, usar graph.facebook.com/me/messages
-                const sendUrl = `https://graph.facebook.com/v24.0/me/messages`;
+                // Enviar mensaje usando Instagram Messaging API
+                // Endpoint: https://graph.instagram.com/v21.0/me/messages
+                const sendUrl = `https://graph.instagram.com/v21.0/me/messages`;
                 console.log(`📡 POST ${sendUrl} (recipient: ${String(recipientId).substring(0, 10)}...)`);
 
                 const response = await fetch(sendUrl, {
