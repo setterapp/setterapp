@@ -1293,7 +1293,13 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
                 // Enviar mensaje usando Instagram Messaging API
                 // Endpoint: POST /{instagram_user_id}/messages
                 const sendUrl = `https://graph.instagram.com/v24.0/${instagramUserId}/messages`;
+                const requestBody = {
+                    recipient: { id: String(recipientId) },
+                    message: { text: part }
+                };
+
                 console.log(`📡 POST ${sendUrl}`);
+                console.log(`📦 Body:`, JSON.stringify(requestBody));
 
                 const response = await fetch(sendUrl, {
                     method: 'POST',
@@ -1301,24 +1307,45 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
                         'Authorization': `Bearer ${accessToken}`,
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        recipient: { id: String(recipientId) },
-                        message: { text: part }
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
+                const responseText = await response.text();
+                let responseData: any = {};
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch {
+                    responseData = { raw: responseText };
+                }
+
+                // Guardar el request en la base de datos para debugging
+                try {
+                    await supabase.from('api_request_logs').insert({
+                        user_id: userId,
+                        platform: 'instagram',
+                        endpoint: sendUrl,
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ***' },
+                        body: requestBody,
+                        response_status: response.status,
+                        response_body: responseData,
+                        error: response.ok ? null : responseData?.error?.message || responseText
+                    });
+                } catch (logErr) {
+                    console.warn('⚠️ No se pudo guardar log de API:', logErr);
+                }
+
                 if (response.ok) {
-                    lastResult = await response.json();
+                    lastResult = responseData;
                     console.log(`✅ Mensaje parte ${i + 1}/${messageParts.length} enviado`);
                     break;
                 }
 
-                const errorData = await response.json().catch(() => ({}));
-                lastError = errorData;
+                lastError = responseData;
 
                 // Si es error transitorio (code 2), reintentar
-                if (errorData.error?.is_transient === true || errorData.error?.code === 2) {
-                    console.warn(`⚠️ Error transitorio (intento ${attempts}/${maxAttempts}):`, errorData.error?.message);
+                if (lastError?.error?.is_transient === true || lastError?.error?.code === 2) {
+                    console.warn(`⚠️ Error transitorio (intento ${attempts}/${maxAttempts}):`, lastError?.error?.message);
                     if (attempts < maxAttempts) {
                         // Esperar antes de reintentar (backoff exponencial)
                         await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
@@ -1327,7 +1354,7 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
                 }
 
                 // Si el token ha expirado (error code 190), marcar la integración como desconectada
-                if (errorData.error?.code === 190 || errorData.error?.code === '190') {
+                if (lastError?.error?.code === 190 || lastError?.error?.code === '190') {
                     console.warn('⚠️ Token de Instagram expirado, marcando integración como desconectada');
                     await supabase
                         .from('integrations')
@@ -1338,7 +1365,7 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
                 }
 
                 // Otro error no transitorio
-                console.error(`❌ Error enviando mensaje parte ${i + 1}/${messageParts.length}:`, errorData);
+                console.error(`❌ Error enviando mensaje parte ${i + 1}/${messageParts.length}:`, lastError);
                 return null;
             }
 
