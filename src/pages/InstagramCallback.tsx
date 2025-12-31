@@ -97,12 +97,16 @@ function InstagramCallback() {
         const tokenData = await instagramDirectService.exchangeCodeForToken(code)
 
         // Store access token in user's integration
+        // CRITICAL: instagram_business_account_id is needed for webhook message routing
         await instagramDirectService.storeAccessToken(
           storedUserId,
           tokenData.access_token,
           {
             user_id: tokenData.user_id,
             username: tokenData.username,
+            instagram_business_account_id: tokenData.instagram_business_account_id,
+            expires_in: tokenData.expires_in,
+            token_type: tokenData.token_type,
           }
         )
 
