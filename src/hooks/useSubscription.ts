@@ -61,9 +61,9 @@ export function useSubscription() {
         .from('subscriptions')
         .select('*')
         .eq('user_id', session.user.id)
-        .single()
+        .maybeSingle()
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
+      if (fetchError) {
         throw fetchError
       }
 

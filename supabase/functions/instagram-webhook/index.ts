@@ -215,6 +215,7 @@ Deno.serve(async (req: Request) => {
 /**
  * Obtiene el perfil de un usuario de Instagram usando la Graph API
  * OPTIMIZACIÓN: Primero verifica cache en tabla contacts antes de hacer llamada API
+ * Usa el User Profile API (graph.facebook.com con page_access_token) como método principal
  */
 async function getInstagramUserProfile(userId: string, senderId: string): Promise<{ name?: string; username?: string; profile_picture?: string } | null> {
     try {
@@ -243,9 +244,9 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         }
 
         // 📡 Cache miss o expirado -> hacer llamada API
-        console.log('📡 Cache miss, obteniendo perfil desde API...');
+        console.log('📡 Cache miss, obteniendo perfil desde API para senderId:', senderId);
 
-        // Obtener integración de Instagram para acceder a flags y fallback legacy
+        // Obtener integración de Instagram
         const { data: instagramIntegration, error: instagramError } = await supabase
             .from('integrations')
             .select('config')
@@ -254,195 +255,118 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
             .eq('status', 'connected')
             .maybeSingle();
 
-        const debugEnabled = Boolean(instagramIntegration?.config?.debug_webhooks);
-
-        // Usar access_token de integración IG
         if (instagramError || !instagramIntegration) {
-            // Sin logs por defecto (seguridad)
+            console.warn('⚠️ No se encontró integración de Instagram');
             return null;
         }
 
+        const debugEnabled = Boolean(instagramIntegration?.config?.debug_webhooks);
         const accessToken = instagramIntegration.config?.access_token;
+        const instagramBusinessAccountId = instagramIntegration.config?.instagram_user_id ||
+            instagramIntegration.config?.instagram_business_account_id;
+
         if (!accessToken) {
             if (debugEnabled) console.warn('⚠️ No hay access token disponible para obtener perfil');
             return null;
         }
 
-        // Intentar obtener el perfil del usuario usando la Graph API
-        // Nota: El senderId es un IGSID (Instagram Scoped ID) que requiere endpoints específicos
+        // Método 1 (PRINCIPAL): User Profile API con access token de Instagram
+        // Este es el método más confiable para obtener perfiles de usuarios que te enviaron mensajes
+        // https://developers.facebook.com/docs/messenger-platform/instagram/features/user-profile/
         try {
-            // Obtener el instagram_business_account_id de la integración
-            const { data: integrationWithAccount } = await supabase
-                .from('integrations')
-                .select('config')
-                .eq('type', 'instagram')
-                .eq('user_id', userId)
-                .eq('status', 'connected')
-                .maybeSingle();
-
-            const instagramBusinessAccountId = integrationWithAccount?.config?.instagram_user_id ||
-                integrationWithAccount?.config?.instagram_business_account_id;
-
-            if (!instagramBusinessAccountId) {
-                console.warn('⚠️ No se encontró instagram_business_account_id en la integración');
-                return null;
-            }
-
-            // Método 1: Intentar obtener el perfil directamente usando el senderId
-            // Esto puede funcionar si el senderId es un ID válido de Instagram
-            let response = await fetch(
-                `https://graph.instagram.com/v21.0/${senderId}?fields=id,username,name,profile_picture_url&access_token=${accessToken}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
+            console.log('📡 Intentando User Profile API (graph.facebook.com/v24.0)...');
+            const response = await fetch(
+                `https://graph.facebook.com/v24.0/${senderId}?fields=name,username,profile_pic&access_token=${accessToken}`,
+                { method: 'GET' }
             );
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.error) {
-                    if (debugEnabled) console.log('⚠️ Error en respuesta directa:', data.error);
-                    if (isTokenExpiredError(data)) {
-                        if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado. No se puede obtener perfil.');
-                        return null;
-                    }
-                } else {
-                    if (debugEnabled) console.log('✅ Perfil obtenido directamente:', data);
-                    return {
-                        name: data.name || null,
-                        username: data.username || null,
-                        profile_picture: data.profile_picture_url || null,
-                    };
-                }
-            } else {
-                const errorText = await response.text();
-                if (debugEnabled) console.log('⚠️ Primer intento falló:', errorText);
-                // Verificar si es error de token expirado
-                try {
-                    const errorData = JSON.parse(errorText);
-                    if (isTokenExpiredError(errorData)) {
-                        if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado. No se puede obtener perfil.');
-                        return null;
-                    }
-                } catch (e) {
-                    // No es JSON, continuar con otros métodos
-                }
-            }
-
-            // Método 2: Intentar con el endpoint de Facebook Graph API
-            response = await fetch(
-                `https://graph.facebook.com/v21.0/${senderId}?fields=id,username,name,profile_pic&access_token=${accessToken}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.error) {
-                    if (debugEnabled) console.log('⚠️ Error en respuesta de Facebook:', data.error);
-                    // code 190 => token inválido/expirado/revocado/no parseable/tipo incorrecto
-                    if (isTokenExpiredError(data)) {
-                        if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado. No se puede obtener perfil.');
-                        return null;
-                    }
-                } else {
-                    if (debugEnabled) console.log('✅ Perfil obtenido desde Facebook:', data);
+                if (!data.error && (data.username || data.name)) {
+                    console.log('✅ Perfil obtenido via User Profile API:', {
+                        username: data.username,
+                        name: data.name,
+                        has_pic: !!data.profile_pic
+                    });
                     return {
                         name: data.name || null,
                         username: data.username || null,
                         profile_picture: data.profile_pic || null,
                     };
                 }
-            } else {
-                const errorText = await response.text();
-                if (debugEnabled) console.log('⚠️ Segundo intento falló:', errorText);
-                // Verificar si es error de token expirado
-                try {
-                    const errorData = JSON.parse(errorText);
-                    if (isTokenExpiredError(errorData)) {
-                        if (debugEnabled) console.warn('⚠️ Token inválido o no autorizado. No se puede obtener perfil.');
+                if (data.error) {
+                    console.warn('⚠️ User Profile API error:', data.error?.message || data.error);
+                    if (isTokenExpiredError(data)) {
+                        console.warn('⚠️ Token expirado/inválido');
                         return null;
                     }
-                } catch (e) {
-                    // No es JSON, continuar con otros métodos
                 }
+            } else {
+                const errorText = await response.text();
+                console.warn('⚠️ User Profile API falló:', response.status, errorText.substring(0, 200));
             }
+        } catch (error) {
+            console.warn('⚠️ Error en User Profile API:', error);
+        }
 
-            // Método 3: Intentar obtener información a través del endpoint de conversaciones
-            // Buscar conversaciones que incluyan este senderId como participante
-            const convResponse = await fetch(
-                // Nota: endpoints de Messaging/Business van por graph.facebook.com (no graph.instagram.com)
-                `https://graph.facebook.com/v21.0/${instagramBusinessAccountId}/conversations?fields=participants&access_token=${accessToken}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
+        // Método 2: Intentar con Instagram Graph API directamente
+        try {
+            console.log('📡 Intentando Instagram Graph API...');
+            const response = await fetch(
+                `https://graph.instagram.com/v21.0/${senderId}?fields=id,username,name&access_token=${accessToken}`,
+                { method: 'GET' }
             );
 
-            if (convResponse.ok) {
-                const convData = await convResponse.json();
-                if (debugEnabled) console.log('📋 Conversaciones obtenidas:', convData);
+            if (response.ok) {
+                const data = await response.json();
+                if (!data.error && (data.username || data.name)) {
+                    console.log('✅ Perfil obtenido via Instagram Graph API:', data);
+                    return {
+                        name: data.name || null,
+                        username: data.username || null,
+                        profile_picture: null,
+                    };
+                }
+            }
+        } catch (error) {
+            if (debugEnabled) console.warn('⚠️ Instagram Graph API falló:', error);
+        }
 
-                // Buscar la conversación que contiene este senderId
-                if (convData.data && convData.data.length > 0) {
-                    for (const conversation of convData.data) {
-                        if (conversation.participants?.data) {
-                            const participant = conversation.participants.data.find((p: any) => p.id === senderId);
-                            if (participant) {
-                                if (debugEnabled) console.log('✅ Participante encontrado:', participant);
-                                // Intentar obtener el perfil completo del participante
-                                const participantResponse = await fetch(
-                                    `https://graph.facebook.com/v21.0/${participant.id}?fields=id,username,name,profile_pic&access_token=${accessToken}`,
-                                    {
-                                        method: 'GET',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        },
-                                    }
-                                );
+        // Método 3: Buscar en conversaciones (más lento pero puede funcionar)
+        if (instagramBusinessAccountId) {
+            try {
+                console.log('📡 Intentando buscar en conversaciones...');
+                const convResponse = await fetch(
+                    `https://graph.facebook.com/v21.0/${instagramBusinessAccountId}/conversations?fields=participants&access_token=${accessToken}`,
+                    { method: 'GET' }
+                );
 
-                                if (participantResponse.ok) {
-                                    const participantData = await participantResponse.json();
-                                    if (!participantData.error) {
-                                        return {
-                                            name: participantData.name || participant.name || null,
-                                            username: participantData.username || participant.username || null,
-                                            profile_picture: participantData.profile_pic || participant.profile_pic || null,
-                                        };
-                                    }
-                                }
+                if (convResponse.ok) {
+                    const convData = await convResponse.json();
+                    const conversations = convData.data || [];
 
-                                // Si no podemos obtener más datos, usar los que tenemos del participante
-                                return {
-                                    name: participant.name || null,
-                                    username: participant.username || null,
-                                    profile_picture: participant.profile_pic || null,
-                                };
-                            }
+                    for (const conversation of conversations) {
+                        const participants = conversation.participants?.data || [];
+                        const participant = participants.find((p: any) => p.id === senderId);
+                        if (participant && (participant.username || participant.name)) {
+                            console.log('✅ Participante encontrado en conversaciones:', participant);
+                            return {
+                                name: participant.name || null,
+                                username: participant.username || null,
+                                profile_picture: participant.profile_pic || null,
+                            };
                         }
                     }
                 }
-            } else {
-                const errorText = await convResponse.text();
-                if (debugEnabled) console.log('⚠️ Error obteniendo conversaciones:', errorText);
+            } catch (error) {
+                if (debugEnabled) console.warn('⚠️ Búsqueda en conversaciones falló:', error);
             }
-
-            if (debugEnabled) console.warn('⚠️ No se pudo obtener perfil de Instagram después de todos los intentos');
-            return null;
-        } catch (error) {
-            if (debugEnabled) console.warn('⚠️ Error al obtener perfil de Instagram:', error);
-            return null;
         }
+
+        console.warn('⚠️ No se pudo obtener perfil de Instagram después de todos los intentos para:', senderId);
+        return null;
     } catch (error) {
-        // Sin logs por defecto (seguridad)
+        console.error('❌ Error general en getInstagramUserProfile:', error);
         return null;
     }
 }
@@ -596,116 +520,96 @@ async function processInstagramEvent(event: any, pageId: string) {
             const displayName = userProfile?.username || userProfile?.name || senderId;
             const contactName = displayName;
 
-            // Crear o actualizar contacto (CRM) - NO sobrescribir lead_status si ya existe
+            // Crear o actualizar contacto (CRM) - usando UPSERT para evitar race conditions
             let contactId: string | null = null;
             try {
-                // Primero buscar si el contacto ya existe
-                const { data: existingContact } = await supabase
-                    .from('contacts')
-                    .select('id')
-                    .eq('user_id', userId)
-                    .eq('platform', 'instagram')
-                    .eq('external_id', senderId)
-                    .maybeSingle();
+                // Usar upsert con ON CONFLICT para manejar race conditions
+                const contactData = {
+                    user_id: userId,
+                    platform: 'instagram',
+                    external_id: senderId,
+                    display_name: contactName,
+                    username: userProfile?.username || null,
+                    profile_picture: userProfile?.profile_picture || null,
+                    last_message_at: new Date(timestampInMs).toISOString(),
+                    metadata: userProfile ? {
+                        username: userProfile.username,
+                        name: userProfile.name,
+                        profile_picture: userProfile.profile_picture,
+                    } : {},
+                    updated_at: new Date().toISOString(),
+                };
 
-                if (existingContact) {
-                    // Contacto existe: actualizar SIN tocar lead_status
-                    await supabase
+                // Primero intentar upsert (solo actualiza campos específicos si existe)
+                const { data: upsertedContact, error: upsertError } = await supabase
+                    .from('contacts')
+                    .upsert({
+                        ...contactData,
+                        lead_status: 'cold', // Solo se usa en INSERT, no en UPDATE
+                    }, {
+                        onConflict: 'user_id,platform,external_id',
+                        ignoreDuplicates: false,
+                    })
+                    .select('id')
+                    .single();
+
+                if (upsertError) {
+                    // Si falla el upsert, intentar buscar el existente
+                    console.warn('⚠️ Contact upsert failed, looking up existing:', upsertError.message);
+                    const { data: existingContact } = await supabase
                         .from('contacts')
-                        .update({
-                            display_name: contactName,
-                            username: userProfile?.username || null,
-                            profile_picture: userProfile?.profile_picture || null,
-                            last_message_at: new Date(timestampInMs).toISOString(),
-                            metadata: userProfile ? {
-                                username: userProfile.username,
-                                name: userProfile.name,
-                                profile_picture: userProfile.profile_picture,
-                            } : {},
-                            updated_at: new Date().toISOString(),
-                        })
-                        .eq('id', existingContact.id);
-                    contactId = existingContact.id;
-                } else {
-                    // Contacto nuevo: crear con lead_status: 'cold'
-                    const { data: newContact } = await supabase
-                        .from('contacts')
-                        .insert({
-                            user_id: userId,
-                            platform: 'instagram',
-                            external_id: senderId,
-                            display_name: contactName,
-                            username: userProfile?.username || null,
-                            profile_picture: userProfile?.profile_picture || null,
-                            last_message_at: new Date(timestampInMs).toISOString(),
-                            lead_status: 'cold',
-                            metadata: userProfile ? {
-                                username: userProfile.username,
-                                name: userProfile.name,
-                                profile_picture: userProfile.profile_picture,
-                            } : {},
-                        })
                         .select('id')
-                        .single();
-                    contactId = newContact?.id || null;
+                        .eq('user_id', userId)
+                        .eq('platform', 'instagram')
+                        .eq('external_id', senderId)
+                        .maybeSingle();
+                    contactId = existingContact?.id || null;
+                } else {
+                    contactId = upsertedContact?.id || null;
                 }
-            } catch {
+            } catch (e) {
+                console.warn('⚠️ Contact creation error (non-blocking):', e);
                 // No romper el webhook por CRM
             }
 
-            // Buscar o crear conversación
+            // Buscar o crear conversación - usando UPSERT para evitar race conditions
             let conversationId: string | null = null;
+            const lastMessageDate = new Date(timestampInMs);
+            const lastMessageDateISO = lastMessageDate.toISOString();
 
-            // Buscar conversación existente
+            // Primero intentar buscar la conversación existente
             const { data: existingConv, error: findError } = await supabase
                 .from('conversations')
-                .select('id')
+                .select('id, unread_count, contact')
                 .eq('user_id', userId)
                 .eq('platform', 'instagram')
                 .eq('platform_conversation_id', senderId)
-                .order('updated_at', { ascending: false })
-                .limit(1)
                 .maybeSingle();
 
-            if (findError) {
+            if (findError && findError.code !== 'PGRST116') {
                 console.error('❌ Error finding conversation:', findError);
             }
 
             if (existingConv) {
                 conversationId = existingConv.id;
-                // Found existing conversation
 
-                // Actualizar last_message_at y unread_count
-                // También actualizar el nombre si tenemos nueva información del perfil
-                // Primero obtener el unread_count actual
-                const { data: currentConv } = await supabase
-                    .from('conversations')
-                    .select('unread_count, contact')
-                    .eq('id', conversationId)
-                    .single();
-
-                const updateDate = new Date(timestampInMs);
-                const updateDateISO = updateDate.toISOString();
-
-                // Si el contacto actual es solo un ID y tenemos nombre/username, actualizarlo
+                // Actualizar conversación existente
                 const updateData: any = {
-                    last_message_at: updateDateISO,
-                    unread_count: (currentConv?.unread_count || 0) + 1,
+                    last_message_at: lastMessageDateISO,
+                    unread_count: (existingConv.unread_count || 0) + 1,
                     updated_at: new Date().toISOString(),
                 };
                 if (contactId) updateData.contact_id = contactId;
 
                 // Actualizar el nombre si tenemos información del perfil y el contacto actual es solo un ID
-                if (userProfile && (currentConv?.contact === senderId || !currentConv?.contact || currentConv?.contact.match(/^\d+$/))) {
+                if (userProfile && (existingConv.contact === senderId || !existingConv.contact || existingConv.contact.match(/^\d+$/))) {
                     updateData.contact = displayName;
                     updateData.contact_metadata = {
                         username: userProfile.username,
                         name: userProfile.name,
                         profile_picture: userProfile.profile_picture,
                     };
-                    // Updating contact name and metadata
                 } else if (userProfile) {
-                    // Actualizar metadata aunque el nombre ya esté actualizado
                     updateData.contact_metadata = {
                         username: userProfile.username,
                         name: userProfile.name,
@@ -720,45 +624,74 @@ async function processInstagramEvent(event: any, pageId: string) {
 
                 console.log('✅ Updated conversation:', conversationId);
             } else {
-                // Crear nueva conversación
-                // Asegurarse de que la fecha sea válida antes de insertar
-                const lastMessageDate = new Date(timestampInMs);
-                const lastMessageDateISO = lastMessageDate.toISOString();
-
+                // Crear nueva conversación usando INSERT con manejo de conflicto
                 console.log('📅 Creating conversation with date:', {
                     timestampInMs,
                     lastMessageDate: lastMessageDateISO,
                     isValid: !isNaN(lastMessageDate.getTime())
                 });
 
+                const conversationData = {
+                    user_id: userId,
+                    platform: 'instagram',
+                    platform_conversation_id: senderId,
+                    platform_page_id: pageId,
+                    contact_id: contactId,
+                    contact: displayName,
+                    last_message_at: lastMessageDateISO,
+                    unread_count: 1,
+                    lead_status: 'cold',
+                    contact_metadata: userProfile ? {
+                        username: userProfile.username,
+                        name: userProfile.name,
+                        profile_picture: userProfile.profile_picture,
+                    } : {},
+                };
+
                 const { data: newConv, error: createError } = await supabase
                     .from('conversations')
-                    .insert({
-                        user_id: userId,
-                        platform: 'instagram',
-                        platform_conversation_id: senderId,
-                        platform_page_id: pageId,
-                        contact_id: contactId,
-                        contact: displayName, // Usar username o name si está disponible
-                        last_message_at: lastMessageDateISO,
-                        unread_count: 1,
-                        lead_status: 'cold', // Estado inicial para nuevos leads
-                        contact_metadata: userProfile ? {
-                            username: userProfile.username,
-                            name: userProfile.name,
-                            profile_picture: userProfile.profile_picture,
-                        } : {},
+                    .upsert(conversationData, {
+                        onConflict: 'user_id,platform,platform_conversation_id',
+                        ignoreDuplicates: false,
                     })
                     .select('id')
                     .single();
 
                 if (createError) {
-                    console.error('❌ Error creating conversation:', createError);
-                    return;
-                }
+                    // Si falla el upsert, puede ser race condition - buscar la conversación existente
+                    if (createError.code === '23505') {
+                        console.log('⚠️ Race condition detected, looking up existing conversation');
+                        const { data: raceConv } = await supabase
+                            .from('conversations')
+                            .select('id')
+                            .eq('user_id', userId)
+                            .eq('platform', 'instagram')
+                            .eq('platform_conversation_id', senderId)
+                            .maybeSingle();
 
-                conversationId = newConv.id;
-                console.log('✅ Created new conversation:', conversationId);
+                        if (raceConv) {
+                            conversationId = raceConv.id;
+                            // Actualizar unread_count ya que es un nuevo mensaje
+                            await supabase
+                                .from('conversations')
+                                .update({
+                                    last_message_at: lastMessageDateISO,
+                                    updated_at: new Date().toISOString(),
+                                })
+                                .eq('id', conversationId);
+                            console.log('✅ Found conversation after race condition:', conversationId);
+                        } else {
+                            console.error('❌ Could not find conversation after race condition');
+                            return;
+                        }
+                    } else {
+                        console.error('❌ Error creating conversation:', createError);
+                        return;
+                    }
+                } else {
+                    conversationId = newConv.id;
+                    console.log('✅ Created new conversation:', conversationId);
+                }
             }
 
             // Guardar el mensaje
@@ -918,68 +851,84 @@ async function processEchoMessage(event: any, pageId: string) {
         // Si no existe conversación, crear una nueva
         if (!conversationId) {
             console.log('📝 Creating new conversation for echo message');
+            const echoLastMessageDateISO = new Date(timestampInMs).toISOString();
 
-            // Crear o actualizar contacto - NO sobrescribir lead_status
+            // Crear o actualizar contacto usando upsert
             let contactId: string | null = null;
-            const { data: existingEchoContact } = await supabase
-                .from('contacts')
-                .select('id')
-                .eq('user_id', userId)
-                .eq('platform', 'instagram')
-                .eq('external_id', recipientId)
-                .maybeSingle();
-
-            if (existingEchoContact) {
-                // Actualizar solo last_message_at
-                await supabase
+            try {
+                const { data: upsertedEchoContact, error: contactError } = await supabase
                     .from('contacts')
-                    .update({
-                        last_message_at: new Date(timestampInMs).toISOString(),
-                        updated_at: new Date().toISOString(),
-                    })
-                    .eq('id', existingEchoContact.id);
-                contactId = existingEchoContact.id;
-            } else {
-                // Crear contacto nuevo
-                const { data: newEchoContact } = await supabase
-                    .from('contacts')
-                    .insert({
+                    .upsert({
                         user_id: userId,
                         platform: 'instagram',
                         external_id: recipientId,
                         display_name: recipientId,
-                        last_message_at: new Date(timestampInMs).toISOString(),
+                        last_message_at: echoLastMessageDateISO,
                         lead_status: 'cold',
+                        updated_at: new Date().toISOString(),
+                    }, {
+                        onConflict: 'user_id,platform,external_id',
+                        ignoreDuplicates: false,
                     })
                     .select('id')
                     .single();
-                contactId = newEchoContact?.id || null;
+
+                if (contactError) {
+                    const { data: existingEchoContact } = await supabase
+                        .from('contacts')
+                        .select('id')
+                        .eq('user_id', userId)
+                        .eq('platform', 'instagram')
+                        .eq('external_id', recipientId)
+                        .maybeSingle();
+                    contactId = existingEchoContact?.id || null;
+                } else {
+                    contactId = upsertedEchoContact?.id || null;
+                }
+            } catch (e) {
+                console.warn('⚠️ Echo contact creation error:', e);
             }
 
-            // Crear conversación
+            // Crear conversación usando upsert
             const { data: newConv, error: createError } = await supabase
                 .from('conversations')
-                .insert({
+                .upsert({
                     user_id: userId,
                     platform: 'instagram',
                     platform_conversation_id: recipientId,
                     platform_page_id: pageId,
                     contact_id: contactId,
                     contact: recipientId,
-                    last_message_at: new Date(timestampInMs).toISOString(),
+                    last_message_at: echoLastMessageDateISO,
                     unread_count: 0, // Echo messages don't increase unread count
                     lead_status: 'cold',
+                }, {
+                    onConflict: 'user_id,platform,platform_conversation_id',
+                    ignoreDuplicates: false,
                 })
                 .select('id')
                 .single();
 
             if (createError) {
-                console.error('❌ Error creating conversation for echo:', createError);
-                return;
+                // Handle race condition
+                if (createError.code === '23505') {
+                    const { data: raceConv } = await supabase
+                        .from('conversations')
+                        .select('id')
+                        .eq('user_id', userId)
+                        .eq('platform', 'instagram')
+                        .eq('platform_conversation_id', recipientId)
+                        .maybeSingle();
+                    conversationId = raceConv?.id || null;
+                } else {
+                    console.error('❌ Error creating conversation for echo:', createError);
+                    return;
+                }
+            } else {
+                conversationId = newConv?.id || null;
             }
 
-            conversationId = newConv.id;
-            console.log('✅ Created new conversation for echo:', conversationId);
+            console.log('✅ Created/found conversation for echo:', conversationId);
         } else {
             // Actualizar last_message_at de la conversación existente
             await supabase
