@@ -137,47 +137,39 @@ Deno.serve(async (req: Request) => {
 
     // 4) Subscribe the Instagram Business Account to receive webhooks
     // This is CRITICAL for external users (not app testers) to receive messages
+    // Using /me/subscribed_apps as per Meta documentation
     let webhookSubscribed = false;
-    if (instagramBusinessAccountId) {
-      try {
-        console.log('📡 Subscribing to webhooks for IG Business Account:', instagramBusinessAccountId);
+    try {
+      console.log('📡 Subscribing to webhooks using /me/subscribed_apps...');
 
-        // Subscribe to messages webhook using the Instagram Business Account ID
-        const subscribeResponse = await fetch(
-          `https://graph.instagram.com/v21.0/${instagramBusinessAccountId}/subscribed_apps`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-              subscribed_fields: 'messages',
-              access_token: finalAccessToken,
-            }),
-          }
-        );
-
-        const subscribeText = await subscribeResponse.text();
-        console.log('📡 Webhook subscription response:', subscribeResponse.status, subscribeText);
-
-        if (subscribeResponse.ok) {
-          try {
-            const subscribeData = JSON.parse(subscribeText);
-            webhookSubscribed = subscribeData.success === true;
-            if (webhookSubscribed) {
-              console.log('✅ Successfully subscribed to webhooks');
-            } else {
-              console.warn('⚠️ Webhook subscription returned false:', subscribeData);
-            }
-          } catch {
-            console.warn('⚠️ Could not parse subscription response');
-          }
-        } else {
-          console.warn('⚠️ Webhook subscription failed:', subscribeResponse.status, subscribeText);
+      // Subscribe to messages webhook - /me resolves to the user's IG professional account
+      const subscribeResponse = await fetch(
+        `https://graph.instagram.com/v24.0/me/subscribed_apps?subscribed_fields=messages&access_token=${encodeURIComponent(finalAccessToken)}`,
+        {
+          method: 'POST',
         }
-      } catch (e) {
-        console.warn('⚠️ Webhook subscription error:', e);
+      );
+
+      const subscribeText = await subscribeResponse.text();
+      console.log('📡 Webhook subscription response:', subscribeResponse.status, subscribeText);
+
+      if (subscribeResponse.ok) {
+        try {
+          const subscribeData = JSON.parse(subscribeText);
+          webhookSubscribed = subscribeData.success === true;
+          if (webhookSubscribed) {
+            console.log('✅ Successfully subscribed to webhooks');
+          } else {
+            console.warn('⚠️ Webhook subscription returned:', subscribeData);
+          }
+        } catch {
+          console.warn('⚠️ Could not parse subscription response');
+        }
+      } else {
+        console.warn('⚠️ Webhook subscription failed:', subscribeResponse.status, subscribeText);
       }
+    } catch (e) {
+      console.warn('⚠️ Webhook subscription error:', e);
     }
 
     // Return token data including instagram_business_account_id for webhook matching
