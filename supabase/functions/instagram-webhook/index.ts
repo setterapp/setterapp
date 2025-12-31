@@ -15,6 +15,13 @@ if (!VERIFY_TOKEN) {
 // Crear cliente de Supabase con service role key para operaciones administrativas
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// CORS headers for responses
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 console.log(`Instagram webhook function initialized`);
 
 function extractPlatformMessageId(event: any): string | null {
@@ -724,9 +731,7 @@ async function processInstagramEvent(event: any, pageId: string) {
                         createdAt: existingMessage.created_at
                     });
                     // Es un duplicado real, no procesarlo de nuevo
-                    return new Response(JSON.stringify({ success: true, skipped: 'duplicate' }), {
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    });
+                    return;
                 }
 
                 // No existe, proceder a insertarlo
@@ -756,9 +761,7 @@ async function processInstagramEvent(event: any, pageId: string) {
                     // Si falla por violación de unique constraint, es race condition (2 webhooks simultáneos)
                     if (messageError.code === '23505') {
                         console.log('ℹ️ Race condition: message became duplicate during insert');
-                        return new Response(JSON.stringify({ success: true, skipped: 'race_condition' }), {
-                            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                        });
+                        return;
                     }
 
                     // Otro error, no bloquear el webhook pero logear
