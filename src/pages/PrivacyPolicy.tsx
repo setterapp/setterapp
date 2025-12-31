@@ -49,7 +49,7 @@ function PrivacyPolicy() {
                 <strong>Account information:</strong> Email, username, and authentication data when you sign up.
               </li>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong>Integration data:</strong> Information from your connected accounts (WhatsApp Business, Instagram, Google Calendar) necessary to provide our services.
+                <strong>Integration data:</strong> Information from your connected accounts (Instagram, Google Calendar) necessary to provide our services.
               </li>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
                 <strong>Conversations and messages:</strong> Messages and conversations managed through our AI agents to enable automation and automatic responses.
@@ -89,7 +89,7 @@ function PrivacyPolicy() {
                 </a>
               </li>
               <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong>Meta/Facebook:</strong> For WhatsApp Business and Instagram integration. See their privacy policy at{' '}
+                <strong>Meta/Facebook:</strong> For Instagram integration. See their privacy policy at{' '}
                 <a href="https://www.facebook.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>
                   https://www.facebook.com/privacy
                 </a>
