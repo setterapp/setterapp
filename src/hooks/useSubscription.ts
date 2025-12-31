@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
 // Admin emails that bypass subscription checks
-const ADMIN_EMAILS = ['info@setterapp.ai', 'reviewer@setterapp.ai']
+const ADMIN_EMAILS = ['info@setterapp.ai', 'reviewer@setterapp.ai', 'mpozzetti@mimetria.com']
 
 export type SubscriptionPlan = 'starter' | 'growth' | 'premium'
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'inactive'
