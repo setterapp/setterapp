@@ -388,10 +388,16 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
 
 /**
  * Obtiene el user_id asociado a una integración de Instagram
- * Intenta buscar por pageId primero, si no encuentra, usa la primera integración conectada
+ * Busca SOLO por match exacto del pageId/instagram_business_account_id
+ * NO hace fallback a otras integraciones para evitar routing incorrecto de mensajes
  */
 async function getUserIdFromPageId(pageId: string): Promise<string | null> {
     try {
+        if (!pageId) {
+            console.error('❌ No pageId provided');
+            return null;
+        }
+
         // Buscar integraciones conectadas relevantes (instagram + facebook)
         const { data: integrations, error } = await supabase
             .from('integrations')
@@ -409,43 +415,45 @@ async function getUserIdFromPageId(pageId: string): Promise<string | null> {
             return null;
         }
 
-        // Si hay pageId, intentar encontrar una que coincida
-        if (pageId) {
-            for (const integration of integrations) {
-                const config = integration.config || {};
-                const candidateIds = new Set<string>();
-                // IDs comunes que podemos recibir en webhooks IG (dependiendo de object/formato)
-                // - page_id / pageId: Facebook Page ID
-                // - instagram_business_account_id / instagram_user_id: IG Business Account ID
-                // - instagram_page_id: algunos flows legacy lo guardan así
-                const maybeIds = [
-                    config.page_id,
-                    config.pageId,
-                    config.instagram_page_id,
-                    config.instagram_user_id,
-                    config.instagram_business_account_id,
-                    config.instagramBusinessAccountId,
-                ];
-                for (const v of maybeIds) {
-                    if (typeof v === 'string' && v.trim() !== '') candidateIds.add(v);
-                    if (typeof v === 'number') candidateIds.add(String(v));
-                }
+        // Log para debugging
+        console.log(`🔍 Looking for pageId: ${pageId} among ${integrations.length} integration(s)`);
 
-                if (candidateIds.has(pageId)) {
-                    console.log('✅ Found integration matching pageId:', pageId);
-                    return integration.user_id;
-                }
+        // Buscar match exacto del pageId con los IDs guardados
+        for (const integration of integrations) {
+            const config = integration.config || {};
+            const candidateIds = new Set<string>();
+
+            // IDs comunes que podemos recibir en webhooks IG (dependiendo de object/formato)
+            // - page_id / pageId: Facebook Page ID
+            // - instagram_business_account_id / instagram_user_id: IG Business Account ID
+            // - instagram_page_id: algunos flows legacy lo guardan así
+            const maybeIds = [
+                config.page_id,
+                config.pageId,
+                config.instagram_page_id,
+                config.instagram_user_id,
+                config.instagram_business_account_id,
+                config.instagramBusinessAccountId,
+            ];
+
+            for (const v of maybeIds) {
+                if (typeof v === 'string' && v.trim() !== '') candidateIds.add(v);
+                if (typeof v === 'number') candidateIds.add(String(v));
+            }
+
+            // Log de los IDs que tiene esta integración (sin exponer tokens)
+            console.log(`  - Integration ${integration.type} for user ${integration.user_id.substring(0, 8)}... has IDs:`, Array.from(candidateIds));
+
+            if (candidateIds.has(pageId)) {
+                console.log('✅ Found integration matching pageId:', pageId, 'for user:', integration.user_id.substring(0, 8) + '...');
+                return integration.user_id;
             }
         }
 
-        // Si no coincide, preferir instagram; si no hay, usar la primera conectada
-        const instagram = integrations.find((i: any) => i.type === 'instagram');
-        if (instagram) {
-            console.warn('⚠️ FALLBACK: No exact match for pageId:', pageId, '- using first IG integration for user:', instagram.user_id);
-            return instagram.user_id;
-        }
-        console.warn('⚠️ FALLBACK: No exact match for pageId:', pageId, '- using first integration for user:', integrations[0].user_id);
-        return integrations[0].user_id;
+        // NO hacer fallback - si no hay match exacto, es mejor no procesar que procesar con el usuario equivocado
+        console.error(`❌ NO MATCH: pageId ${pageId} does not match any integration. Message will not be processed.`);
+        console.error(`   This usually means the user needs to reconnect Instagram to get the correct instagram_business_account_id saved.`);
+        return null;
     } catch (error) {
         console.error('❌ Error getting user_id from pageId:', error);
         return null;
