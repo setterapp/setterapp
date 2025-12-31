@@ -282,10 +282,10 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         // https://developers.facebook.com/docs/messenger-platform/instagram/features/user-profile/
         // Fields: name, username, profile_pic (también puede ser profile_picture_url en versiones nuevas)
         try {
-            console.log('📡 Intentando User Profile API (graph.facebook.com/v21.0)...');
-            // Usamos v21.0 que es más estable, con ambos formatos de campo de imagen
+            console.log('📡 Intentando User Profile API (graph.facebook.com/v24.0)...');
+            // Usamos v24.0 que es más estable, con ambos formatos de campo de imagen
             const response = await fetch(
-                `https://graph.facebook.com/v21.0/${senderId}?fields=name,username,profile_pic&access_token=${accessToken}`,
+                `https://graph.facebook.com/v24.0/${senderId}?fields=name,username,profile_pic&access_token=${accessToken}`,
                 { method: 'GET' }
             );
 
@@ -328,7 +328,7 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         try {
             console.log('📡 Intentando Instagram Graph API...');
             const response = await fetch(
-                `https://graph.instagram.com/v21.0/${senderId}?fields=id,username,name&access_token=${accessToken}`,
+                `https://graph.instagram.com/v24.0/${senderId}?fields=id,username,name&access_token=${accessToken}`,
                 { method: 'GET' }
             );
 
@@ -352,7 +352,7 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
             try {
                 console.log('📡 Intentando buscar en conversaciones...');
                 const convResponse = await fetch(
-                    `https://graph.facebook.com/v21.0/${instagramBusinessAccountId}/conversations?fields=participants&access_token=${accessToken}`,
+                    `https://graph.facebook.com/v24.0/${instagramBusinessAccountId}/conversations?fields=participants&access_token=${accessToken}`,
                     { method: 'GET' }
                 );
 
@@ -1294,11 +1294,10 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
             while (attempts < maxAttempts) {
                 attempts++;
 
-                // Enviar mensaje usando Instagram Messaging API
-                // Para Instagram Business Login: POST /{ig-user-id}/messages
-                // El ig-user-id es el instagram_user_id (scoped ID) del OAuth
-                const sendUrl = `https://graph.instagram.com/v21.0/${instagramUserId}/messages`;
-                console.log(`📡 POST ${sendUrl.replace(accessToken, '***')}`);
+                // Enviar mensaje usando Instagram Messaging API via Facebook Graph
+                // Según documentación de Meta, usar graph.facebook.com/me/messages
+                const sendUrl = `https://graph.facebook.com/v24.0/me/messages`;
+                console.log(`📡 POST ${sendUrl} (recipient: ${String(recipientId).substring(0, 10)}...)`);
 
                 const response = await fetch(sendUrl, {
                     method: 'POST',
