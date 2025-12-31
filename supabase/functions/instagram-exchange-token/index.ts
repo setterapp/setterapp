@@ -135,6 +135,51 @@ Deno.serve(async (req: Request) => {
       console.warn('⚠️ Profile fetch failed:', e);
     }
 
+    // 4) Subscribe the Instagram Business Account to receive webhooks
+    // This is CRITICAL for external users (not app testers) to receive messages
+    let webhookSubscribed = false;
+    if (instagramBusinessAccountId) {
+      try {
+        console.log('📡 Subscribing to webhooks for IG Business Account:', instagramBusinessAccountId);
+
+        // Subscribe to messages webhook using the Instagram Business Account ID
+        const subscribeResponse = await fetch(
+          `https://graph.instagram.com/v21.0/${instagramBusinessAccountId}/subscribed_apps`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              subscribed_fields: 'messages',
+              access_token: finalAccessToken,
+            }),
+          }
+        );
+
+        const subscribeText = await subscribeResponse.text();
+        console.log('📡 Webhook subscription response:', subscribeResponse.status, subscribeText);
+
+        if (subscribeResponse.ok) {
+          try {
+            const subscribeData = JSON.parse(subscribeText);
+            webhookSubscribed = subscribeData.success === true;
+            if (webhookSubscribed) {
+              console.log('✅ Successfully subscribed to webhooks');
+            } else {
+              console.warn('⚠️ Webhook subscription returned false:', subscribeData);
+            }
+          } catch {
+            console.warn('⚠️ Could not parse subscription response');
+          }
+        } else {
+          console.warn('⚠️ Webhook subscription failed:', subscribeResponse.status, subscribeText);
+        }
+      } catch (e) {
+        console.warn('⚠️ Webhook subscription error:', e);
+      }
+    }
+
     // Return token data including instagram_business_account_id for webhook matching
     return new Response(
       JSON.stringify({
