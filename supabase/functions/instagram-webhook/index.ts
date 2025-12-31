@@ -1248,9 +1248,11 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
         const accessToken = integration?.config?.access_token;
         // Usar instagram_user_id que es el scoped ID correcto para enviar mensajes
         // También verificar instagram_business_account_id como fallback
-        const instagramUserId = integration?.config?.instagram_user_id ||
+        // Convertir a string por si viene como número
+        const rawId = integration?.config?.instagram_user_id ||
             integration?.config?.instagram_business_account_id ||
             integration?.config?.instagram_page_id;
+        const instagramUserId = rawId ? String(rawId) : null;
 
         if (!accessToken || !instagramUserId) {
             console.error('❌ Faltan credenciales de Instagram. Config:', {
@@ -1263,7 +1265,7 @@ async function sendInstagramMessage(userId: string, recipientId: string, message
 
         console.log('📤 Enviando mensaje a Instagram:', {
             instagramUserId: instagramUserId.substring(0, 10) + '...',
-            recipientId: recipientId.substring(0, 10) + '...',
+            recipientId: String(recipientId).substring(0, 10) + '...',
             messageLength: message.length
         });
 
