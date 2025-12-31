@@ -23,9 +23,6 @@ verify_jwt = false
 [functions.update-contact-email]
 verify_jwt = false
 
-[functions.facebook-exchange-token]
-verify_jwt = false
-
 [functions.instagram-exchange-token]
 verify_jwt = false
 

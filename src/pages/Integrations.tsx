@@ -6,11 +6,9 @@ import { useTranslation } from 'react-i18next'
 import { useIntegrations } from '../hooks/useIntegrations'
 import { instagramService } from '../services/facebook/instagram'
 import { whatsappService } from '../services/facebook/whatsapp'
-// import { facebookOAuthService } from '../services/facebook-oauth' // COMENTADO - Facebook oculto
 import { Switch } from '../components/ui/switch'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
-// import FacebookIcon from '../components/icons/FacebookIcon' // COMENTADO - Facebook oculto
 import GoogleCalendarIcon from '../components/icons/GoogleCalendarIcon'
 import Modal from '../components/common/Modal'
 import { googleCalendarService } from '../services/google/calendar'
@@ -20,8 +18,6 @@ function Integrations() {
   const location = useLocation()
   const { integrations, loading, error, updateIntegration, refetch } = useIntegrations()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-  // Instagram warning modal removed - direct connect now
-  // const [showFacebookWarning, setShowFacebookWarning] = useState(false) // COMENTADO - Facebook oculto
   const [showWhatsAppWarning, setShowWhatsAppWarning] = useState(false)
   const [showGoogleCalendarWarning, setShowGoogleCalendarWarning] = useState(false)
 
@@ -76,14 +72,6 @@ function Integrations() {
           // Desconectar
           await handleWhatsAppDisconnect(id)
         }
-      // } else if (type === 'facebook') { // COMENTADO - Facebook oculto
-      //   if (checked) {
-      //     // Mostrar advertencia antes de conectar
-      //     // setShowFacebookWarning(true)
-      //   } else {
-      //     // Desconectar
-      //     // await handleFacebookDisconnect(id)
-      //   }
       } else if (type === 'google-calendar') {
         if (checked) {
           // Mostrar advertencia/info antes de conectar
@@ -197,50 +185,6 @@ function Integrations() {
     }
   }
 
-  // async function handleFacebookConnect() { // COMENTADO - Facebook oculto
-  //   try {
-  //     // Conectar con OAuth de Facebook para obtener Page Access Token
-  //     await facebookOAuthService.connectFacebook()
-  //     // El usuario será redirigido al callback después de autorizar
-  //     // Después volverá a /integrations
-  //   } catch (error: any) {
-  //     console.error('Error connecting Facebook:', error)
-  //     alert(`Error al conectar con Facebook: ${error.message || 'Error desconocido'}`)
-  //     refetch() // Refetch para revertir el toggle si la conexión falló
-  //   }
-  // }
-
-  // async function handleFacebookDisconnect(integrationId?: string) { // COMENTADO - Facebook oculto
-  //   try {
-  //     if (!confirm('¿Desconectar Facebook? Esto deshabilitará la obtención automática de usernames para Instagram.')) {
-  //       refetch()
-  //       return
-  //     }
-
-  //     const integration = integrationId
-  //       ? integrations.find(i => i.id === integrationId)
-  //       : integrations.find(i => i.type === 'facebook')
-
-  //     if (!integration) {
-  //       alert('No se encontró la integración de Facebook')
-  //       refetch()
-  //       return
-  //     }
-
-  //     await updateIntegration(integration.id, {
-  //       status: 'disconnected',
-  //       connected_at: undefined,
-  //       config: {}
-  //     })
-
-  //     refetch()
-  //   } catch (error: any) {
-  //     console.error('Error disconnecting Facebook:', error)
-  //     alert(`Error al desconectar: ${error.message || 'Error desconocido'}`)
-  //     refetch()
-  //   }
-  // }
-
   async function handleGoogleCalendarConnect() {
     try {
       await googleCalendarService.connectCalendar()
@@ -306,7 +250,7 @@ function Integrations() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
                 {integrations
-                  .filter(integration => integration.type !== 'facebook') // Ocultar Facebook por ahora
+                  .filter(integration => integration.type !== 'facebook')
                   .map((integration) => {
             const isConnected = integration.status === 'connected'
             const isWhatsApp = integration.type === 'whatsapp'
@@ -354,9 +298,6 @@ function Integrations() {
                     {integration.type === 'instagram' && (
                       <InstagramIcon size={24} color="#000" />
                     )}
-                    {/* integration.type === 'facebook' && ( // COMENTADO - Facebook oculto
-                      // <FacebookIcon size={24} color="#000" />
-                    ) */}
                     {integration.type === 'google-calendar' && (
                       <GoogleCalendarIcon size={24} color="#000" />
                     )}
@@ -557,83 +498,6 @@ function Integrations() {
           }          )}
         </div>
       )}
-
-      {/* Instagram modal removed - direct connect now */}
-
-      {/* Modal de advertencia para Facebook - COMENTADO TEMPORALMENTE
-      <Modal
-        isOpen={showFacebookWarning}
-        onClose={() => setShowFacebookWarning(false)}
-        title={t('integrations.modals.facebook.title')}
-      >
-        <div style={{ padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-          <div>
-            <p style={{ margin: 0, marginBottom: 'var(--spacing-md)' }} dangerouslySetInnerHTML={{ __html: t('integrations.modals.facebook.intro') }} />
-          </div>
-
-          <div>
-            <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
-              {t('integrations.modals.facebook.requirementsTitle')}
-            </h4>
-            <ul style={{ margin: 0, paddingLeft: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
-              <li>{t('integrations.modals.facebook.requirement1')}</li>
-              <li>{t('integrations.modals.facebook.requirement2')}</li>
-              <li>{t('integrations.modals.facebook.requirement3')}</li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 style={{ margin: 0, marginBottom: 'var(--spacing-sm)' }}>
-              {t('integrations.modals.facebook.resourcesTitle')}
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
-              <a
-                href="https://www.facebook.com/business/help/898752960195806"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', color: 'var(--color-primary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}
-              >
-                <ExternalLink size={16} />
-                {t('integrations.modals.facebook.resource1')}
-              </a>
-              <a
-                href="https://www.facebook.com/business/help/196240171867691"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', color: 'var(--color-primary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}
-              >
-                <ExternalLink size={16} />
-                {t('integrations.modals.facebook.resource2')}
-              </a>
-            </div>
-          </div>
-
-          <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
-            <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-              <strong>{t('integrations.modals.facebook.importantTitle')}</strong> {t('integrations.modals.facebook.importantText')}
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end', marginTop: 'var(--spacing-md)' }}>
-            <button
-              onClick={() => setShowFacebookWarning(false)}
-              className="btn btn--secondary"
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              onClick={async () => {
-                setShowFacebookWarning(false)
-                await handleFacebookConnect()
-              }}
-              className="btn btn--primary"
-            >
-              {t('integrations.modals.facebook.continueButton')}
-            </button>
-          </div>
-        </div>
-      </Modal>
-      */}
 
       {/* Modal de advertencia para WhatsApp */}
       <Modal

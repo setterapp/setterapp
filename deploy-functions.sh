@@ -23,9 +23,7 @@ supabase functions deploy send-meeting-reminders --no-verify-jwt
 supabase functions deploy update-contact-email --no-verify-jwt
 
 # Deploy token exchange functions
-supabase functions deploy facebook-exchange-token --no-verify-jwt
 supabase functions deploy instagram-exchange-token --no-verify-jwt
-supabase functions deploy instagram-facebook-setup --no-verify-jwt
 
 # Only instagram-resolve-profile may use JWT
 supabase functions deploy instagram-resolve-profile --no-verify-jwt
