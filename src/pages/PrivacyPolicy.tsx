@@ -100,12 +100,6 @@ function PrivacyPolicy() {
                   https://policies.google.com/privacy
                 </a>
               </li>
-              <li style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong>OpenAI:</strong> For AI and natural language processing services. See their privacy policy at{' '}
-                <a href="https://openai.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>
-                  https://openai.com/privacy
-                </a>
-              </li>
             </ul>
           </section>
 
