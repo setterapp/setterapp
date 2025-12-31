@@ -19,6 +19,8 @@ export interface Subscription {
   current_period_end: string | null
   cancel_at_period_end: boolean
   canceled_at: string | null
+  messages_used: number
+  messages_reset_at: string | null
   created_at: string
   updated_at: string
 }
@@ -152,6 +154,10 @@ export function useSubscription() {
     }
   }
 
+  // Get messages used (admins always show 0 usage)
+  const messagesUsed = isAdmin ? 0 : (subscription?.messages_used || 0)
+  const messagesLimit = limits?.messages || 0
+
   return {
     subscription,
     loading,
@@ -162,6 +168,8 @@ export function useSubscription() {
     hasAccess,
     limits,
     plan: isAdmin ? 'premium' as SubscriptionPlan : (subscription?.plan || null),
+    messagesUsed,
+    messagesLimit,
     createCheckout,
     openPortal,
     refetch: fetchSubscription,

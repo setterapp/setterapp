@@ -186,18 +186,22 @@ Deno.serve(async (req) => {
           // Get the latest subscription data
           const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
 
-          // Update subscription status and period
+          // Update subscription status, period, and RESET messages_used for new billing cycle
           const { error } = await supabase
             .from("subscriptions")
             .update({
               status: subscription.status,
               current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
               current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              messages_used: 0, // Reset usage for new billing period
+              messages_reset_at: new Date().toISOString(),
             })
             .eq("stripe_subscription_id", invoice.subscription as string);
 
           if (error) {
             console.error("❌ Error updating subscription:", error);
+          } else {
+            console.log("✅ Messages usage reset for new billing period");
           }
         }
         break;

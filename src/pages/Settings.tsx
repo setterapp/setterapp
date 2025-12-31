@@ -44,7 +44,7 @@ const defaultSettings: UserSettings = {
 }
 
 function SubscriptionSection() {
-  const { subscription, plan, isActive, isExpiring, openPortal, loading } = useSubscription()
+  const { subscription, plan, isActive, isExpiring, openPortal, loading, messagesUsed, messagesLimit } = useSubscription()
 
   const planNames: Record<string, string> = {
     starter: 'Starter',
@@ -60,6 +60,11 @@ function SubscriptionSection() {
       day: 'numeric',
     })
   }
+
+  // Calculate usage percentage for progress bar
+  const usagePercentage = messagesLimit === Infinity ? 0 : Math.min((messagesUsed / messagesLimit) * 100, 100)
+  const isNearLimit = usagePercentage >= 80
+  const isAtLimit = usagePercentage >= 100
 
   return (
     <div>
@@ -107,9 +112,50 @@ function SubscriptionSection() {
             </p>
           )}
 
+          {/* Messages Usage */}
+          <div style={{ marginTop: 'var(--spacing-xs)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600 }}>Messages Used</span>
+              <span style={{
+                fontSize: 'var(--font-size-xs)',
+                fontWeight: 600,
+                color: isAtLimit ? '#f38ba8' : isNearLimit ? '#f59e0b' : 'var(--color-text-secondary)'
+              }}>
+                {messagesUsed.toLocaleString()} / {messagesLimit === Infinity ? 'Unlimited' : messagesLimit.toLocaleString()}
+              </span>
+            </div>
+            {messagesLimit !== Infinity && (
+              <div style={{
+                width: '100%',
+                height: '8px',
+                background: '#e2e8f0',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                border: '1px solid #000'
+              }}>
+                <div style={{
+                  width: `${usagePercentage}%`,
+                  height: '100%',
+                  background: isAtLimit ? '#f38ba8' : isNearLimit ? '#f59e0b' : '#a6e3a1',
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+            )}
+            {isNearLimit && !isAtLimit && (
+              <p style={{ fontSize: 'var(--font-size-xs)', color: '#f59e0b', margin: '4px 0 0 0' }}>
+                You're approaching your message limit
+              </p>
+            )}
+            {isAtLimit && (
+              <p style={{ fontSize: 'var(--font-size-xs)', color: '#f38ba8', margin: '4px 0 0 0' }}>
+                You've reached your message limit. Upgrade to continue.
+              </p>
+            )}
+          </div>
+
           <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
             <p style={{ margin: '0 0 4px 0' }}>
-              <strong>Limits:</strong> {PLAN_LIMITS[plan || 'starter'].agents} agents, {PLAN_LIMITS[plan || 'starter'].messages === Infinity ? 'Unlimited' : PLAN_LIMITS[plan || 'starter'].messages.toLocaleString()} messages, {PLAN_LIMITS[plan || 'starter'].knowledgeBases} KB
+              <strong>Plan limits:</strong> {PLAN_LIMITS[plan || 'starter'].agents} agents, {PLAN_LIMITS[plan || 'starter'].knowledgeBases} knowledge bases
             </p>
             <p style={{ margin: 0 }}>
               <strong>Renews:</strong> {formatDate(subscription.current_period_end)}

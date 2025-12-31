@@ -1737,6 +1737,11 @@ async function saveOutboundMessage(conversationId: string, userId: string, conte
         message_type: 'text',
         metadata: metadata
     }, { onConflict: 'user_id,platform_message_id', ignoreDuplicates: true });
+
+    // Increment messages_used counter in subscription
+    await supabase.rpc('increment_messages_used', { p_user_id: userId }).catch(() => {
+        console.log('⚠️ Could not increment messages_used (user may not have subscription)');
+    });
 }
 
 /**
