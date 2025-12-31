@@ -579,9 +579,8 @@ async function processInstagramEvent(event: any, pageId: string) {
                 // No romper el webhook por debug
             }
 
-            // Obtener perfil del usuario (requiere App Review aprobado)
-            // Para habilitar: cambiar APP_REVIEW_APPROVED a true
-            const APP_REVIEW_APPROVED = false; // ⬅️ CAMBIAR A true DESPUÉS DEL APP REVIEW
+            // Obtener perfil del usuario (App Review aprobado)
+            const APP_REVIEW_APPROVED = true;
 
             let userProfile = null;
             if (APP_REVIEW_APPROVED) {
