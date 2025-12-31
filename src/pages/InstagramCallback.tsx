@@ -6,9 +6,13 @@ function InstagramCallback() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [error, setError] = useState<string | null>(null)
-  // Check immediately if we're in a popup
+  // Check immediately if we're in a popup (window.opener can be null due to cross-origin)
   const [isPopup] = useState(() => {
-    return !!(window.opener && !window.opener.closed)
+    // Check multiple indicators that we're in a popup
+    const hasOpener = !!(window.opener && !window.opener.closed)
+    const isSmallWindow = window.innerWidth < 700 && window.innerHeight < 800
+    const hasStoredState = !!localStorage.getItem('instagram_oauth_state')
+    return hasOpener || (isSmallWindow && hasStoredState)
   })
 
   useEffect(() => {
@@ -20,39 +24,66 @@ function InstagramCallback() {
         const errorParam = searchParams.get('error')
         const errorDescription = searchParams.get('error_description')
 
-        // If we're in a popup, send message to parent window and close immediately
-        // Check for popup BEFORE doing anything else
+        // If we're in a popup, try multiple methods to communicate with parent
         if (isPopup) {
           try {
-            // Small delay to ensure message is sent
-            await new Promise(resolve => setTimeout(resolve, 100))
+            // Method 1: Try postMessage if opener exists
+            if (window.opener && !window.opener.closed) {
+              await new Promise(resolve => setTimeout(resolve, 100))
 
-            if (errorParam) {
-              window.opener.postMessage({
-                type: 'instagram_oauth_error',
-                error: errorDescription || errorParam
-              }, window.location.origin)
-            } else if (code) {
-              window.opener.postMessage({
-                type: 'instagram_oauth_success',
-                code: code,
-                url: window.location.href,
-                state: state
-              }, window.location.origin)
+              if (errorParam) {
+                window.opener.postMessage({
+                  type: 'instagram_oauth_error',
+                  error: errorDescription || errorParam
+                }, window.location.origin)
+              } else if (code) {
+                window.opener.postMessage({
+                  type: 'instagram_oauth_success',
+                  code: code,
+                  url: window.location.href,
+                  state: state
+                }, window.location.origin)
+              }
             }
 
-            // Close popup immediately - use setTimeout to ensure message is sent first
+            // Method 2: Always store in localStorage as fallback
+            // The parent window polls localStorage for this
+            if (errorParam) {
+              localStorage.setItem('instagram_oauth_result', JSON.stringify({
+                type: 'error',
+                error: errorDescription || errorParam,
+                timestamp: Date.now()
+              }))
+            } else if (code) {
+              localStorage.setItem('instagram_oauth_result', JSON.stringify({
+                type: 'success',
+                code: code,
+                url: window.location.href,
+                state: state,
+                timestamp: Date.now()
+              }))
+            }
+
+            // Close popup - use setTimeout to ensure storage is written
             setTimeout(() => {
               window.close()
-              // Force close if still open
               if (!window.closed) {
                 window.close()
               }
-            }, 200)
+            }, 300)
             return
           } catch (e) {
-            console.error('Error sending message to parent:', e)
-            // Still try to close the popup
+            console.error('Error in popup callback:', e)
+            // Still try localStorage fallback
+            if (code) {
+              localStorage.setItem('instagram_oauth_result', JSON.stringify({
+                type: 'success',
+                code: code,
+                url: window.location.href,
+                state: state,
+                timestamp: Date.now()
+              }))
+            }
             setTimeout(() => {
               window.close()
               if (!window.closed) {

@@ -118,11 +118,20 @@ export const instagramDirectService = {
         throw new Error('No se pudo abrir la ventana popup. Por favor, permite ventanas emergentes para este sitio.')
       }
 
-      // Listen for the callback using postMessage
-      // The callback page will send a message when it loads
+      // Listen for the callback using postMessage AND localStorage fallback
+      // The callback page will send a message when it loads, or store in localStorage
       return new Promise((resolve, reject) => {
-        // Declare checkRedirect before messageHandler so it's in scope
         let checkRedirect: ReturnType<typeof setInterval> | undefined = undefined
+        let checkLocalStorage: ReturnType<typeof setInterval> | undefined = undefined
+        let resolved = false
+
+        const cleanup = () => {
+          if (checkRedirect !== undefined) clearInterval(checkRedirect)
+          if (checkLocalStorage !== undefined) clearInterval(checkLocalStorage)
+          window.removeEventListener('message', messageHandler)
+          // Clean up localStorage
+          localStorage.removeItem('instagram_oauth_result')
+        }
 
         const messageHandler = (event: MessageEvent) => {
           // Verify origin for security - allow our domain
@@ -137,53 +146,73 @@ export const instagramDirectService = {
           }
 
           if (event.data && event.data.type === 'instagram_oauth_success') {
-            window.removeEventListener('message', messageHandler)
-            if (checkRedirect !== undefined) {
-              clearInterval(checkRedirect)
-            }
-            // Close popup if still open
-            if (popup && !popup.closed) {
-              popup.close()
-            }
+            if (resolved) return
+            resolved = true
+            cleanup()
+            if (popup && !popup.closed) popup.close()
             resolve({ code: event.data.code, url: event.data.url })
           } else if (event.data && event.data.type === 'instagram_oauth_error') {
-            window.removeEventListener('message', messageHandler)
-            if (checkRedirect !== undefined) {
-              clearInterval(checkRedirect)
-            }
-            // Close popup if still open
-            if (popup && !popup.closed) {
-              popup.close()
-            }
+            if (resolved) return
+            resolved = true
+            cleanup()
+            if (popup && !popup.closed) popup.close()
             reject(new Error(event.data.error || 'Error al autorizar con Instagram'))
           }
         }
 
         window.addEventListener('message', messageHandler)
 
-        // Also poll for popup URL changes (when redirect happens)
+        // Poll localStorage for fallback (when postMessage doesn't work due to cross-origin)
+        checkLocalStorage = setInterval(() => {
+          try {
+            const result = localStorage.getItem('instagram_oauth_result')
+            if (result) {
+              const data = JSON.parse(result)
+              // Only process recent results (within last 30 seconds)
+              if (data.timestamp && Date.now() - data.timestamp < 30000) {
+                if (resolved) return
+                resolved = true
+                cleanup()
+                if (popup && !popup.closed) popup.close()
+
+                if (data.type === 'success') {
+                  resolve({ code: data.code, url: data.url })
+                } else if (data.type === 'error') {
+                  reject(new Error(data.error || 'Error al autorizar con Instagram'))
+                }
+              }
+            }
+          } catch (e) {
+            // Ignore JSON parse errors
+          }
+        }, 300)
+
+        // Also poll for popup closed state
         checkRedirect = setInterval(() => {
           try {
-            // Check if popup has been redirected to our callback or Supabase callback
-            if (popup.closed) {
-              if (checkRedirect !== undefined) {
-                clearInterval(checkRedirect)
-              }
-              window.removeEventListener('message', messageHandler)
-              // Don't reject if popup closed - it might have closed after success
-              return
-            }
-
-            // Try to check popup location (may fail due to cross-origin)
-            try {
-              const popupUrl = popup.location.href
-              // If popup is on our domain or Supabase domain, it means redirect happened
-              if (popupUrl.includes(window.location.hostname) || popupUrl.includes('supabase.co')) {
-                // The callback page should handle closing the popup
-                // Just wait for the message
-              }
-            } catch (e) {
-              // Cross-origin error is expected, ignore
+            if (popup.closed && !resolved) {
+              // Give localStorage a moment to be read
+              setTimeout(() => {
+                if (!resolved) {
+                  // Check localStorage one more time
+                  const result = localStorage.getItem('instagram_oauth_result')
+                  if (result) {
+                    try {
+                      const data = JSON.parse(result)
+                      if (data.timestamp && Date.now() - data.timestamp < 30000) {
+                        resolved = true
+                        cleanup()
+                        if (data.type === 'success') {
+                          resolve({ code: data.code, url: data.url })
+                        } else {
+                          reject(new Error(data.error || 'Error al autorizar con Instagram'))
+                        }
+                        return
+                      }
+                    } catch (e) {}
+                  }
+                }
+              }, 500)
             }
           } catch (e) {
             // Ignore errors
@@ -192,13 +221,10 @@ export const instagramDirectService = {
 
         // Timeout after 5 minutes
         setTimeout(() => {
-          if (checkRedirect !== undefined) {
-            clearInterval(checkRedirect)
-          }
-          window.removeEventListener('message', messageHandler)
-          if (popup && !popup.closed) {
-            popup.close()
-          }
+          if (resolved) return
+          resolved = true
+          cleanup()
+          if (popup && !popup.closed) popup.close()
           reject(new Error('Tiempo de espera agotado'))
         }, 5 * 60 * 1000)
       })
