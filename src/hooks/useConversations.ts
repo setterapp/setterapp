@@ -19,6 +19,7 @@ export interface Conversation {
   contact_id?: string | null
   contact_ref?: Contact | null
   platform: 'whatsapp' | 'instagram'
+  platform_page_id?: string | null  // ID de la integración que creó esta conversación
   agent_id?: string | null
   unread_count: number
   last_message_at?: string
@@ -35,6 +36,47 @@ export interface Conversation {
 
 // Caché a nivel de módulo para persistir datos entre navegaciones
 let cachedConversations: Conversation[] | null = null
+let cachedIntegrationIds: Set<string> | null = null
+
+/**
+ * Obtiene los IDs de plataforma de las integraciones activas del usuario.
+ * Estos IDs se usan para filtrar conversaciones y solo mostrar las de la integración actual.
+ */
+async function getActiveIntegrationIds(userId: string): Promise<Set<string>> {
+  try {
+    const { data: integrations } = await supabase
+      .from('integrations')
+      .select('type, config')
+      .eq('user_id', userId)
+      .eq('status', 'connected')
+      .in('type', ['instagram', 'whatsapp'])
+
+    const ids = new Set<string>()
+    for (const integration of integrations || []) {
+      const config = integration.config || {}
+      // Instagram puede guardar el ID en varios campos
+      const instagramIds = [
+        config.instagram_business_account_id,
+        config.instagram_user_id,
+        config.instagram_page_id,
+        config.page_id,
+      ]
+      // WhatsApp usa phone_number_id
+      const whatsappIds = [
+        config.phone_number_id,
+        config.waba_id,
+      ]
+
+      for (const id of [...instagramIds, ...whatsappIds]) {
+        if (typeof id === 'string' && id.trim()) ids.add(id)
+        if (typeof id === 'number') ids.add(String(id))
+      }
+    }
+    return ids
+  } catch {
+    return new Set()
+  }
+}
 
 export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>(cachedConversations || [])
@@ -48,6 +90,7 @@ export function useConversations() {
   const channelKeyRef = useRef<string | null>(null)
   const resolveAttemptedRef = useRef<Set<string>>(new Set())
   const refreshTimerRef = useRef<number | null>(null)
+  const integrationIdsRef = useRef<Set<string>>(cachedIntegrationIds || new Set())
 
   const conversationSelect = '*, contact_ref:contacts(id, platform, external_id, display_name, phone, username, profile_picture, lead_status)'
 
@@ -62,6 +105,18 @@ export function useConversations() {
 
   const upsertConversationInState = (conv: Conversation) => {
     setConversations(prev => {
+      // Verificar si la conversación pertenece a la integración actual
+      const activeIds = integrationIdsRef.current
+      const belongsToCurrentIntegration =
+        activeIds.size === 0 ? false :
+        !conv.platform_page_id ? true :
+        activeIds.has(conv.platform_page_id)
+
+      // Si no pertenece a la integración actual, no agregarla/actualizarla
+      if (!belongsToCurrentIntegration) {
+        return prev
+      }
+
       const idx = prev.findIndex(c => c.id === conv.id)
       let newList: Conversation[]
       if (idx === -1) {
@@ -89,6 +144,18 @@ export function useConversations() {
       }
       setError(null)
 
+      // Obtener sesión para el user_id
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) {
+        setLoading(false)
+        return
+      }
+
+      // Obtener IDs de integraciones activas para filtrar conversaciones
+      const activeIds = await getActiveIntegrationIds(session.user.id)
+      integrationIdsRef.current = activeIds
+      cachedIntegrationIds = activeIds
+
       const { data, error: fetchError } = await supabase
         .from('conversations')
         .select(conversationSelect)
@@ -98,16 +165,31 @@ export function useConversations() {
       if (fetchError) throw fetchError
       if (fetchId !== activeFetchIdRef.current) return
 
+      // Filtrar conversaciones: solo mostrar las que pertenecen a la integración actual
+      // Una conversación pertenece a la integración actual si:
+      // 1. No tiene platform_page_id (conversaciones legacy) - las mostramos por compatibilidad
+      // 2. Su platform_page_id está en la lista de IDs de integraciones activas
+      const allConversations = (data || []) as Conversation[]
+      const filteredList = allConversations.filter(conv => {
+        // Si no hay integraciones activas, no mostrar nada
+        if (activeIds.size === 0) return false
+
+        // Si la conversación no tiene platform_page_id, la mostramos (legacy)
+        if (!conv.platform_page_id) return true
+
+        // Solo mostrar si el platform_page_id coincide con una integración activa
+        return activeIds.has(conv.platform_page_id)
+      })
+
       // Actualizar estado y caché
-      const list = (data || []) as Conversation[]
-      cachedConversations = list
-      setConversations(list)
+      cachedConversations = filteredList
+      setConversations(filteredList)
 
       // Best-effort: si hay conversaciones de Instagram con "ID numérico", intentamos resolver @username/name
       // Requiere la Edge Function `instagram-resolve-profile` desplegada (verify-jwt=true).
       void (async () => {
-        const candidates = list
-          .filter(c =>
+        const candidates = filteredList
+          .filter((c: Conversation) =>
             c.platform === 'instagram' &&
             !c.contact_metadata?.username &&
             !c.contact_metadata?.name &&
@@ -293,6 +375,33 @@ export function useConversations() {
               const rowUserId = (payload.new as any)?.user_id ?? (payload.old as any)?.user_id
               if (rowUserId && rowUserId !== uid) return
               void fetchConversations()
+            }
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'integrations',
+            },
+            (payload) => {
+              const uid = session.user.id
+              const rowUserId = (payload.new as any)?.user_id ?? (payload.old as any)?.user_id
+              if (rowUserId && rowUserId !== uid) return
+
+              // Si cambia la integración (reconexión, desconexión), refrescar conversaciones
+              // para actualizar los IDs de integración y re-filtrar
+              const integrationType = (payload.new as any)?.type ?? (payload.old as any)?.type
+              if (integrationType === 'instagram' || integrationType === 'whatsapp') {
+                // Limpiar caché para forzar re-fetch con nuevos IDs
+                cachedIntegrationIds = null
+                cachedConversations = null
+
+                if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current)
+                refreshTimerRef.current = window.setTimeout(() => {
+                  void fetchConversations()
+                }, 200)
+              }
             }
           )
           .subscribe(async (status) => {
