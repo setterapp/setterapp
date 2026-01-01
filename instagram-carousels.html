@@ -435,7 +435,6 @@
   <script>
     async function downloadCarousel(elementId, filename) {
       const button = event.target;
-      const card = button.closest('.carousel-card');
 
       // Add downloading state
       button.textContent = 'Downloading...';
@@ -443,17 +442,29 @@
 
       try {
         const element = document.getElementById(elementId);
+        const preview = element.parentElement;
+
+        // Temporarily remove scale for capture
+        preview.style.transform = 'scale(1)';
+        preview.style.transformOrigin = 'top left';
+        preview.style.marginBottom = '0';
+
         const canvas = await html2canvas(element, {
           width: 1080,
           height: 1080,
-          scale: 2,
-          backgroundColor: '#ffffff',
+          scale: 1,
+          backgroundColor: null,
           logging: false,
+          useCORS: true,
         });
+
+        // Restore scale
+        preview.style.transform = 'scale(0.38)';
+        preview.style.marginBottom = '-62%';
 
         const link = document.createElement('a');
         link.download = `${filename}.png`;
-        link.href = canvas.toDataURL('image/png');
+        link.href = canvas.toDataURL('image/png', 1.0);
         link.click();
 
         button.textContent = 'Downloaded!';
