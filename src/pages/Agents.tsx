@@ -1159,7 +1159,7 @@ Agent: Do you have your own business or work in sales?`}
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             flexShrink: 0,
-                                            color: 'var(--color-primary)',
+                                            color: '#000',
                                         }}
                                     >
                                         <Logo size={24} variant="stroke" />
