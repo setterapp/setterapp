@@ -536,9 +536,8 @@ async function processInstagramEvent(event: any, pageId: string) {
                 console.log('ℹ️ Profile fetching disabled (APP_REVIEW_APPROVED = false)');
             }
 
-            // Usar username si está disponible, sino el senderId
-            const displayName = userProfile?.username || userProfile?.name || senderId;
-            const contactName = displayName;
+            // Priorizar name sobre username para display_name
+            const contactName = userProfile?.name || userProfile?.username || senderId;
 
             // Crear o actualizar contacto (CRM) - usando UPSERT para evitar race conditions
             let contactId: string | null = null;
