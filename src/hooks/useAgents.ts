@@ -274,7 +274,7 @@ export function useAgents() {
           .not('platform', 'is', null)
 
         if ((count || 0) >= limit) {
-          throw new Error(`Has alcanzado el límite de ${limit} agente${limit > 1 ? 's' : ''} activo${limit > 1 ? 's' : ''} para tu plan ${plan}. Desactiva un agente o mejora tu plan.`)
+          throw new Error(`You have reached the limit of ${limit} active agent${limit > 1 ? 's' : ''} for your ${plan} plan. Deactivate an agent or upgrade your plan.`)
         }
       }
 
@@ -338,7 +338,7 @@ export function useAgents() {
             .not('platform', 'is', null)
 
           if ((count || 0) >= limit) {
-            throw new Error(`Has alcanzado el límite de ${limit} agente${limit > 1 ? 's' : ''} activo${limit > 1 ? 's' : ''} para tu plan ${plan}. Desactiva un agente o mejora tu plan.`)
+            throw new Error(`You have reached the limit of ${limit} active agent${limit > 1 ? 's' : ''} for your ${plan} plan. Deactivate an agent or upgrade your plan.`)
           }
         }
       }

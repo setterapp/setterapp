@@ -39,7 +39,7 @@ function IntegrationModal({ isOpen, onClose, integrationType, onConnect }: Integ
       setBusinessAccountId('')
       onClose()
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al conectar'
+      const message = err instanceof Error ? err.message : 'Error connecting'
       setError(message)
     } finally {
       setLoading(false)
@@ -58,7 +58,7 @@ function IntegrationModal({ isOpen, onClose, integrationType, onConnect }: Integ
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={`Conectar ${
+      title={`Connect ${
         integrationType === 'whatsapp'
           ? 'WhatsApp Business'
           : 'Instagram'
@@ -83,7 +83,7 @@ function IntegrationModal({ isOpen, onClose, integrationType, onConnect }: Integ
         <div className="form-group">
           <label htmlFor="token" className="label">
             <Key size={16} style={{ display: 'inline', marginRight: 'var(--spacing-xs)' }} />
-            Token de Acceso
+            Access Token
           </label>
           <input
             id="token"
@@ -96,8 +96,8 @@ function IntegrationModal({ isOpen, onClose, integrationType, onConnect }: Integ
           />
           <p style={{ margin: 'var(--spacing-xs) 0 0 0', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
             {integrationType === 'whatsapp'
-              ? 'Token de acceso permanente de WhatsApp Business API'
-              : 'Token de acceso de Instagram Graph API'}
+              ? 'WhatsApp Business API permanent access token'
+              : 'Instagram Graph API access token'}
           </p>
         </div>
 
@@ -115,7 +115,7 @@ function IntegrationModal({ isOpen, onClose, integrationType, onConnect }: Integ
               placeholder="123456789012345"
             />
             <p style={{ margin: 'var(--spacing-xs) 0 0 0', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-              ID del número de teléfono de WhatsApp Business
+              WhatsApp Business phone number ID
             </p>
           </div>
         )}
@@ -134,7 +134,7 @@ function IntegrationModal({ isOpen, onClose, integrationType, onConnect }: Integ
               placeholder="17841405309211844"
             />
             <p style={{ margin: 'var(--spacing-xs) 0 0 0', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-              ID de la cuenta comercial de Instagram
+              Instagram business account ID
             </p>
           </div>
         )}
@@ -146,10 +146,10 @@ function IntegrationModal({ isOpen, onClose, integrationType, onConnect }: Integ
             onClick={handleClose}
             disabled={loading}
           >
-            Cancelar
+            Cancel
           </button>
           <button type="submit" className="btn btn--primary" disabled={loading}>
-            {loading ? 'Conectando...' : 'Conectar'}
+            {loading ? 'Connecting...' : 'Connect'}
           </button>
         </div>
       </form>

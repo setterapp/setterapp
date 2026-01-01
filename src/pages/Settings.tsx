@@ -357,7 +357,7 @@ function SettingsPage() {
           theme: settingsToSave.theme,
         }, { onConflict: 'user_id' })
     } catch (err: any) {
-      console.error('Error al guardar configuración:', err)
+      console.error('Error saving settings:', err)
     }
   }
 
@@ -370,9 +370,9 @@ function SettingsPage() {
           queryParams: { access_type: 'offline', prompt: 'consent' },
         },
       })
-      if (error) alert(`Error al iniciar sesión: ${error.message}`)
+      if (error) alert(`Error signing in: ${error.message}`)
     } catch (err: any) {
-      alert(`Error inesperado: ${err.message}`)
+      alert(`Unexpected error: ${err.message}`)
     }
   }
 
@@ -381,7 +381,7 @@ function SettingsPage() {
       cacheService.clear()
       await supabase.auth.signOut()
     } catch (err: any) {
-      alert(`Error al cerrar sesión: ${err.message}`)
+      alert(`Error signing out: ${err.message}`)
     }
   }
 
@@ -404,7 +404,7 @@ function SettingsPage() {
       await supabase.auth.signOut()
       window.location.href = '/'
     } catch (err: any) {
-      alert(`Error al eliminar cuenta: ${err.message}`)
+      alert(`Error deleting account: ${err.message}`)
       setDeleting(false)
     }
   }
@@ -423,14 +423,14 @@ function SettingsPage() {
   if (!user) {
     return (
       <div>
-        <SectionHeader title="Configuración" icon={<Settings size={24} />} />
+        <SectionHeader title="Settings" icon={<Settings size={24} />} />
         <div className="card" style={{ border: '2px solid #000' }}>
           <div className="empty-state">
             <User size={48} style={{ margin: '0 auto var(--spacing-md)', opacity: 0.5 }} />
-            <h3>No has iniciado sesión</h3>
-            <p>Inicia sesión para acceder a tus ajustes</p>
+            <h3>Not signed in</h3>
+            <p>Sign in to access your settings</p>
             <button onClick={handleGoogleLogin} className="btn btn--primary mt-md">
-              Iniciar sesión con Google
+              Sign in with Google
             </button>
           </div>
         </div>
@@ -440,7 +440,7 @@ function SettingsPage() {
 
   return (
     <div>
-      <SectionHeader title="Configuración" icon={<Settings size={24} />}>
+      <SectionHeader title="Settings" icon={<Settings size={24} />}>
         <button onClick={handleLogout} className="btn btn--sm" style={{ background: '#f38ba8', color: '#000' }}>
           <LogOut size={16} />
           {t('settings.logout')}
@@ -625,7 +625,7 @@ function SettingsPage() {
                 Danger Zone
               </h3>
               <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', margin: '0 0 var(--spacing-sm) 0' }}>
-                Esta acción es irreversible. Se eliminarán todos tus datos.
+                This action is irreversible. All your data will be deleted.
               </p>
               <button
                 onClick={() => setShowDeleteConfirm(true)}
@@ -633,7 +633,7 @@ function SettingsPage() {
                 style={{ background: 'transparent', border: '2px solid #f38ba8', color: '#f38ba8' }}
               >
                 <Trash2 size={14} />
-                Eliminar Cuenta
+                Delete Account
               </button>
             </div>
           </div>
@@ -647,12 +647,12 @@ function SettingsPage() {
           background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 'var(--spacing-md)'
         }}>
           <div style={{ background: 'var(--color-bg)', borderRadius: 'var(--border-radius-lg)', padding: 'var(--spacing-xl)', maxWidth: '400px', width: '100%', border: '2px solid #000' }}>
-            <h3 style={{ margin: 0, marginBottom: 'var(--spacing-md)', color: '#f38ba8' }}>Eliminar Cuenta</h3>
+            <h3 style={{ margin: 0, marginBottom: 'var(--spacing-md)', color: '#f38ba8' }}>Delete Account</h3>
             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-md)' }}>
-              Esta acción no se puede deshacer. Todos tus datos serán eliminados permanentemente.
+              This action cannot be undone. All your data will be permanently deleted.
             </p>
             <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-sm)' }}>
-              Escribe <strong>DELETE</strong> para confirmar:
+              Type <strong>DELETE</strong> to confirm:
             </p>
             <input
               type="text"
@@ -669,7 +669,7 @@ function SettingsPage() {
                 style={{ flex: 1 }}
                 disabled={deleting}
               >
-                Cancelar
+                Cancel
               </button>
               <button
                 onClick={handleDeleteAccount}
@@ -677,7 +677,7 @@ function SettingsPage() {
                 style={{ flex: 1 }}
                 disabled={deleteConfirmText !== 'DELETE' || deleting}
               >
-                {deleting ? 'Eliminando...' : 'Eliminar'}
+                {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>

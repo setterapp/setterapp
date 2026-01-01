@@ -11,7 +11,7 @@ function GoogleCalendarCallback() {
   const navigate = useNavigate()
   const location = useLocation()
   const [error, setError] = useState<string | null>(null)
-  const [status, setStatus] = useState<string>('Procesando autenticación...')
+  const [status, setStatus] = useState<string>('Processing authentication...')
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -27,7 +27,7 @@ function GoogleCalendarCallback() {
         // Verificar si hubo un error en la autorización
         if (errorParam) {
           console.error('[GoogleCalendarCallback] OAuth error:', errorParam)
-          setError(`Error de autorización: ${errorParam}`)
+          setError(`Authorization error: ${errorParam}`)
           setTimeout(() => navigate('/integrations'), 3000)
           return
         }
@@ -35,24 +35,24 @@ function GoogleCalendarCallback() {
         // Verificar que tengamos el código
         if (!code || !state) {
           console.error('[GoogleCalendarCallback] Missing code or state')
-          setError('Parámetros de callback inválidos')
+          setError('Invalid callback parameters')
           setTimeout(() => navigate('/integrations'), 3000)
           return
         }
 
         console.log('[GoogleCalendarCallback] Code received, exchanging for tokens')
-        setStatus('Obteniendo tokens de acceso...')
+        setStatus('Obtaining access tokens...')
 
         // Intercambiar código por tokens
         const tokens = await googleOAuthDirect.exchangeCodeForTokens(code, state)
 
         console.log('[GoogleCalendarCallback] Tokens obtained, saving to database')
-        setStatus('Guardando configuración...')
+        setStatus('Saving configuration...')
 
         // Obtener usuario actual
         const { data: { session: userSession } } = await supabase.auth.getSession()
         if (!userSession?.user) {
-          throw new Error('No hay sesión de usuario activa')
+          throw new Error('No active user session')
         }
 
         // Guardar tokens en la integración de Google Calendar
@@ -135,7 +135,7 @@ function GoogleCalendarCallback() {
         })
 
         // Activar webhook automáticamente para sincronización en tiempo real
-        setStatus('Activando sincronización automática...')
+        setStatus('Activating automatic sync...')
 
         try {
           console.log('[GoogleCalendarCallback] Setting up calendar watch webhook')
@@ -155,7 +155,7 @@ function GoogleCalendarCallback() {
           // No es crítico - continuar con el flujo normal
         }
 
-        setStatus('¡Conexión exitosa! Redirigiendo...')
+        setStatus('Connection successful! Redirecting...')
 
         // Esperar un momento y redirigir a integraciones
         await new Promise(resolve => setTimeout(resolve, 1500))
@@ -163,7 +163,7 @@ function GoogleCalendarCallback() {
 
       } catch (err: any) {
         console.error('[GoogleCalendarCallback] Error processing callback:', err)
-        setError(err.message || 'Error desconocido al procesar la autenticación')
+        setError(err.message || 'Unknown error processing authentication')
         setTimeout(() => navigate('/integrations'), 3000)
       }
     }
@@ -175,9 +175,9 @@ function GoogleCalendarCallback() {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <div className="card" style={{ maxWidth: '500px', margin: '0 auto' }}>
-          <h3 style={{ color: 'var(--color-danger)' }}>Error de autenticación</h3>
+          <h3 style={{ color: 'var(--color-danger)' }}>Authentication error</h3>
           <p className="text-secondary">{error}</p>
-          <p className="text-tertiary text-sm">Redirigiendo a Integraciones...</p>
+          <p className="text-tertiary text-sm">Redirecting to Integrations...</p>
         </div>
       </div>
     )

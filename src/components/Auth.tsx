@@ -36,13 +36,13 @@ function Auth() {
         },
       })
       if (error) {
-        console.error('Error al iniciar sesión:', error)
-        alert(`Error al iniciar sesión: ${error.message}`)
+        console.error('Error signing in:', error)
+        alert(`Error signing in: ${error.message}`)
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error inesperado'
-      console.error('Error inesperado:', err)
-      alert(`Error inesperado: ${message}`)
+      const message = err instanceof Error ? err.message : 'Unexpected error'
+      console.error('Unexpected error:', err)
+      alert(`Unexpected error: ${message}`)
     }
   }
 

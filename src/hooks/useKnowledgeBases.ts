@@ -79,7 +79,7 @@ export function useKnowledgeBases(agentId?: string) {
           .eq('user_id', user.id)
 
         if ((count || 0) >= limit) {
-          throw new Error(`Has alcanzado el límite de ${limit} base${limit > 1 ? 's' : ''} de conocimiento para tu plan ${plan}. Mejora tu plan para crear más.`)
+          throw new Error(`You have reached the limit of ${limit} knowledge base${limit > 1 ? 's' : ''} for your ${plan} plan. Upgrade your plan to create more.`)
         }
       }
 

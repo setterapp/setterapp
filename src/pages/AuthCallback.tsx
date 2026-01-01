@@ -136,7 +136,7 @@ function AuthCallback() {
                     session = retrySession
                   } else {
                     console.error('[AuthCallback] Still no provider_token after retry')
-                    alert('Error: No se pudo obtener el token de acceso de Google. Por favor, intenta desconectar y volver a conectar Google Calendar.')
+                    alert('Error: Could not obtain Google access token. Please try disconnecting and reconnecting Google Calendar.')
                     navigate('/integrations')
                     return
                   }
@@ -184,7 +184,7 @@ function AuthCallback() {
                 } catch (igError: any) {
                   // Si no podemos obtener page token, igual dejamos la integración conectada.
                   // El usuario puede reconectar con permisos correctos luego.
-                  alert(`No se pudo conectar Instagram: ${igError.message || 'Error desconocido'}.\n\nAsegúrate de:\n1. Tener una Página de Facebook\n2. Tener una Cuenta de Instagram Business vinculada a esa Página\n3. Haber otorgado todos los permisos solicitados`)
+                  alert(`Could not connect Instagram: ${igError.message || 'Unknown error'}.\n\nMake sure you:\n1. Have a Facebook Page\n2. Have an Instagram Business Account linked to that Page\n3. Have granted all requested permissions`)
                 }
               }
 
@@ -314,7 +314,7 @@ function AuthCallback() {
               const redirectToRetry = new URLSearchParams(location.search).get('redirect_to') || '/analytics'
               navigate(redirectToRetry)
             } else {
-              setError('No se pudo completar la autenticación')
+              setError('Could not complete authentication')
               setTimeout(() => navigate('/login'), 3000)
             }
           }, 1000)

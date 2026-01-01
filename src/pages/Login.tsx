@@ -97,10 +97,10 @@ function Login() {
               color: 'var(--color-text)',
             }}
           >
-            Iniciar sesión
+            Sign in
           </h2>
           <p style={{ margin: 'var(--spacing-sm) 0 0 0', color: 'var(--color-text-secondary)' }}>
-            Accede a tu cuenta para continuar
+            Access your account to continue
           </p>
         </div>
 
@@ -153,7 +153,7 @@ function Login() {
 
             <div className="form-group">
               <label htmlFor="password" className="label">
-                Contraseña
+                Password
               </label>
               <div style={{ position: 'relative' }}>
                 <Lock
@@ -185,7 +185,7 @@ function Login() {
               className="btn btn--primary"
               style={{ width: '100%', marginTop: 'var(--spacing-md)' }}
             >
-              {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
 
@@ -216,14 +216,14 @@ function Login() {
             }}
           >
             <GoogleIcon size={20} />
-            Iniciar sesión con Google
+            Sign in with Google
           </button>
 
           <div style={{ marginTop: 'var(--spacing-lg)', textAlign: 'center' }}>
             <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-              ¿No tienes una cuenta?{' '}
+              Don't have an account?{' '}
               <Link to="/register" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
-                Regístrate
+                Sign up
               </Link>
             </p>
           </div>

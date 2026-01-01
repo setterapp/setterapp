@@ -234,7 +234,7 @@ function Agents() {
             setShowForm(false)
         } catch (err) {
             console.error('Error saving agent:', err)
-            alert('Error al guardar el agente. Por favor, intenta de nuevo.')
+            alert('Error saving agent. Please try again.')
         } finally {
             setSaving(false)
         }
@@ -298,7 +298,7 @@ function Agents() {
     }
 
     const handleDelete = async (agentId: string) => {
-        if (!confirm('¿Estás seguro de que quieres eliminar este agente?')) return
+        if (!confirm('Are you sure you want to delete this agent?')) return
         try {
             await deleteAgent(agentId)
         } catch (err) {

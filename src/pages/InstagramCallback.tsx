@@ -97,7 +97,7 @@ function InstagramCallback() {
         // Check for errors from Instagram
         if (errorParam) {
           console.error('❌ Error from Instagram:', errorParam, errorDescription)
-          setError(errorDescription || errorParam || 'Error al autorizar con Instagram')
+          setError(errorDescription || errorParam || 'Error authorizing with Instagram')
           setTimeout(() => navigate('/integrations'), 5000)
           return
         }
@@ -107,19 +107,19 @@ function InstagramCallback() {
         const storedUserId = localStorage.getItem('instagram_oauth_user_id')
 
         if (!state || state !== storedState) {
-          setError('Solicitud inválida. Por favor, intenta de nuevo.')
+          setError('Invalid request. Please try again.')
           setTimeout(() => navigate('/integrations'), 5000)
           return
         }
 
         if (!code) {
-          setError('No se recibió código de autorización')
+          setError('No authorization code received')
           setTimeout(() => navigate('/integrations'), 5000)
           return
         }
 
         if (!storedUserId) {
-          setError('Sesión no encontrada. Por favor, inicia sesión de nuevo.')
+          setError('Session not found. Please sign in again.')
           setTimeout(() => navigate('/login'), 5000)
           return
         }
@@ -148,7 +148,7 @@ function InstagramCallback() {
         // Redirect to integrations page
         navigate('/integrations')
       } catch (err: any) {
-        setError(err.message || 'Error al completar la conexión con Instagram')
+        setError(err.message || 'Error completing Instagram connection')
         setTimeout(() => navigate('/integrations'), 5000)
       }
     }

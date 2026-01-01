@@ -29,13 +29,13 @@ function Register() {
     setError(null)
 
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden')
+      setError('Passwords do not match')
       setLoading(false)
       return
     }
 
     if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
+      setError('Password must be at least 6 characters')
       setLoading(false)
       return
     }
@@ -128,10 +128,10 @@ function Register() {
               color: 'var(--color-text)',
             }}
           >
-            Crear cuenta
+            Create account
           </h2>
           <p style={{ margin: 'var(--spacing-sm) 0 0 0', color: 'var(--color-text-secondary)' }}>
-            Comienza a automatizar tus conversaciones
+            Start automating your conversations
           </p>
         </div>
 
@@ -167,7 +167,7 @@ function Register() {
             }}
           >
             <GoogleIcon size={20} />
-            Continuar con Google
+            Continue with Google
           </button>
 
           <div
@@ -187,7 +187,7 @@ function Register() {
           <form onSubmit={handleEmailRegister}>
             <div className="form-group">
               <label htmlFor="name" className="label">
-                Nombre
+                Name
               </label>
               <div style={{ position: 'relative' }}>
                 <User
@@ -207,7 +207,7 @@ function Register() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  placeholder="Tu nombre"
+                  placeholder="Your name"
                   style={{ paddingLeft: 'calc(var(--spacing-sm) + 26px)' }}
                 />
               </div>
@@ -243,7 +243,7 @@ function Register() {
 
             <div className="form-group">
               <label htmlFor="password" className="label">
-                Contraseña
+                Password
               </label>
               <div style={{ position: 'relative' }}>
                 <Lock
@@ -272,7 +272,7 @@ function Register() {
 
             <div className="form-group">
               <label htmlFor="confirmPassword" className="label">
-                Confirmar contraseña
+                Confirm password
               </label>
               <div style={{ position: 'relative' }}>
                 <Lock
@@ -305,15 +305,15 @@ function Register() {
               className="btn btn--primary"
               style={{ width: '100%', marginTop: 'var(--spacing-md)' }}
             >
-              {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+              {loading ? 'Creating account...' : 'Create account'}
             </button>
           </form>
 
           <div style={{ marginTop: 'var(--spacing-lg)', textAlign: 'center' }}>
             <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-              ¿Ya tienes una cuenta?{' '}
+              Already have an account?{' '}
               <Link to="/login" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
-                Inicia sesión
+                Sign in
               </Link>
             </p>
           </div>

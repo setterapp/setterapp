@@ -40,7 +40,7 @@ function Calendar() {
       // Verificar si hay sesión activa
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       if (sessionError || !session) {
-        setError('No hay sesión activa. Por favor, inicia sesión.')
+        setError('No active session. Please sign in.')
         setLoading(false)
         return
       }
@@ -55,13 +55,13 @@ function Calendar() {
 
       if (intError) {
         console.error('Error checking integration:', intError)
-        setError('Error al verificar la conexión de Google Calendar.')
+        setError('Error checking Google Calendar connection.')
         setLoading(false)
         return
       }
 
       if (!integrations || integrations.length === 0) {
-        setError('Google Calendar no está conectado. Por favor, conéctalo desde la página de Integraciones.')
+        setError('Google Calendar is not connected. Please connect it from the Integrations page.')
         setLoading(false)
         return
       }
@@ -71,7 +71,7 @@ function Calendar() {
       if (!hasToken) {
         // La integración está conectada pero no hay tokens (probablemente después de cerrar sesión)
         // Ofrecer reconectar automáticamente
-        setError('Google Calendar está conectado pero los tokens no están disponibles. Por favor, reconecta desde la página de Integraciones.')
+        setError('Google Calendar is connected but tokens are not available. Please reconnect from the Integrations page.')
         setLoading(false)
         return
       }
@@ -87,13 +87,13 @@ function Calendar() {
       setEvents(calendarEvents || [])
     } catch (err: any) {
       console.error('Error fetching events:', err)
-      let errorMessage = err.message || 'Error al cargar eventos'
+      let errorMessage = err.message || 'Error loading events'
 
-      // Mensajes de error más específicos
+      // More specific error messages
       if (errorMessage.includes('403') || errorMessage.includes('permisos')) {
-        errorMessage = 'No tienes permisos para acceder a Google Calendar. Por favor, reconecta Google Calendar desde la página de Integraciones y asegúrate de otorgar los permisos necesarios.'
-      } else if (errorMessage.includes('401') || errorMessage.includes('expirado') || errorMessage.includes('tokens no están disponibles') || errorMessage.includes('no están disponibles')) {
-        errorMessage = 'Google Calendar está conectado pero los tokens expiraron o no están disponibles. Por favor, reconecta Google Calendar desde la página de Integraciones.'
+        errorMessage = 'You do not have permission to access Google Calendar. Please reconnect Google Calendar from the Integrations page and make sure to grant the necessary permissions.'
+      } else if (errorMessage.includes('401') || errorMessage.includes('expired') || errorMessage.includes('tokens')) {
+        errorMessage = 'Google Calendar is connected but tokens expired or are not available. Please reconnect Google Calendar from the Integrations page.'
       }
 
       setError(errorMessage)
@@ -206,7 +206,7 @@ function Calendar() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--spacing-md)' }}>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ margin: 0, marginBottom: 'var(--spacing-sm)', fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>
-                    {event.summary || 'Sin título'}
+                    {event.summary || 'No title'}
                   </h3>
 
                   {event.description && (

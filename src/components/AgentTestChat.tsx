@@ -61,12 +61,12 @@ export default function AgentTestChat({ agent }: AgentTestChatProps) {
         content: response.content
       }])
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al generar respuesta'
-      console.error('Error generando respuesta:', err)
+      const message = err instanceof Error ? err.message : 'Error generating response'
+      console.error('Error generating response:', err)
       setError(message)
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Lo siento, ocurrió un error: ${message}`
+        content: `Sorry, an error occurred: ${message}`
       }])
     } finally {
       setLoading(false)
