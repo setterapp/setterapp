@@ -4,9 +4,11 @@ import Logo from '../components/Logo'
 import SectionHeader from '../components/SectionHeader'
 import { useAgents, type AgentConfig, type Agent, type AgentType } from '../hooks/useAgents'
 import { useKnowledgeBases } from '../hooks/useKnowledgeBases'
+import { useIntegrations } from '../hooks/useIntegrations'
 import { Switch } from '../components/ui/switch'
 import Modal from '../components/common/Modal'
 import AgentTestChat from '../components/AgentTestChat'
+import GoogleCalendarMiniCard from '../components/GoogleCalendarMiniCard'
 import WhatsAppIcon from '../components/icons/WhatsAppIcon'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import { formatDate, formatFullDate } from '../utils/date'
@@ -193,6 +195,8 @@ const LANGUAGE_ACCENTS = [
 function Agents() {
     const { agents, loading, error, createAgent, updateAgent, deleteAgent } = useAgents()
     const { knowledgeBases, createKnowledgeBase, deleteKnowledgeBase } = useKnowledgeBases()
+    const { integrations, refetch: refetchIntegrations } = useIntegrations()
+    const googleCalendarIntegration = integrations.find(i => i.type === 'google-calendar') || null
     const [showForm, setShowForm] = useState(false)
     const [editingAgent, setEditingAgent] = useState<string | null>(null)
     const [openMenuId, setOpenMenuId] = useState<string | null>(null)
@@ -950,7 +954,14 @@ Agent: Do you have your own business or work in sales?`}
 
                             {formData.config.enableMeetingScheduling && (
                                 <>
-                                    <div className="form-group">
+                                    {/* Google Calendar Integration Mini Card */}
+                                    <GoogleCalendarMiniCard
+                                        integration={googleCalendarIntegration}
+                                        onConnect={() => refetchIntegrations()}
+                                        onDisconnect={() => refetchIntegrations()}
+                                    />
+
+                                    <div className="form-group" style={{ marginTop: 'var(--spacing-lg)' }}>
                                         <label htmlFor="meetingEmail">Meeting Email *</label>
                                         <input
                                             id="meetingEmail"
