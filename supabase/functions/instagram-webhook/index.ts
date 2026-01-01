@@ -622,7 +622,7 @@ async function processInstagramEvent(event: any, pageId: string) {
 
                 // Actualizar el nombre si tenemos información del perfil y el contacto actual es solo un ID
                 if (userProfile && (existingConv.contact === senderId || !existingConv.contact || existingConv.contact.match(/^\d+$/))) {
-                    updateData.contact = displayName;
+                    updateData.contact = contactName;
                     updateData.contact_metadata = {
                         username: userProfile.username,
                         name: userProfile.name,
@@ -656,7 +656,7 @@ async function processInstagramEvent(event: any, pageId: string) {
                     platform_conversation_id: senderId,
                     platform_page_id: pageId,
                     contact_id: contactId,
-                    contact: displayName,
+                    contact: contactName,
                     last_message_at: lastMessageDateISO,
                     unread_count: 1,
                     lead_status: 'cold',
