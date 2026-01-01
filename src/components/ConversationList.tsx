@@ -144,11 +144,12 @@ function ConversationItem({
   const isNumeric = /^\d+$/.test(rawContact)
   const alias = conversation.contact_alias
   const contactDisplayName = conversation.contact_ref?.display_name
+  // Priorizar: display_name > name > alias > @username > ID
   const displayName =
     contactDisplayName ||
+    name ||
     alias ||
     (username ? `@${username}` : null) ||
-    name ||
     (rawContact
       ? (isNumeric
         ? (conversation.platform === 'whatsapp'

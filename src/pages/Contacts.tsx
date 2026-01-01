@@ -48,24 +48,26 @@ function Contacts() {
       header: t('contacts.table.name'),
       cell: ({ row }) => {
         const contact = row.original
-        const name =
-          contact.display_name ||
-          (contact.username ? `@${contact.username}` : null) ||
-          (contact.platform === 'whatsapp'
-            ? `+${contact.external_id}`
-            : `IG …${contact.external_id.slice(-6)}`)
-
+        const name = contact.display_name || '—'
         return (
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>
-              {name}
-            </div>
-            {contact.username && contact.display_name && (
-              <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                @{contact.username}
-              </div>
-            )}
-          </div>
+          <span style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>
+            {name}
+          </span>
+        )
+      },
+    },
+    {
+      accessorKey: 'username',
+      header: 'Username',
+      cell: ({ row }) => {
+        const contact = row.original
+        const username = contact.username
+        return username ? (
+          <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+            @{username}
+          </span>
+        ) : (
+          <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>—</span>
         )
       },
     },
@@ -76,19 +78,6 @@ function Contacts() {
         const email = row.getValue('email') as string | null
         return email ? (
           <span style={{ fontSize: 'var(--font-size-sm)' }}>{email}</span>
-        ) : (
-          <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>—</span>
-        )
-      },
-    },
-    {
-      accessorKey: 'phone',
-      header: t('contacts.table.phone'),
-      cell: ({ row }) => {
-        const contact = row.original
-        const phone = contact.phone || (contact.platform === 'whatsapp' ? `+${contact.external_id}` : null)
-        return phone ? (
-          <span style={{ fontSize: 'var(--font-size-sm)' }}>{phone}</span>
         ) : (
           <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>—</span>
         )
@@ -127,28 +116,22 @@ function Contacts() {
   const handleExportCSV = (selectedContacts: Contact[]) => {
     const headers = [
       t('contacts.table.name'),
+      'Username',
       t('contacts.table.email'),
-      t('contacts.table.phone'),
       t('contacts.table.platform'),
       t('contacts.table.leadStatus'),
       t('contacts.table.lastSeen'),
     ]
 
     const rows = selectedContacts.map(contact => {
-      const name =
-        contact.display_name ||
-        (contact.username ? `@${contact.username}` : null) ||
-        (contact.platform === 'whatsapp'
-          ? `+${contact.external_id}`
-          : `IG …${contact.external_id.slice(-6)}`)
-
+      const name = contact.display_name || ''
+      const username = contact.username ? `@${contact.username}` : ''
       const email = contact.email || ''
-      const phone = contact.phone || (contact.platform === 'whatsapp' ? `+${contact.external_id}` : '')
       const platform = contact.platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'
       const status = contact.lead_status ? t(`contacts.status.${contact.lead_status}`) : t('contacts.status.none')
       const lastSeen = contact.last_message_at ? formatDate(contact.last_message_at) : ''
 
-      return [name, email, phone, platform, status, lastSeen]
+      return [name, username, email, platform, status, lastSeen]
     })
 
     const csvContent = [
@@ -170,28 +153,22 @@ function Contacts() {
   const handleCopyToClipboard = async (selectedContacts: Contact[]) => {
     const headers = [
       t('contacts.table.name'),
+      'Username',
       t('contacts.table.email'),
-      t('contacts.table.phone'),
       t('contacts.table.platform'),
       t('contacts.table.leadStatus'),
       t('contacts.table.lastSeen'),
     ]
 
     const rows = selectedContacts.map(contact => {
-      const name =
-        contact.display_name ||
-        (contact.username ? `@${contact.username}` : null) ||
-        (contact.platform === 'whatsapp'
-          ? `+${contact.external_id}`
-          : `IG …${contact.external_id.slice(-6)}`)
-
+      const name = contact.display_name || ''
+      const username = contact.username ? `@${contact.username}` : ''
       const email = contact.email || ''
-      const phone = contact.phone || (contact.platform === 'whatsapp' ? `+${contact.external_id}` : '')
       const platform = contact.platform === 'whatsapp' ? 'WhatsApp' : 'Instagram'
       const status = contact.lead_status ? t(`contacts.status.${contact.lead_status}`) : t('contacts.status.none')
       const lastSeen = contact.last_message_at ? formatDate(contact.last_message_at) : ''
 
-      return [name, email, phone, platform, status, lastSeen]
+      return [name, username, email, platform, status, lastSeen]
     })
 
     const tsvContent = [

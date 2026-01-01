@@ -81,11 +81,12 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
   const name = conversation.contact_metadata?.name
   const rawContact = conversation.contact || ''
   const isNumeric = /^\d+$/.test(rawContact)
+  // Priorizar: display_name > name > alias > @username > ID
   const displayName =
     contactDisplayName ||
+    name ||
     alias ||
     (username ? `@${username}` : null) ||
-    name ||
     (rawContact
       ? (isNumeric
         ? (conversation.platform === 'whatsapp'
@@ -93,6 +94,8 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
           : `ID …${rawContact.slice(-6)}`)
         : rawContact)
       : 'No name')
+  // Solo mostrar username si el displayName no es el username
+  const showUsername = username && displayName !== `@${username}`
 
   return (
     <div className="chat-panel">
@@ -133,9 +136,16 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
           >
             <User size={18} color="var(--color-text-secondary)" />
           </div>
-          <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)', fontWeight: 600, flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {displayName}
-          </h3>
+          <div style={{ flexShrink: 1, minWidth: 0, overflow: 'hidden' }}>
+            <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {displayName}
+            </h3>
+            {showUsername && (
+              <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                @{username}
+              </p>
+            )}
+          </div>
           {/* Selector de lead status - estilo badge como en Agentes */}
           <select
             value={optimisticLeadStatus || ''}

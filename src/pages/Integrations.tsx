@@ -303,43 +303,33 @@ function Integrations() {
                     )}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <h3 style={{ margin: 0, marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>
-                      {integration.name}
-                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xs)' }}>
+                      <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-text)' }}>
+                        {integration.name}
+                      </h3>
+                      {/* Show connected account inline with name */}
+                      {isConnected && integration.config?.instagram_username && (
+                        <span style={{
+                          fontSize: 'var(--font-size-sm)',
+                          color: 'var(--color-text-secondary)',
+                          fontWeight: 500,
+                        }}>
+                          @{integration.config.instagram_username}
+                        </span>
+                      )}
+                      {isConnected && integration.config?.calendar_email && (
+                        <span style={{
+                          fontSize: 'var(--font-size-sm)',
+                          color: 'var(--color-text-secondary)',
+                          fontWeight: 500,
+                        }}>
+                          {integration.config.calendar_email}
+                        </span>
+                      )}
+                    </div>
                     <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: '1.4' }}>
                       {getIntegrationDescription(integration.type)}
                     </p>
-                    {/* Show connected account info */}
-                    {isConnected && integration.config?.instagram_username && (
-                      <p style={{
-                        margin: 0,
-                        marginTop: 'var(--spacing-xs)',
-                        fontSize: 'var(--font-size-sm)',
-                        color: 'var(--color-text)',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--spacing-xs)'
-                      }}>
-                        <span style={{ color: 'var(--color-success)' }}>●</span>
-                        @{integration.config.instagram_username}
-                      </p>
-                    )}
-                    {isConnected && integration.config?.calendar_email && (
-                      <p style={{
-                        margin: 0,
-                        marginTop: 'var(--spacing-xs)',
-                        fontSize: 'var(--font-size-sm)',
-                        color: 'var(--color-text)',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--spacing-xs)'
-                      }}>
-                        <span style={{ color: 'var(--color-success)' }}>●</span>
-                        {integration.config.calendar_email}
-                      </p>
-                    )}
                   </div>
                 </div>
 
