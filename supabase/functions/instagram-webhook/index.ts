@@ -278,13 +278,11 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
         }
 
         // Método 1 (PRINCIPAL): User Profile API con access token de Instagram
-        // Este es el método más confiable para obtener perfiles de usuarios que te enviaron mensajes
         // https://developers.facebook.com/docs/messenger-platform/instagram/features/user-profile/
-        // Meta renamed profile_pic to profile_picture_url in 2025
         try {
             console.log('📡 Intentando User Profile API (graph.facebook.com/v24.0)...');
             const response = await fetch(
-                `https://graph.facebook.com/v24.0/${senderId}?fields=name,username,profile_picture_url&access_token=${accessToken}`,
+                `https://graph.facebook.com/v24.0/${senderId}?fields=name,username,profile_pic&access_token=${accessToken}`,
                 { method: 'GET' }
             );
 
@@ -298,12 +296,12 @@ async function getInstagramUserProfile(userId: string, senderId: string): Promis
                         console.log('✅ Perfil obtenido via User Profile API:', {
                             username: data.username,
                             name: data.name,
-                            has_pic: !!data.profile_picture_url
+                            has_pic: !!data.profile_pic
                         });
                         return {
                             name: data.name || null,
                             username: data.username || null,
-                            profile_picture: data.profile_picture_url || null,
+                            profile_picture: data.profile_pic || null,
                         };
                     }
                     if (data.error) {
