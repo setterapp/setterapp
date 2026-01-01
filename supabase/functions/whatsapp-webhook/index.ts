@@ -13,6 +13,64 @@ if (!VERIFY_TOKEN) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// Plan limits for message checking
+const PLAN_LIMITS: Record<string, { messages: number }> = {
+    starter: { messages: 2000 },
+    growth: { messages: 10000 },
+    premium: { messages: Infinity },
+};
+
+// Admin emails that bypass limits
+const ADMIN_EMAILS = ['info@setterapp.ai', 'reviewer@setterapp.ai', 'mpozzetti@mimetria.com'];
+
+// Helper: Check if user has messages remaining
+async function checkMessageLimit(userId: string): Promise<{ canSend: boolean; reason?: string }> {
+    try {
+        // Get user email to check if admin
+        const { data: userData } = await supabase.auth.admin.getUserById(userId);
+        const userEmail = userData?.user?.email?.toLowerCase() || '';
+
+        if (ADMIN_EMAILS.includes(userEmail)) {
+            return { canSend: true };
+        }
+
+        // Get subscription
+        const { data: subscription } = await supabase
+            .from('subscriptions')
+            .select('plan, messages_used, status')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        // No subscription = no messages (user needs to subscribe)
+        if (!subscription) {
+            console.log('⚠️ User has no subscription, blocking AI response');
+            return { canSend: false, reason: 'no_subscription' };
+        }
+
+        // Check if subscription is active
+        if (subscription.status !== 'active' && subscription.status !== 'trialing') {
+            console.log('⚠️ Subscription not active:', subscription.status);
+            return { canSend: false, reason: 'inactive_subscription' };
+        }
+
+        const plan = subscription.plan || 'starter';
+        const limit = PLAN_LIMITS[plan]?.messages || 2000;
+        const used = subscription.messages_used || 0;
+
+        if (used >= limit) {
+            console.log(`⚠️ User has reached message limit: ${used}/${limit} (${plan})`);
+            return { canSend: false, reason: 'limit_reached' };
+        }
+
+        console.log(`✅ Message limit OK: ${used}/${limit} (${plan})`);
+        return { canSend: true };
+    } catch (error) {
+        console.error('Error checking message limit:', error);
+        // On error, allow the message (fail open for better UX)
+        return { canSend: true };
+    }
+}
+
 console.log(`WhatsApp webhook function initialized`);
 
 Deno.serve(async (req: Request) => {
@@ -589,6 +647,11 @@ async function saveOutboundMessage(conversationId: string, userId: string, conte
         message_type: 'text',
         metadata: { generated_by: 'ai', agent_id: agentId, model: 'gpt-4o-mini' }
     });
+
+    // Increment messages_used counter in subscription (only outbound/AI messages count)
+    await supabase.rpc('increment_messages_used', { p_user_id: userId }).catch(() => {
+        console.log('⚠️ Could not increment messages_used (user may not have subscription)');
+    });
 }
 
 async function generateAndSendAutoReply(
@@ -600,6 +663,13 @@ async function generateAndSendAutoReply(
 ) {
     try {
         console.log('🤖 Generando respuesta automática con IA...');
+
+        // 0. Check message limit before generating AI response
+        const limitCheck = await checkMessageLimit(userId);
+        if (!limitCheck.canSend) {
+            console.log(`⚠️ Message limit reached, not generating AI response: ${limitCheck.reason}`);
+            return;
+        }
 
         const agent = await getWhatsAppAgent(userId);
         if (!agent) {

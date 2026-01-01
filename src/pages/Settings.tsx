@@ -6,7 +6,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { useTranslation } from 'react-i18next'
 import { Checkbox } from '../components/ui/checkbox'
 import SectionHeader from '../components/SectionHeader'
-import { useSubscription, PLAN_LIMITS } from '../hooks/useSubscription'
+import { useSubscription } from '../hooks/useSubscription'
 import i18n from '../i18n'
 
 interface UserSettings {
@@ -44,7 +44,7 @@ const defaultSettings: UserSettings = {
 }
 
 function SubscriptionSection() {
-  const { subscription, plan, isActive, isExpiring, openPortal, loading, messagesUsed, messagesLimit, isAdmin, adminPlanOverride, setAdminPlanOverride } = useSubscription()
+  const { subscription, plan, isActive, isExpiring, openPortal, loading, messagesUsed, messagesLimit, activeAgentsCount, agentsLimit, knowledgeBasesCount, knowledgeBasesLimit, isAdmin, adminPlanOverride, setAdminPlanOverride } = useSubscription()
 
   const planNames: Record<string, string> = {
     starter: 'Starter',
@@ -187,16 +187,71 @@ function SubscriptionSection() {
             )}
           </div>
 
-          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-            <p style={{ margin: '0 0 4px 0' }}>
-              <strong>Plan limits:</strong> {PLAN_LIMITS[plan || 'starter'].agents} agents, {PLAN_LIMITS[plan || 'starter'].knowledgeBases} knowledge bases
-            </p>
-            {subscription?.current_period_end && (
+          {/* Agents & Knowledge Bases Usage */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-xs)' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600 }}>Active Agents</span>
+                <span style={{
+                  fontSize: 'var(--font-size-xs)',
+                  fontWeight: 600,
+                  color: activeAgentsCount >= agentsLimit ? '#f38ba8' : 'var(--color-text-secondary)'
+                }}>
+                  {activeAgentsCount} / {agentsLimit}
+                </span>
+              </div>
+              <div style={{
+                width: '100%',
+                height: '6px',
+                background: '#e2e8f0',
+                borderRadius: '3px',
+                overflow: 'hidden',
+                border: '1px solid #000'
+              }}>
+                <div style={{
+                  width: `${Math.min((activeAgentsCount / agentsLimit) * 100, 100)}%`,
+                  height: '100%',
+                  background: activeAgentsCount >= agentsLimit ? '#f38ba8' : '#a6e3a1',
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+            </div>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600 }}>Knowledge Bases</span>
+                <span style={{
+                  fontSize: 'var(--font-size-xs)',
+                  fontWeight: 600,
+                  color: knowledgeBasesCount >= knowledgeBasesLimit ? '#f38ba8' : 'var(--color-text-secondary)'
+                }}>
+                  {knowledgeBasesCount} / {knowledgeBasesLimit}
+                </span>
+              </div>
+              <div style={{
+                width: '100%',
+                height: '6px',
+                background: '#e2e8f0',
+                borderRadius: '3px',
+                overflow: 'hidden',
+                border: '1px solid #000'
+              }}>
+                <div style={{
+                  width: `${Math.min((knowledgeBasesCount / knowledgeBasesLimit) * 100, 100)}%`,
+                  height: '100%',
+                  background: knowledgeBasesCount >= knowledgeBasesLimit ? '#f38ba8' : '#a6e3a1',
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+            </div>
+          </div>
+
+          {subscription?.current_period_end && (
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: 'var(--spacing-xs)' }}>
               <p style={{ margin: 0 }}>
                 <strong>Renews:</strong> {formatDate(subscription.current_period_end)}
               </p>
-            )}
-          </div>
+            </div>
+          )}
 
           <button
             onClick={() => openPortal()}

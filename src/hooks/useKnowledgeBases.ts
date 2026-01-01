@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { PLAN_LIMITS, type SubscriptionPlan } from './useSubscription'
+
+// Admin emails that bypass limits
+const ADMIN_EMAILS = ['info@setterapp.ai', 'reviewer@setterapp.ai', 'mpozzetti@mimetria.com']
 
 export interface KnowledgeBase {
   id: string
@@ -51,6 +55,33 @@ export function useKnowledgeBases(agentId?: string) {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) throw new Error('User not authenticated')
+
+      const user = session.user
+      const userEmail = user.email?.toLowerCase() || ''
+      const isAdmin = ADMIN_EMAILS.includes(userEmail)
+
+      // Check knowledge base limit unless admin
+      if (!isAdmin) {
+        // Get subscription
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select('plan')
+          .eq('user_id', user.id)
+          .maybeSingle()
+
+        const plan = (subscription?.plan || 'starter') as SubscriptionPlan
+        const limit = PLAN_LIMITS[plan].knowledgeBases
+
+        // Count current knowledge bases for this user
+        const { count } = await supabase
+          .from('knowledge_bases')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+
+        if ((count || 0) >= limit) {
+          throw new Error(`Has alcanzado el límite de ${limit} base${limit > 1 ? 's' : ''} de conocimiento para tu plan ${plan}. Mejora tu plan para crear más.`)
+        }
+      }
 
       const { data, error: insertError } = await supabase
         .from('knowledge_bases')

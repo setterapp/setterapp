@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { PLAN_LIMITS, type SubscriptionPlan } from './useSubscription'
+
+// Admin emails that bypass limits
+const ADMIN_EMAILS = ['info@setterapp.ai', 'reviewer@setterapp.ai', 'mpozzetti@mimetria.com']
 
 // Tipos de agente predefinidos
 export type AgentType = 'setter' | 'support' | 'sales' | 'custom'
@@ -247,6 +251,32 @@ export function useAgents() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) throw new Error('User not authenticated')
       const user = session.user
+      const userEmail = user.email?.toLowerCase() || ''
+      const isAdmin = ADMIN_EMAILS.includes(userEmail)
+
+      // Check agent activation limit (only if assigning a platform)
+      if (!isAdmin && agent.platform) {
+        // Get subscription
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select('plan')
+          .eq('user_id', user.id)
+          .maybeSingle()
+
+        const plan = (subscription?.plan || 'starter') as SubscriptionPlan
+        const limit = PLAN_LIMITS[plan].agents
+
+        // Count ACTIVE agents (those with platform assigned)
+        const { count } = await supabase
+          .from('agents')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .not('platform', 'is', null)
+
+        if ((count || 0) >= limit) {
+          throw new Error(`Has alcanzado el límite de ${limit} agente${limit > 1 ? 's' : ''} activo${limit > 1 ? 's' : ''} para tu plan ${plan}. Desactiva un agente o mejora tu plan.`)
+        }
+      }
 
       const { data, error: insertError } = await supabase
         .from('agents')
@@ -277,6 +307,42 @@ export function useAgents() {
 
   const updateAgent = async (id: string, updates: Partial<Agent>) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) throw new Error('User not authenticated')
+      const user = session.user
+      const userEmail = user.email?.toLowerCase() || ''
+      const isAdmin = ADMIN_EMAILS.includes(userEmail)
+
+      // Check if activating agent (setting platform when it was null)
+      if (!isAdmin && updates.platform) {
+        // Get current agent to check if it already has a platform
+        const currentAgent = agents.find(a => a.id === id)
+        const isNewActivation = currentAgent && !currentAgent.platform
+
+        if (isNewActivation) {
+          // Get subscription
+          const { data: subscription } = await supabase
+            .from('subscriptions')
+            .select('plan')
+            .eq('user_id', user.id)
+            .maybeSingle()
+
+          const plan = (subscription?.plan || 'starter') as SubscriptionPlan
+          const limit = PLAN_LIMITS[plan].agents
+
+          // Count ACTIVE agents (those with platform assigned)
+          const { count } = await supabase
+            .from('agents')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .not('platform', 'is', null)
+
+          if ((count || 0) >= limit) {
+            throw new Error(`Has alcanzado el límite de ${limit} agente${limit > 1 ? 's' : ''} activo${limit > 1 ? 's' : ''} para tu plan ${plan}. Desactiva un agente o mejora tu plan.`)
+          }
+        }
+      }
+
       const { data, error: updateError } = await supabase
         .from('agents')
         .update(updates)

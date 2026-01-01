@@ -45,6 +45,8 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [activeAgentsCount, setActiveAgentsCount] = useState(0)
+  const [knowledgeBasesCount, setKnowledgeBasesCount] = useState(0)
   const [adminPlanOverride, setAdminPlanOverrideState] = useState<SubscriptionPlan | null>(() => {
     const stored = localStorage.getItem(ADMIN_PLAN_OVERRIDE_KEY)
     return stored as SubscriptionPlan | null
@@ -64,17 +66,31 @@ export function useSubscription() {
 
       setUserEmail(session.user.email || null)
 
-      const { data, error: fetchError } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .maybeSingle()
+      // Fetch subscription, active agents count, and knowledge bases count in parallel
+      const [subResult, agentsResult, kbResult] = await Promise.all([
+        supabase
+          .from('subscriptions')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .maybeSingle(),
+        supabase
+          .from('agents')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', session.user.id)
+          .not('platform', 'is', null),
+        supabase
+          .from('knowledge_bases')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', session.user.id)
+      ])
 
-      if (fetchError) {
-        throw fetchError
+      if (subResult.error) {
+        throw subResult.error
       }
 
-      setSubscription(data || null)
+      setSubscription(subResult.data || null)
+      setActiveAgentsCount(agentsResult.count || 0)
+      setKnowledgeBasesCount(kbResult.count || 0)
     } catch (err: any) {
       setError(err.message)
       setSubscription(null)
@@ -178,6 +194,8 @@ export function useSubscription() {
   // Get messages used (admins can simulate usage based on plan limits)
   const messagesUsed = subscription?.messages_used || 0
   const messagesLimit = limits?.messages || 0
+  const agentsLimit = limits?.agents || 0
+  const knowledgeBasesLimit = limits?.knowledgeBases || 0
 
   return {
     subscription,
@@ -193,6 +211,10 @@ export function useSubscription() {
     setAdminPlanOverride,
     messagesUsed,
     messagesLimit,
+    activeAgentsCount,
+    agentsLimit,
+    knowledgeBasesCount,
+    knowledgeBasesLimit,
     createCheckout,
     openPortal,
     refetch: fetchSubscription,
