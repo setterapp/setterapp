@@ -44,7 +44,7 @@ const defaultSettings: UserSettings = {
 }
 
 function SubscriptionSection() {
-  const { subscription, plan, isActive, isExpiring, openPortal, loading, messagesUsed, messagesLimit } = useSubscription()
+  const { subscription, plan, isActive, isExpiring, openPortal, loading, messagesUsed, messagesLimit, isAdmin, adminPlanOverride, setAdminPlanOverride } = useSubscription()
 
   const planNames: Record<string, string> = {
     starter: 'Starter',
@@ -73,9 +73,43 @@ function SubscriptionSection() {
         Subscription
       </h3>
 
+      {/* Admin Plan Override Section */}
+      {isAdmin && (
+        <div style={{
+          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+          border: '2px solid #000',
+          borderRadius: 'var(--border-radius)',
+          padding: 'var(--spacing-md)',
+          marginBottom: 'var(--spacing-md)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' }}>
+            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700 }}>🔧 ADMIN MODE</span>
+          </div>
+          <label style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+            Simulate Plan (for testing)
+          </label>
+          <select
+            className="input select"
+            value={adminPlanOverride || ''}
+            onChange={(e) => setAdminPlanOverride(e.target.value as 'starter' | 'growth' | 'premium' | null || null)}
+            style={{ fontSize: 'var(--font-size-sm)', padding: '8px 12px', width: '100%' }}
+          >
+            <option value="">No override (Premium)</option>
+            <option value="starter">Starter (1 agent, 2K msgs)</option>
+            <option value="growth">Growth (3 agents, 10K msgs)</option>
+            <option value="premium">Premium (10 agents, unlimited)</option>
+          </select>
+          {adminPlanOverride && (
+            <p style={{ fontSize: 'var(--font-size-xs)', color: '#92400e', margin: '8px 0 0 0' }}>
+              ⚠️ Simulating <strong>{planNames[adminPlanOverride]}</strong> plan limits
+            </p>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>Loading...</p>
-      ) : subscription ? (
+      ) : subscription || isAdmin ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
             <span
@@ -102,11 +136,11 @@ function SubscriptionSection() {
                 color: '#000',
               }}
             >
-              {isActive ? 'Active' : subscription.status}
+              {isActive ? 'Active' : (subscription?.status || 'Admin')}
             </span>
           </div>
 
-          {isExpiring && (
+          {isExpiring && subscription && (
             <p style={{ fontSize: 'var(--font-size-xs)', color: '#f59e0b', margin: 0 }}>
               Your subscription will end on {formatDate(subscription.current_period_end)}
             </p>
@@ -157,9 +191,11 @@ function SubscriptionSection() {
             <p style={{ margin: '0 0 4px 0' }}>
               <strong>Plan limits:</strong> {PLAN_LIMITS[plan || 'starter'].agents} agents, {PLAN_LIMITS[plan || 'starter'].knowledgeBases} knowledge bases
             </p>
-            <p style={{ margin: 0 }}>
-              <strong>Renews:</strong> {formatDate(subscription.current_period_end)}
-            </p>
+            {subscription?.current_period_end && (
+              <p style={{ margin: 0 }}>
+                <strong>Renews:</strong> {formatDate(subscription.current_period_end)}
+              </p>
+            )}
           </div>
 
           <button

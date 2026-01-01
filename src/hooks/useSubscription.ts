@@ -4,6 +4,9 @@ import { supabase } from '../lib/supabase'
 // Admin emails that bypass subscription checks
 const ADMIN_EMAILS = ['info@setterapp.ai', 'reviewer@setterapp.ai', 'mpozzetti@mimetria.com']
 
+// Key for storing admin plan override in localStorage
+const ADMIN_PLAN_OVERRIDE_KEY = 'admin_plan_override'
+
 export type SubscriptionPlan = 'starter' | 'growth' | 'premium'
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'inactive'
 
@@ -42,6 +45,10 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [adminPlanOverride, setAdminPlanOverrideState] = useState<SubscriptionPlan | null>(() => {
+    const stored = localStorage.getItem(ADMIN_PLAN_OVERRIDE_KEY)
+    return stored as SubscriptionPlan | null
+  })
 
   const fetchSubscription = async () => {
     try {
@@ -92,8 +99,22 @@ export function useSubscription() {
   // Check if user is admin
   const isAdmin = userEmail ? ADMIN_EMAILS.includes(userEmail.toLowerCase()) : false
 
+  // Set admin plan override (only works for admins)
+  const setAdminPlanOverride = (plan: SubscriptionPlan | null) => {
+    if (!isAdmin) return
+    if (plan) {
+      localStorage.setItem(ADMIN_PLAN_OVERRIDE_KEY, plan)
+    } else {
+      localStorage.removeItem(ADMIN_PLAN_OVERRIDE_KEY)
+    }
+    setAdminPlanOverrideState(plan)
+  }
+
+  // Effective plan (admin override takes precedence if set)
+  const effectivePlan = isAdmin && adminPlanOverride ? adminPlanOverride : (subscription?.plan || null)
+
   // Check if subscription is active
-  const isActive = subscription?.status === 'active' || subscription?.status === 'trialing'
+  const isActive = isAdmin || subscription?.status === 'active' || subscription?.status === 'trialing'
 
   // Check if subscription is expiring soon (cancelled but still active)
   const isExpiring = subscription?.cancel_at_period_end === true && isActive
@@ -105,8 +126,8 @@ export function useSubscription() {
     new Date(subscription.current_period_end) > new Date()
   )
 
-  // Get current plan limits (admins get premium limits)
-  const limits = isAdmin ? PLAN_LIMITS.premium : (subscription?.plan ? PLAN_LIMITS[subscription.plan] : null)
+  // Get current plan limits (uses effective plan, or premium if admin without override)
+  const limits = effectivePlan ? PLAN_LIMITS[effectivePlan] : (isAdmin ? PLAN_LIMITS.premium : null)
 
   // Create checkout session
   const createCheckout = async (plan: SubscriptionPlan) => {
@@ -154,8 +175,8 @@ export function useSubscription() {
     }
   }
 
-  // Get messages used (admins always show 0 usage)
-  const messagesUsed = isAdmin ? 0 : (subscription?.messages_used || 0)
+  // Get messages used (admins can simulate usage based on plan limits)
+  const messagesUsed = subscription?.messages_used || 0
   const messagesLimit = limits?.messages || 0
 
   return {
@@ -167,7 +188,9 @@ export function useSubscription() {
     isExpiring,
     hasAccess,
     limits,
-    plan: isAdmin ? 'premium' as SubscriptionPlan : (subscription?.plan || null),
+    plan: effectivePlan || (isAdmin ? 'premium' as SubscriptionPlan : null),
+    adminPlanOverride,
+    setAdminPlanOverride,
     messagesUsed,
     messagesLimit,
     createCheckout,
