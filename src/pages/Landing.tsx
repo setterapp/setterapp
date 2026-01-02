@@ -535,6 +535,7 @@ function Landing() {
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
               gap: 'var(--spacing-lg)',
+              alignItems: 'stretch',
             }}
           >
             {[
@@ -551,11 +552,12 @@ function Landing() {
                   borderRadius: '16px',
                   padding: 'var(--spacing-xl)',
                   display: 'flex',
-                  alignItems: 'flex-start',
+                  alignItems: 'center',
                   gap: 'var(--spacing-lg)',
                   boxShadow: '4px 4px 0px 0px #000',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                   cursor: 'default',
+                  minHeight: '120px',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translate(-2px, -2px)'
