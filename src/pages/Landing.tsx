@@ -203,13 +203,14 @@ function Landing() {
               lineHeight: 1.2,
             }}
           >
-            AI Appointment Setter for{' '}
-            <span style={{ color: 'var(--color-primary)' }}>Instagram</span>
+            Instagram Sales on{' '}
+            <span style={{ color: 'var(--color-primary)' }}>Autopilot</span>
           </h1>
 
-          <p
+          <h2
             style={{
               fontSize: 'var(--font-size-lg)',
+              fontWeight: 500,
               color: 'var(--color-text-secondary)',
               margin: '0 0 var(--spacing-lg) 0',
               lineHeight: 1.6,
@@ -218,9 +219,8 @@ function Landing() {
               marginRight: 'auto',
             }}
           >
-            Automate your appointment booking 24/7 with our AI setter. Handle Instagram DMs
-            automatically, qualify leads, and book meetings while you sleep.
-          </p>
+            Deploy ultra-realistic AI agents that engage leads naturally and book appointments 24/7. Stop splitting your profits—get a top-tier setter with zero commissions.
+          </h2>
 
           {/* Meta Tech Provider Badge */}
           <div
