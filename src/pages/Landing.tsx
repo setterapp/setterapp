@@ -140,28 +140,20 @@ function Landing() {
         className="landing-hero"
         style={{
           padding: '80px var(--spacing-xl)',
-          maxWidth: '1400px',
+          textAlign: 'center',
+          maxWidth: '1000px',
           margin: '0 auto',
         }}
       >
         <div
+          className="card"
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(450px, 100%), 1fr))',
-            gap: 'var(--spacing-2xl)',
-            alignItems: 'center',
+            padding: 'var(--spacing-2xl)',
+            marginBottom: 'var(--spacing-2xl)',
+            animation: 'slideInUp 0.6s ease-out',
+            position: 'relative',
           }}
         >
-          {/* Left Column - Content Card */}
-          <div
-            className="card"
-            style={{
-              padding: 'var(--spacing-2xl)',
-              animation: 'slideInUp 0.6s ease-out',
-              position: 'relative',
-              textAlign: 'center',
-            }}
-          >
           {/* Floating Badge */}
           <div
             className="hero-badge"
@@ -245,7 +237,7 @@ function Landing() {
             }}
           >
             {/* Infinity Symbol */}
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="#0081FB" xmlns="http://www.w3.org/2000/svg">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="#0081FB" xmlns="http://www.w3.org/2000/svg">
               <path d="M5.68 5.792 7.345 7.75 5.681 9.708a2.75 2.75 0 1 1 0-3.916ZM8 6.978 6.416 5.113l-.014-.015a3.75 3.75 0 1 0 0 5.304l.014-.015L8 8.522l1.584 1.865.014.015a3.75 3.75 0 1 0 0-5.304l-.014.015zm.656.772 1.663-1.958a2.75 2.75 0 1 1 0 3.916z"/>
             </svg>
             <span style={{ fontSize: '14px', fontWeight: 600, color: '#000' }}>
@@ -258,251 +250,8 @@ function Landing() {
               Get Started
               <ArrowRight size={20} />
             </Link>
-            <Link to="/login" className="btn btn--secondary btn--lg" style={{ animation: 'slideInUp 1s ease-out' }}>
-              Log In
-            </Link>
           </div>
         </div>
-
-        {/* Right Column - Mobile Mockup */}
-        <div style={{ display: 'flex', justifyContent: 'center', animation: 'slideInUp 0.8s ease-out' }}>
-          {/* iPhone Mockup */}
-          <div
-            style={{
-              width: '320px',
-              height: '640px',
-              background: '#000',
-              borderRadius: '40px',
-              padding: '12px',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1)',
-              position: 'relative',
-            }}
-          >
-            {/* Screen */}
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                background: '#fff',
-                borderRadius: '32px',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              {/* Instagram Header */}
-              <div
-                style={{
-                  padding: '12px 16px',
-                  borderBottom: '1px solid #dbdbdb',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  background: '#fff',
-                }}
-              >
-                <div
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)',
-                    border: '2px solid #fff',
-                  }}
-                />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#000' }}>FitCoach Pro</div>
-                  <div style={{ fontSize: '12px', color: '#8e8e8e' }}>Active now</div>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div
-                style={{
-                  flex: 1,
-                  padding: '16px',
-                  overflowY: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                  background: '#fff',
-                }}
-              >
-                {/* Incoming message */}
-                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                  <div
-                    style={{
-                      maxWidth: '75%',
-                      padding: '10px 14px',
-                      background: '#efefef',
-                      borderRadius: '18px',
-                      fontSize: '13px',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    Hi! I saw your post about the transformation program. How does it work?
-                  </div>
-                </div>
-
-                {/* Outgoing message */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <div
-                    style={{
-                      maxWidth: '75%',
-                      padding: '10px 14px',
-                      background: '#0095f6',
-                      color: '#fff',
-                      borderRadius: '18px',
-                      fontSize: '13px',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    Hey! 👋 Thanks for reaching out! Our 3-month transformation program includes personalized training plans, nutrition guidance, and weekly check-ins. What are your fitness goals?
-                  </div>
-                </div>
-
-                {/* Incoming */}
-                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                  <div
-                    style={{
-                      maxWidth: '75%',
-                      padding: '10px 14px',
-                      background: '#efefef',
-                      borderRadius: '18px',
-                      fontSize: '13px',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    I want to lose 20lbs and build muscle. How much does it cost?
-                  </div>
-                </div>
-
-                {/* Outgoing */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <div
-                    style={{
-                      maxWidth: '75%',
-                      padding: '10px 14px',
-                      background: '#0095f6',
-                      color: '#fff',
-                      borderRadius: '18px',
-                      fontSize: '13px',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    Perfect goals! The program is $997 for 3 months. That includes everything - custom plans, unlimited messaging support, and accountability. Would you like to jump on a quick call to discuss your specific situation?
-                  </div>
-                </div>
-
-                {/* Incoming */}
-                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                  <div
-                    style={{
-                      maxWidth: '75%',
-                      padding: '10px 14px',
-                      background: '#efefef',
-                      borderRadius: '18px',
-                      fontSize: '13px',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    Yes! When are you available?
-                  </div>
-                </div>
-
-                {/* Outgoing - Meeting booked */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <div
-                    style={{
-                      maxWidth: '75%',
-                      padding: '10px 14px',
-                      background: '#0095f6',
-                      color: '#fff',
-                      borderRadius: '18px',
-                      fontSize: '13px',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    Great! I have openings tomorrow at 10am, 2pm, or 5pm EST. What works best for you?
-                  </div>
-                </div>
-
-                {/* Incoming */}
-                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                  <div
-                    style={{
-                      maxWidth: '75%',
-                      padding: '10px 14px',
-                      background: '#efefef',
-                      borderRadius: '18px',
-                      fontSize: '13px',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    2pm works perfect!
-                  </div>
-                </div>
-
-                {/* Outgoing - Confirmation */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <div
-                    style={{
-                      maxWidth: '75%',
-                      padding: '12px 16px',
-                      background: '#00c851',
-                      color: '#fff',
-                      borderRadius: '18px',
-                      fontSize: '13px',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    ✅ Booked! Your consultation is tomorrow at 2pm EST. I've sent you a Google Meet link via email. Looking forward to helping you hit those goals! 💪
-                  </div>
-                </div>
-              </div>
-
-              {/* Message Input (disabled) */}
-              <div
-                style={{
-                  padding: '12px 16px',
-                  borderTop: '1px solid #dbdbdb',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: '#fff',
-                }}
-              >
-                <div
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    background: '#f0f0f0',
-                    borderRadius: '20px',
-                    fontSize: '13px',
-                    color: '#8e8e8e',
-                  }}
-                >
-                  Message...
-                </div>
-              </div>
-            </div>
-
-            {/* Notch */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '12px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '120px',
-                height: '28px',
-                background: '#000',
-                borderRadius: '0 0 20px 20px',
-              }}
-            />
-          </div>
-        </div>
-      </div>
       </section>
 
       {/* 2. PAIN POINTS SECTION */}
