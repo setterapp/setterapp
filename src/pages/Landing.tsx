@@ -104,7 +104,7 @@ function Landing() {
 
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg-secondary)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--color-primary)' }}>
       {/* Header */}
       <header
         className="landing-header"
@@ -121,7 +121,7 @@ function Landing() {
       >
         <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
           <Logo size={48} variant="icon" />
-          <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: 'var(--color-text)' }}>
+          <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: '#fff' }}>
             setterapp.ai
           </span>
         </Link>
@@ -341,10 +341,74 @@ function Landing() {
         </div>
       </section>
 
+      {/* STATS SECTION - Social Proof */}
+      <section
+        style={{
+          padding: '60px var(--spacing-xl)',
+          background: 'rgba(255,255,255,0.1)',
+          backdropFilter: 'blur(10px)',
+        }}
+      >
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))',
+              gap: 'var(--spacing-xl)',
+            }}
+          >
+            {[
+              { number: '10,000+', label: 'Messages Sent', icon: '💬' },
+              { number: '10+', label: 'Happy Clients', icon: '🎯' },
+              { number: '95%', label: 'Response Rate', icon: '⚡' },
+              { number: '24/7', label: 'Always Available', icon: '🌙' },
+            ].map((stat, index) => (
+              <div
+                key={index}
+                style={{
+                  background: 'rgba(255,255,255,0.95)',
+                  border: '3px solid #000',
+                  borderRadius: '16px',
+                  padding: 'var(--spacing-xl)',
+                  textAlign: 'center',
+                  boxShadow: '4px 4px 0px 0px #000',
+                  animation: `slideInUp 0.6s ease-out ${index * 0.1}s both`,
+                }}
+              >
+                <div style={{ fontSize: '48px', marginBottom: 'var(--spacing-sm)' }}>
+                  {stat.icon}
+                </div>
+                <div
+                  style={{
+                    fontSize: 'clamp(2rem, 4vw, 3rem)',
+                    fontWeight: 800,
+                    color: 'var(--color-primary)',
+                    marginBottom: 'var(--spacing-xs)',
+                    lineHeight: 1,
+                  }}
+                >
+                  {stat.number}
+                </div>
+                <div
+                  style={{
+                    fontSize: 'var(--font-size-md)',
+                    fontWeight: 600,
+                    color: 'var(--color-text-secondary)',
+                  }}
+                >
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* 2. PAIN POINTS SECTION */}
       <section
         style={{
           padding: '60px var(--spacing-xl)',
+          background: 'var(--color-bg-secondary)',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -425,6 +489,7 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
+          background: 'var(--color-primary)',
         }}
       >
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
@@ -434,7 +499,7 @@ function Landing() {
               fontWeight: 700,
               textAlign: 'center',
               margin: '0 0 var(--spacing-2xl) 0',
-              color: 'var(--color-text)',
+              color: '#fff',
             }}
           >
             AI vs Human Setter
@@ -503,6 +568,7 @@ function Landing() {
         className="landing-features"
         style={{
           padding: '60px var(--spacing-xl)',
+          background: 'var(--color-bg-secondary)',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -580,7 +646,7 @@ function Landing() {
       <section
         style={{
           padding: '80px var(--spacing-xl)',
-          background: 'linear-gradient(180deg, #fafafa 0%, #fff 100%)',
+          background: 'var(--color-primary)',
         }}
       >
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
@@ -590,7 +656,7 @@ function Landing() {
               fontWeight: 700,
               textAlign: 'center',
               margin: '0 0 var(--spacing-sm) 0',
-              color: 'var(--color-text)',
+              color: '#fff',
             }}
           >
             Simple, Transparent Pricing
@@ -598,7 +664,7 @@ function Landing() {
           <p
             style={{
               textAlign: 'center',
-              color: 'var(--color-text-secondary)',
+              color: 'rgba(255,255,255,0.9)',
               margin: '0 0 var(--spacing-2xl) 0',
               fontSize: 'var(--font-size-lg)',
             }}
@@ -859,6 +925,7 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
+          background: 'var(--color-bg-secondary)',
         }}
       >
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -892,6 +959,7 @@ function Landing() {
         style={{
           padding: '80px var(--spacing-xl)',
           textAlign: 'center',
+          background: 'var(--color-primary)',
         }}
       >
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
@@ -915,7 +983,7 @@ function Landing() {
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
               margin: '0 0 var(--spacing-md) 0',
-              color: 'var(--color-text)',
+              color: '#fff',
             }}
           >
             Ready to Automate Your Appointment Booking?
@@ -923,7 +991,7 @@ function Landing() {
           <p
             style={{
               fontSize: 'var(--font-size-lg)',
-              color: 'var(--color-text-secondary)',
+              color: 'rgba(255,255,255,0.9)',
               margin: '0 0 var(--spacing-2xl) 0',
             }}
           >
