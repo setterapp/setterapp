@@ -175,23 +175,110 @@ function Landing() {
             Plans from $49/mo
           </div>
 
+          {/* Connected Logos */}
           <div
             style={{
-              width: 'clamp(80px, 20vw, 120px)',
-              height: 'clamp(80px, 20vw, 120px)',
-              background: 'var(--color-primary)',
-              border: '2px solid #000',
-              borderRadius: '12px',
-              margin: '0 auto var(--spacing-lg)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '3px 3px 0px 0px #000',
-              animation: 'float 3s ease-in-out infinite',
+              gap: '24px',
+              margin: '0 auto var(--spacing-lg)',
             }}
           >
-            <Logo size={48} variant="icon" />
+            {/* Robot Logo */}
+            <div
+              style={{
+                width: '80px',
+                height: '80px',
+                background: 'var(--color-primary)',
+                border: '2px solid #000',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '3px 3px 0px 0px #000',
+                animation: 'float 3s ease-in-out infinite',
+              }}
+            >
+              <Logo size={40} variant="icon" />
+            </div>
+
+            {/* Animated Connection Line */}
+            <div
+              style={{
+                position: 'relative',
+                width: '60px',
+                height: '4px',
+                background: 'linear-gradient(90deg, var(--color-primary) 0%, #f38ba8 100%)',
+                borderRadius: '2px',
+              }}
+            >
+              {/* Animated dots */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '0',
+                  width: '8px',
+                  height: '8px',
+                  background: '#fff',
+                  borderRadius: '50%',
+                  transform: 'translateY(-50%)',
+                  animation: 'slideData 2s ease-in-out infinite',
+                  boxShadow: '0 0 8px rgba(255,255,255,0.8)',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: '0',
+                  width: '8px',
+                  height: '8px',
+                  background: '#fff',
+                  borderRadius: '50%',
+                  transform: 'translateY(-50%)',
+                  animation: 'slideDataReverse 2s ease-in-out infinite',
+                  boxShadow: '0 0 8px rgba(255,255,255,0.8)',
+                }}
+              />
+            </div>
+
+            {/* Instagram Logo */}
+            <div
+              style={{
+                width: '80px',
+                height: '80px',
+                background: '#f38ba8',
+                border: '2px solid #000',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '3px 3px 0px 0px #000',
+                animation: 'float 3s ease-in-out infinite 0.5s',
+              }}
+            >
+              <InstagramIcon size={40} color="#000" />
+            </div>
           </div>
+
+          <style>
+            {`
+              @keyframes slideData {
+                0%, 100% { left: 0; opacity: 0; }
+                10% { opacity: 1; }
+                90% { opacity: 1; }
+                100% { left: calc(100% - 8px); opacity: 0; }
+              }
+              @keyframes slideDataReverse {
+                0%, 100% { right: 0; opacity: 0; }
+                10% { opacity: 1; }
+                90% { opacity: 1; }
+                100% { right: calc(100% - 8px); opacity: 0; }
+              }
+            `}
+          </style>
 
           <h1
             className="landing-hero-title"
