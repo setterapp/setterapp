@@ -712,14 +712,13 @@ function Landing() {
                 borderRadius: '20px',
                 border: '3px solid #000',
                 boxShadow: '6px 6px 0px 0px #000',
-                textAlign: 'center',
               }}
             >
               <div style={{ marginBottom: 'var(--spacing-lg)' }}>
                 <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
                   Starter
                 </h3>
-                <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
+                <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
                   <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$49</span>
                   <span style={{ color: '#666', fontSize: 'var(--font-size-sm)' }}>/month</span>
                 </p>
@@ -729,33 +728,31 @@ function Landing() {
               </div>
 
               {/* Features */}
-              <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ textAlign: 'left' }}>
-                  {[
-                    "1 AI Agent",
-                    "2,000 messages/month",
-                    "1 Knowledge Base",
-                    "Instagram DM automation",
-                    "Google Calendar sync",
-                    "Built-in CRM",
-                    "Email support",
-                  ].map((feature, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--spacing-sm)',
-                        marginBottom: '12px',
-                        fontSize: 'var(--font-size-sm)',
-                        color: '#000',
-                      }}
-                    >
-                      <Check size={16} color="#10b981" strokeWidth={3} style={{ flexShrink: 0 }} />
-                      {feature}
-                    </div>
-                  ))}
-                </div>
+              <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
+                {[
+                  "1 AI Agent",
+                  "2,000 messages/month",
+                  "1 Knowledge Base",
+                  "Instagram DM automation",
+                  "Google Calendar sync",
+                  "Built-in CRM",
+                  "Email support",
+                ].map((feature, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--spacing-sm)',
+                      marginBottom: '12px',
+                      fontSize: 'var(--font-size-sm)',
+                      color: '#000',
+                    }}
+                  >
+                    <Check size={16} color="#10b981" strokeWidth={3} style={{ flexShrink: 0 }} />
+                    {feature}
+                  </div>
+                ))}
               </div>
 
               <Link
@@ -787,7 +784,6 @@ function Landing() {
                 border: '3px solid #000',
                 boxShadow: '8px 8px 0px 0px #000',
                 transform: 'scale(1.03)',
-                textAlign: 'center',
               }}
             >
               <div
@@ -813,7 +809,7 @@ function Landing() {
                 <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
                   Growth
                 </h3>
-                <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
+                <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
                   <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$99</span>
                   <span style={{ color: '#333', fontSize: 'var(--font-size-sm)' }}>/month</span>
                 </p>
@@ -823,34 +819,32 @@ function Landing() {
               </div>
 
               {/* Features */}
-              <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ textAlign: 'left' }}>
-                  {[
-                    "3 AI Agents",
-                    "10,000 messages/month",
-                    "3 Knowledge Bases",
-                    "Instagram DM automation",
-                    "Google Calendar sync",
-                    "Built-in CRM",
-                    "Priority support",
-                  ].map((feature, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--spacing-sm)',
-                        marginBottom: '12px',
-                        fontSize: 'var(--font-size-sm)',
-                        color: '#000',
-                        fontWeight: 500,
-                      }}
-                    >
-                      <Check size={16} color="#000" strokeWidth={3} style={{ flexShrink: 0 }} />
-                      {feature}
-                    </div>
-                  ))}
-                </div>
+              <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
+                {[
+                  "3 AI Agents",
+                  "10,000 messages/month",
+                  "3 Knowledge Bases",
+                  "Instagram DM automation",
+                  "Google Calendar sync",
+                  "Built-in CRM",
+                  "Priority support",
+                ].map((feature, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--spacing-sm)',
+                      marginBottom: '12px',
+                      fontSize: 'var(--font-size-sm)',
+                      color: '#000',
+                      fontWeight: 500,
+                    }}
+                  >
+                    <Check size={16} color="#000" strokeWidth={3} style={{ flexShrink: 0 }} />
+                    {feature}
+                  </div>
+                ))}
               </div>
 
               <Link
@@ -881,14 +875,33 @@ function Landing() {
                 borderRadius: '20px',
                 border: '3px solid #000',
                 boxShadow: '6px 6px 0px 0px #000',
-                textAlign: 'center',
               }}
             >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-16px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: '#f9e2af',
+                  color: '#000',
+                  padding: '8px 24px',
+                  borderRadius: '30px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  border: '2px solid #000',
+                  letterSpacing: '0.5px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                BEST VALUE
+              </div>
+
               <div style={{ marginBottom: 'var(--spacing-lg)' }}>
                 <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
                   Premium
                 </h3>
-                <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
+                <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
                   <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$347</span>
                   <span style={{ color: '#666', fontSize: 'var(--font-size-sm)' }}>/month</span>
                 </p>
@@ -898,35 +911,33 @@ function Landing() {
               </div>
 
               {/* Features */}
-              <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ textAlign: 'left' }}>
-                  {[
-                    "10 AI Agents",
-                    "Unlimited messages",
-                    "10 Knowledge Bases",
-                    "Instagram DM automation",
-                    "Google Calendar sync",
-                    "Built-in CRM",
-                    "VIP 24/7 support",
-                    "Personalized onboarding",
-                    "Early access to features",
-                  ].map((feature, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--spacing-sm)',
-                        marginBottom: '12px',
-                        fontSize: 'var(--font-size-sm)',
-                        color: '#000',
-                      }}
-                    >
-                      <Check size={16} color="#10b981" strokeWidth={3} style={{ flexShrink: 0 }} />
-                      {feature}
-                    </div>
-                  ))}
-                </div>
+              <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
+                {[
+                  "10 AI Agents",
+                  "Unlimited messages",
+                  "10 Knowledge Bases",
+                  "Instagram DM automation",
+                  "Google Calendar sync",
+                  "Built-in CRM",
+                  "VIP 24/7 support",
+                  "Personalized onboarding",
+                  "Early access to features",
+                ].map((feature, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--spacing-sm)',
+                      marginBottom: '12px',
+                      fontSize: 'var(--font-size-sm)',
+                      color: '#000',
+                    }}
+                  >
+                    <Check size={16} color="#10b981" strokeWidth={3} style={{ flexShrink: 0 }} />
+                    {feature}
+                  </div>
+                ))}
               </div>
 
               <Link
@@ -935,7 +946,7 @@ function Landing() {
                 style={{
                   width: '100%',
                   justifyContent: 'center',
-                  background: '#fff',
+                  background: '#f9e2af',
                   color: '#000',
                   border: '2px solid #000',
                   fontWeight: 700,
