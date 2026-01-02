@@ -236,7 +236,10 @@ function Landing() {
               boxShadow: '2px 2px 0px 0px #000',
             }}
           >
-            <Check size={16} color="#10b981" strokeWidth={3} />
+            {/* Meta Infinity Symbol */}
+            <svg width="16" height="16" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M145.5 50C123.8 50 110.2 65.8 100 85.3C89.8 65.8 76.2 50 54.5 50C24.4 50 0 74.4 0 104.5C0 134.6 24.4 159 54.5 159C76.2 159 89.8 143.2 100 123.7C110.2 143.2 123.8 159 145.5 159C175.6 159 200 134.6 200 104.5C200 74.4 175.6 50 145.5 50ZM54.5 139C35.5 139 20 123.5 20 104.5C20 85.5 35.5 70 54.5 70C68.8 70 79.5 82.5 88 99C79.5 115.5 68.8 139 54.5 139ZM145.5 139C131.2 139 120.5 115.5 112 99C120.5 82.5 131.2 70 145.5 70C164.5 70 180 85.5 180 104.5C180 123.5 164.5 139 145.5 139Z" fill="#0081FB"/>
+            </svg>
             <span style={{ fontSize: '14px', fontWeight: 600, color: '#000' }}>
               We are officially a Meta Tech Provider
             </span>
