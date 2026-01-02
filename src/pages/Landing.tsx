@@ -129,7 +129,7 @@ function Landing() {
           <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000' }}>
             Log In
           </Link>
-          <Link to="/register" className="btn" style={{ background: '#a6e3a1', color: '#000', border: '2px solid #000' }}>
+          <Link to="/register" className="btn" style={{ background: '#000', color: '#fff', border: '2px solid #000' }}>
             Get Started
           </Link>
         </div>
@@ -283,8 +283,11 @@ function Landing() {
           <style>
             {`
               @keyframes gradientShift {
-                0%, 100% { background-position: 0% 50%; }
+                0% { background-position: 0% 50%; }
+                25% { background-position: 50% 100%; }
                 50% { background-position: 100% 50%; }
+                75% { background-position: 50% 0%; }
+                100% { background-position: 0% 50%; }
               }
             `}
           </style>
@@ -301,12 +304,12 @@ function Landing() {
             Instagram Sales on{' '}
             <span
               style={{
-                background: 'linear-gradient(90deg, #3b82f6, #f38ba8, #3b82f6)',
-                backgroundSize: '200% 100%',
+                background: 'linear-gradient(45deg, #3b82f6, #a855f7, #f38ba8, #3b82f6)',
+                backgroundSize: '300% 300%',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
-                animation: 'gradientShift 3s ease-in-out infinite',
+                animation: 'gradientShift 4s ease infinite',
               }}
             >
               Autopilot
@@ -357,8 +360,8 @@ function Landing() {
               className="btn btn--lg"
               style={{
                 animation: 'slideInUp 0.8s ease-out',
-                background: '#a6e3a1',
-                color: '#000',
+                background: '#000',
+                color: '#fff',
                 border: '2px solid #000',
                 fontWeight: 600
               }}
@@ -790,9 +793,9 @@ function Landing() {
             <div
               style={{
                 position: 'relative',
-                background: 'linear-gradient(135deg, #a5d8ff, #fcc2d7, #a5d8ff)',
-                backgroundSize: '200% 200%',
-                animation: 'gradientShift 3s ease-in-out infinite',
+                background: 'linear-gradient(45deg, #a5d8ff, #c4b5fd, #fcc2d7, #a5d8ff)',
+                backgroundSize: '300% 300%',
+                animation: 'gradientShift 4s ease infinite',
                 display: 'flex',
                 flexDirection: 'column',
                 padding: 'var(--spacing-xl)',
@@ -899,7 +902,7 @@ function Landing() {
                   top: '-16px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: '#f9e2af',
+                  background: '#a6e3a1',
                   color: '#000',
                   padding: '8px 24px',
                   borderRadius: '30px',
@@ -1017,21 +1020,6 @@ function Landing() {
         }}
       >
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-          <div
-            style={{
-              display: 'inline-block',
-              background: 'var(--color-success)',
-              color: '#000',
-              padding: '6px 16px',
-              borderRadius: '20px',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: 700,
-              marginBottom: 'var(--spacing-lg)',
-              border: '2px solid #000',
-            }}
-          >
-            Plans from $49/mo
-          </div>
           <h2
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -1056,8 +1044,8 @@ function Landing() {
             className="btn btn--lg"
             style={{
               animation: 'pulse 2s ease-in-out infinite',
-              background: '#a6e3a1',
-              color: '#000',
+              background: '#000',
+              color: '#fff',
               border: '2px solid #000',
               fontWeight: 600
             }}
