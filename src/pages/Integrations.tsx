@@ -21,6 +21,7 @@ function Integrations() {
   const [showWhatsAppWarning, setShowWhatsAppWarning] = useState(false)
   const [showGoogleCalendarWarning, setShowGoogleCalendarWarning] = useState(false)
   const [showInstagramWarning, setShowInstagramWarning] = useState(false)
+  const [previousInstagramUsername, setPreviousInstagramUsername] = useState<string | null>(null)
 
 
 
@@ -62,10 +63,14 @@ function Integrations() {
           // Check if already connected
           const existingInstagram = integrations.find(i => i.type === 'instagram' && i.status === 'connected')
           if (existingInstagram) {
-            alert('You already have an Instagram account connected. Disconnect it first to connect a different one.')
+            alert('You already have an Instagram account connected.')
             refetch()
             return
           }
+          // Check if there was a previously connected account (stored in config)
+          const instagramIntegration = integrations.find(i => i.type === 'instagram')
+          const prevUsername = instagramIntegration?.config?.locked_instagram_username
+          setPreviousInstagramUsername(prevUsername || null)
           // Show warning modal before connecting
           setShowInstagramWarning(true)
         } else {
@@ -119,7 +124,7 @@ function Integrations() {
 
   async function handleInstagramDisconnect(integrationId?: string) {
     try {
-      if (!confirm('Disconnect Instagram?')) {
+      if (!confirm('Disconnect Instagram? You can only reconnect the same account. To change accounts, contact support.')) {
         refetch()
         return
       }
@@ -134,10 +139,13 @@ function Integrations() {
         return
       }
 
+      // Keep the locked_instagram_username so they can only reconnect the same account
+      const lockedUsername = integration.config?.instagram_username || integration.config?.locked_instagram_username
+
       await updateIntegration(integration.id, {
         status: 'disconnected',
         connected_at: undefined,
-        config: {}
+        config: lockedUsername ? { locked_instagram_username: lockedUsername } : {}
       })
 
       await instagramService.disconnect()
@@ -611,53 +619,93 @@ function Integrations() {
       <Modal
         isOpen={showInstagramWarning}
         onClose={() => setShowInstagramWarning(false)}
-        title="Connect Instagram"
+        title={previousInstagramUsername ? "Reconnect Instagram" : "Connect Instagram"}
       >
         <div style={{ padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--spacing-md)',
-            padding: 'var(--spacing-md)',
-            background: '#fff3cd',
-            border: '2px solid #000',
-            borderRadius: 'var(--border-radius)',
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              background: '#ffc107',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: '20px',
-              flexShrink: 0,
-            }}>
-              !
-            </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: 600, fontSize: 'var(--font-size-base)' }}>
-                Only 1 Instagram account allowed
-              </p>
-              <p style={{ margin: '4px 0 0 0', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                You can only connect one Instagram account at a time. Choose wisely!
-              </p>
-            </div>
-          </div>
+          {previousInstagramUsername ? (
+            /* Reconnection flow - must use same account */
+            <>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-md)',
+                padding: 'var(--spacing-md)',
+                background: '#e3f2fd',
+                border: '2px solid #000',
+                borderRadius: 'var(--border-radius)',
+              }}>
+                <InstagramIcon size={32} color="#000" />
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 'var(--font-size-base)' }}>
+                    Reconnect @{previousInstagramUsername}
+                  </p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                    You can only reconnect the same Instagram account.
+                  </p>
+                </div>
+              </div>
 
-          <div>
-            <p style={{ margin: 0 }}>
-              Make sure you're logged into the correct Instagram account in your browser before proceeding.
-            </p>
-          </div>
+              <div>
+                <p style={{ margin: 0 }}>
+                  Make sure you're logged into <strong>@{previousInstagramUsername}</strong> in your browser before proceeding.
+                </p>
+              </div>
 
-          <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
-            <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-              <strong>Tip:</strong> If you want to connect a different account later, you'll need to disconnect the current one first.
-            </p>
-          </div>
+              <div style={{ padding: 'var(--spacing-md)', background: '#fff3cd', borderRadius: 'var(--border-radius)', border: '2px solid #000' }}>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-sm)' }}>
+                  <strong>Want to use a different account?</strong> Contact support at <a href="mailto:support@setterapp.ai" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>support@setterapp.ai</a>
+                </p>
+              </div>
+            </>
+          ) : (
+            /* First time connection */
+            <>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-md)',
+                padding: 'var(--spacing-md)',
+                background: '#fff3cd',
+                border: '2px solid #000',
+                borderRadius: 'var(--border-radius)',
+              }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: '#ffc107',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: '20px',
+                  flexShrink: 0,
+                }}>
+                  !
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 'var(--font-size-base)' }}>
+                    Only 1 Instagram account allowed
+                  </p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                    Choose carefully - you cannot change it later without contacting support.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p style={{ margin: 0 }}>
+                  Make sure you're logged into the correct Instagram account in your browser before proceeding.
+                </p>
+              </div>
+
+              <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                  <strong>Important:</strong> Once connected, you can only reconnect the same account. To change accounts, you'll need to contact support.
+                </p>
+              </div>
+            </>
+          )}
 
           <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end', marginTop: 'var(--spacing-md)' }}>
             <button
@@ -675,7 +723,7 @@ function Integrations() {
               style={{ background: '#f38ba8', borderColor: '#000' }}
             >
               <InstagramIcon size={16} color="#000" />
-              Connect Instagram
+              {previousInstagramUsername ? `Reconnect @${previousInstagramUsername}` : 'Connect Instagram'}
             </button>
           </div>
         </div>
