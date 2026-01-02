@@ -222,32 +222,30 @@ function Landing() {
             automatically, qualify leads, and book meetings while you sleep.
           </p>
 
-          {/* Meta Technology Partner Badge */}
+          {/* Meta Tech Provider Badge */}
           <div
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '10px',
+              gap: '12px',
               background: '#ffffff',
               border: '3px solid #000',
               borderRadius: '12px',
-              padding: '12px 24px',
+              padding: '16px 28px',
               margin: '0 0 var(--spacing-xl) 0',
               boxShadow: '4px 4px 0px 0px #000',
             }}
           >
-            {/* Meta Logo */}
-            <svg width="32" height="32" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M128 0C57.3 0 0 57.3 0 128s57.3 128 128 128 128-57.3 128-128S198.7 0 128 0zm0 240c-61.8 0-112-50.2-112-112S66.2 16 128 16s112 50.2 112 112-50.2 112-112 112z" fill="#0081FB"/>
-              <path d="M128 40c-48.5 0-88 39.5-88 88s39.5 88 88 88 88-39.5 88-88-39.5-88-88-88zm0 160c-39.7 0-72-32.3-72-72s32.3-72 72-72 72 32.3 72 72-32.3 72-72 72z" fill="#0081FB"/>
-              <circle cx="128" cy="128" r="48" fill="#0081FB"/>
+            {/* Meta Logo - Infinity Symbol */}
+            <svg width="48" height="48" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M145.5 50C123.8 50 110.2 65.8 100 85.3C89.8 65.8 76.2 50 54.5 50C24.4 50 0 74.4 0 104.5C0 134.6 24.4 159 54.5 159C76.2 159 89.8 143.2 100 123.7C110.2 143.2 123.8 159 145.5 159C175.6 159 200 134.6 200 104.5C200 74.4 175.6 50 145.5 50ZM54.5 139C35.5 139 20 123.5 20 104.5C20 85.5 35.5 70 54.5 70C68.8 70 79.5 82.5 88 99C79.5 115.5 68.8 139 54.5 139ZM145.5 139C131.2 139 120.5 115.5 112 99C120.5 82.5 131.2 70 145.5 70C164.5 70 180 85.5 180 104.5C180 123.5 164.5 139 145.5 139Z" fill="#0081FB"/>
             </svg>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Official
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+              <span style={{ fontSize: '24px', fontWeight: 700, color: '#000', lineHeight: 1, letterSpacing: '-0.5px' }}>
+                Meta
               </span>
-              <span style={{ fontSize: '15px', fontWeight: 800, color: '#000', lineHeight: 1 }}>
-                Meta Technology Partner
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#000', lineHeight: 1 }}>
+                Tech Provider
               </span>
             </div>
           </div>
