@@ -605,62 +605,57 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          display: 'flex',
-          justifyContent: 'center',
         }}
       >
-        <div
-          className="stats-bar"
-          style={{
-            background: '#fff',
-            border: '3px solid #000',
-            borderRadius: '20px',
-            padding: 'var(--spacing-xl) var(--spacing-2xl)',
-            boxShadow: '6px 6px 0px 0px #000',
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 'var(--spacing-xl)',
-            maxWidth: '900px',
-            width: '100%',
-          }}
-        >
-          {[
-            { number: '10,000+', label: 'Messages Sent' },
-            { number: '10+', label: 'Happy Clients' },
-            { number: '95%', label: 'Response Rate' },
-            { number: '24/7', label: 'Always Available' },
-          ].map((stat, index, arr) => (
-            <div
-              key={index}
-              style={{
-                textAlign: 'center',
-                padding: 'var(--spacing-md) var(--spacing-lg)',
-                borderRight: index < arr.length - 1 ? '2px solid #e0e0e0' : 'none',
-              }}
-            >
+        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+          <div
+            className="stats-bar"
+            style={{
+              background: '#fff',
+              border: '3px solid #000',
+              borderRadius: '20px',
+              padding: 'var(--spacing-xl)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+            }}
+          >
+            {[
+              { number: '10,000+', label: 'Messages Sent' },
+              { number: '10+', label: 'Happy Clients' },
+              { number: '95%', label: 'Response Rate' },
+              { number: '24/7', label: 'Always Available' },
+            ].map((stat, index, arr) => (
               <div
+                key={index}
                 style={{
-                  fontSize: 'clamp(1.5rem, 3vw, 2rem)',
-                  fontWeight: 800,
-                  color: '#000',
-                  marginBottom: '8px',
-                  lineHeight: 1,
+                  textAlign: 'center',
+                  padding: 'var(--spacing-md)',
+                  borderRight: index < arr.length - 1 ? '2px solid #e0e0e0' : 'none',
                 }}
               >
-                {stat.number}
+                <div
+                  style={{
+                    fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+                    fontWeight: 800,
+                    color: '#000',
+                    marginBottom: '8px',
+                    lineHeight: 1,
+                  }}
+                >
+                  {stat.number}
+                </div>
+                <div
+                  style={{
+                    fontSize: 'var(--font-size-sm)',
+                    fontWeight: 600,
+                    color: '#666',
+                  }}
+                >
+                  {stat.label}
+                </div>
               </div>
-              <div
-                style={{
-                  fontSize: 'var(--font-size-sm)',
-                  fontWeight: 600,
-                  color: '#666',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {stat.label}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
