@@ -126,10 +126,10 @@ function Landing() {
           </span>
         </Link>
         <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center', flexWrap: 'wrap' }}>
-          <Link to="/login" className="btn btn--ghost">
+          <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000' }}>
             Log In
           </Link>
-          <Link to="/register" className="btn btn--primary">
+          <Link to="/register" className="btn" style={{ background: '#a6e3a1', color: '#000', border: '2px solid #000' }}>
             Get Started
           </Link>
         </div>
@@ -333,7 +333,17 @@ function Landing() {
           </div>
 
           <div className="landing-hero-buttons" style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/register" className="btn btn--primary btn--lg" style={{ animation: 'slideInUp 0.8s ease-out' }}>
+            <Link
+              to="/register"
+              className="btn btn--lg"
+              style={{
+                animation: 'slideInUp 0.8s ease-out',
+                background: '#a6e3a1',
+                color: '#000',
+                border: '2px solid #000',
+                fontWeight: 600
+              }}
+            >
               Get Started
               <ArrowRight size={20} />
             </Link>
@@ -345,8 +355,6 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'rgba(255,255,255,0.1)',
-          backdropFilter: 'blur(10px)',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -408,7 +416,6 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-bg-secondary)',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -418,7 +425,7 @@ function Landing() {
               fontWeight: 700,
               textAlign: 'center',
               margin: '0 0 var(--spacing-2xl) 0',
-              color: 'var(--color-text)',
+              color: '#fff',
             }}
           >
             Tired of This?
@@ -489,7 +496,6 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-primary)',
         }}
       >
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
@@ -568,7 +574,6 @@ function Landing() {
         className="landing-features"
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-bg-secondary)',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -579,7 +584,7 @@ function Landing() {
               fontWeight: 700,
               textAlign: 'center',
               margin: '0 0 var(--spacing-2xl) 0',
-              color: 'var(--color-text)',
+              color: '#fff',
             }}
           >
             AI Appointment Setter Features
@@ -646,7 +651,6 @@ function Landing() {
       <section
         style={{
           padding: '80px var(--spacing-xl)',
-          background: 'var(--color-primary)',
         }}
       >
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
@@ -925,7 +929,6 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
-          background: 'var(--color-bg-secondary)',
         }}
       >
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -935,7 +938,7 @@ function Landing() {
               fontWeight: 700,
               textAlign: 'center',
               margin: '0 0 var(--spacing-2xl) 0',
-              color: 'var(--color-text)',
+              color: '#fff',
             }}
           >
             Frequently Asked Questions
@@ -959,7 +962,6 @@ function Landing() {
         style={{
           padding: '80px var(--spacing-xl)',
           textAlign: 'center',
-          background: 'var(--color-primary)',
         }}
       >
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
@@ -999,9 +1001,13 @@ function Landing() {
           </p>
           <Link
             to="/register"
-            className="btn btn--primary btn--lg"
+            className="btn btn--lg"
             style={{
               animation: 'pulse 2s ease-in-out infinite',
+              background: '#a6e3a1',
+              color: '#000',
+              border: '2px solid #000',
+              fontWeight: 600
             }}
           >
             Get Started
