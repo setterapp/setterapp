@@ -10,11 +10,7 @@ import {
   ChevronDown,
   Clock,
   DollarSign,
-  TrendingUp,
-  MessageCircle,
-  Target,
-  Zap,
-  Moon
+  TrendingUp
 } from 'lucide-react'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import Logo from '../components/Logo'
@@ -611,39 +607,25 @@ function Landing() {
             }}
           >
             {[
-              { number: '10,000+', label: 'Messages Sent', Icon: MessageCircle },
-              { number: '10+', label: 'Happy Clients', Icon: Target },
-              { number: '95%', label: 'Response Rate', Icon: Zap },
-              { number: '24/7', label: 'Always Available', Icon: Moon },
+              { number: '10,000+', label: 'Messages Sent' },
+              { number: '10+', label: 'Happy Clients' },
+              { number: '95%', label: 'Response Rate' },
+              { number: '24/7', label: 'Always Available' },
             ].map((stat, index) => (
               <div
                 key={index}
                 style={{
                   textAlign: 'center',
-                  padding: 'var(--spacing-md)',
+                  padding: 'var(--spacing-lg) var(--spacing-md)',
                   borderRight: index < 3 ? '2px solid #e0e0e0' : 'none',
                 }}
               >
                 <div
                   style={{
-                    width: '48px',
-                    height: '48px',
-                    background: 'var(--color-primary)',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto var(--spacing-sm)',
-                  }}
-                >
-                  <stat.Icon size={24} color="#fff" strokeWidth={2} />
-                </div>
-                <div
-                  style={{
-                    fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+                    fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
                     fontWeight: 800,
                     color: '#000',
-                    marginBottom: '4px',
+                    marginBottom: '8px',
                     lineHeight: 1,
                   }}
                 >
