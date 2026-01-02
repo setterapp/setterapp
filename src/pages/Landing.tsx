@@ -368,7 +368,7 @@ function Landing() {
               fontWeight: 700,
               textAlign: 'center',
               margin: '0 0 var(--spacing-2xl) 0',
-              color: '#fff',
+              color: '#000',
             }}
           >
             Tired of This?
@@ -448,7 +448,7 @@ function Landing() {
               fontWeight: 700,
               textAlign: 'center',
               margin: '0 0 var(--spacing-2xl) 0',
-              color: '#fff',
+              color: '#000',
             }}
           >
             AI vs Human Setter
@@ -527,7 +527,7 @@ function Landing() {
               fontWeight: 700,
               textAlign: 'center',
               margin: '0 0 var(--spacing-2xl) 0',
-              color: '#fff',
+              color: '#000',
             }}
           >
             AI Appointment Setter Features
@@ -677,7 +677,7 @@ function Landing() {
               fontWeight: 700,
               textAlign: 'center',
               margin: '0 0 var(--spacing-sm) 0',
-              color: '#fff',
+              color: '#000',
             }}
           >
             Simple, Transparent Pricing
@@ -685,7 +685,7 @@ function Landing() {
           <p
             style={{
               textAlign: 'center',
-              color: 'rgba(255,255,255,0.9)',
+              color: '#333',
               margin: '0 0 var(--spacing-2xl) 0',
               fontSize: 'var(--font-size-lg)',
             }}
@@ -974,7 +974,7 @@ function Landing() {
               fontWeight: 700,
               textAlign: 'center',
               margin: '0 0 var(--spacing-2xl) 0',
-              color: '#fff',
+              color: '#000',
             }}
           >
             Frequently Asked Questions
@@ -1021,7 +1021,7 @@ function Landing() {
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
               margin: '0 0 var(--spacing-md) 0',
-              color: '#fff',
+              color: '#000',
             }}
           >
             Ready to Automate Your Appointment Booking?
@@ -1029,7 +1029,7 @@ function Landing() {
           <p
             style={{
               fontSize: 'var(--font-size-lg)',
-              color: 'rgba(255,255,255,0.9)',
+              color: '#333',
               margin: '0 0 var(--spacing-2xl) 0',
             }}
           >
