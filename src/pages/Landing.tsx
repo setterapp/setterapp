@@ -790,7 +790,7 @@ function Landing() {
             <div
               style={{
                 position: 'relative',
-                background: 'linear-gradient(135deg, #3b82f6, #f38ba8, #3b82f6)',
+                background: 'linear-gradient(135deg, #a5d8ff, #fcc2d7, #a5d8ff)',
                 backgroundSize: '200% 200%',
                 animation: 'gradientShift 3s ease-in-out infinite',
                 display: 'flex',
@@ -822,14 +822,14 @@ function Landing() {
               </div>
 
               <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#fff' }}>
+                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
                   Growth
                 </h3>
                 <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#fff' }}>$99</span>
-                  <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 'var(--font-size-sm)' }}>/month</span>
+                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$99</span>
+                  <span style={{ color: '#333', fontSize: 'var(--font-size-sm)' }}>/month</span>
                 </p>
-                <p style={{ margin: '8px 0 0 0', fontSize: 'var(--font-size-sm)', color: 'rgba(255,255,255,0.9)' }}>
+                <p style={{ margin: '8px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#333' }}>
                   Best for growing businesses
                 </p>
               </div>
@@ -853,11 +853,11 @@ function Landing() {
                       gap: 'var(--spacing-sm)',
                       marginBottom: '12px',
                       fontSize: 'var(--font-size-sm)',
-                      color: '#fff',
+                      color: '#000',
                       fontWeight: 500,
                     }}
                   >
-                    <Check size={16} color="#fff" strokeWidth={3} style={{ flexShrink: 0 }} />
+                    <Check size={16} color="#000" strokeWidth={3} style={{ flexShrink: 0 }} />
                     {feature}
                   </div>
                 ))}
@@ -869,8 +869,8 @@ function Landing() {
                 style={{
                   width: '100%',
                   justifyContent: 'center',
-                  background: '#fff',
-                  color: '#000',
+                  background: '#000',
+                  color: '#fff',
                   border: '2px solid #000',
                   fontWeight: 700,
                   padding: '14px 24px',
