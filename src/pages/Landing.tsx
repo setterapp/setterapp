@@ -238,7 +238,7 @@ function Landing() {
           >
             <Check size={16} color="#10b981" strokeWidth={3} />
             <span style={{ fontSize: '14px', fontWeight: 600, color: '#000' }}>
-              we are officially a Meta tech provider
+              We are officially a Meta Tech Provider
             </span>
           </div>
 
