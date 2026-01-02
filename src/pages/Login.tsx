@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Mail, Lock } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import GoogleIcon from '../components/icons/GoogleIcon'
-import Logo from '../components/Logo'
 
 function Login() {
   const navigate = useNavigate()
@@ -75,20 +74,8 @@ function Login() {
           maxWidth: 'min(400px, 100%)',
         }}
       >
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-xl)' }}>
-          <Link
-            to="/"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 'var(--spacing-sm)',
-              textDecoration: 'none',
-              marginBottom: 'var(--spacing-md)',
-            }}
-          >
-            <Logo size={40} />
-          </Link>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-lg)' }}>
           <h2
             style={{
               margin: 0,
@@ -99,7 +86,7 @@ function Login() {
           >
             Sign in
           </h2>
-          <p style={{ margin: 'var(--spacing-sm) 0 0 0', color: 'var(--color-text-secondary)' }}>
+          <p style={{ margin: 'var(--spacing-xs) 0 0 0', color: 'var(--color-text-secondary)' }}>
             Access your account to continue
           </p>
         </div>
