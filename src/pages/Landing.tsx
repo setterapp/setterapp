@@ -10,7 +10,11 @@ import {
   ChevronDown,
   Clock,
   DollarSign,
-  TrendingUp
+  TrendingUp,
+  MessageCircle,
+  Target,
+  Zap,
+  Moon
 } from 'lucide-react'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import Logo from '../components/Logo'
@@ -351,67 +355,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* STATS SECTION - Social Proof */}
-      <section
-        style={{
-          padding: '60px var(--spacing-xl)',
-        }}
-      >
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))',
-              gap: 'var(--spacing-xl)',
-            }}
-          >
-            {[
-              { number: '10,000+', label: 'Messages Sent', icon: '💬' },
-              { number: '10+', label: 'Happy Clients', icon: '🎯' },
-              { number: '95%', label: 'Response Rate', icon: '⚡' },
-              { number: '24/7', label: 'Always Available', icon: '🌙' },
-            ].map((stat, index) => (
-              <div
-                key={index}
-                style={{
-                  background: 'rgba(255,255,255,0.95)',
-                  border: '3px solid #000',
-                  borderRadius: '16px',
-                  padding: 'var(--spacing-xl)',
-                  textAlign: 'center',
-                  boxShadow: '4px 4px 0px 0px #000',
-                  animation: `slideInUp 0.6s ease-out ${index * 0.1}s both`,
-                }}
-              >
-                <div style={{ fontSize: '48px', marginBottom: 'var(--spacing-sm)' }}>
-                  {stat.icon}
-                </div>
-                <div
-                  style={{
-                    fontSize: 'clamp(2rem, 4vw, 3rem)',
-                    fontWeight: 800,
-                    color: 'var(--color-primary)',
-                    marginBottom: 'var(--spacing-xs)',
-                    lineHeight: 1,
-                  }}
-                >
-                  {stat.number}
-                </div>
-                <div
-                  style={{
-                    fontSize: 'var(--font-size-md)',
-                    fontWeight: 600,
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* 2. PAIN POINTS SECTION */}
       <section
         style={{
@@ -647,6 +590,80 @@ function Landing() {
         </div>
       </section>
 
+      {/* STATS SECTION - Social Proof */}
+      <section
+        style={{
+          padding: '60px var(--spacing-xl)',
+        }}
+      >
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <div
+            className="stats-bar"
+            style={{
+              background: '#fff',
+              border: '3px solid #000',
+              borderRadius: '20px',
+              padding: 'var(--spacing-xl) var(--spacing-lg)',
+              boxShadow: '6px 6px 0px 0px #000',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+              gap: 'var(--spacing-md)',
+            }}
+          >
+            {[
+              { number: '10,000+', label: 'Messages Sent', Icon: MessageCircle },
+              { number: '10+', label: 'Happy Clients', Icon: Target },
+              { number: '95%', label: 'Response Rate', Icon: Zap },
+              { number: '24/7', label: 'Always Available', Icon: Moon },
+            ].map((stat, index) => (
+              <div
+                key={index}
+                style={{
+                  textAlign: 'center',
+                  padding: 'var(--spacing-md)',
+                  borderRight: index < 3 ? '2px solid #e0e0e0' : 'none',
+                }}
+              >
+                <div
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    background: 'var(--color-primary)',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto var(--spacing-sm)',
+                  }}
+                >
+                  <stat.Icon size={24} color="#fff" strokeWidth={2} />
+                </div>
+                <div
+                  style={{
+                    fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+                    fontWeight: 800,
+                    color: '#000',
+                    marginBottom: '4px',
+                    lineHeight: 1,
+                  }}
+                >
+                  {stat.number}
+                </div>
+                <div
+                  style={{
+                    fontSize: 'var(--font-size-sm)',
+                    fontWeight: 600,
+                    color: '#666',
+                  }}
+                >
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* 9. PRICING */}
       <section
         style={{
@@ -679,29 +696,34 @@ function Landing() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
               gap: 'var(--spacing-xl)',
               alignItems: 'stretch',
             }}
           >
             {/* Starter Plan */}
             <div
-              className="card"
               style={{
                 position: 'relative',
                 background: '#fff',
                 display: 'flex',
                 flexDirection: 'column',
                 padding: 'var(--spacing-xl)',
+                borderRadius: '20px',
+                border: '3px solid #000',
+                boxShadow: '6px 6px 0px 0px #000',
               }}
             >
               <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 4px 0', color: '#666' }}>
+                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
                   Starter
                 </h3>
                 <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1 }}>$49</span>
-                  <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>/month</span>
+                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$49</span>
+                  <span style={{ color: '#666', fontSize: 'var(--font-size-sm)' }}>/month</span>
+                </p>
+                <p style={{ margin: '8px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#666' }}>
+                  Perfect for getting started
                 </p>
               </div>
 
@@ -724,10 +746,10 @@ function Landing() {
                       gap: 'var(--spacing-sm)',
                       marginBottom: '12px',
                       fontSize: 'var(--font-size-sm)',
-                      color: '#444',
+                      color: '#000',
                     }}
                   >
-                    <Check size={16} color="#10b981" strokeWidth={2.5} style={{ flexShrink: 0 }} />
+                    <Check size={16} color="#10b981" strokeWidth={3} style={{ flexShrink: 0 }} />
                     {feature}
                   </div>
                 ))}
@@ -742,53 +764,57 @@ function Landing() {
                   background: '#fff',
                   color: '#000',
                   border: '2px solid #000',
-                  fontWeight: 600,
+                  fontWeight: 700,
+                  padding: '14px 24px',
                 }}
               >
                 Get Started
               </Link>
             </div>
 
-            {/* Growth Plan */}
+            {/* Growth Plan - HIGHLIGHTED */}
             <div
-              className="card"
               style={{
                 position: 'relative',
-                background: '#fff',
+                background: '#a6e3a1',
                 display: 'flex',
                 flexDirection: 'column',
                 padding: 'var(--spacing-xl)',
-                border: '3px solid var(--color-primary)',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-                transform: 'scale(1.02)',
+                borderRadius: '20px',
+                border: '3px solid #000',
+                boxShadow: '8px 8px 0px 0px #000',
+                transform: 'scale(1.03)',
               }}
             >
               <div
                 style={{
                   position: 'absolute',
-                  top: '-14px',
+                  top: '-16px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: 'var(--color-primary)',
-                  color: '#000',
-                  padding: '6px 20px',
-                  borderRadius: '20px',
-                  fontSize: '11px',
+                  background: '#000',
+                  color: '#fff',
+                  padding: '8px 24px',
+                  borderRadius: '30px',
+                  fontSize: '12px',
                   fontWeight: 700,
-                  border: '2px solid #000',
                   letterSpacing: '0.5px',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 MOST POPULAR
               </div>
 
               <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 4px 0', color: '#666' }}>
+                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
                   Growth
                 </h3>
                 <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1 }}>$99</span>
-                  <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>/month</span>
+                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$99</span>
+                  <span style={{ color: '#333', fontSize: 'var(--font-size-sm)' }}>/month</span>
+                </p>
+                <p style={{ margin: '8px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#333' }}>
+                  Best for growing businesses
                 </p>
               </div>
 
@@ -811,10 +837,11 @@ function Landing() {
                       gap: 'var(--spacing-sm)',
                       marginBottom: '12px',
                       fontSize: 'var(--font-size-sm)',
-                      color: '#444',
+                      color: '#000',
+                      fontWeight: 500,
                     }}
                   >
-                    <Check size={16} color="#10b981" strokeWidth={2.5} style={{ flexShrink: 0 }} />
+                    <Check size={16} color="#000" strokeWidth={3} style={{ flexShrink: 0 }} />
                     {feature}
                   </div>
                 ))}
@@ -822,11 +849,15 @@ function Landing() {
 
               <Link
                 to="/register"
-                className="btn btn--primary"
+                className="btn"
                 style={{
                   width: '100%',
                   justifyContent: 'center',
-                  fontWeight: 600,
+                  background: '#000',
+                  color: '#fff',
+                  border: '2px solid #000',
+                  fontWeight: 700,
+                  padding: '14px 24px',
                 }}
               >
                 Get Started
@@ -835,43 +866,47 @@ function Landing() {
 
             {/* Premium Plan */}
             <div
-              className="card"
               style={{
                 position: 'relative',
-                background: 'linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%)',
-                color: '#fff',
+                background: '#fff',
                 display: 'flex',
                 flexDirection: 'column',
                 padding: 'var(--spacing-xl)',
-                border: '2px solid #333',
+                borderRadius: '20px',
+                border: '3px solid #000',
+                boxShadow: '6px 6px 0px 0px #000',
               }}
             >
               <div
                 style={{
                   position: 'absolute',
-                  top: '-14px',
+                  top: '-16px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: 'linear-gradient(135deg, #f9e2af 0%, #f59e0b 100%)',
+                  background: '#f9e2af',
                   color: '#000',
-                  padding: '6px 20px',
-                  borderRadius: '20px',
-                  fontSize: '11px',
+                  padding: '8px 24px',
+                  borderRadius: '30px',
+                  fontSize: '12px',
                   fontWeight: 700,
                   border: '2px solid #000',
                   letterSpacing: '0.5px',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 BEST VALUE
               </div>
 
               <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 4px 0', color: 'rgba(255,255,255,0.6)' }}>
+                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
                   Premium
                 </h3>
                 <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1 }}>$347</span>
-                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 'var(--font-size-sm)' }}>/month</span>
+                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$347</span>
+                  <span style={{ color: '#666', fontSize: 'var(--font-size-sm)' }}>/month</span>
+                </p>
+                <p style={{ margin: '8px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#666' }}>
+                  For high-volume teams
                 </p>
               </div>
 
@@ -896,10 +931,10 @@ function Landing() {
                       gap: 'var(--spacing-sm)',
                       marginBottom: '12px',
                       fontSize: 'var(--font-size-sm)',
-                      color: 'rgba(255,255,255,0.85)',
+                      color: '#000',
                     }}
                   >
-                    <Check size={16} color="#a6e3a1" strokeWidth={2.5} style={{ flexShrink: 0 }} />
+                    <Check size={16} color="#10b981" strokeWidth={3} style={{ flexShrink: 0 }} />
                     {feature}
                   </div>
                 ))}
@@ -911,10 +946,11 @@ function Landing() {
                 style={{
                   width: '100%',
                   justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #f9e2af 0%, #f59e0b 100%)',
+                  background: '#f9e2af',
                   color: '#000',
                   border: '2px solid #000',
-                  fontWeight: 600,
+                  fontWeight: 700,
+                  padding: '14px 24px',
                 }}
               >
                 Get Started
