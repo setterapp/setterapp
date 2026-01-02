@@ -482,7 +482,7 @@ function Landing() {
           >
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '400px' }}>
               <thead>
-                <tr style={{ background: 'var(--color-primary)' }}>
+                <tr style={{ background: '#89CFF0' }}>
                   <th style={{ padding: 'var(--spacing-md)', textAlign: 'left', borderBottom: '2px solid #000', fontWeight: 700 }}>
                     Aspect
                   </th>
