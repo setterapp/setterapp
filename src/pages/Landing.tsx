@@ -357,7 +357,7 @@ function Landing() {
           padding: '60px var(--spacing-xl)',
         }}
       >
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           <h2
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -373,7 +373,7 @@ function Landing() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(250px, 100%), 1fr))',
+              gridTemplateColumns: 'repeat(2, 1fr)',
               gap: 'var(--spacing-lg)',
             }}
           >
@@ -533,7 +533,7 @@ function Landing() {
             className="landing-features-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
+              gridTemplateColumns: 'repeat(2, 1fr)',
               gap: 'var(--spacing-lg)',
             }}
           >
@@ -545,41 +545,54 @@ function Landing() {
             ].map((feature, index) => (
               <div
                 key={index}
-                className="card card--hover"
                 style={{
-                  padding: 'var(--spacing-2xl)',
-                  textAlign: 'center',
-                  animation: 'slideInUp 0.6s ease-out',
-                  animationDelay: `${index * 0.1}s`,
-                  animationFillMode: 'both',
+                  background: '#fff',
+                  border: '3px solid #000',
+                  borderRadius: '16px',
+                  padding: 'var(--spacing-xl)',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 'var(--spacing-lg)',
+                  boxShadow: '4px 4px 0px 0px #000',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  cursor: 'default',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translate(-2px, -2px)'
+                  e.currentTarget.style.boxShadow = '6px 6px 0px 0px #000'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translate(0, 0)'
+                  e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000'
                 }}
               >
                 <div
                   style={{
-                    width: 'clamp(60px, 15vw, 80px)',
-                    height: 'clamp(60px, 15vw, 80px)',
+                    width: '56px',
+                    height: '56px',
                     borderRadius: '12px',
                     background: feature.color,
                     border: '2px solid #000',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    margin: '0 auto var(--spacing-md)',
-                    boxShadow: '3px 3px 0px 0px #000',
+                    flexShrink: 0,
                   }}
                 >
                   {feature.isComponent ? (
-                    <feature.icon size={32} color="#000" />
+                    <feature.icon size={28} color="#000" />
                   ) : (
-                    <feature.icon size={32} color="#000" strokeWidth={2} />
+                    <feature.icon size={28} color="#000" strokeWidth={2} />
                   )}
                 </div>
-                <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, margin: '0 0 var(--spacing-sm) 0' }}>
-                  {feature.title}
-                </h4>
-                <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
-                  {feature.desc}
-                </p>
+                <div>
+                  <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
+                    {feature.title}
+                  </h4>
+                  <p style={{ color: '#555', margin: 0, lineHeight: 1.5, fontSize: 'var(--font-size-sm)' }}>
+                    {feature.desc}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
