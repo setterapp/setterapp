@@ -20,6 +20,7 @@ function Integrations() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [showWhatsAppWarning, setShowWhatsAppWarning] = useState(false)
   const [showGoogleCalendarWarning, setShowGoogleCalendarWarning] = useState(false)
+  const [showInstagramWarning, setShowInstagramWarning] = useState(false)
 
 
 
@@ -58,8 +59,15 @@ function Integrations() {
 
       if (type === 'instagram') {
         if (checked) {
-          // Conectar directamente sin modal
-          await handleInstagramConnect()
+          // Check if already connected
+          const existingInstagram = integrations.find(i => i.type === 'instagram' && i.status === 'connected')
+          if (existingInstagram) {
+            alert('You already have an Instagram account connected. Disconnect it first to connect a different one.')
+            refetch()
+            return
+          }
+          // Show warning modal before connecting
+          setShowInstagramWarning(true)
         } else {
           // Desconectar
           await handleInstagramDisconnect(id)
@@ -594,6 +602,80 @@ function Integrations() {
               className="btn btn--primary"
             >
               {t('integrations.modals.googleCalendar.continueButton')}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de advertencia para Instagram */}
+      <Modal
+        isOpen={showInstagramWarning}
+        onClose={() => setShowInstagramWarning(false)}
+        title="Connect Instagram"
+      >
+        <div style={{ padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-md)',
+            padding: 'var(--spacing-md)',
+            background: '#fff3cd',
+            border: '2px solid #000',
+            borderRadius: 'var(--border-radius)',
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              background: '#ffc107',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '20px',
+              flexShrink: 0,
+            }}>
+              !
+            </div>
+            <div>
+              <p style={{ margin: 0, fontWeight: 600, fontSize: 'var(--font-size-base)' }}>
+                Only 1 Instagram account allowed
+              </p>
+              <p style={{ margin: '4px 0 0 0', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                You can only connect one Instagram account at a time. Choose wisely!
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <p style={{ margin: 0 }}>
+              Make sure you're logged into the correct Instagram account in your browser before proceeding.
+            </p>
+          </div>
+
+          <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--color-border)' }}>
+            <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+              <strong>Tip:</strong> If you want to connect a different account later, you'll need to disconnect the current one first.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end', marginTop: 'var(--spacing-md)' }}>
+            <button
+              onClick={() => setShowInstagramWarning(false)}
+              className="btn btn--secondary"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                setShowInstagramWarning(false)
+                await handleInstagramConnect()
+              }}
+              className="btn btn--primary"
+              style={{ background: '#f38ba8', borderColor: '#000' }}
+            >
+              <InstagramIcon size={16} color="#000" />
+              Connect Instagram
             </button>
           </div>
         </div>
