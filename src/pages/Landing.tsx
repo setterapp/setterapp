@@ -12,8 +12,49 @@ import {
   DollarSign,
   TrendingUp
 } from 'lucide-react'
+import { motion } from 'framer-motion'
+import type { Variants } from 'framer-motion'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import Logo from '../components/Logo'
+
+// Animation variants for scroll animations
+const fadeInUp: Variants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6 }
+  }
+}
+
+const scaleIn: Variants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.5 }
+  }
+}
+
+const staggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
+    }
+  }
+}
+
+const staggerItem: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5 }
+  }
+}
 
 // FAQ Accordion Item Component
 function FAQItem({ question, answer, isOpen, onClick }: {
@@ -381,7 +422,11 @@ function Landing() {
         }}
       >
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <h2
+          <motion.h2
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeInUp}
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
@@ -391,9 +436,13 @@ function Landing() {
             }}
           >
             Tired of This?
-          </h2>
+          </motion.h2>
 
-          <div
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
             className="landing-pain-points-grid"
             style={{
               display: 'grid',
@@ -407,8 +456,11 @@ function Landing() {
               { text: "Losing leads at 3am because no one answers", icon: Clock },
               { text: "Slow responses that cool down hot leads", icon: TrendingUp },
             ].map((pain, index) => (
-              <div
+              <motion.div
                 key={index}
+                variants={staggerItem}
+                whileHover={{ scale: 1.02, rotate: [-1, 1, -1, 0] }}
+                transition={{ duration: 0.3 }}
                 style={{
                   background: '#fff5f5',
                   border: '2px solid #000',
@@ -417,18 +469,8 @@ function Landing() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 'var(--spacing-md)',
-                  animation: `slideInUp 0.5s ease-out`,
-                  animationDelay: `${index * 0.1}s`,
-                  animationFillMode: 'both',
                   boxShadow: '3px 3px 0px 0px #000',
-                  transition: 'transform 0.2s ease',
                   cursor: 'default',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.animation = 'shake 0.3s ease-in-out'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.animation = ''
                 }}
               >
                 <div
@@ -449,9 +491,9 @@ function Landing() {
                 <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-text)' }}>
                   {pain.text}
                 </p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -463,7 +505,11 @@ function Landing() {
         }}
       >
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <h2
+          <motion.h2
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeInUp}
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
@@ -473,9 +519,13 @@ function Landing() {
             }}
           >
             AI vs Human Setter
-          </h2>
+          </motion.h2>
 
-          <div
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={scaleIn}
             className="card"
             style={{
               overflow: 'auto',
@@ -529,7 +579,7 @@ function Landing() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -541,7 +591,11 @@ function Landing() {
         }}
       >
         <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-          <h2
+          <motion.h2
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeInUp}
             className="landing-section-title"
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -552,9 +606,13 @@ function Landing() {
             }}
           >
             AI Appointment Setter Features
-          </h2>
+          </motion.h2>
 
-          <div
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
             className="landing-features-grid"
             style={{
               display: 'grid',
@@ -569,8 +627,14 @@ function Landing() {
               { icon: Users, title: "AI Lead Qualification", desc: "Automatically qualify leads and track contacts with built-in CRM", color: "#cba6f7" },
               { icon: BarChart3, title: "Conversion Analytics", desc: "Monitor AI setter performance, response times, and booking conversion rates", color: "#f9e2af" },
             ].map((feature, index) => (
-              <div
+              <motion.div
                 key={index}
+                variants={staggerItem}
+                whileHover={{
+                  scale: 1.03,
+                  boxShadow: '6px 6px 0px 0px #000',
+                  transition: { duration: 0.2 }
+                }}
                 style={{
                   background: '#fff',
                   border: '3px solid #000',
@@ -580,17 +644,8 @@ function Landing() {
                   alignItems: 'center',
                   gap: 'var(--spacing-lg)',
                   boxShadow: '4px 4px 0px 0px #000',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                   cursor: 'default',
                   minHeight: '120px',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translate(-2px, -2px)'
-                  e.currentTarget.style.boxShadow = '6px 6px 0px 0px #000'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translate(0, 0)'
-                  e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000'
                 }}
               >
                 <div
@@ -620,9 +675,9 @@ function Landing() {
                     {feature.desc}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -634,7 +689,11 @@ function Landing() {
         }}
       >
         <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-          <div
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={scaleIn}
             className="stats-bar"
             style={{
               background: '#fff',
@@ -651,8 +710,12 @@ function Landing() {
               { number: '95%', label: 'Response Rate' },
               { number: '24/7', label: 'Always Available' },
             ].map((stat, index, arr) => (
-              <div
+              <motion.div
                 key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
                 style={{
                   textAlign: 'center',
                   padding: 'var(--spacing-md)',
@@ -679,9 +742,9 @@ function Landing() {
                 >
                   {stat.label}
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -693,7 +756,11 @@ function Landing() {
         }}
       >
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <h2
+          <motion.h2
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeInUp}
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
@@ -703,8 +770,12 @@ function Landing() {
             }}
           >
             Simple, Transparent Pricing
-          </h2>
-          <p
+          </motion.h2>
+          <motion.p
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeInUp}
             style={{
               textAlign: 'center',
               color: '#333',
@@ -713,9 +784,13 @@ function Landing() {
             }}
           >
             Choose the plan that fits your business
-          </p>
+          </motion.p>
 
-          <div
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
             className="landing-pricing-grid"
             style={{
               display: 'grid',
@@ -725,7 +800,9 @@ function Landing() {
             }}
           >
             {/* Starter Plan */}
-            <div
+            <motion.div
+              variants={staggerItem}
+              whileHover={{ scale: 1.02, y: -5 }}
               style={{
                 position: 'relative',
                 background: '#fff',
@@ -793,10 +870,12 @@ function Landing() {
               >
                 Get Started
               </Link>
-            </div>
+            </motion.div>
 
             {/* Growth Plan - HIGHLIGHTED */}
-            <div
+            <motion.div
+              variants={staggerItem}
+              whileHover={{ scale: 1.05, y: -5 }}
               style={{
                 position: 'relative',
                 background: 'linear-gradient(45deg, #a5d8ff, #c4b5fd, #fcc2d7, #a5d8ff)',
@@ -887,10 +966,12 @@ function Landing() {
               >
                 Get Started
               </Link>
-            </div>
+            </motion.div>
 
             {/* Premium Plan */}
-            <div
+            <motion.div
+              variants={staggerItem}
+              whileHover={{ scale: 1.02, y: -5 }}
               style={{
                 position: 'relative',
                 background: '#fff',
@@ -980,8 +1061,8 @@ function Landing() {
               >
                 Get Started
               </Link>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
         </div>
       </section>
@@ -994,7 +1075,11 @@ function Landing() {
         }}
       >
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <h2
+          <motion.h2
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeInUp}
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
@@ -1004,17 +1089,25 @@ function Landing() {
             }}
           >
             Frequently Asked Questions
-          </h2>
+          </motion.h2>
 
-          {faqs.map((faq, index) => (
-            <FAQItem
-              key={index}
-              question={faq.question}
-              answer={faq.answer}
-              isOpen={openFAQ === index}
-              onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
-            />
-          ))}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+          >
+            {faqs.map((faq, index) => (
+              <motion.div key={index} variants={staggerItem}>
+                <FAQItem
+                  question={faq.question}
+                  answer={faq.answer}
+                  isOpen={openFAQ === index}
+                  onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
@@ -1026,7 +1119,13 @@ function Landing() {
           textAlign: 'center',
         }}
       >
-        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={scaleIn}
+          style={{ maxWidth: '700px', margin: '0 auto' }}
+        >
           <h2
             style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -1046,21 +1145,23 @@ function Landing() {
           >
             Join thousands of businesses using AI to book more appointments 24/7.
           </p>
-          <Link
-            to="/register"
-            className="btn btn--lg"
-            style={{
-              animation: 'pulse 2s ease-in-out infinite',
-              background: '#000',
-              color: '#fff',
-              border: '2px solid #000',
-              fontWeight: 600
-            }}
-          >
-            Get Started
-            <ArrowRight size={20} />
-          </Link>
-        </div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              to="/register"
+              className="btn btn--lg"
+              style={{
+                animation: 'pulse 2s ease-in-out infinite',
+                background: '#000',
+                color: '#fff',
+                border: '2px solid #000',
+                fontWeight: 600
+              }}
+            >
+              Get Started
+              <ArrowRight size={20} />
+            </Link>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* 12. FOOTER */}
