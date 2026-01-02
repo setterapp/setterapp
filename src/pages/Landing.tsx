@@ -515,7 +515,7 @@ function Landing() {
           padding: '60px var(--spacing-xl)',
         }}
       >
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
           <h2
             className="landing-section-title"
             style={{
@@ -605,59 +605,62 @@ function Landing() {
       <section
         style={{
           padding: '60px var(--spacing-xl)',
+          display: 'flex',
+          justifyContent: 'center',
         }}
       >
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <div
-            className="stats-bar"
-            style={{
-              background: '#fff',
-              border: '3px solid #000',
-              borderRadius: '20px',
-              padding: 'var(--spacing-xl) var(--spacing-lg)',
-              boxShadow: '6px 6px 0px 0px #000',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-              gap: 'var(--spacing-md)',
-            }}
-          >
-            {[
-              { number: '10,000+', label: 'Messages Sent' },
-              { number: '10+', label: 'Happy Clients' },
-              { number: '95%', label: 'Response Rate' },
-              { number: '24/7', label: 'Always Available' },
-            ].map((stat, index) => (
+        <div
+          className="stats-bar"
+          style={{
+            background: '#fff',
+            border: '3px solid #000',
+            borderRadius: '20px',
+            padding: 'var(--spacing-xl) var(--spacing-2xl)',
+            boxShadow: '6px 6px 0px 0px #000',
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 'var(--spacing-xl)',
+            maxWidth: '900px',
+            width: '100%',
+          }}
+        >
+          {[
+            { number: '10,000+', label: 'Messages Sent' },
+            { number: '10+', label: 'Happy Clients' },
+            { number: '95%', label: 'Response Rate' },
+            { number: '24/7', label: 'Always Available' },
+          ].map((stat, index, arr) => (
+            <div
+              key={index}
+              style={{
+                textAlign: 'center',
+                padding: 'var(--spacing-md) var(--spacing-lg)',
+                borderRight: index < arr.length - 1 ? '2px solid #e0e0e0' : 'none',
+              }}
+            >
               <div
-                key={index}
                 style={{
-                  textAlign: 'center',
-                  padding: 'var(--spacing-lg) var(--spacing-md)',
-                  borderRight: index < 3 ? '2px solid #e0e0e0' : 'none',
+                  fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+                  fontWeight: 800,
+                  color: '#000',
+                  marginBottom: '8px',
+                  lineHeight: 1,
                 }}
               >
-                <div
-                  style={{
-                    fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-                    fontWeight: 800,
-                    color: '#000',
-                    marginBottom: '8px',
-                    lineHeight: 1,
-                  }}
-                >
-                  {stat.number}
-                </div>
-                <div
-                  style={{
-                    fontSize: 'var(--font-size-sm)',
-                    fontWeight: 600,
-                    color: '#666',
-                  }}
-                >
-                  {stat.label}
-                </div>
+                {stat.number}
               </div>
-            ))}
-          </div>
+              <div
+                style={{
+                  fontSize: 'var(--font-size-sm)',
+                  fontWeight: 600,
+                  color: '#666',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {stat.label}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
