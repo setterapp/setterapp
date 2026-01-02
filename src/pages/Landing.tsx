@@ -211,7 +211,7 @@ function Landing() {
             style={{
               fontSize: 'var(--font-size-lg)',
               color: 'var(--color-text-secondary)',
-              margin: '0 0 var(--spacing-2xl) 0',
+              margin: '0 0 var(--spacing-lg) 0',
               lineHeight: 1.6,
               maxWidth: '700px',
               marginLeft: 'auto',
@@ -221,6 +221,36 @@ function Landing() {
             Automate your appointment booking 24/7 with our AI setter. Handle Instagram DMs
             automatically, qualify leads, and book meetings while you sleep.
           </p>
+
+          {/* Meta Technology Partner Badge */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              background: '#ffffff',
+              border: '3px solid #000',
+              borderRadius: '12px',
+              padding: '12px 24px',
+              margin: '0 0 var(--spacing-xl) 0',
+              boxShadow: '4px 4px 0px 0px #000',
+            }}
+          >
+            {/* Meta Logo */}
+            <svg width="32" height="32" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M128 0C57.3 0 0 57.3 0 128s57.3 128 128 128 128-57.3 128-128S198.7 0 128 0zm0 240c-61.8 0-112-50.2-112-112S66.2 16 128 16s112 50.2 112 112-50.2 112-112 112z" fill="#0081FB"/>
+              <path d="M128 40c-48.5 0-88 39.5-88 88s39.5 88 88 88 88-39.5 88-88-39.5-88-88-88zm0 160c-39.7 0-72-32.3-72-72s32.3-72 72-72 72 32.3 72 72-32.3 72-72 72z" fill="#0081FB"/>
+              <circle cx="128" cy="128" r="48" fill="#0081FB"/>
+            </svg>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Official
+              </span>
+              <span style={{ fontSize: '15px', fontWeight: 800, color: '#000', lineHeight: 1 }}>
+                Meta Technology Partner
+              </span>
+            </div>
+          </div>
 
           <div className="landing-hero-buttons" style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/register" className="btn btn--primary btn--lg" style={{ animation: 'slideInUp 0.8s ease-out' }}>
