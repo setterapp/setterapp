@@ -226,22 +226,19 @@ function Landing() {
           <div
             style={{
               display: 'inline-flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              gap: '2px',
-              background: '#ffffff',
-              border: '3px solid #000',
-              borderRadius: '12px',
-              padding: '16px 28px',
+              gap: '8px',
+              background: '#e8f5e9',
+              border: '2px solid #000',
+              borderRadius: '8px',
+              padding: '8px 16px',
               margin: '0 0 var(--spacing-xl) 0',
-              boxShadow: '4px 4px 0px 0px #000',
+              boxShadow: '2px 2px 0px 0px #000',
             }}
           >
-            <span style={{ fontSize: '24px', fontWeight: 700, color: '#000', lineHeight: 1, letterSpacing: '-0.5px' }}>
-              Meta
-            </span>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#000', lineHeight: 1 }}>
-              Tech Provider
+            <Check size={16} color="#10b981" strokeWidth={3} />
+            <span style={{ fontSize: '14px', fontWeight: 600, color: '#000' }}>
+              we are officially a Meta tech provider
             </span>
           </div>
 
