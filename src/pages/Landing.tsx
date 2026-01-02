@@ -121,7 +121,7 @@ function Landing() {
       >
         <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
           <Logo size={48} variant="icon" />
-          <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: '#fff' }}>
+          <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: '#000' }}>
             setterapp.ai
           </span>
         </Link>
@@ -280,6 +280,14 @@ function Landing() {
             `}
           </style>
 
+          <style>
+            {`
+              @keyframes gradientShift {
+                0%, 100% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+              }
+            `}
+          </style>
           <h1
             className="landing-hero-title"
             style={{
@@ -291,7 +299,18 @@ function Landing() {
             }}
           >
             Instagram Sales on{' '}
-            <span style={{ color: 'var(--color-primary)' }}>Autopilot</span>
+            <span
+              style={{
+                background: 'linear-gradient(90deg, #89b4fa, #f38ba8, #89b4fa)',
+                backgroundSize: '200% 100%',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                animation: 'gradientShift 3s ease-in-out infinite',
+              }}
+            >
+              Autopilot
+            </span>
           </h1>
 
           <h2
@@ -315,7 +334,7 @@ function Landing() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              background: '#e8f5e9',
+              background: '#fff',
               border: '2px solid #000',
               borderRadius: '8px',
               padding: '8px 16px',
@@ -756,8 +775,8 @@ function Landing() {
                 style={{
                   width: '100%',
                   justifyContent: 'center',
-                  background: '#fff',
-                  color: '#000',
+                  background: '#000',
+                  color: '#fff',
                   border: '2px solid #000',
                   fontWeight: 700,
                   padding: '14px 24px',
@@ -941,8 +960,8 @@ function Landing() {
                 style={{
                   width: '100%',
                   justifyContent: 'center',
-                  background: '#f9e2af',
-                  color: '#000',
+                  background: '#000',
+                  color: '#fff',
                   border: '2px solid #000',
                   fontWeight: 700,
                   padding: '14px 24px',
