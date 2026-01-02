@@ -375,6 +375,7 @@ function Landing() {
 
       {/* 2. PAIN POINTS SECTION */}
       <section
+        className="landing-section"
         style={{
           padding: '60px var(--spacing-xl)',
         }}
@@ -393,6 +394,7 @@ function Landing() {
           </h2>
 
           <div
+            className="landing-pain-points-grid"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
@@ -455,6 +457,7 @@ function Landing() {
 
       {/* 4. COMPARISON TABLE */}
       <section
+        className="landing-section"
         style={{
           padding: '60px var(--spacing-xl)',
         }}
@@ -625,6 +628,7 @@ function Landing() {
 
       {/* STATS SECTION - Social Proof */}
       <section
+        className="landing-section"
         style={{
           padding: '60px var(--spacing-xl)',
         }}
@@ -683,6 +687,7 @@ function Landing() {
 
       {/* 9. PRICING */}
       <section
+        className="landing-section"
         style={{
           padding: '80px var(--spacing-xl)',
         }}
@@ -711,6 +716,7 @@ function Landing() {
           </p>
 
           <div
+            className="landing-pricing-grid"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
@@ -982,6 +988,7 @@ function Landing() {
 
       {/* 10. FAQ */}
       <section
+        className="landing-section"
         style={{
           padding: '60px var(--spacing-xl)',
         }}
@@ -1058,6 +1065,7 @@ function Landing() {
 
       {/* 12. FOOTER */}
       <footer
+        className="landing-footer"
         style={{
           padding: 'var(--spacing-2xl)',
           borderTop: '2px solid #000',

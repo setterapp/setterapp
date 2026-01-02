@@ -662,6 +662,157 @@ input, textarea, select {
   }
 }
 
+/* ========================================
+   LANDING PAGE MOBILE STYLES
+   ======================================== */
+
+/* Tablet and below */
+@media (max-width: 768px) {
+  /* Landing Header */
+  .landing-header {
+    padding: var(--spacing-md) var(--spacing-md) !important;
+  }
+
+  /* Landing Hero */
+  .landing-hero {
+    padding: 40px var(--spacing-md) !important;
+  }
+
+  .landing-hero .card {
+    padding: var(--spacing-lg) !important;
+  }
+
+  .hero-badge {
+    position: static !important;
+    display: inline-block !important;
+    margin-bottom: var(--spacing-md) !important;
+    right: auto !important;
+    top: auto !important;
+  }
+
+  /* Pain Points Grid - 1 column */
+  .landing-pain-points-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Features Grid - 1 column */
+  .landing-features-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stats Bar - 2x2 grid */
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--spacing-md) !important;
+  }
+
+  .stats-bar > div {
+    border-right: none !important;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .stats-bar > div:nth-child(odd) {
+    border-right: 1px solid #e0e0e0 !important;
+  }
+
+  .stats-bar > div:nth-child(n+3) {
+    border-bottom: none;
+  }
+
+  /* Pricing Cards - remove scale on mobile */
+  .landing-pricing-grid > div {
+    transform: none !important;
+  }
+
+  /* Landing sections - reduce padding */
+  .landing-section {
+    padding: 40px var(--spacing-md) !important;
+  }
+
+  .landing-features,
+  .landing-cta {
+    padding: 40px var(--spacing-md) !important;
+  }
+
+  /* Footer - reduce padding */
+  .landing-footer {
+    padding: var(--spacing-lg) var(--spacing-md) !important;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+  /* Landing Header - stack on very small screens */
+  .landing-header {
+    flex-direction: column !important;
+    text-align: center;
+    gap: var(--spacing-sm) !important;
+  }
+
+  .landing-header > div:last-child {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Hero adjustments */
+  .landing-hero {
+    padding: 24px var(--spacing-sm) !important;
+  }
+
+  .landing-hero .card {
+    padding: var(--spacing-md) !important;
+  }
+
+  .landing-hero-title {
+    font-size: 1.75rem !important;
+  }
+
+  .landing-hero-buttons {
+    flex-direction: column !important;
+    width: 100%;
+  }
+
+  .landing-hero-buttons .btn {
+    width: 100%;
+  }
+
+  /* Landing sections - smaller padding on mobile */
+  .landing-section {
+    padding: 32px var(--spacing-sm) !important;
+  }
+
+  /* Stats Bar - single column on very small screens */
+  .stats-bar {
+    grid-template-columns: 1fr !important;
+    padding: var(--spacing-md) !important;
+  }
+
+  .stats-bar > div {
+    border-right: none !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+  }
+
+  .stats-bar > div:last-child {
+    border-bottom: none !important;
+  }
+
+  /* Pricing cards - smaller padding */
+  .landing-pricing-grid > div {
+    padding: var(--spacing-md) !important;
+    box-shadow: 4px 4px 0px 0px #000 !important;
+  }
+
+  /* Footer */
+  .landing-footer {
+    padding: var(--spacing-md) var(--spacing-sm) !important;
+  }
+
+  /* FAQ items */
+  .landing-section .card {
+    margin-bottom: var(--spacing-sm) !important;
+  }
+}
+
 /* Switch Component */
 button[role="switch"][data-state="checked"] span[data-state="checked"] {
   transform: translateX(26px);
