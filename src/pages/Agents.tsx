@@ -579,38 +579,20 @@ function Agents() {
                                     rows={2}
                                 />
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--spacing-md)' }}>
-                                <div className="form-group">
-                                    <label htmlFor="activeHoursStart">Start Time</label>
-                                    <input
-                                        id="activeHoursStart"
-                                        type="time"
-                                        className="input"
-                                        value={formData.config.activeHoursStart || '09:00'}
-                                        onChange={(e) => updateConfig('activeHoursStart', e.target.value)}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="activeHoursEnd">End Time</label>
-                                    <input
-                                        id="activeHoursEnd"
-                                        type="time"
-                                        className="input"
-                                        value={formData.config.activeHoursEnd || '18:00'}
-                                        onChange={(e) => updateConfig('activeHoursEnd', e.target.value)}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="responseInterval">Interval (min)</label>
-                                    <input
-                                        id="responseInterval"
-                                        type="number"
-                                        className="input"
-                                        min="1"
-                                        value={formData.config.responseInterval || 3}
-                                        onChange={(e) => updateConfig('responseInterval', parseInt(e.target.value) || 3)}
-                                    />
-                                </div>
+                            <div className="form-group">
+                                <label htmlFor="responseInterval">Response Interval (minutes)</label>
+                                <input
+                                    id="responseInterval"
+                                    type="number"
+                                    className="input"
+                                    min="1"
+                                    value={formData.config.responseInterval || 3}
+                                    onChange={(e) => updateConfig('responseInterval', parseInt(e.target.value) || 3)}
+                                    style={{ maxWidth: '120px' }}
+                                />
+                                <small style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
+                                    The agent responds 24/7. This is the minimum delay between responses.
+                                </small>
                             </div>
                         </div>
 
