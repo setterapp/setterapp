@@ -954,13 +954,12 @@ function Landing() {
                   "1 AI Agent",
                   "2,000 messages/month",
                   "1 Knowledge Base",
-                  "1 team member",
                   "Instagram DM automation",
-                  "Google Calendar integration",
-                  "Built-in CRM & contact management",
-                  "Basic analytics",
+                  "Google Calendar sync",
+                  "Automatic appointment booking",
+                  "Built-in CRM",
+                  "Lead tracking & status",
                   "Email support",
-                  "Unlimited Instagram workflows",
                 ].map((feature, i) => (
                   <div
                     key={i}
@@ -1054,12 +1053,8 @@ function Landing() {
                   "3 AI Agents",
                   "10,000 messages/month",
                   "3 Knowledge Bases",
-                  "3 team members",
-                  "Custom AI instructions",
-                  "Advanced conversation routing",
-                  "Lead status automation",
-                  "Priority 24/7 support",
-                  "Remove 'Powered by SetterApp' branding",
+                  "Priority support",
+                  "WhatsApp integration (coming soon)",
                 ].map((feature, i) => (
                   <div
                     key={i}
@@ -1152,14 +1147,8 @@ function Landing() {
                   "10 AI Agents",
                   "Unlimited messages",
                   "10 Knowledge Bases",
-                  "10 team members",
-                  "Unlimited custom tools & integrations",
-                  "Advanced analytics & reporting",
-                  "Multi-language support",
-                  "Custom AI model training",
-                  "Dedicated account manager",
-                  "VIP 24/7 support",
-                  "Personalized onboarding",
+                  "VIP Priority support",
+                  "Personalized onboarding call",
                   "Early access to new features",
                 ].map((feature, i) => (
                   <div
