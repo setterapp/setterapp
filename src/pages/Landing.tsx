@@ -80,7 +80,7 @@ function FAQItem({ question, answer, isOpen, onClick }: {
     >
       <div
         style={{
-          padding: 'var(--spacing-lg)',
+          padding: 'clamp(var(--spacing-md), 3vw, var(--spacing-lg))',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -88,15 +88,16 @@ function FAQItem({ question, answer, isOpen, onClick }: {
           transition: 'background 0.2s ease',
         }}
       >
-        <h4 style={{ margin: 0, fontSize: 'var(--font-size-lg)', fontWeight: 600 }}>
+        <h4 style={{ margin: 0, fontSize: 'clamp(14px, 3.5vw, var(--font-size-lg))', fontWeight: 600 }}>
           {question}
         </h4>
         <ChevronDown
-          size={24}
+          size={window.innerWidth < 768 ? 20 : 24}
           style={{
             transition: 'transform 0.3s ease',
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-            flexShrink: 0
+            flexShrink: 0,
+            marginLeft: 'var(--spacing-sm)'
           }}
         />
       </div>
@@ -105,11 +106,11 @@ function FAQItem({ question, answer, isOpen, onClick }: {
           maxHeight: isOpen ? '500px' : '0',
           overflow: 'hidden',
           transition: 'max-height 0.3s ease, padding 0.3s ease',
-          padding: isOpen ? 'var(--spacing-lg)' : '0 var(--spacing-lg)',
+          padding: isOpen ? 'clamp(var(--spacing-md), 3vw, var(--spacing-lg))' : '0 clamp(var(--spacing-md), 3vw, var(--spacing-lg))',
           borderTop: isOpen ? '2px solid #000' : 'none',
         }}
       >
-        <p style={{ margin: 0, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+        <p style={{ margin: 0, color: 'var(--color-text-secondary)', lineHeight: 1.6, fontSize: 'clamp(13px, 3vw, 15px)' }}>
           {answer}
         </p>
       </div>
@@ -191,27 +192,27 @@ function Landing() {
         <header
           className="landing-header"
           style={{
-            padding: 'var(--spacing-md) var(--spacing-xl)',
+            padding: 'clamp(12px, 3vw, var(--spacing-md)) clamp(16px, 4vw, var(--spacing-xl))',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: 'var(--spacing-md)',
+            gap: 'clamp(8px, 2vw, var(--spacing-md))',
             maxWidth: '1400px',
             margin: '0 auto',
           }}
         >
           <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-            <Logo size={40} variant="icon" />
-            <span style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, color: '#000' }}>
+            <Logo size={window.innerWidth < 768 ? 32 : 40} variant="icon" />
+            <span style={{ fontSize: 'clamp(16px, 4vw, var(--font-size-lg))', fontWeight: 700, color: '#000' }}>
               setterapp.ai
             </span>
           </Link>
-          <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center', flexWrap: 'wrap' }}>
-            <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000' }}>
+          <div style={{ display: 'flex', gap: 'clamp(8px, 2vw, var(--spacing-md))', alignItems: 'center', flexWrap: 'wrap' }}>
+            <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000', padding: 'clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px)', fontSize: 'clamp(13px, 3vw, 15px)' }}>
               Log In
             </Link>
-            <Link to="/register" className="btn" style={{ background: '#000', color: '#fff', border: '2px solid #000' }}>
+            <Link to="/register" className="btn" style={{ background: '#000', color: '#fff', border: '2px solid #000', padding: 'clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px)', fontSize: 'clamp(13px, 3vw, 15px)' }}>
               Get Started
             </Link>
           </div>
@@ -222,14 +223,14 @@ function Landing() {
       <section
         className="landing-hero"
         style={{
-          padding: '120px var(--spacing-xl)',
+          padding: 'clamp(40px, 10vw, 120px) clamp(16px, 4vw, var(--spacing-xl))',
           textAlign: 'center',
           position: 'relative',
           backgroundImage: `
             linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
             linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px)
           `,
-          backgroundSize: '40px 40px',
+          backgroundSize: 'clamp(20px, 5vw, 40px) clamp(20px, 5vw, 40px)',
         }}
       >
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
@@ -239,18 +240,18 @@ function Landing() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '24px',
-              margin: '0 auto var(--spacing-xl)',
+              gap: 'clamp(12px, 4vw, 24px)',
+              margin: '0 auto clamp(var(--spacing-lg), 5vw, var(--spacing-xl))',
             }}
           >
             {/* Robot Logo */}
             <div
               style={{
-                width: '80px',
-                height: '80px',
+                width: 'clamp(50px, 15vw, 80px)',
+                height: 'clamp(50px, 15vw, 80px)',
                 background: 'var(--color-primary)',
                 border: '2px solid #000',
-                borderRadius: '12px',
+                borderRadius: 'clamp(8px, 2vw, 12px)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -258,14 +259,14 @@ function Landing() {
                 animation: 'float 3s ease-in-out infinite',
               }}
             >
-              <Logo size={40} variant="icon" />
+              <Logo size={window.innerWidth < 768 ? 24 : 40} variant="icon" />
             </div>
 
             {/* Animated Connection Line */}
             <div
               style={{
                 position: 'relative',
-                width: '60px',
+                width: 'clamp(30px, 10vw, 60px)',
                 height: '4px',
                 background: 'linear-gradient(90deg, var(--color-primary) 0%, #f38ba8 100%)',
                 borderRadius: '2px',
@@ -305,11 +306,11 @@ function Landing() {
             {/* Instagram Logo */}
             <div
               style={{
-                width: '80px',
-                height: '80px',
+                width: 'clamp(50px, 15vw, 80px)',
+                height: 'clamp(50px, 15vw, 80px)',
                 background: '#f38ba8',
                 border: '2px solid #000',
-                borderRadius: '12px',
+                borderRadius: 'clamp(8px, 2vw, 12px)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -317,7 +318,7 @@ function Landing() {
                 animation: 'float 3s ease-in-out infinite 0.5s',
               }}
             >
-              <InstagramIcon size={40} color="#000" />
+              <InstagramIcon size={window.innerWidth < 768 ? 24 : 40} color="#000" />
             </div>
           </div>
 
@@ -395,20 +396,20 @@ function Landing() {
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '10px',
+              gap: 'clamp(6px, 2vw, 10px)',
               background: 'linear-gradient(135deg, #0081FB 0%, #00a3ff 100%)',
-              border: '3px solid #000',
-              borderRadius: '12px',
-              padding: '12px 20px',
-              margin: '0 0 var(--spacing-xl) 0',
-              boxShadow: '4px 4px 0px 0px #000',
+              border: 'clamp(2px, 0.5vw, 3px) solid #000',
+              borderRadius: 'clamp(8px, 2vw, 12px)',
+              padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 20px)',
+              margin: '0 0 clamp(var(--spacing-lg), 5vw, var(--spacing-xl)) 0',
+              boxShadow: 'clamp(3px, 1vw, 4px) clamp(3px, 1vw, 4px) 0px 0px #000',
             }}
           >
             {/* Infinity Symbol */}
-            <svg width="24" height="24" viewBox="0 0 16 16" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+            <svg width="clamp(18, 5vw, 24)" height="clamp(18, 5vw, 24)" viewBox="0 0 16 16" fill="#fff" xmlns="http://www.w3.org/2000/svg">
               <path d="M5.68 5.792 7.345 7.75 5.681 9.708a2.75 2.75 0 1 1 0-3.916ZM8 6.978 6.416 5.113l-.014-.015a3.75 3.75 0 1 0 0 5.304l.014-.015L8 8.522l1.584 1.865.014.015a3.75 3.75 0 1 0 0-5.304l-.014.015zm.656.772 1.663-1.958a2.75 2.75 0 1 1 0 3.916z"/>
             </svg>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff', letterSpacing: '0.3px' }}>
+            <span style={{ fontSize: 'clamp(12px, 3vw, 15px)', fontWeight: 700, color: '#fff', letterSpacing: '0.3px' }}>
               Official Meta Tech Provider
             </span>
           </div>
@@ -436,7 +437,7 @@ function Landing() {
       <section
         className="landing-section"
         style={{
-          padding: '60px var(--spacing-xl)',
+          padding: 'clamp(40px, 8vw, 60px) clamp(16px, 4vw, var(--spacing-xl))',
         }}
       >
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -449,7 +450,7 @@ function Landing() {
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
               textAlign: 'center',
-              margin: '0 0 var(--spacing-2xl) 0',
+              margin: '0 0 clamp(var(--spacing-xl), 6vw, var(--spacing-2xl)) 0',
               color: '#000',
             }}
           >
@@ -464,8 +465,8 @@ function Landing() {
             className="landing-pain-points-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: 'var(--spacing-lg)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
+              gap: 'clamp(var(--spacing-md), 4vw, var(--spacing-lg))',
             }}
           >
             {[
@@ -482,31 +483,31 @@ function Landing() {
                 style={{
                   background: '#fff5f5',
                   border: '2px solid #000',
-                  borderRadius: '12px',
-                  padding: 'var(--spacing-lg)',
+                  borderRadius: 'clamp(8px, 2vw, 12px)',
+                  padding: 'clamp(var(--spacing-md), 3vw, var(--spacing-lg))',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 'var(--spacing-md)',
+                  gap: 'clamp(var(--spacing-sm), 3vw, var(--spacing-md))',
                   boxShadow: '3px 3px 0px 0px #000',
                   cursor: 'default',
                 }}
               >
                 <div
                   style={{
-                    width: '48px',
-                    height: '48px',
+                    width: 'clamp(36px, 10vw, 48px)',
+                    height: 'clamp(36px, 10vw, 48px)',
                     background: 'var(--color-danger)',
                     border: '2px solid #000',
-                    borderRadius: '8px',
+                    borderRadius: 'clamp(6px, 2vw, 8px)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
                   }}
                 >
-                  <X size={24} color="#000" strokeWidth={3} />
+                  <X size={window.innerWidth < 768 ? 20 : 24} color="#000" strokeWidth={3} />
                 </div>
-                <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-text)' }}>
+                <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-text)', fontSize: 'clamp(13px, 3.5vw, 16px)' }}>
                   {pain.text}
                 </p>
               </motion.div>
@@ -519,7 +520,7 @@ function Landing() {
       <section
         className="landing-section"
         style={{
-          padding: '60px var(--spacing-xl)',
+          padding: 'clamp(40px, 8vw, 60px) clamp(16px, 4vw, var(--spacing-xl))',
         }}
       >
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
@@ -551,17 +552,17 @@ function Landing() {
               WebkitOverflowScrolling: 'touch',
             }}
           >
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '400px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '280px' }}>
               <thead>
                 <tr style={{ background: '#89CFF0' }}>
-                  <th style={{ padding: 'var(--spacing-md)', textAlign: 'left', borderBottom: '2px solid #000', fontWeight: 700 }}>
+                  <th style={{ padding: 'clamp(8px, 2vw, var(--spacing-md))', textAlign: 'left', borderBottom: '2px solid #000', fontWeight: 700, fontSize: 'clamp(12px, 3vw, 15px)' }}>
                     Aspect
                   </th>
-                  <th style={{ padding: 'var(--spacing-md)', textAlign: 'center', borderBottom: '2px solid #000', fontWeight: 700 }}>
-                    Human Setter
+                  <th style={{ padding: 'clamp(8px, 2vw, var(--spacing-md))', textAlign: 'center', borderBottom: '2px solid #000', fontWeight: 700, fontSize: 'clamp(12px, 3vw, 15px)' }}>
+                    Human
                   </th>
-                  <th style={{ padding: 'var(--spacing-md)', textAlign: 'center', borderBottom: '2px solid #000', fontWeight: 700 }}>
-                    SetterApp.ai
+                  <th style={{ padding: 'clamp(8px, 2vw, var(--spacing-md))', textAlign: 'center', borderBottom: '2px solid #000', fontWeight: 700, fontSize: 'clamp(12px, 3vw, 15px)' }}>
+                    AI Setter
                   </th>
                 </tr>
               </thead>
@@ -575,24 +576,25 @@ function Landing() {
                   { aspect: "Turnover", icon: UserX, human: "High", ai: "None" },
                 ].map((row, index) => (
                   <tr key={index} style={{ borderBottom: index < 5 ? '1px solid #e0e0e0' : 'none' }}>
-                    <td style={{ padding: 'var(--spacing-md)', fontWeight: 600 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                        <row.icon size={18} strokeWidth={2.5} />
-                        {row.aspect}
+                    <td style={{ padding: 'clamp(8px, 2vw, var(--spacing-md))', fontWeight: 600, fontSize: 'clamp(12px, 3vw, 15px)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, var(--spacing-sm))' }}>
+                        <row.icon size={window.innerWidth < 768 ? 14 : 18} strokeWidth={2.5} />
+                        <span style={{ display: window.innerWidth < 480 ? 'none' : 'inline' }}>{row.aspect}</span>
                       </div>
                     </td>
-                    <td style={{ padding: 'var(--spacing-md)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                    <td style={{ padding: 'clamp(8px, 2vw, var(--spacing-md))', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 'clamp(11px, 2.5vw, 14px)' }}>
                       {row.human}
                     </td>
                     <td style={{
-                      padding: 'var(--spacing-md)',
+                      padding: 'clamp(8px, 2vw, var(--spacing-md))',
                       textAlign: 'center',
                       background: '#e8f5e9',
                       fontWeight: 600,
-                      color: 'var(--color-success)'
+                      color: 'var(--color-success)',
+                      fontSize: 'clamp(11px, 2.5vw, 14px)'
                     }}>
                       <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                        <Check size={16} strokeWidth={3} />
+                        <Check size={window.innerWidth < 768 ? 12 : 16} strokeWidth={3} />
                         {row.ai}
                       </span>
                     </td>
@@ -608,7 +610,7 @@ function Landing() {
       <section
         className="landing-features"
         style={{
-          padding: '60px var(--spacing-xl)',
+          padding: 'clamp(40px, 8vw, 60px) clamp(16px, 4vw, var(--spacing-xl))',
         }}
       >
         <div style={{ maxWidth: '960px', margin: '0 auto' }}>
@@ -622,7 +624,7 @@ function Landing() {
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
               textAlign: 'center',
-              margin: '0 0 var(--spacing-2xl) 0',
+              margin: '0 0 clamp(var(--spacing-xl), 6vw, var(--spacing-2xl)) 0',
               color: '#000',
             }}
           >
@@ -637,8 +639,8 @@ function Landing() {
             className="landing-features-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: 'var(--spacing-lg)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
+              gap: 'clamp(var(--spacing-md), 4vw, var(--spacing-lg))',
               alignItems: 'stretch',
             }}
           >
@@ -658,22 +660,22 @@ function Landing() {
                 }}
                 style={{
                   background: '#fff',
-                  border: '3px solid #000',
-                  borderRadius: '16px',
-                  padding: 'var(--spacing-xl)',
+                  border: 'clamp(2px, 0.5vw, 3px) solid #000',
+                  borderRadius: 'clamp(12px, 3vw, 16px)',
+                  padding: 'clamp(var(--spacing-md), 4vw, var(--spacing-xl))',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 'var(--spacing-lg)',
+                  gap: 'clamp(var(--spacing-md), 3vw, var(--spacing-lg))',
                   boxShadow: '4px 4px 0px 0px #000',
                   cursor: 'default',
-                  minHeight: '120px',
+                  minHeight: 'clamp(100px, 20vw, 120px)',
                 }}
               >
                 <div
                   style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '12px',
+                    width: 'clamp(44px, 12vw, 56px)',
+                    height: 'clamp(44px, 12vw, 56px)',
+                    borderRadius: 'clamp(8px, 2vw, 12px)',
                     background: feature.color,
                     border: '2px solid #000',
                     display: 'flex',
@@ -683,16 +685,16 @@ function Landing() {
                   }}
                 >
                   {feature.isComponent ? (
-                    <feature.icon size={28} color="#000" />
+                    <feature.icon size={window.innerWidth < 768 ? 22 : 28} color="#000" />
                   ) : (
-                    <feature.icon size={28} color="#000" strokeWidth={2} />
+                    <feature.icon size={window.innerWidth < 768 ? 22 : 28} color="#000" strokeWidth={2} />
                   )}
                 </div>
                 <div>
-                  <h4 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
+                  <h4 style={{ fontSize: 'clamp(14px, 3.5vw, var(--font-size-lg))', fontWeight: 700, margin: '0 0 6px 0', color: '#000' }}>
                     {feature.title}
                   </h4>
-                  <p style={{ color: '#555', margin: 0, lineHeight: 1.5, fontSize: 'var(--font-size-sm)' }}>
+                  <p style={{ color: '#555', margin: 0, lineHeight: 1.5, fontSize: 'clamp(12px, 3vw, var(--font-size-sm))' }}>
                     {feature.desc}
                   </p>
                 </div>
@@ -706,7 +708,7 @@ function Landing() {
       <section
         className="landing-section"
         style={{
-          padding: '60px var(--spacing-xl)',
+          padding: 'clamp(40px, 8vw, 60px) clamp(16px, 4vw, var(--spacing-xl))',
           background: 'var(--color-bg-secondary)',
         }}
       >
@@ -806,7 +808,7 @@ function Landing() {
       <section
         className="landing-section"
         style={{
-          padding: '60px var(--spacing-xl)',
+          padding: 'clamp(40px, 8vw, 60px) clamp(16px, 4vw, var(--spacing-xl))',
         }}
       >
         <div style={{ maxWidth: '960px', margin: '0 auto' }}>
@@ -818,11 +820,11 @@ function Landing() {
             className="stats-bar"
             style={{
               background: '#fff',
-              border: '3px solid #000',
-              borderRadius: '20px',
-              padding: 'var(--spacing-xl)',
+              border: 'clamp(2px, 0.5vw, 3px) solid #000',
+              borderRadius: 'clamp(12px, 3vw, 20px)',
+              padding: 'clamp(var(--spacing-md), 4vw, var(--spacing-xl))',
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(120px, 100%), 1fr))',
             }}
           >
             {[
@@ -839,16 +841,16 @@ function Landing() {
                 transition={{ delay: index * 0.1, duration: 0.5 }}
                 style={{
                   textAlign: 'center',
-                  padding: 'var(--spacing-md)',
-                  borderRight: index < arr.length - 1 ? '2px solid #e0e0e0' : 'none',
+                  padding: 'clamp(var(--spacing-sm), 2vw, var(--spacing-md))',
+                  borderRight: index < arr.length - 1 && window.innerWidth >= 640 ? '2px solid #e0e0e0' : 'none',
                 }}
               >
                 <div
                   style={{
-                    fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+                    fontSize: 'clamp(1.25rem, 5vw, 2rem)',
                     fontWeight: 800,
                     color: '#000',
-                    marginBottom: '8px',
+                    marginBottom: 'clamp(4px, 1vw, 8px)',
                     lineHeight: 1,
                   }}
                 >
@@ -856,7 +858,7 @@ function Landing() {
                 </div>
                 <div
                   style={{
-                    fontSize: 'var(--font-size-sm)',
+                    fontSize: 'clamp(11px, 2.5vw, var(--font-size-sm))',
                     fontWeight: 600,
                     color: '#666',
                   }}
@@ -873,7 +875,7 @@ function Landing() {
       <section
         className="landing-section"
         style={{
-          padding: '80px var(--spacing-xl)',
+          padding: 'clamp(50px, 10vw, 80px) clamp(16px, 4vw, var(--spacing-xl))',
         }}
       >
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
@@ -1194,7 +1196,7 @@ function Landing() {
       <section
         className="landing-section"
         style={{
-          padding: '60px var(--spacing-xl)',
+          padding: 'clamp(40px, 8vw, 60px) clamp(16px, 4vw, var(--spacing-xl))',
         }}
       >
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -1238,7 +1240,7 @@ function Landing() {
       <section
         className="landing-cta"
         style={{
-          padding: '80px var(--spacing-xl)',
+          padding: 'clamp(50px, 10vw, 80px) clamp(16px, 4vw, var(--spacing-xl))',
           textAlign: 'center',
         }}
       >
@@ -1291,7 +1293,7 @@ function Landing() {
       <footer
         className="landing-footer"
         style={{
-          padding: 'var(--spacing-2xl)',
+          padding: 'clamp(var(--spacing-xl), 6vw, var(--spacing-2xl))',
           borderTop: '2px solid #000',
         }}
       >
