@@ -175,39 +175,44 @@ function Landing() {
   return (
     <motion.div style={{ minHeight: '100vh', backgroundColor }}>
       {/* Header */}
-      <header
-        className="landing-header"
+      <div
         style={{
           position: 'sticky',
           top: 0,
           zIndex: 100,
           background: '#fff',
           borderBottom: '2px solid #000',
-          padding: 'var(--spacing-lg) var(--spacing-xl)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 'var(--spacing-md)',
-          maxWidth: '1400px',
-          margin: '0 auto',
         }}
       >
-        <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-          <Logo size={48} variant="icon" />
-          <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: '#000' }}>
-            setterapp.ai
-          </span>
-        </Link>
-        <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center', flexWrap: 'wrap' }}>
-          <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000' }}>
-            Log In
+        <header
+          className="landing-header"
+          style={{
+            padding: 'var(--spacing-md) var(--spacing-xl)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 'var(--spacing-md)',
+            maxWidth: '1400px',
+            margin: '0 auto',
+          }}
+        >
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+            <Logo size={40} variant="icon" />
+            <span style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, color: '#000' }}>
+              setterapp.ai
+            </span>
           </Link>
-          <Link to="/register" className="btn" style={{ background: '#000', color: '#fff', border: '2px solid #000' }}>
-            Get Started
-          </Link>
-        </div>
-      </header>
+          <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center', flexWrap: 'wrap' }}>
+            <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000' }}>
+              Log In
+            </Link>
+            <Link to="/register" className="btn" style={{ background: '#000', color: '#fff', border: '2px solid #000' }}>
+              Get Started
+            </Link>
+          </div>
+        </header>
+      </div>
 
       {/* 1. HERO SECTION */}
       <section
