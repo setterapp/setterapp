@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { MessageCircle, RefreshCw, Plus, Settings, Zap, MoreVertical, Trash2, X } from 'lucide-react'
+import { MessageCircle, RefreshCw, Plus, Settings, MoreVertical, Trash2, X } from 'lucide-react'
 import SectionHeader from '../components/SectionHeader'
 import Modal from '../components/common/Modal'
 import { Switch } from '../components/ui/switch'
@@ -217,9 +217,7 @@ function Comments() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
           {posts.map(post => {
-            const postAutomations = getPostAutomations(post.id)
-            const hasActiveAutomation = postAutomations.some(a => a.is_active)
-            const activeCount = postAutomations.filter(a => a.is_active).length
+            const postAutomation = getPostAutomations(post.id)[0] // Only one automation per post
 
             return (
               <div
@@ -233,6 +231,7 @@ function Comments() {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   gap: 'var(--spacing-md)',
+                  opacity: postAutomation && !postAutomation.is_active ? 0.7 : 1,
                 }}
               >
                 {/* Left: Thumbnail and info */}
@@ -287,249 +286,144 @@ function Comments() {
                       }}>
                         {post.caption || 'No caption'}
                       </h3>
-                      {hasActiveAutomation && (
-                        <span style={{
-                          background: '#a6e3a1',
-                          color: '#000',
-                          padding: '2px 8px',
-                          borderRadius: 'var(--border-radius-sm)',
-                          fontSize: 'var(--font-size-xs)',
-                          fontWeight: 600,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          border: '1px solid #000',
-                          flexShrink: 0,
-                        }}>
-                          <Zap size={10} />
-                          {activeCount} active
-                        </span>
-                      )}
                     </div>
                     <p style={{
                       margin: 0,
                       fontSize: 'var(--font-size-sm)',
                       color: 'var(--color-text-secondary)',
                     }}>
-                      {post.comments_count || 0} comments • {postAutomations.length} automation{postAutomations.length !== 1 ? 's' : ''}
+                      {post.comments_count || 0} comments
+                      {postAutomation && (
+                        <>
+                          {' • '}
+                          {postAutomation.trigger_keywords?.length > 0
+                            ? `Keywords: ${postAutomation.trigger_keywords.join(', ')}`
+                            : 'All comments'}
+                          {postAutomation.triggers_count > 0 && ` • ${postAutomation.triggers_count} triggers`}
+                        </>
+                      )}
                     </p>
                   </div>
                 </div>
 
-                {/* Right: Add button */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                  <button
-                    className="btn btn--secondary"
-                    style={{ padding: '8px 12px', fontSize: 'var(--font-size-sm)' }}
-                    onClick={() => handleOpenAutomationModal(post)}
-                  >
-                    <Plus size={16} />
-                    Add Automation
-                  </button>
+                {/* Right: Controls */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                  {postAutomation ? (
+                    <>
+                      {/* Active/Inactive label */}
+                      <span style={{
+                        fontSize: 'var(--font-size-sm)',
+                        fontWeight: 600,
+                        color: postAutomation.is_active ? 'var(--color-success)' : 'var(--color-text-secondary)',
+                      }}>
+                        {postAutomation.is_active ? 'Active' : 'Inactive'}
+                      </span>
+
+                      {/* Toggle Switch */}
+                      <Switch
+                        checked={postAutomation.is_active}
+                        onCheckedChange={(checked) => toggleAutomation(postAutomation.id, checked)}
+                      />
+
+                      {/* Menu */}
+                      <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setOpenMenuId(openMenuId === postAutomation.id ? null : postAutomation.id)
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 'var(--spacing-xs)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--color-text-secondary)',
+                            borderRadius: 'var(--border-radius-sm)',
+                          }}
+                        >
+                          <MoreVertical size={20} />
+                        </button>
+                        {openMenuId === postAutomation.id && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              right: 0,
+                              top: '100%',
+                              marginTop: 'var(--spacing-xs)',
+                              background: 'var(--color-bg)',
+                              border: '2px solid #000',
+                              borderRadius: 'var(--border-radius)',
+                              boxShadow: 'var(--shadow-md)',
+                              padding: 'var(--spacing-xs)',
+                              zIndex: 100,
+                              minWidth: '120px',
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              onClick={() => {
+                                handleOpenAutomationModal(post, postAutomation)
+                                setOpenMenuId(null)
+                              }}
+                              style={{
+                                width: '100%',
+                                textAlign: 'left',
+                                padding: 'var(--spacing-sm)',
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: 'var(--font-size-sm)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 'var(--spacing-sm)',
+                              }}
+                            >
+                              <Settings size={14} />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleDeleteAutomation(postAutomation.id)
+                                setOpenMenuId(null)
+                              }}
+                              style={{
+                                width: '100%',
+                                textAlign: 'left',
+                                padding: 'var(--spacing-sm)',
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: 'var(--font-size-sm)',
+                                color: 'var(--color-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 'var(--spacing-sm)',
+                              }}
+                            >
+                              <Trash2 size={14} />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <button
+                      className="btn btn--secondary"
+                      style={{ padding: '8px 12px', fontSize: 'var(--font-size-sm)' }}
+                      onClick={() => handleOpenAutomationModal(post)}
+                    >
+                      <Plus size={16} />
+                      Add Automation
+                    </button>
+                  )}
                 </div>
               </div>
             )
           })}
-
-          {/* Existing Automations Section */}
-          {automations.length > 0 && (
-            <div style={{ marginTop: 'var(--spacing-lg)' }}>
-              <h2 style={{ marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-lg)', fontWeight: 600 }}>
-                Active Automations
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-                {automations.map(automation => {
-                  const post = posts.find(p => p.id === automation.post_id)
-
-                  return (
-                    <div
-                      key={automation.id}
-                      style={{
-                        background: 'var(--color-bg)',
-                        border: '2px solid #000',
-                        borderRadius: 'var(--border-radius-lg)',
-                        padding: 'var(--spacing-lg)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        gap: 'var(--spacing-md)',
-                        opacity: automation.is_active ? 1 : 0.6,
-                      }}
-                    >
-                      {/* Left: Post thumbnail and automation info */}
-                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                        {/* Post thumbnail */}
-                        <div
-                          style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: 'var(--border-radius)',
-                            border: '2px solid #000',
-                            overflow: 'hidden',
-                            flexShrink: 0,
-                            background: '#f38ba8',
-                          }}
-                        >
-                          {post && (post.media_url || post.thumbnail_url) ? (
-                            <img
-                              src={post.thumbnail_url || post.media_url || ''}
-                              alt=""
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                              }}
-                            />
-                          ) : (
-                            <div style={{
-                              width: '100%',
-                              height: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}>
-                              <InstagramIcon size={20} color="#000" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Automation info */}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xs)' }}>
-                            <h3 style={{
-                              margin: 0,
-                              fontSize: 'var(--font-size-base)',
-                              fontWeight: 600,
-                              color: 'var(--color-text)',
-                            }}>
-                              {automation.trigger_keywords?.length > 0
-                                ? `Keywords: ${automation.trigger_keywords.join(', ')}`
-                                : 'All comments'}
-                            </h3>
-                          </div>
-                          <p style={{
-                            margin: 0,
-                            fontSize: 'var(--font-size-sm)',
-                            color: 'var(--color-text-secondary)',
-                          }}>
-                            {(automation.comment_reply_variations?.length || 0) > 0
-                              ? `${automation.comment_reply_variations?.length} reply variations`
-                              : 'Manual Response'}
-                            {automation.triggers_count > 0 && ` • ${automation.triggers_count} triggers`}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Right: Controls */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                        {/* Active Label */}
-                        {automation.is_active && (
-                          <span style={{
-                            fontSize: 'var(--font-size-sm)',
-                            fontWeight: 600,
-                            color: 'var(--color-success)',
-                          }}>
-                            Active
-                          </span>
-                        )}
-
-                        {/* Toggle Switch */}
-                        <Switch
-                          checked={automation.is_active}
-                          onCheckedChange={(checked) => toggleAutomation(automation.id, checked)}
-                        />
-
-                        {/* Menu */}
-                        <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setOpenMenuId(openMenuId === automation.id ? null : automation.id)
-                            }}
-                            style={{
-                              background: 'transparent',
-                              border: 'none',
-                              cursor: 'pointer',
-                              padding: 'var(--spacing-xs)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: 'var(--color-text-secondary)',
-                              borderRadius: 'var(--border-radius-sm)',
-                            }}
-                          >
-                            <MoreVertical size={20} />
-                          </button>
-                          {openMenuId === automation.id && (
-                            <div
-                              style={{
-                                position: 'absolute',
-                                right: 0,
-                                top: '100%',
-                                marginTop: 'var(--spacing-xs)',
-                                background: 'var(--color-bg)',
-                                border: '1px solid var(--color-border)',
-                                borderRadius: 'var(--border-radius)',
-                                boxShadow: 'var(--shadow-md)',
-                                padding: 'var(--spacing-xs)',
-                                zIndex: 100,
-                                minWidth: '120px',
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <button
-                                onClick={() => {
-                                  if (post) handleOpenAutomationModal(post, automation)
-                                  setOpenMenuId(null)
-                                }}
-                                style={{
-                                  width: '100%',
-                                  textAlign: 'left',
-                                  padding: 'var(--spacing-sm)',
-                                  background: 'transparent',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  fontSize: 'var(--font-size-sm)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 'var(--spacing-sm)',
-                                }}
-                              >
-                                <Settings size={14} />
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => {
-                                  handleDeleteAutomation(automation.id)
-                                  setOpenMenuId(null)
-                                }}
-                                style={{
-                                  width: '100%',
-                                  textAlign: 'left',
-                                  padding: 'var(--spacing-sm)',
-                                  background: 'transparent',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  fontSize: 'var(--font-size-sm)',
-                                  color: 'var(--color-danger)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 'var(--spacing-sm)',
-                                }}
-                              >
-                                <Trash2 size={14} />
-                                Delete
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
         </div>
       )}
 
