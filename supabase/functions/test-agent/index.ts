@@ -276,15 +276,25 @@ Deno.serve(async (req: Request) => {
 
     const data = await response.json();
     const candidate = data.candidates?.[0];
-    const content = candidate?.content?.parts?.map((p: any) => p.text).join('') || '';
+    let content = candidate?.content?.parts?.map((p: any) => p.text).join('') || '';
 
     console.log('[test-agent] Response generated successfully');
+
+    // Split response on . and ? to send as separate messages (same as Instagram production)
+    // Keep the ? at the end of questions, remove trailing periods
+    const messageParts = content
+      .split(/(?<=\?)\s*|(?<=\.)\s*/)  // Split after ? or .
+      .map((msg: string) => msg.trim().replace(/\.$/, ''))  // Remove trailing periods
+      .filter((msg: string) => msg.length > 0);
+
+    console.log(`[test-agent] Split into ${messageParts.length} message(s)`);
 
     // NOTE: This is a TEST - no message credits are counted, no messages are saved to DB
 
     return new Response(
       JSON.stringify({
-        content,
+        content: messageParts.length === 1 ? messageParts[0] : content,
+        messages: messageParts,  // Array of split messages for UI
         model: 'gemini-3-flash-preview'
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

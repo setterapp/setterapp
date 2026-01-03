@@ -74,10 +74,18 @@ export default function AgentTestChat({ agent }: AgentTestChatProps) {
         throw new Error(data.error)
       }
 
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: data.content || 'No response'
-      }])
+      // If we have split messages, add each as a separate bubble (like production)
+      const messageParts = data.messages || [data.content || 'No response']
+
+      // Add each message part as a separate assistant message
+      for (const part of messageParts) {
+        if (part.trim()) {
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: part
+          }])
+        }
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error generating response'
       console.error('Error generating response:', err)
