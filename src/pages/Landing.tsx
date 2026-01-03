@@ -192,27 +192,27 @@ function Landing() {
         <header
           className="landing-header"
           style={{
-            padding: 'clamp(12px, 3vw, var(--spacing-md)) clamp(16px, 4vw, var(--spacing-xl))',
+            padding: 'clamp(8px, 2vw, var(--spacing-md)) clamp(12px, 3vw, var(--spacing-xl))',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: 'clamp(8px, 2vw, var(--spacing-md))',
+            gap: 'clamp(6px, 2vw, var(--spacing-md))',
             maxWidth: '1400px',
             margin: '0 auto',
           }}
         >
-          <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-            <Logo size={window.innerWidth < 768 ? 32 : 40} variant="icon" />
-            <span style={{ fontSize: 'clamp(16px, 4vw, var(--font-size-lg))', fontWeight: 700, color: '#000' }}>
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, var(--spacing-sm))' }}>
+            <Logo size={window.innerWidth < 768 ? 28 : 40} variant="icon" />
+            <span style={{ fontSize: 'clamp(14px, 3.5vw, var(--font-size-lg))', fontWeight: 700, color: '#000' }}>
               setterapp.ai
             </span>
           </Link>
-          <div style={{ display: 'flex', gap: 'clamp(8px, 2vw, var(--spacing-md))', alignItems: 'center', flexWrap: 'wrap' }}>
-            <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000', padding: 'clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px)', fontSize: 'clamp(13px, 3vw, 15px)' }}>
+          <div style={{ display: 'flex', gap: 'clamp(6px, 2vw, var(--spacing-md))', alignItems: 'center', flexWrap: 'wrap' }}>
+            <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000', padding: 'clamp(6px, 1.5vw, 12px) clamp(12px, 3vw, 24px)', fontSize: 'clamp(12px, 3vw, 15px)' }}>
               Log In
             </Link>
-            <Link to="/register" className="btn" style={{ background: '#000', color: '#fff', border: '2px solid #000', padding: 'clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px)', fontSize: 'clamp(13px, 3vw, 15px)' }}>
+            <Link to="/register" className="btn" style={{ background: '#000', color: '#fff', border: '2px solid #000', padding: 'clamp(6px, 1.5vw, 12px) clamp(12px, 3vw, 24px)', fontSize: 'clamp(12px, 3vw, 15px)' }}>
               Get Started
             </Link>
           </div>
@@ -396,20 +396,20 @@ function Landing() {
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 'clamp(6px, 2vw, 10px)',
+              gap: 'clamp(4px, 1.5vw, 10px)',
               background: 'linear-gradient(135deg, #0081FB 0%, #00a3ff 100%)',
-              border: 'clamp(2px, 0.5vw, 3px) solid #000',
-              borderRadius: 'clamp(8px, 2vw, 12px)',
-              padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 20px)',
+              border: '2px solid #000',
+              borderRadius: 'clamp(6px, 1.5vw, 12px)',
+              padding: 'clamp(4px, 1vw, 12px) clamp(8px, 2vw, 20px)',
               margin: '0 0 clamp(var(--spacing-lg), 5vw, var(--spacing-xl)) 0',
-              boxShadow: 'clamp(3px, 1vw, 4px) clamp(3px, 1vw, 4px) 0px 0px #000',
+              boxShadow: '3px 3px 0px 0px #000',
             }}
           >
             {/* Infinity Symbol */}
-            <svg width="clamp(18, 5vw, 24)" height="clamp(18, 5vw, 24)" viewBox="0 0 16 16" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+            <svg width={window.innerWidth < 768 ? 14 : 24} height={window.innerWidth < 768 ? 14 : 24} viewBox="0 0 16 16" fill="#fff" xmlns="http://www.w3.org/2000/svg">
               <path d="M5.68 5.792 7.345 7.75 5.681 9.708a2.75 2.75 0 1 1 0-3.916ZM8 6.978 6.416 5.113l-.014-.015a3.75 3.75 0 1 0 0 5.304l.014-.015L8 8.522l1.584 1.865.014.015a3.75 3.75 0 1 0 0-5.304l-.014.015zm.656.772 1.663-1.958a2.75 2.75 0 1 1 0 3.916z"/>
             </svg>
-            <span style={{ fontSize: 'clamp(12px, 3vw, 15px)', fontWeight: 700, color: '#fff', letterSpacing: '0.3px' }}>
+            <span style={{ fontSize: 'clamp(10px, 2.5vw, 15px)', fontWeight: 700, color: '#fff', letterSpacing: '0.2px' }}>
               Official Meta Tech Provider
             </span>
           </div>
@@ -917,9 +917,10 @@ function Landing() {
             className="landing-pricing-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
-              gap: 'var(--spacing-xl)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
+              gap: 'clamp(var(--spacing-md), 4vw, var(--spacing-xl))',
               alignItems: 'stretch',
+              padding: '0 clamp(8px, 2vw, 0px)',
             }}
           >
             {/* Starter Plan */}
