@@ -282,7 +282,7 @@ function Comments() {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        maxWidth: '300px',
+                        maxWidth: '500px',
                       }}>
                         {post.caption || 'No caption'}
                       </h3>
