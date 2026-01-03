@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 export interface InstagramPost {
@@ -18,15 +18,23 @@ export interface InstagramPost {
   automations_count?: number
 }
 
+// Module-level cache to persist data between navigations
+let cachedPosts: InstagramPost[] | null = null
+
 export function useInstagramPosts() {
-  const [posts, setPosts] = useState<InstagramPost[]>([])
-  const [loading, setLoading] = useState(true)
-  const [syncing, setSyncing] = useState(false)
+  const [posts, setPosts] = useState<InstagramPost[]>(cachedPosts || [])
+  const [loading, setLoading] = useState(!cachedPosts)
   const [error, setError] = useState<string | null>(null)
+  const activeFetchIdRef = useRef(0)
+  const hasSyncedRef = useRef(false)
 
   const fetchPosts = useCallback(async () => {
+    const fetchId = ++activeFetchIdRef.current
     try {
-      setLoading(true)
+      // Only show loading if no cache
+      if (!cachedPosts) {
+        setLoading(true)
+      }
       setError(null)
 
       const { data: { session } } = await supabase.auth.getSession()
@@ -46,26 +54,27 @@ export function useInstagramPosts() {
         .order('timestamp', { ascending: false })
 
       if (fetchError) throw fetchError
+      if (fetchId !== activeFetchIdRef.current) return
 
       const postsWithCount = (data || []).map(post => ({
         ...post,
         automations_count: post.comment_automations?.[0]?.count || 0
       }))
 
+      // Update state and cache
+      cachedPosts = postsWithCount
       setPosts(postsWithCount)
     } catch (err: any) {
+      if (fetchId !== activeFetchIdRef.current) return
       console.error('Error fetching posts:', err)
       setError(err.message || 'Error fetching posts')
     } finally {
-      setLoading(false)
+      if (fetchId === activeFetchIdRef.current) setLoading(false)
     }
   }, [])
 
-  const syncPosts = useCallback(async () => {
+  const syncFromInstagram = useCallback(async () => {
     try {
-      setSyncing(true)
-      setError(null)
-
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) return
 
@@ -79,7 +88,7 @@ export function useInstagramPosts() {
         .single()
 
       if (!integration?.config?.access_token || !integration?.config?.instagram_user_id) {
-        throw new Error('Instagram not connected')
+        return // Silently fail if not connected
       }
 
       const accessToken = integration.config.access_token
@@ -91,8 +100,8 @@ export function useInstagramPosts() {
       )
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error?.message || 'Failed to fetch posts from Instagram')
+        console.error('Failed to sync from Instagram')
+        return
       }
 
       const data = await response.json()
@@ -118,26 +127,38 @@ export function useInstagramPosts() {
           })
       }
 
-      // Refresh the posts list
+      // Refresh the posts list (silently updates UI)
       await fetchPosts()
     } catch (err: any) {
       console.error('Error syncing posts:', err)
-      setError(err.message || 'Error syncing posts')
-    } finally {
-      setSyncing(false)
     }
   }, [fetchPosts])
 
   useEffect(() => {
-    fetchPosts()
-  }, [fetchPosts])
+    const start = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setLoading(false)
+        return
+      }
+
+      // Load from DB first (fast, uses cache)
+      await fetchPosts()
+
+      // Then sync from Instagram in background (only once per session)
+      if (!hasSyncedRef.current) {
+        hasSyncedRef.current = true
+        syncFromInstagram()
+      }
+    }
+
+    start()
+  }, [fetchPosts, syncFromInstagram])
 
   return {
     posts,
     loading,
-    syncing,
     error,
-    syncPosts,
     refetch: fetchPosts
   }
 }

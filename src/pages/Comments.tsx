@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { MessageCircle, RefreshCw, Plus, Settings, MoreVertical, Trash2, X } from 'lucide-react'
+import { MessageCircle, Plus, Settings, MoreVertical, Trash2, X } from 'lucide-react'
 import SectionHeader from '../components/SectionHeader'
 import Modal from '../components/common/Modal'
 import { Switch } from '../components/ui/switch'
@@ -9,7 +9,7 @@ import { useIntegrations } from '../hooks/useIntegrations'
 import InstagramIcon from '../components/icons/InstagramIcon'
 
 function Comments() {
-  const { posts, loading: postsLoading, syncing, error: postsError, syncPosts } = useInstagramPosts()
+  const { posts, loading: postsLoading, error: postsError } = useInstagramPosts()
   const { automations, loading: automationsLoading, createAutomation, updateAutomation, deleteAutomation, toggleAutomation, refetch: refetchAutomations } = useCommentAutomations()
   const { integrations } = useIntegrations()
 
@@ -174,16 +174,7 @@ function Comments() {
 
   return (
     <div>
-      <SectionHeader title="Comments" icon={<MessageCircle size={24} />}>
-        <button
-          className="btn btn--secondary"
-          onClick={syncPosts}
-          disabled={syncing}
-        >
-          <RefreshCw size={18} className={syncing ? 'spinning' : ''} />
-          {syncing ? 'Syncing...' : 'Sync Posts'}
-        </button>
-      </SectionHeader>
+      <SectionHeader title="Comments" icon={<MessageCircle size={24} />} />
 
       {loading ? (
         <div className="card" style={{ border: '2px solid #000' }}>
@@ -197,9 +188,6 @@ function Comments() {
           <div className="empty-state">
             <h3>Error</h3>
             <p>{postsError}</p>
-            <button className="btn btn--primary" onClick={syncPosts} style={{ marginTop: 'var(--spacing-md)' }}>
-              Try Again
-            </button>
           </div>
         </div>
       ) : posts.length === 0 ? (
@@ -207,11 +195,7 @@ function Comments() {
           <div className="empty-state">
             <MessageCircle size={48} style={{ opacity: 0.5 }} />
             <h3>No posts yet</h3>
-            <p>Sync your Instagram posts to set up comment automations</p>
-            <button className="btn btn--primary" onClick={syncPosts} style={{ marginTop: 'var(--spacing-md)' }}>
-              <RefreshCw size={18} />
-              Sync Posts
-            </button>
+            <p>Your Instagram posts will appear here automatically</p>
           </div>
         </div>
       ) : (
@@ -643,17 +627,6 @@ function Comments() {
           </div>
         </div>
       </Modal>
-
-      {/* Add spinning animation */}
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .spinning {
-          animation: spin 1s linear infinite;
-        }
-      `}</style>
     </div>
   )
 }
