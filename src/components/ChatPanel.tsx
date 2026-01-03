@@ -11,9 +11,10 @@ interface ChatPanelProps {
   onBack?: () => void
   isMobile?: boolean
   onAiEnabledChange?: (conversationId: string, enabled: boolean) => void
+  onLeadStatusChange?: (conversationId: string, status: 'cold' | 'warm' | 'booked' | 'closed' | 'not_closed' | null) => void
 }
 
-export default function ChatPanel({ conversationId, conversation, onBack, isMobile = false, onAiEnabledChange }: ChatPanelProps) {
+export default function ChatPanel({ conversationId, conversation, onBack, isMobile = false, onAiEnabledChange, onLeadStatusChange }: ChatPanelProps) {
   const { messages, loading, error, refetch } = useMessages(conversationId)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -63,7 +64,7 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
       case 'warm':
         return '#fbbf24' // warning color
       case 'booked':
-        return '#ef4444' // danger color
+        return '#3b82f6' // blue color
       case 'closed':
         return '#22c55e' // success color
       case 'not_closed':
@@ -167,6 +168,8 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
               // Optimistic update - update UI immediately
               console.log('✅ Setting optimistic lead status to:', newStatus)
               setOptimisticLeadStatus(newStatus)
+              // Notify parent for immediate update in conversation list
+              onLeadStatusChange?.(conversationId, newStatus || null)
 
               try {
                 // Only update contacts table (source of truth)
@@ -189,7 +192,9 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
                 console.error('❌ Error updating lead status:', error)
                 console.error('❌ Error details (stringified):', JSON.stringify(error, null, 2))
                 // Revert optimistic update on error
-                setOptimisticLeadStatus(conversation.contact_ref?.lead_status || null)
+                const originalStatus = conversation.contact_ref?.lead_status || null
+                setOptimisticLeadStatus(originalStatus)
+                onLeadStatusChange?.(conversationId, originalStatus)
               }
             }}
             style={{

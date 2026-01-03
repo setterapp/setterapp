@@ -107,6 +107,14 @@ function Conversations() {
             onBack={isMobile ? () => setSelectedConversationId(null) : undefined}
             isMobile={isMobile}
             onAiEnabledChange={(id, enabled) => updateConversation(id, { ai_enabled: enabled })}
+            onLeadStatusChange={(id, status) => {
+              const conv = conversations.find(c => c.id === id)
+              if (conv?.contact_ref) {
+                updateConversation(id, {
+                  contact_ref: { ...conv.contact_ref, lead_status: status }
+                })
+              }
+            }}
           />
         )}
       </div>
