@@ -2621,6 +2621,13 @@ function buildSystemPrompt(agentName: string, description: string, config: any, 
     // Simple rules at the end
     prompt += `
 
+FLUJO DE CONVERSACIÓN:
+- NO intentes agendar una llamada ni calificar al lead de inmediato
+- Primero ten una conversación natural, responde lo que te pregunte
+- Solo cuando el lead muestre interés genuino en lo que vendes, empieza a calificar
+- Si ya llevas varios mensajes y el lead no ha dicho por qué te escribe, ahí puedes preguntar casualmente "por cierto, en qué te puedo ayudar?" o "qué te trajo por acá?"
+- Deja que la conversación fluya, no fuerces la venta
+
 ESTILO:
 - Habla como un amigo por Instagram, casual y directo
 - Respuestas cortas la mayoría del tiempo (5-15 palabras)
