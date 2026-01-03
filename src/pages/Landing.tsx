@@ -178,6 +178,11 @@ function Landing() {
       <header
         className="landing-header"
         style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          background: 'var(--color-primary)',
+          borderBottom: '2px solid #000',
           padding: 'var(--spacing-lg) var(--spacing-xl)',
           display: 'flex',
           justifyContent: 'space-between',
@@ -210,16 +215,15 @@ function Landing() {
         style={{
           padding: '80px var(--spacing-xl)',
           textAlign: 'center',
-          maxWidth: '1000px',
-          margin: '0 auto',
           position: 'relative',
           backgroundImage: `
-            linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
+            linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px)
           `,
           backgroundSize: '40px 40px',
         }}
       >
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           {/* Connected Logos */}
           <div
             style={{
@@ -416,6 +420,7 @@ function Landing() {
               <ArrowRight size={20} />
             </Link>
           </div>
+        </div>
       </section>
 
       {/* 2. PAIN POINTS SECTION */}
