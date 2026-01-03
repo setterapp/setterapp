@@ -350,8 +350,9 @@
   max-width: 900px;
   width: 100%;
   max-height: 90vh;
-  overflow-y: auto;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--color-bg);
   border: var(--border-neo) solid #000;
   border-radius: var(--border-radius-lg);
