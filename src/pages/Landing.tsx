@@ -209,6 +209,7 @@ function Landing() {
               align-items: center;
               gap: 6px;
               min-width: 0;
+              margin-right: auto;
             }
             .landing-header .logo-icon {
               flex-shrink: 0;
