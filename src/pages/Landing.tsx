@@ -218,14 +218,14 @@ function Landing() {
       <section
         className="landing-hero"
         style={{
-          padding: '80px var(--spacing-xl)',
+          padding: '120px var(--spacing-xl)',
           textAlign: 'center',
           position: 'relative',
           backgroundImage: `
             linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
             linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px)
           `,
-          backgroundSize: '30px 30px',
+          backgroundSize: '40px 40px',
         }}
       >
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
