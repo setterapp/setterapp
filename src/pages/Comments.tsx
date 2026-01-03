@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { MessageCircle, RefreshCw, Plus, Settings, Zap, Image, Video, Layers, MoreVertical, Trash2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { MessageCircle, RefreshCw, Plus, Settings, Zap, MoreVertical, Trash2 } from 'lucide-react'
 import SectionHeader from '../components/SectionHeader'
 import Modal from '../components/common/Modal'
 import { Switch } from '../components/ui/switch'
@@ -39,6 +39,15 @@ function Comments() {
   const instagramAgent = agents.find(a => a.platform === 'instagram')
 
   const loading = postsLoading || automationsLoading
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setOpenMenuId(null)
+    if (openMenuId) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [openMenuId])
 
   const handleOpenAutomationModal = (post: InstagramPost, automation?: CommentAutomation) => {
     setSelectedPost(post)
@@ -125,17 +134,6 @@ function Comments() {
     }
   }
 
-  const getMediaIcon = (mediaType: string | null) => {
-    switch (mediaType) {
-      case 'VIDEO':
-        return <Video size={14} />
-      case 'CAROUSEL_ALBUM':
-        return <Layers size={14} />
-      default:
-        return <Image size={14} />
-    }
-  }
-
   const getPostAutomations = (postId: string) => {
     return automations.filter(a => a.post_id === postId)
   }
@@ -201,275 +199,319 @@ function Comments() {
           </div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--spacing-md)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
           {posts.map(post => {
             const postAutomations = getPostAutomations(post.id)
             const hasActiveAutomation = postAutomations.some(a => a.is_active)
+            const activeCount = postAutomations.filter(a => a.is_active).length
 
             return (
               <div
                 key={post.id}
-                className="card"
                 style={{
+                  background: 'var(--color-bg)',
                   border: '2px solid #000',
-                  padding: 0,
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  transition: 'var(--transition)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--color-primary)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(35, 131, 226, 0.1)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#000'
-                  e.currentTarget.style.boxShadow = 'none'
+                  borderRadius: 'var(--border-radius-lg)',
+                  padding: 'var(--spacing-lg)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-md)',
                 }}
               >
-                {/* Post Image */}
-                <div
-                  style={{
-                    position: 'relative',
-                    backgroundColor: 'var(--color-bg-secondary)',
-                    overflow: 'hidden'
-                  }}
-                  onClick={() => handleOpenAutomationModal(post)}
-                >
-                  {(post.media_url || post.thumbnail_url) ? (
-                    <img
-                      src={post.thumbnail_url || post.media_url || ''}
-                      alt={post.caption || 'Instagram post'}
-                      style={{
+                {/* Left: Thumbnail and info */}
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                  {/* Post thumbnail */}
+                  <div
+                    style={{
+                      width: '64px',
+                      height: '64px',
+                      borderRadius: 'var(--border-radius)',
+                      border: '2px solid #000',
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                      background: 'var(--color-bg-secondary)',
+                    }}
+                  >
+                    {(post.media_url || post.thumbnail_url) ? (
+                      <img
+                        src={post.thumbnail_url || post.media_url || ''}
+                        alt=""
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <div style={{
                         width: '100%',
-                        height: 'auto',
-                        display: 'block'
-                      }}
-                    />
-                  ) : (
-                    <div style={{
-                      width: '100%',
-                      height: '200px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <InstagramIcon size={48} color="#ccc" />
-                    </div>
-                  )}
-
-                  {/* Media type badge */}
-                  <div style={{
-                    position: 'absolute',
-                    top: 'var(--spacing-sm)',
-                    left: 'var(--spacing-sm)',
-                    background: 'rgba(0,0,0,0.7)',
-                    color: '#fff',
-                    padding: '4px 8px',
-                    borderRadius: 'var(--border-radius-sm)',
-                    fontSize: 'var(--font-size-xs)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}>
-                    {getMediaIcon(post.media_type)}
-                    {post.media_type || 'IMAGE'}
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <InstagramIcon size={24} color="#ccc" />
+                      </div>
+                    )}
                   </div>
 
-                  {/* Active automation indicator */}
-                  {hasActiveAutomation && (
-                    <div style={{
-                      position: 'absolute',
-                      top: 'var(--spacing-sm)',
-                      right: 'var(--spacing-sm)',
-                      background: '#a6e3a1',
-                      color: '#000',
-                      padding: '4px 8px',
-                      borderRadius: 'var(--border-radius-sm)',
-                      fontSize: 'var(--font-size-xs)',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      border: '2px solid #000'
-                    }}>
-                      <Zap size={12} />
-                      Active
-                    </div>
-                  )}
-                </div>
-
-                {/* Post Info */}
-                <div style={{ padding: 'var(--spacing-md)' }}>
-                  <p style={{
-                    margin: 0,
-                    fontSize: 'var(--font-size-sm)',
-                    color: 'var(--color-text)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {post.caption || 'No caption'}
-                  </p>
-
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: 'var(--spacing-sm)'
-                  }}>
-                    <span style={{
-                      fontSize: 'var(--font-size-xs)',
-                      color: 'var(--color-text-secondary)'
-                    }}>
-                      {postAutomations.length} automation{postAutomations.length !== 1 ? 's' : ''}
-                    </span>
-
-                    <button
-                      className="btn btn--secondary"
-                      style={{ padding: '4px 8px', fontSize: 'var(--font-size-xs)' }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleOpenAutomationModal(post)
-                      }}
-                    >
-                      <Plus size={14} />
-                      Add
-                    </button>
-                  </div>
-
-                  {/* Automations list */}
-                  {postAutomations.length > 0 && (
-                    <div style={{ marginTop: 'var(--spacing-sm)', borderTop: '1px solid var(--color-border)', paddingTop: 'var(--spacing-sm)' }}>
-                      {postAutomations.slice(0, 2).map(automation => (
-                        <div
-                          key={automation.id}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: 'var(--spacing-xs) 0',
-                            fontSize: 'var(--font-size-xs)'
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', flex: 1, minWidth: 0 }}>
-                            <span style={{
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
-                            }}>
-                              {automation.trigger_keywords?.length > 0
-                                ? automation.trigger_keywords.join(', ')
-                                : 'Any comment'}
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                            <Switch
-                              checked={automation.is_active}
-                              onCheckedChange={(checked) => toggleAutomation(automation.id, checked)}
-                            />
-                            <div style={{ position: 'relative' }}>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setOpenMenuId(openMenuId === automation.id ? null : automation.id)
-                                }}
-                                style={{
-                                  background: 'transparent',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  padding: '2px',
-                                  color: 'var(--color-text-secondary)'
-                                }}
-                              >
-                                <MoreVertical size={14} />
-                              </button>
-                              {openMenuId === automation.id && (
-                                <div
-                                  style={{
-                                    position: 'absolute',
-                                    right: 0,
-                                    top: '100%',
-                                    background: 'var(--color-bg)',
-                                    border: '1px solid var(--color-border)',
-                                    borderRadius: 'var(--border-radius)',
-                                    boxShadow: 'var(--shadow-md)',
-                                    zIndex: 100,
-                                    minWidth: '120px'
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <button
-                                    onClick={() => {
-                                      handleOpenAutomationModal(post, automation)
-                                      setOpenMenuId(null)
-                                    }}
-                                    style={{
-                                      width: '100%',
-                                      textAlign: 'left',
-                                      padding: 'var(--spacing-sm)',
-                                      background: 'transparent',
-                                      border: 'none',
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: 'var(--spacing-sm)'
-                                    }}
-                                  >
-                                    <Settings size={14} />
-                                    Edit
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      handleDeleteAutomation(automation.id)
-                                      setOpenMenuId(null)
-                                    }}
-                                    style={{
-                                      width: '100%',
-                                      textAlign: 'left',
-                                      padding: 'var(--spacing-sm)',
-                                      background: 'transparent',
-                                      border: 'none',
-                                      cursor: 'pointer',
-                                      color: 'var(--color-danger)',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: 'var(--spacing-sm)'
-                                    }}
-                                  >
-                                    <Trash2 size={14} />
-                                    Delete
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {postAutomations.length > 2 && (
-                        <button
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'var(--color-primary)',
-                            fontSize: 'var(--font-size-xs)',
-                            cursor: 'pointer',
-                            padding: 'var(--spacing-xs) 0'
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleOpenAutomationModal(post)
-                          }}
-                        >
-                          +{postAutomations.length - 2} more
-                        </button>
+                  {/* Post info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xs)' }}>
+                      <h3 style={{
+                        margin: 0,
+                        fontSize: 'var(--font-size-base)',
+                        fontWeight: 600,
+                        color: 'var(--color-text)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: '300px',
+                      }}>
+                        {post.caption || 'No caption'}
+                      </h3>
+                      {hasActiveAutomation && (
+                        <span style={{
+                          background: '#a6e3a1',
+                          color: '#000',
+                          padding: '2px 8px',
+                          borderRadius: 'var(--border-radius-sm)',
+                          fontSize: 'var(--font-size-xs)',
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          border: '1px solid #000',
+                          flexShrink: 0,
+                        }}>
+                          <Zap size={10} />
+                          {activeCount} active
+                        </span>
                       )}
                     </div>
-                  )}
+                    <p style={{
+                      margin: 0,
+                      fontSize: 'var(--font-size-sm)',
+                      color: 'var(--color-text-secondary)',
+                    }}>
+                      {post.comments_count || 0} comments • {postAutomations.length} automation{postAutomations.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right: Add button */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                  <button
+                    className="btn btn--secondary"
+                    style={{ padding: '8px 12px', fontSize: 'var(--font-size-sm)' }}
+                    onClick={() => handleOpenAutomationModal(post)}
+                  >
+                    <Plus size={16} />
+                    Add Automation
+                  </button>
                 </div>
               </div>
             )
           })}
+
+          {/* Existing Automations Section */}
+          {automations.length > 0 && (
+            <div style={{ marginTop: 'var(--spacing-lg)' }}>
+              <h2 style={{ marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-lg)', fontWeight: 600 }}>
+                Active Automations
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+                {automations.map(automation => {
+                  const post = posts.find(p => p.id === automation.post_id)
+
+                  return (
+                    <div
+                      key={automation.id}
+                      style={{
+                        background: 'var(--color-bg)',
+                        border: '2px solid #000',
+                        borderRadius: 'var(--border-radius-lg)',
+                        padding: 'var(--spacing-lg)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-md)',
+                        opacity: automation.is_active ? 1 : 0.6,
+                      }}
+                    >
+                      {/* Left: Post thumbnail and automation info */}
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                        {/* Post thumbnail */}
+                        <div
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: 'var(--border-radius)',
+                            border: '2px solid #000',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            background: '#f38ba8',
+                          }}
+                        >
+                          {post && (post.media_url || post.thumbnail_url) ? (
+                            <img
+                              src={post.thumbnail_url || post.media_url || ''}
+                              alt=""
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                              }}
+                            />
+                          ) : (
+                            <div style={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}>
+                              <InstagramIcon size={20} color="#000" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Automation info */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xs)' }}>
+                            <h3 style={{
+                              margin: 0,
+                              fontSize: 'var(--font-size-base)',
+                              fontWeight: 600,
+                              color: 'var(--color-text)',
+                            }}>
+                              {automation.trigger_keywords?.length > 0
+                                ? `Keywords: ${automation.trigger_keywords.join(', ')}`
+                                : 'All comments'}
+                            </h3>
+                          </div>
+                          <p style={{
+                            margin: 0,
+                            fontSize: 'var(--font-size-sm)',
+                            color: 'var(--color-text-secondary)',
+                          }}>
+                            {automation.response_type === 'ai' ? 'AI Response' : 'Manual Response'}
+                            {automation.triggers_count > 0 && ` • ${automation.triggers_count} triggers`}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right: Controls */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                        {/* Active Label */}
+                        {automation.is_active && (
+                          <span style={{
+                            fontSize: 'var(--font-size-sm)',
+                            fontWeight: 600,
+                            color: 'var(--color-success)',
+                          }}>
+                            Active
+                          </span>
+                        )}
+
+                        {/* Toggle Switch */}
+                        <Switch
+                          checked={automation.is_active}
+                          onCheckedChange={(checked) => toggleAutomation(automation.id, checked)}
+                        />
+
+                        {/* Menu */}
+                        <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setOpenMenuId(openMenuId === automation.id ? null : automation.id)
+                            }}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: 'var(--spacing-xs)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'var(--color-text-secondary)',
+                              borderRadius: 'var(--border-radius-sm)',
+                            }}
+                          >
+                            <MoreVertical size={20} />
+                          </button>
+                          {openMenuId === automation.id && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                right: 0,
+                                top: '100%',
+                                marginTop: 'var(--spacing-xs)',
+                                background: 'var(--color-bg)',
+                                border: '1px solid var(--color-border)',
+                                borderRadius: 'var(--border-radius)',
+                                boxShadow: 'var(--shadow-md)',
+                                padding: 'var(--spacing-xs)',
+                                zIndex: 100,
+                                minWidth: '120px',
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                onClick={() => {
+                                  if (post) handleOpenAutomationModal(post, automation)
+                                  setOpenMenuId(null)
+                                }}
+                                style={{
+                                  width: '100%',
+                                  textAlign: 'left',
+                                  padding: 'var(--spacing-sm)',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontSize: 'var(--font-size-sm)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 'var(--spacing-sm)',
+                                }}
+                              >
+                                <Settings size={14} />
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => {
+                                  handleDeleteAutomation(automation.id)
+                                  setOpenMenuId(null)
+                                }}
+                                style={{
+                                  width: '100%',
+                                  textAlign: 'left',
+                                  padding: 'var(--spacing-sm)',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontSize: 'var(--font-size-sm)',
+                                  color: 'var(--color-danger)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 'var(--spacing-sm)',
+                                }}
+                              >
+                                <Trash2 size={14} />
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

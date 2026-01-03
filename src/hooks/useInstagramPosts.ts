@@ -11,6 +11,7 @@ export interface InstagramPost {
   thumbnail_url: string | null
   caption: string | null
   timestamp: string | null
+  comments_count: number
   created_at: string
   updated_at: string
   // Joined data
@@ -84,9 +85,9 @@ export function useInstagramPosts() {
       const accessToken = integration.config.access_token
       const instagramUserId = integration.config.instagram_user_id
 
-      // Fetch media from Instagram Graph API
+      // Fetch media from Instagram Graph API (including comments_count)
       const response = await fetch(
-        `https://graph.instagram.com/v24.0/${instagramUserId}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=50&access_token=${accessToken}`
+        `https://graph.instagram.com/v24.0/${instagramUserId}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,comments_count&limit=50&access_token=${accessToken}`
       )
 
       if (!response.ok) {
@@ -110,6 +111,7 @@ export function useInstagramPosts() {
             thumbnail_url: post.thumbnail_url,
             caption: post.caption,
             timestamp: post.timestamp,
+            comments_count: post.comments_count || 0,
             updated_at: new Date().toISOString()
           }, {
             onConflict: 'user_id,post_id'
