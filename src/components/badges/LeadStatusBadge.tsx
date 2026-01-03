@@ -4,12 +4,16 @@ import type { CSSProperties } from 'react'
 interface LeadStatusBadgeProps {
   status?: 'cold' | 'warm' | 'booked' | 'closed' | 'not_closed' | null
   style?: CSSProperties
+  variant?: 'badge' | 'dot'
 }
 
-export default function LeadStatusBadge({ status, style }: LeadStatusBadgeProps) {
+export default function LeadStatusBadge({ status, style, variant = 'badge' }: LeadStatusBadgeProps) {
   const { t } = useTranslation()
 
   if (!status) {
+    if (variant === 'dot') {
+      return null
+    }
     return (
       <span
         style={{
@@ -29,12 +33,30 @@ export default function LeadStatusBadge({ status, style }: LeadStatusBadgeProps)
   const config: Record<string, { bg: string; label: string }> = {
     cold: { bg: '#94a3b8', label: t('contacts.status.cold') },
     warm: { bg: '#f9e2af', label: t('contacts.status.warm') },
-    booked: { bg: '#f38ba8', label: t('contacts.status.booked') },
+    booked: { bg: '#3b82f6', label: t('contacts.status.booked') },
     closed: { bg: '#a6e3a1', label: t('contacts.status.closed') },
     not_closed: { bg: '#f38ba8', label: t('contacts.status.notClosed') },
   }
 
   const { bg, label } = config[status] || { bg: '#94a3b8', label: status }
+
+  if (variant === 'dot') {
+    return (
+      <span
+        title={label}
+        style={{
+          width: '10px',
+          height: '10px',
+          borderRadius: '50%',
+          backgroundColor: bg,
+          border: '1.5px solid #000',
+          display: 'inline-block',
+          flexShrink: 0,
+          ...style,
+        }}
+      />
+    )
+  }
 
   return (
     <span

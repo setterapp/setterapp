@@ -178,7 +178,7 @@ function ConversationItem({
               {displayName}
             </h4>
             {conversation.contact_ref?.lead_status && (
-              <LeadStatusBadge status={conversation.contact_ref.lead_status} />
+              <LeadStatusBadge status={conversation.contact_ref.lead_status} variant="dot" />
             )}
           </div>
           <p className="conversation-item-timestamp" style={{ marginTop: 'var(--spacing-xs)' }}>
