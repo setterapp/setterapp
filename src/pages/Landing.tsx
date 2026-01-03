@@ -929,27 +929,27 @@ function Landing() {
                 background: '#fff',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: 'var(--spacing-xl)',
-                borderRadius: '20px',
+                padding: 'var(--spacing-lg)',
+                borderRadius: '16px',
                 border: '3px solid #000',
                 boxShadow: '6px 6px 0px 0px #000',
               }}
             >
-              <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
+              <div style={{ marginBottom: 'var(--spacing-md)' }}>
+                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 6px 0', color: '#000' }}>
                   Starter
                 </h3>
                 <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$49</span>
+                  <span style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$49</span>
                   <span style={{ color: '#666', fontSize: 'var(--font-size-sm)' }}>/month</span>
                 </p>
-                <p style={{ margin: '8px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#666' }}>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
                   Perfect for getting started
                 </p>
               </div>
 
               {/* Features */}
-              <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
+              <div style={{ flex: 1, marginBottom: 'var(--spacing-md)' }}>
                 {[
                   "1 AI Agent",
                   "2,000 messages/month",
@@ -967,13 +967,13 @@ function Landing() {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 'var(--spacing-sm)',
-                      marginBottom: '12px',
-                      fontSize: 'var(--font-size-sm)',
+                      gap: '8px',
+                      marginBottom: '8px',
+                      fontSize: '13px',
                       color: '#000',
                     }}
                   >
-                    <Check size={16} color="#10b981" strokeWidth={3} style={{ flexShrink: 0 }} />
+                    <Check size={14} color="#10b981" strokeWidth={3} style={{ flexShrink: 0 }} />
                     {feature}
                   </div>
                 ))}
@@ -989,7 +989,8 @@ function Landing() {
                   color: '#fff',
                   border: '2px solid #000',
                   fontWeight: 700,
-                  padding: '14px 24px',
+                  padding: '12px 20px',
+                  fontSize: '14px',
                 }}
               >
                 Get Started
@@ -1007,8 +1008,8 @@ function Landing() {
                 animation: 'gradientShift 4s ease infinite',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: 'var(--spacing-xl)',
-                borderRadius: '20px',
+                padding: 'var(--spacing-lg)',
+                borderRadius: '16px',
                 border: '3px solid #000',
                 boxShadow: '8px 8px 0px 0px #000',
                 transform: 'scale(1.03)',
@@ -1017,14 +1018,14 @@ function Landing() {
               <div
                 style={{
                   position: 'absolute',
-                  top: '-16px',
+                  top: '-14px',
                   left: '50%',
                   transform: 'translateX(-50%)',
                   background: '#000',
                   color: '#fff',
-                  padding: '8px 24px',
+                  padding: '6px 20px',
                   borderRadius: '30px',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: 700,
                   letterSpacing: '0.5px',
                   whiteSpace: 'nowrap',
@@ -1033,21 +1034,21 @@ function Landing() {
                 MOST POPULAR
               </div>
 
-              <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
+              <div style={{ marginBottom: 'var(--spacing-md)' }}>
+                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 6px 0', color: '#000' }}>
                   Growth
                 </h3>
                 <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$99</span>
+                  <span style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$99</span>
                   <span style={{ color: '#333', fontSize: 'var(--font-size-sm)' }}>/month</span>
                 </p>
-                <p style={{ margin: '8px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#333' }}>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#333' }}>
                   Best for growing businesses
                 </p>
               </div>
 
               {/* Features */}
-              <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
+              <div style={{ flex: 1, marginBottom: 'var(--spacing-md)' }}>
                 {[
                   "Everything in Starter +",
                   "3 AI Agents",
@@ -1065,14 +1066,14 @@ function Landing() {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 'var(--spacing-sm)',
-                      marginBottom: '12px',
-                      fontSize: 'var(--font-size-sm)',
+                      gap: '8px',
+                      marginBottom: '8px',
+                      fontSize: '13px',
                       color: '#000',
                       fontWeight: 500,
                     }}
                   >
-                    <Check size={16} color="#000" strokeWidth={3} style={{ flexShrink: 0 }} />
+                    <Check size={14} color="#000" strokeWidth={3} style={{ flexShrink: 0 }} />
                     {feature}
                   </div>
                 ))}
@@ -1088,7 +1089,8 @@ function Landing() {
                   color: '#fff',
                   border: '2px solid #000',
                   fontWeight: 700,
-                  padding: '14px 24px',
+                  padding: '12px 20px',
+                  fontSize: '14px',
                 }}
               >
                 Get Started
@@ -1104,8 +1106,8 @@ function Landing() {
                 background: '#fff',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: 'var(--spacing-xl)',
-                borderRadius: '20px',
+                padding: 'var(--spacing-lg)',
+                borderRadius: '16px',
                 border: '3px solid #000',
                 boxShadow: '6px 6px 0px 0px #000',
               }}
@@ -1113,14 +1115,14 @@ function Landing() {
               <div
                 style={{
                   position: 'absolute',
-                  top: '-16px',
+                  top: '-14px',
                   left: '50%',
                   transform: 'translateX(-50%)',
                   background: '#a6e3a1',
                   color: '#000',
-                  padding: '8px 24px',
+                  padding: '6px 20px',
                   borderRadius: '30px',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: 700,
                   border: '2px solid #000',
                   letterSpacing: '0.5px',
@@ -1130,21 +1132,21 @@ function Landing() {
                 BEST VALUE
               </div>
 
-              <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
+              <div style={{ marginBottom: 'var(--spacing-md)' }}>
+                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 6px 0', color: '#000' }}>
                   Premium
                 </h3>
                 <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$347</span>
+                  <span style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$347</span>
                   <span style={{ color: '#666', fontSize: 'var(--font-size-sm)' }}>/month</span>
                 </p>
-                <p style={{ margin: '8px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#666' }}>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
                   For high-volume teams
                 </p>
               </div>
 
               {/* Features */}
-              <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
+              <div style={{ flex: 1, marginBottom: 'var(--spacing-md)' }}>
                 {[
                   "Everything in Growth +",
                   "10 AI Agents",
@@ -1165,13 +1167,13 @@ function Landing() {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 'var(--spacing-sm)',
-                      marginBottom: '12px',
-                      fontSize: 'var(--font-size-sm)',
+                      gap: '8px',
+                      marginBottom: '8px',
+                      fontSize: '13px',
                       color: '#000',
                     }}
                   >
-                    <Check size={16} color="#10b981" strokeWidth={3} style={{ flexShrink: 0 }} />
+                    <Check size={14} color="#10b981" strokeWidth={3} style={{ flexShrink: 0 }} />
                     {feature}
                   </div>
                 ))}
@@ -1187,7 +1189,8 @@ function Landing() {
                   color: '#fff',
                   border: '2px solid #000',
                   fontWeight: 700,
-                  padding: '14px 24px',
+                  padding: '12px 20px',
+                  fontSize: '14px',
                 }}
               >
                 Get Started
