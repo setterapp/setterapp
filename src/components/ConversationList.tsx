@@ -167,7 +167,13 @@ function ConversationItem({
         onSelect(conversation.id, e)
       }}
       title={rawContact && displayName !== rawContact ? rawContact : undefined}
+      style={{ position: 'relative', overflow: 'hidden' }}
     >
+      {/* Lead status corner flap */}
+      {conversation.contact_ref?.lead_status && (
+        <LeadStatusBadge status={conversation.contact_ref.lead_status} variant="dot" />
+      )}
+
       {/* Avatar con foto de perfil y icono de red social */}
       {renderAvatar()}
 
@@ -177,9 +183,6 @@ function ConversationItem({
             <h4 className="conversation-item-name" style={{ fontWeight: conversation.unread_count > 0 ? 600 : 500, margin: 0, flex: 1 }}>
               {displayName}
             </h4>
-            {conversation.contact_ref?.lead_status && (
-              <LeadStatusBadge status={conversation.contact_ref.lead_status} variant="dot" />
-            )}
           </div>
           <p className="conversation-item-timestamp" style={{ marginTop: 'var(--spacing-xs)' }}>
             {conversation.last_message_at

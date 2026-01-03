@@ -45,13 +45,15 @@ export default function LeadStatusBadge({ status, style, variant = 'badge' }: Le
       <span
         title={label}
         style={{
-          width: '10px',
-          height: '10px',
-          borderRadius: '50%',
-          backgroundColor: bg,
-          border: '1.5px solid #000',
-          display: 'inline-block',
-          flexShrink: 0,
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: 0,
+          height: 0,
+          borderStyle: 'solid',
+          borderWidth: '0 20px 20px 0',
+          borderColor: `transparent ${bg} transparent transparent`,
+          filter: 'drop-shadow(-1px 1px 0 #000)',
           ...style,
         }}
       />
