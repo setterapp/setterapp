@@ -225,7 +225,7 @@ function Landing() {
             linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
             linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px)
           `,
-          backgroundSize: '40px 40px',
+          backgroundSize: '30px 30px',
         }}
       >
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
