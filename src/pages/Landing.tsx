@@ -1026,6 +1026,7 @@ function Landing() {
                   "2,000 messages/month",
                   "1 Knowledge Base",
                   "Instagram DM automation",
+                  "Unlimited Comment-to-DM automations",
                   "Google Calendar sync",
                   "Automatic appointment booking",
                   "Built-in CRM",

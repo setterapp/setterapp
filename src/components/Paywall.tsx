@@ -83,6 +83,7 @@ export default function Paywall({ onClose }: PaywallProps) {
                 "2,000 messages/month",
                 "1 Knowledge Base",
                 "Instagram DM automation",
+                "Unlimited Comment-to-DM automations",
                 "Google Calendar sync",
                 "Email support",
               ].map((feature, i) => (
@@ -152,6 +153,7 @@ export default function Paywall({ onClose }: PaywallProps) {
                 "10,000 messages/month",
                 "3 Knowledge Bases",
                 "Instagram DM automation",
+                "Unlimited Comment-to-DM automations",
                 "Google Calendar sync",
                 "Priority support",
               ].map((feature, i) => (
@@ -196,6 +198,7 @@ export default function Paywall({ onClose }: PaywallProps) {
                 "10 AI Agents",
                 "Unlimited messages",
                 "10 Knowledge Bases",
+                "Unlimited Comment-to-DM automations",
                 "VIP 24/7 support",
                 "Personalized onboarding",
                 "Early access to features",
