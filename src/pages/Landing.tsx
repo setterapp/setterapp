@@ -954,10 +954,13 @@ function Landing() {
                   "1 AI Agent",
                   "2,000 messages/month",
                   "1 Knowledge Base",
+                  "1 team member",
                   "Instagram DM automation",
-                  "Google Calendar sync",
-                  "Built-in CRM",
+                  "Google Calendar integration",
+                  "Built-in CRM & contact management",
+                  "Basic analytics",
                   "Email support",
+                  "Unlimited Instagram workflows",
                 ].map((feature, i) => (
                   <div
                     key={i}
@@ -1046,13 +1049,16 @@ function Landing() {
               {/* Features */}
               <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
                 {[
+                  "Everything in Starter +",
                   "3 AI Agents",
                   "10,000 messages/month",
                   "3 Knowledge Bases",
-                  "Instagram DM automation",
-                  "Google Calendar sync",
-                  "Built-in CRM",
-                  "Priority support",
+                  "3 team members",
+                  "Custom AI instructions",
+                  "Advanced conversation routing",
+                  "Lead status automation",
+                  "Priority 24/7 support",
+                  "Remove 'Powered by SetterApp' branding",
                 ].map((feature, i) => (
                   <div
                     key={i}
@@ -1140,15 +1146,19 @@ function Landing() {
               {/* Features */}
               <div style={{ flex: 1, marginBottom: 'var(--spacing-lg)' }}>
                 {[
+                  "Everything in Growth +",
                   "10 AI Agents",
                   "Unlimited messages",
                   "10 Knowledge Bases",
-                  "Instagram DM automation",
-                  "Google Calendar sync",
-                  "Built-in CRM",
+                  "10 team members",
+                  "Unlimited custom tools & integrations",
+                  "Advanced analytics & reporting",
+                  "Multi-language support",
+                  "Custom AI model training",
+                  "Dedicated account manager",
                   "VIP 24/7 support",
                   "Personalized onboarding",
-                  "Early access to features",
+                  "Early access to new features",
                 ].map((feature, i) => (
                   <div
                     key={i}
