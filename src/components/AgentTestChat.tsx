@@ -54,8 +54,10 @@ export default function AgentTestChat({ agent }: AgentTestChatProps) {
 
     try {
       // Call the test-agent edge function (no message credits counted, no DB saves)
+      // Uses exact same buildSystemPrompt as Instagram webhook + fetches knowledge bases
       const { data, error: invokeError } = await supabase.functions.invoke('test-agent', {
         body: {
+          agent_id: agent.id,
           agent_name: agent.name,
           description: agent.description,
           user_message: userMessage.content,

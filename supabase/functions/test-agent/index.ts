@@ -1,35 +1,21 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // Use Google AI (same as production webhooks)
 const GOOGLE_AI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
 }
 
-interface AgentConfig {
-  assistantName?: string;
-  companyName?: string;
-  ownerName?: string;
-  businessNiche?: string;
-  clientGoals?: string;
-  offerDetails?: string;
-  importantLinks?: string[];
-  openingQuestion?: string;
-  activeHoursStart?: string;
-  activeHoursEnd?: string;
-  enableQualification?: boolean;
-  qualifyingQuestion?: string;
-  qualificationCriteria?: string;
-  disqualifyMessage?: string;
-  toneGuidelines?: string;
-  additionalContext?: string;
-  conversationExamples?: string;
-  responseInterval?: number;
-  languageAccent?: string;
-}
-
+/**
+ * Maps language code to accent instructions (SAME AS INSTAGRAM WEBHOOK)
+ */
 function getAccentInstructions(languageAccent: string): string {
   const accentMap: Record<string, string> = {
     'es-ES': 'Habla español de España. Usa "tú" y expresiones españolas.',
@@ -49,8 +35,41 @@ function getAccentInstructions(languageAccent: string): string {
   return accentMap[languageAccent] || '';
 }
 
-function buildSystemPrompt(agentName: string, description: string, config?: AgentConfig): string {
-  let prompt = description || `Eres ${agentName || 'un asistente de IA'}.`;
+/**
+ * Obtiene las knowledge bases asociadas a un agent (SAME AS INSTAGRAM WEBHOOK)
+ */
+async function getAgentKnowledgeBases(agentId: string): Promise<string[]> {
+  try {
+    const { data: knowledgeBases, error } = await supabase
+      .from('knowledge_bases')
+      .select('name, content')
+      .eq('agent_id', agentId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('[test-agent] Error getting knowledge bases:', error);
+      return [];
+    }
+
+    if (!knowledgeBases || knowledgeBases.length === 0) {
+      return [];
+    }
+
+    console.log(`[test-agent] Found ${knowledgeBases.length} knowledge base(s)`);
+
+    // Return formatted knowledge base content (same format as Instagram webhook)
+    return knowledgeBases.map(kb => `[${kb.name}]\n${kb.content}`);
+  } catch (error) {
+    console.error('[test-agent] Error getting knowledge bases:', error);
+    return [];
+  }
+}
+
+/**
+ * Builds the system prompt - EXACT COPY FROM INSTAGRAM WEBHOOK
+ */
+function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null, knowledgeBases?: string[]): string {
+  let prompt = `${description || `You are ${agentName}.`}`;
 
   // Add language/accent based on config
   const languageAccent = config?.languageAccent || 'es-ES';
@@ -59,45 +78,93 @@ function buildSystemPrompt(agentName: string, description: string, config?: Agen
     prompt += `\n\nIDIOMA: ${accentInstructions}`;
   }
 
-  // Identidad del asistente
+  // Add identity information if configured
   if (config?.assistantName || config?.companyName || config?.ownerName) {
-    prompt += `\n\nIDENTIDAD:`;
-    if (config?.assistantName) prompt += ` Nombre: ${config.assistantName}.`;
-    if (config?.companyName) prompt += ` Empresa: ${config.companyName}.`;
-    if (config?.ownerName) prompt += ` Jefe: ${config.ownerName}.`;
+    prompt += `\n\nIDENTITY:`;
+    if (config.assistantName) prompt += ` Name: ${config.assistantName}.`;
+    if (config.companyName) prompt += ` Company: ${config.companyName}.`;
+    if (config.ownerName) prompt += ` Boss: ${config.ownerName}.`;
   }
 
-  // Información del negocio
+  // Add business information if configured
   if (config?.businessNiche || config?.clientGoals || config?.offerDetails || config?.importantLinks?.length) {
-    prompt += `\n\nNEGOCIO:`;
-    if (config?.businessNiche) prompt += ` Nicho: ${config.businessNiche}.`;
-    if (config?.clientGoals) prompt += ` Objetivos: ${config.clientGoals}.`;
-    if (config?.offerDetails) prompt += ` Oferta: ${config.offerDetails}.`;
-    if (config?.importantLinks && config.importantLinks.length > 0) {
-      prompt += ` Links importantes: ${config.importantLinks.join(', ')}.`;
+    prompt += `\n\nBUSINESS:`;
+    if (config.businessNiche) prompt += ` Niche: ${config.businessNiche}.`;
+    if (config.clientGoals) prompt += ` Goals: ${config.clientGoals}.`;
+    if (config.offerDetails) prompt += ` Offer: ${config.offerDetails}.`;
+    if (config.importantLinks && config.importantLinks.length > 0) {
+      prompt += ` Important links: ${config.importantLinks.join(', ')}.`;
     }
   }
 
-  // Calificación de leads
-  if (config?.enableQualification) {
-    prompt += `\n\nCALIFICACIÓN DE LEADS:`;
-    if (config?.qualifyingQuestion) prompt += ` Pregunta clave: "${config.qualifyingQuestion}"`;
-    if (config?.qualificationCriteria) prompt += ` Criterios: ${config.qualificationCriteria}`;
-    if (config?.disqualifyMessage) prompt += ` Si no califica: "${config.disqualifyMessage}"`;
+  // Add opening question if configured (for first contact)
+  if (config?.openingQuestion) {
+    prompt += `\n\nOPENING: When starting a new conversation, use this opening: "${config.openingQuestion}"`;
   }
 
-  // Personalización
+  // Add lead qualification settings if enabled
+  if (config?.enableQualification === true) {
+    prompt += `\n\nLEAD QUALIFICATION:`;
+    if (config.qualifyingQuestion) {
+      prompt += ` Key question to ask: "${config.qualifyingQuestion}"`;
+    }
+    if (config.qualificationCriteria) {
+      prompt += ` Criteria to qualify: ${config.qualificationCriteria}`;
+    }
+    if (config.disqualifyMessage) {
+      prompt += ` If lead doesn't qualify, respond with: "${config.disqualifyMessage}"`;
+    }
+  }
+
+  // Add tone guidelines if configured
   if (config?.toneGuidelines) {
-    prompt += `\n\nESTILO: ${config.toneGuidelines}`;
-  }
-  if (config?.additionalContext) {
-    prompt += `\n\nCONTEXTO: ${config.additionalContext}`;
-  }
-  if (config?.conversationExamples) {
-    prompt += `\n\nEJEMPLOS:\n${config.conversationExamples}`;
+    prompt += `\n\nSTYLE: ${config.toneGuidelines}`;
   }
 
-  // Instrucciones finales - same style as Instagram webhook
+  // Add additional context if exists
+  if (config?.additionalContext) {
+    prompt += `\n\nCONTEXT: ${config.additionalContext}`;
+  }
+
+  // Add conversation examples if they exist
+  if (config?.conversationExamples) {
+    prompt += `\n\nEXAMPLES:\n${config.conversationExamples}`;
+  }
+
+  // Add knowledge bases content if available
+  if (knowledgeBases && knowledgeBases.length > 0) {
+    prompt += `\n\nKNOWLEDGE BASE (use this information to answer questions):\n${knowledgeBases.join('\n\n')}`;
+  }
+
+  // If there's saved context about the contact, include it
+  if (contactContext) {
+    prompt += `\n\nMEMORY ABOUT THIS LEAD: ${contactContext}`;
+  }
+
+  // If calendar capabilities are enabled, add minimal context
+  if (config?.enableMeetingScheduling === true) {
+    const now = new Date();
+    const timezone = config?.meetingTimezone || 'America/Argentina/Buenos_Aires';
+    const currentDateTime = now.toLocaleString('en-US', {
+      timeZone: timezone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+
+    const workDays = config?.meetingAvailableDays?.length > 0
+      ? config.meetingAvailableDays.join(', ')
+      : 'monday, tuesday, wednesday, thursday, friday';
+    const duration = config?.meetingDuration || 30;
+
+    prompt += `\n\nCALENDAR: Now is ${currentDateTime} (${timezone}). Work hours: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'}. Work days: ${workDays}. Meeting duration: ${duration} minutes. Use check_availability before proposing times. Ask for email before scheduling.`;
+  }
+
+  // Simple rules at the end (SAME AS INSTAGRAM WEBHOOK)
   prompt += `
 
 ESTILO:
@@ -109,7 +176,8 @@ ESTILO:
 - Nunca preguntes "quieres saber más?" ni "te ayudo en algo más?"
 - Solo usa ? (nunca ¿)
 
-NOTA: Esto es una PRUEBA del agente, no una conversación real.`;
+Ejemplo correcto: "listo, quedó agendada. te llegó el mail?"
+Ejemplo incorrecto: "listo, quedó agendada te llegó el mail?"`;
 
   return prompt;
 }
@@ -127,7 +195,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { agent_name, description, user_message, conversation_history, config } = await req.json();
+    const { agent_id, agent_name, description, user_message, conversation_history, config } = await req.json();
 
     if (!user_message) {
       return new Response(
@@ -143,7 +211,23 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const systemPrompt = buildSystemPrompt(agent_name || 'Asistente', description || '', config);
+    // Fetch knowledge bases if agent_id is provided
+    let knowledgeBases: string[] = [];
+    if (agent_id) {
+      knowledgeBases = await getAgentKnowledgeBases(agent_id);
+    }
+
+    // Build system prompt with EXACT same logic as Instagram webhook
+    const systemPrompt = buildSystemPrompt(
+      agent_name || 'Asistente',
+      description || '',
+      config,
+      null, // No contact context for test
+      knowledgeBases
+    );
+
+    console.log('[test-agent] System prompt length:', systemPrompt.length);
+    console.log('[test-agent] First 500 chars:', systemPrompt.substring(0, 500));
 
     // Build conversation for Gemini format
     const contents: any[] = [];
@@ -164,7 +248,7 @@ Deno.serve(async (req: Request) => {
 
     console.log('[test-agent] Generating response for:', agent_name);
 
-    // Use Gemini 3 Flash (same as production)
+    // Use Gemini 2.0 Flash (same as production)
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_AI_API_KEY}`,
       {
