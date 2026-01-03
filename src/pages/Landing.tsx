@@ -196,23 +196,22 @@ function Landing() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            flexWrap: 'wrap',
             gap: 'clamp(6px, 2vw, var(--spacing-md))',
             maxWidth: '1400px',
             margin: '0 auto',
           }}
         >
           <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, var(--spacing-sm))' }}>
-            <Logo size={window.innerWidth < 768 ? 28 : 40} variant="icon" />
-            <span style={{ fontSize: 'clamp(14px, 3.5vw, var(--font-size-lg))', fontWeight: 700, color: '#000' }}>
+            <Logo size={window.innerWidth < 768 ? 24 : 40} variant="icon" />
+            <span style={{ fontSize: 'clamp(13px, 3.5vw, var(--font-size-lg))', fontWeight: 700, color: '#000' }}>
               setterapp.ai
             </span>
           </Link>
-          <div style={{ display: 'flex', gap: 'clamp(6px, 2vw, var(--spacing-md))', alignItems: 'center', flexWrap: 'wrap' }}>
-            <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000', padding: 'clamp(6px, 1.5vw, 12px) clamp(12px, 3vw, 24px)', fontSize: 'clamp(12px, 3vw, 15px)' }}>
+          <div style={{ display: 'flex', gap: 'clamp(4px, 1.5vw, var(--spacing-md))', alignItems: 'center' }}>
+            <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000', padding: 'clamp(5px, 1.2vw, 12px) clamp(10px, 2.5vw, 24px)', fontSize: 'clamp(11px, 2.8vw, 15px)', whiteSpace: 'nowrap' }}>
               Log In
             </Link>
-            <Link to="/register" className="btn" style={{ background: '#000', color: '#fff', border: '2px solid #000', padding: 'clamp(6px, 1.5vw, 12px) clamp(12px, 3vw, 24px)', fontSize: 'clamp(12px, 3vw, 15px)' }}>
+            <Link to="/register" className="btn" style={{ background: '#000', color: '#fff', border: '2px solid #000', padding: 'clamp(5px, 1.2vw, 12px) clamp(10px, 2.5vw, 24px)', fontSize: 'clamp(11px, 2.8vw, 15px)', whiteSpace: 'nowrap' }}>
               Get Started
             </Link>
           </div>
@@ -423,11 +422,13 @@ function Landing() {
                 background: '#000',
                 color: '#fff',
                 border: '2px solid #000',
-                fontWeight: 600
+                fontWeight: 600,
+                padding: 'clamp(10px, 2.5vw, 16px) clamp(20px, 5vw, 32px)',
+                fontSize: 'clamp(14px, 3.5vw, 18px)',
               }}
             >
               Get Started
-              <ArrowRight size={20} />
+              <ArrowRight size={window.innerWidth < 768 ? 16 : 20} />
             </Link>
           </div>
         </div>
