@@ -12,7 +12,7 @@ import {
   DollarSign,
   TrendingUp
 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import type { Variants } from 'framer-motion'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import Logo from '../components/Logo'
@@ -155,9 +155,25 @@ function Landing() {
     }
   ]
 
+  // Scroll-based background color animation
+  const { scrollYProgress } = useScroll()
+  const backgroundColor = useTransform(
+    scrollYProgress,
+    [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1],
+    [
+      'var(--color-primary)', // Azul
+      '#ffffff',              // Blanco
+      'var(--color-primary)', // Azul
+      '#ffffff',              // Blanco
+      'var(--color-primary)', // Azul
+      '#ffffff',              // Blanco
+      'var(--color-primary)', // Azul
+      '#ffffff'               // Blanco
+    ]
+  )
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-primary)' }}>
+    <motion.div style={{ minHeight: '100vh', backgroundColor }}>
       {/* Header */}
       <header
         className="landing-header"
@@ -1405,7 +1421,7 @@ function Landing() {
           © 2025 setterapp.ai. All rights reserved.
         </div>
       </footer>
-    </div>
+    </motion.div>
   )
 }
 
