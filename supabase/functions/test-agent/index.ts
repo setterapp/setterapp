@@ -282,8 +282,9 @@ Deno.serve(async (req: Request) => {
 
     // Split response on . and ? to send as separate messages (same as Instagram production)
     // Keep the ? at the end of questions, remove trailing periods
+    // IMPORTANT: Only split after . if followed by space (to avoid splitting domains like setterapp.ai)
     const messageParts = content
-      .split(/(?<=\?)\s*|(?<=\.)\s*/)  // Split after ? or .
+      .split(/(?<=\?)\s*|(?<=\.)\s+/)  // Split after ? or . (. only if followed by space)
       .map((msg: string) => msg.trim().replace(/\.$/, ''))  // Remove trailing periods
       .filter((msg: string) => msg.length > 0);
 
