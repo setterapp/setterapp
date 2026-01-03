@@ -485,11 +485,22 @@ export function useConversations() {
     }
   }, [])
 
+  const updateConversation = (conversationId: string, updates: Partial<Conversation>) => {
+    setConversations(prev => {
+      const newList = prev.map(c =>
+        c.id === conversationId ? { ...c, ...updates } : c
+      )
+      cachedConversations = newList
+      return newList
+    })
+  }
+
   return {
     conversations,
     loading,
     error,
     refetch: fetchConversations,
     markConversationRead,
+    updateConversation,
   }
 }

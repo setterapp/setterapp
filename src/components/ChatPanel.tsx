@@ -10,9 +10,10 @@ interface ChatPanelProps {
   conversation: Conversation
   onBack?: () => void
   isMobile?: boolean
+  onAiEnabledChange?: (conversationId: string, enabled: boolean) => void
 }
 
-export default function ChatPanel({ conversationId, conversation, onBack, isMobile = false }: ChatPanelProps) {
+export default function ChatPanel({ conversationId, conversation, onBack, isMobile = false, onAiEnabledChange }: ChatPanelProps) {
   const { messages, loading, error, refetch } = useMessages(conversationId)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -225,6 +226,8 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
             onClick={async () => {
               const newValue = !aiEnabled
               setAiEnabled(newValue)
+              // Notify parent immediately for optimistic update
+              onAiEnabledChange?.(conversationId, newValue)
 
               try {
                 const { error } = await supabase
@@ -238,10 +241,12 @@ export default function ChatPanel({ conversationId, conversation, onBack, isMobi
                 if (error) {
                   console.error('❌ Error updating ai_enabled:', error)
                   setAiEnabled(!newValue) // Revert on error
+                  onAiEnabledChange?.(conversationId, !newValue) // Revert in parent too
                 }
               } catch (err) {
                 console.error('❌ Error updating ai_enabled:', err)
                 setAiEnabled(!newValue)
+                onAiEnabledChange?.(conversationId, !newValue)
               }
             }}
             title={aiEnabled ? 'AI activada - Click para desactivar' : 'AI desactivada - Click para activar'}

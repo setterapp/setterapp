@@ -2118,7 +2118,8 @@ async function generateAndSendAutoReply(
                             userId,
                             conversationId,
                             agent.id,
-                            functionArgs
+                            functionArgs,
+                            agent.config
                         );
                     } else if (functionName === 'update_contact_email') {
                         toolResult = await executeUpdateContactEmail(
@@ -2290,7 +2291,8 @@ async function executeScheduleMeeting(
     userId: string,
     conversationId: string,
     agentId: string,
-    args: any
+    args: any,
+    agentConfig?: any
 ) {
     try {
         const { data, error } = await supabase.functions.invoke('schedule-meeting', {
@@ -2299,9 +2301,11 @@ async function executeScheduleMeeting(
                 conversation_id: conversationId,
                 agent_id: agentId,
                 meeting_date: args.meeting_date,
-                duration_minutes: args.duration_minutes || 30,
+                duration_minutes: args.duration_minutes || agentConfig?.meetingDuration || 30,
                 lead_name: args.lead_name,
-                lead_email: args.lead_email
+                lead_email: args.lead_email,
+                meeting_title: agentConfig?.meetingTitle,
+                meeting_description: agentConfig?.meetingDescription
             }
         });
 
@@ -2536,11 +2540,33 @@ function buildSystemPrompt(agentName: string, description: string, config: any, 
     }
 
     // Add business information if configured
-    if (config?.businessNiche || config?.clientGoals || config?.offerDetails) {
+    if (config?.businessNiche || config?.clientGoals || config?.offerDetails || config?.importantLinks?.length) {
         prompt += `\n\nBUSINESS:`;
         if (config.businessNiche) prompt += ` Niche: ${config.businessNiche}.`;
         if (config.clientGoals) prompt += ` Goals: ${config.clientGoals}.`;
         if (config.offerDetails) prompt += ` Offer: ${config.offerDetails}.`;
+        if (config.importantLinks && config.importantLinks.length > 0) {
+            prompt += ` Important links: ${config.importantLinks.join(', ')}.`;
+        }
+    }
+
+    // Add opening question if configured (for first contact)
+    if (config?.openingQuestion) {
+        prompt += `\n\nOPENING: When starting a new conversation, use this opening: "${config.openingQuestion}"`;
+    }
+
+    // Add lead qualification settings if enabled
+    if (config?.enableQualification === true) {
+        prompt += `\n\nLEAD QUALIFICATION:`;
+        if (config.qualifyingQuestion) {
+            prompt += ` Key question to ask: "${config.qualifyingQuestion}"`;
+        }
+        if (config.qualificationCriteria) {
+            prompt += ` Criteria to qualify: ${config.qualificationCriteria}`;
+        }
+        if (config.disqualifyMessage) {
+            prompt += ` If lead doesn't qualify, respond with: "${config.disqualifyMessage}"`;
+        }
     }
 
     // Add tone guidelines if configured
@@ -2583,7 +2609,12 @@ function buildSystemPrompt(agentName: string, description: string, config: any, 
             hour12: false
         });
 
-        prompt += `\n\nCALENDAR: Now is ${currentDateTime} (${timezone}). Work hours: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'}. Use check_availability before proposing times. Ask for email before scheduling.`;
+        const workDays = config?.meetingAvailableDays?.length > 0
+            ? config.meetingAvailableDays.join(', ')
+            : 'monday, tuesday, wednesday, thursday, friday';
+        const duration = config?.meetingDuration || 30;
+
+        prompt += `\n\nCALENDAR: Now is ${currentDateTime} (${timezone}). Work hours: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'}. Work days: ${workDays}. Meeting duration: ${duration} minutes. Use check_availability before proposing times. Ask for email before scheduling.`;
     }
 
     // Simple rules at the end

@@ -380,18 +380,133 @@ async function updateContactContext(conversationId: string, newContext: string):
     }
 }
 
-function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null): string {
+/**
+ * Obtiene las knowledge bases asociadas a un agent
+ */
+async function getAgentKnowledgeBases(agentId: string): Promise<string[]> {
+    try {
+        const { data: knowledgeBases, error } = await supabase
+            .from('knowledge_bases')
+            .select('name, content')
+            .eq('agent_id', agentId)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('❌ Error getting knowledge bases:', error);
+            return [];
+        }
+
+        if (!knowledgeBases || knowledgeBases.length === 0) {
+            return [];
+        }
+
+        // Formatear cada knowledge base
+        return knowledgeBases.map(kb => `=== ${kb.name} ===\n${kb.content}`);
+    } catch (error) {
+        console.error('❌ Error getting knowledge bases:', error);
+        return [];
+    }
+}
+
+/**
+ * Maps language code to accent instructions
+ */
+function getAccentInstructions(languageAccent: string): string {
+    const accentMap: Record<string, string> = {
+        'es-ES': 'Habla español de España. Usa "tú" y expresiones españolas.',
+        'es-MX': 'Habla español de México. Usa expresiones mexicanas.',
+        'es-AR': 'Habla español de Argentina. Usa "vos" y expresiones argentinas.',
+        'es-CO': 'Habla español de Colombia. Usa expresiones colombianas.',
+        'es-CL': 'Habla español de Chile. Usa expresiones chilenas.',
+        'es-PE': 'Habla español de Perú. Usa expresiones peruanas.',
+        'en-US': 'Speak American English.',
+        'en-GB': 'Speak British English.',
+        'pt-BR': 'Fale português do Brasil.',
+        'pt-PT': 'Fale português de Portugal.',
+        'fr-FR': 'Parle français.',
+        'de-DE': 'Sprich Deutsch.',
+        'it-IT': 'Parla italiano.',
+    };
+    return accentMap[languageAccent] || '';
+}
+
+function buildSystemPrompt(agentName: string, description: string, config: any, contactContext?: string | null, knowledgeBases?: string[]): string {
     let prompt = description || `Eres ${agentName}.`;
+
+    // Add language/accent based on config
+    const languageAccent = config?.languageAccent || 'es-ES';
+    const accentInstructions = getAccentInstructions(languageAccent);
+    if (accentInstructions) {
+        prompt += `\n\nIDIOMA: ${accentInstructions}`;
+    }
+
+    // Add identity information if configured
+    if (config?.assistantName || config?.companyName || config?.ownerName) {
+        prompt += `\n\nIDENTIDAD:`;
+        if (config.assistantName) prompt += ` Nombre: ${config.assistantName}.`;
+        if (config.companyName) prompt += ` Empresa: ${config.companyName}.`;
+        if (config.ownerName) prompt += ` Jefe: ${config.ownerName}.`;
+    }
+
+    // Add business information if configured
+    if (config?.businessNiche || config?.clientGoals || config?.offerDetails || config?.importantLinks?.length) {
+        prompt += `\n\nNEGOCIO:`;
+        if (config.businessNiche) prompt += ` Nicho: ${config.businessNiche}.`;
+        if (config.clientGoals) prompt += ` Objetivos: ${config.clientGoals}.`;
+        if (config.offerDetails) prompt += ` Oferta: ${config.offerDetails}.`;
+        if (config.importantLinks && config.importantLinks.length > 0) {
+            prompt += ` Links importantes: ${config.importantLinks.join(', ')}.`;
+        }
+    }
+
+    // Add opening question if configured (for first contact)
+    if (config?.openingQuestion) {
+        prompt += `\n\nAPERTURA: Al iniciar una nueva conversación, usa esta pregunta: "${config.openingQuestion}"`;
+    }
+
+    // Add lead qualification settings if enabled
+    if (config?.enableQualification === true) {
+        prompt += `\n\nCALIFICACIÓN DE LEADS:`;
+        if (config.qualifyingQuestion) {
+            prompt += ` Pregunta clave: "${config.qualifyingQuestion}"`;
+        }
+        if (config.qualificationCriteria) {
+            prompt += ` Criterios para calificar: ${config.qualificationCriteria}`;
+        }
+        if (config.disqualifyMessage) {
+            prompt += ` Si el lead no califica, responde con: "${config.disqualifyMessage}"`;
+        }
+    }
+
+    // Add tone guidelines if configured
+    if (config?.toneGuidelines) {
+        prompt += `\n\nESTILO: ${config.toneGuidelines}`;
+    }
+
+    // Add additional context if exists
+    if (config?.additionalContext) {
+        prompt += `\n\nCONTEXTO: ${config.additionalContext}`;
+    }
+
+    // Add conversation examples if they exist
+    if (config?.conversationExamples) {
+        prompt += `\n\nEJEMPLOS:\n${config.conversationExamples}`;
+    }
+
+    // Add knowledge bases content if available
+    if (knowledgeBases && knowledgeBases.length > 0) {
+        prompt += `\n\nBASE DE CONOCIMIENTO (usa esta información para responder):\n${knowledgeBases.join('\n\n')}`;
+    }
 
     // Si hay contexto guardado del contacto, incluirlo
     if (contactContext) {
         prompt += `\n\n=== TU MEMORIA SOBRE ESTE LEAD ===
 ${contactContext}
 
-IMPORTANTE: Esta es información que ya aprendiste sobre este lead en conversaciones anteriores. Úsala para personalizar tus respuestas. Si aprendes información nueva importante, usa la función update_context para actualizar tu memoria.`
+IMPORTANTE: Esta es información que ya aprendiste sobre este lead en conversaciones anteriores. Úsala para personalizar tus respuestas. Si aprendes información nueva importante, usa la función update_context para actualizar tu memoria.`;
     } else {
         prompt += `\n\n=== MEMORIA ===
-Es tu primera conversación con este lead o no tienes información guardada. Cuando aprendas datos importantes (nombre, qué busca, país, objeciones, etc.), usa la función update_context para guardarlos en tu memoria.`
+Es tu primera conversación con este lead o no tienes información guardada. Cuando aprendas datos importantes (nombre, qué busca, país, objeciones, etc.), usa la función update_context para guardarlos en tu memoria.`;
     }
 
     if (config?.enableMeetingScheduling === true) {
@@ -408,12 +523,19 @@ Es tu primera conversación con este lead o no tienes información guardada. Cua
             hour12: false
         });
 
+        const workDays = config?.meetingAvailableDays?.length > 0
+            ? config.meetingAvailableDays.join(', ')
+            : 'monday, tuesday, wednesday, thursday, friday';
+        const duration = config?.meetingDuration || 30;
+
         prompt += `
 
 === CALENDARIO ===
 Ahora: ${currentDateTime}
 Mi zona horaria: ${timezone}
 Horario laboral: ${config?.meetingAvailableHoursStart || '09:00'}-${config?.meetingAvailableHoursEnd || '18:00'} (en mi zona horaria)
+Días laborales: ${workDays}
+Duración de reuniones: ${duration} minutos
 
 WORKFLOW DE AGENDAMIENTO (SIGUE ESTOS PASOS EN ORDEN):
 1. Lead pregunta por reunión → PREGUNTA DE QUÉ PAÍS ES (ej: "¿Desde qué país me escribes? Así coordino bien el horario")

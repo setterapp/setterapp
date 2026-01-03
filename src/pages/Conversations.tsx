@@ -5,7 +5,7 @@ import ChatPanel from '../components/ChatPanel'
 import EmptyConversation from '../components/EmptyConversation'
 
 function Conversations() {
-  const { conversations, loading, error, markConversationRead } = useConversations()
+  const { conversations, loading, error, markConversationRead, updateConversation } = useConversations()
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [selectedConversationNonce, setSelectedConversationNonce] = useState(0)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -106,6 +106,7 @@ function Conversations() {
             conversation={selectedConversation}
             onBack={isMobile ? () => setSelectedConversationId(null) : undefined}
             isMobile={isMobile}
+            onAiEnabledChange={(id, enabled) => updateConversation(id, { ai_enabled: enabled })}
           />
         )}
       </div>
