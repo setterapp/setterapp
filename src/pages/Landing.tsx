@@ -192,26 +192,31 @@ function Landing() {
         <header
           className="landing-header"
           style={{
-            padding: 'clamp(8px, 2vw, var(--spacing-md)) clamp(12px, 3vw, var(--spacing-xl))',
+            padding: 'clamp(8px, 2vw, var(--spacing-md)) clamp(8px, 2vw, var(--spacing-xl))',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: 'clamp(6px, 2vw, var(--spacing-md))',
+            gap: 'clamp(4px, 1vw, var(--spacing-md))',
             maxWidth: '1400px',
             margin: '0 auto',
           }}
         >
           <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, var(--spacing-sm))' }}>
-            <Logo size={window.innerWidth < 768 ? 24 : 40} variant="icon" />
-            <span style={{ fontSize: 'clamp(13px, 3.5vw, var(--font-size-lg))', fontWeight: 700, color: '#000' }}>
+            <Logo size={window.innerWidth < 768 ? 22 : 40} variant="icon" />
+            <span style={{
+              fontSize: 'clamp(13px, 3.5vw, var(--font-size-lg))',
+              fontWeight: 700,
+              color: '#000',
+              display: window.innerWidth < 480 ? 'none' : 'inline'
+            }}>
               setterapp.ai
             </span>
           </Link>
-          <div style={{ display: 'flex', gap: 'clamp(4px, 1.5vw, var(--spacing-md))', alignItems: 'center' }}>
-            <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000', padding: 'clamp(5px, 1.2vw, 12px) clamp(10px, 2.5vw, 24px)', fontSize: 'clamp(11px, 2.8vw, 15px)', whiteSpace: 'nowrap' }}>
+          <div style={{ display: 'flex', gap: 'clamp(3px, 1vw, var(--spacing-md))', alignItems: 'center' }}>
+            <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000', padding: 'clamp(4px, 1vw, 12px) clamp(8px, 2vw, 24px)', fontSize: 'clamp(10px, 2.5vw, 15px)', whiteSpace: 'nowrap' }}>
               Log In
             </Link>
-            <Link to="/register" className="btn" style={{ background: '#000', color: '#fff', border: '2px solid #000', padding: 'clamp(5px, 1.2vw, 12px) clamp(10px, 2.5vw, 24px)', fontSize: 'clamp(11px, 2.8vw, 15px)', whiteSpace: 'nowrap' }}>
+            <Link to="/register" className="btn" style={{ background: '#000', color: '#fff', border: '2px solid #000', padding: 'clamp(4px, 1vw, 12px) clamp(8px, 2vw, 24px)', fontSize: 'clamp(10px, 2.5vw, 15px)', whiteSpace: 'nowrap' }}>
               Get Started
             </Link>
           </div>
