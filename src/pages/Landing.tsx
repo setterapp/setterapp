@@ -193,7 +193,8 @@ function Landing() {
           {`
             .landing-header {
               padding: 12px 16px;
-              display: flex;
+              display: flex !important;
+              flex-direction: row !important;
               justify-content: space-between;
               align-items: center;
               flex-wrap: nowrap !important;
@@ -207,12 +208,18 @@ function Landing() {
               display: flex;
               align-items: center;
               gap: 6px;
+              min-width: 0;
+            }
+            .landing-header .logo-icon {
               flex-shrink: 0;
+              width: 28px;
+              height: 28px;
             }
             .landing-header .logo-text {
               font-size: 16px;
               font-weight: 700;
               color: #000;
+              white-space: nowrap;
             }
             .landing-header .header-buttons {
               display: flex;
@@ -225,39 +232,34 @@ function Landing() {
               font-size: 14px;
               white-space: nowrap;
             }
-            @media (max-width: 768px) {
+            @media (max-width: 600px) {
               .landing-header {
-                padding: 8px 12px;
+                padding: 8px 10px;
                 gap: 6px;
+              }
+              .landing-header .logo-icon {
+                width: 24px;
+                height: 24px;
               }
               .landing-header .logo-text {
-                font-size: 14px;
-              }
-              .landing-header .header-buttons {
-                gap: 6px;
-              }
-              .landing-header .header-btn {
-                padding: 6px 12px;
                 font-size: 13px;
               }
-            }
-            @media (max-width: 480px) {
-              .landing-header {
+              .landing-header .header-buttons {
+                gap: 4px;
+              }
+              .landing-header .header-btn {
                 padding: 6px 10px;
-                gap: 4px;
-              }
-              .landing-header .logo-text {
-                font-size: 13px;
-              }
-              .landing-header .header-buttons {
-                gap: 4px;
-              }
-              .landing-header .header-btn {
-                padding: 5px 10px;
                 font-size: 12px;
               }
             }
-            @media (max-width: 380px) {
+            @media (max-width: 420px) {
+              .landing-header {
+                padding: 6px 8px;
+              }
+              .landing-header .logo-icon {
+                width: 22px;
+                height: 22px;
+              }
               .landing-header .logo-text {
                 display: none;
               }
@@ -270,7 +272,9 @@ function Landing() {
         </style>
         <header className="landing-header">
           <Link to="/" className="logo-link">
-            <Logo size={28} variant="icon" />
+            <div className="logo-icon">
+              <Logo size={28} variant="icon" />
+            </div>
             <span className="logo-text">setterapp.ai</span>
           </Link>
           <div className="header-buttons">
