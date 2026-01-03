@@ -340,7 +340,8 @@ function Landing() {
               lineHeight: 1.2,
             }}
           >
-            Turn Instagram DMs Into{' '}
+            Turn Instagram DMs Into
+            <br />
             <span
               style={{
                 background: 'linear-gradient(45deg, #3b82f6, #a855f7, #f38ba8, #3b82f6)',
