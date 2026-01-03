@@ -92,7 +92,7 @@ function FAQItem({ question, answer, isOpen, onClick }: {
           {question}
         </h4>
         <ChevronDown
-          size={window.innerWidth < 768 ? 20 : 24}
+          size={22}
           style={{
             transition: 'transform 0.3s ease',
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -189,34 +189,95 @@ function Landing() {
           borderBottom: '2px solid #000',
         }}
       >
-        <header
-          className="landing-header"
-          style={{
-            padding: 'clamp(8px, 2vw, var(--spacing-md)) clamp(8px, 2vw, var(--spacing-xl))',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 'clamp(4px, 1vw, var(--spacing-md))',
-            maxWidth: '1400px',
-            margin: '0 auto',
-          }}
-        >
-          <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, var(--spacing-sm))' }}>
-            <Logo size={window.innerWidth < 768 ? 22 : 40} variant="icon" />
-            <span style={{
-              fontSize: 'clamp(13px, 3.5vw, var(--font-size-lg))',
-              fontWeight: 700,
-              color: '#000',
-              display: window.innerWidth < 480 ? 'none' : 'inline'
-            }}>
-              setterapp.ai
-            </span>
+        <style>
+          {`
+            .landing-header {
+              padding: 12px 16px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              flex-wrap: nowrap !important;
+              gap: 8px;
+              max-width: 1400px;
+              margin: 0 auto;
+            }
+            .landing-header .logo-link {
+              text-decoration: none;
+              color: inherit;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              flex-shrink: 0;
+            }
+            .landing-header .logo-text {
+              font-size: 16px;
+              font-weight: 700;
+              color: #000;
+            }
+            .landing-header .header-buttons {
+              display: flex;
+              gap: 8px;
+              align-items: center;
+              flex-shrink: 0;
+            }
+            .landing-header .header-btn {
+              padding: 8px 16px;
+              font-size: 14px;
+              white-space: nowrap;
+            }
+            @media (max-width: 768px) {
+              .landing-header {
+                padding: 8px 12px;
+                gap: 6px;
+              }
+              .landing-header .logo-text {
+                font-size: 14px;
+              }
+              .landing-header .header-buttons {
+                gap: 6px;
+              }
+              .landing-header .header-btn {
+                padding: 6px 12px;
+                font-size: 13px;
+              }
+            }
+            @media (max-width: 480px) {
+              .landing-header {
+                padding: 6px 10px;
+                gap: 4px;
+              }
+              .landing-header .logo-text {
+                font-size: 13px;
+              }
+              .landing-header .header-buttons {
+                gap: 4px;
+              }
+              .landing-header .header-btn {
+                padding: 5px 10px;
+                font-size: 12px;
+              }
+            }
+            @media (max-width: 380px) {
+              .landing-header .logo-text {
+                display: none;
+              }
+              .landing-header .header-btn {
+                padding: 5px 8px;
+                font-size: 11px;
+              }
+            }
+          `}
+        </style>
+        <header className="landing-header">
+          <Link to="/" className="logo-link">
+            <Logo size={28} variant="icon" />
+            <span className="logo-text">setterapp.ai</span>
           </Link>
-          <div style={{ display: 'flex', gap: 'clamp(3px, 1vw, var(--spacing-md))', alignItems: 'center' }}>
-            <Link to="/login" className="btn" style={{ background: '#fff', color: '#000', border: '2px solid #000', padding: 'clamp(4px, 1vw, 12px) clamp(8px, 2vw, 24px)', fontSize: 'clamp(10px, 2.5vw, 15px)', whiteSpace: 'nowrap' }}>
+          <div className="header-buttons">
+            <Link to="/login" className="btn header-btn" style={{ background: '#fff', color: '#000', border: '2px solid #000' }}>
               Log In
             </Link>
-            <Link to="/register" className="btn" style={{ background: '#000', color: '#fff', border: '2px solid #000', padding: 'clamp(4px, 1vw, 12px) clamp(8px, 2vw, 24px)', fontSize: 'clamp(10px, 2.5vw, 15px)', whiteSpace: 'nowrap' }}>
+            <Link to="/register" className="btn header-btn" style={{ background: '#000', color: '#fff', border: '2px solid #000' }}>
               Get Started
             </Link>
           </div>
@@ -263,7 +324,7 @@ function Landing() {
                 animation: 'float 3s ease-in-out infinite',
               }}
             >
-              <Logo size={window.innerWidth < 768 ? 24 : 40} variant="icon" />
+              <Logo size={32} variant="icon" />
             </div>
 
             {/* Animated Connection Line */}
@@ -322,7 +383,7 @@ function Landing() {
                 animation: 'float 3s ease-in-out infinite 0.5s',
               }}
             >
-              <InstagramIcon size={window.innerWidth < 768 ? 24 : 40} color="#000" />
+              <InstagramIcon size={32} color="#000" />
             </div>
           </div>
 
@@ -410,7 +471,7 @@ function Landing() {
             }}
           >
             {/* Infinity Symbol */}
-            <svg width={window.innerWidth < 768 ? 14 : 24} height={window.innerWidth < 768 ? 14 : 24} viewBox="0 0 16 16" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+            <svg width={18} height={18} viewBox="0 0 16 16" fill="#fff" xmlns="http://www.w3.org/2000/svg">
               <path d="M5.68 5.792 7.345 7.75 5.681 9.708a2.75 2.75 0 1 1 0-3.916ZM8 6.978 6.416 5.113l-.014-.015a3.75 3.75 0 1 0 0 5.304l.014-.015L8 8.522l1.584 1.865.014.015a3.75 3.75 0 1 0 0-5.304l-.014.015zm.656.772 1.663-1.958a2.75 2.75 0 1 1 0 3.916z"/>
             </svg>
             <span style={{ fontSize: 'clamp(10px, 2.5vw, 15px)', fontWeight: 700, color: '#fff', letterSpacing: '0.2px' }}>
@@ -433,7 +494,7 @@ function Landing() {
               }}
             >
               Get Started
-              <ArrowRight size={window.innerWidth < 768 ? 16 : 20} />
+              <ArrowRight size={18} />
             </Link>
           </div>
         </div>
@@ -511,7 +572,7 @@ function Landing() {
                     flexShrink: 0,
                   }}
                 >
-                  <X size={window.innerWidth < 768 ? 20 : 24} color="#000" strokeWidth={3} />
+                  <X size={22} color="#000" strokeWidth={3} />
                 </div>
                 <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-text)', fontSize: 'clamp(13px, 3.5vw, 16px)' }}>
                   {pain.text}
@@ -584,8 +645,8 @@ function Landing() {
                   <tr key={index} style={{ borderBottom: index < 5 ? '1px solid #e0e0e0' : 'none' }}>
                     <td style={{ padding: 'clamp(8px, 2vw, var(--spacing-md))', fontWeight: 600, fontSize: 'clamp(12px, 3vw, 15px)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, var(--spacing-sm))' }}>
-                        <row.icon size={window.innerWidth < 768 ? 14 : 18} strokeWidth={2.5} />
-                        <span style={{ display: window.innerWidth < 480 ? 'none' : 'inline' }}>{row.aspect}</span>
+                        <row.icon size={16} strokeWidth={2.5} />
+                        {row.aspect}
                       </div>
                     </td>
                     <td style={{ padding: 'clamp(8px, 2vw, var(--spacing-md))', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 'clamp(11px, 2.5vw, 14px)' }}>
@@ -600,7 +661,7 @@ function Landing() {
                       fontSize: 'clamp(11px, 2.5vw, 14px)'
                     }}>
                       <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                        <Check size={window.innerWidth < 768 ? 12 : 16} strokeWidth={3} />
+                        <Check size={14} strokeWidth={3} />
                         {row.ai}
                       </span>
                     </td>
@@ -691,9 +752,9 @@ function Landing() {
                   }}
                 >
                   {feature.isComponent ? (
-                    <feature.icon size={window.innerWidth < 768 ? 22 : 28} color="#000" />
+                    <feature.icon size={24} color="#000" />
                   ) : (
-                    <feature.icon size={window.innerWidth < 768 ? 22 : 28} color="#000" strokeWidth={2} />
+                    <feature.icon size={24} color="#000" strokeWidth={2} />
                   )}
                 </div>
                 <div>
@@ -848,7 +909,7 @@ function Landing() {
                 style={{
                   textAlign: 'center',
                   padding: 'clamp(var(--spacing-sm), 2vw, var(--spacing-md))',
-                  borderRight: index < arr.length - 1 && window.innerWidth >= 640 ? '2px solid #e0e0e0' : 'none',
+                  borderRight: index < arr.length - 1 ? '2px solid #e0e0e0' : 'none',
                 }}
               >
                 <div
