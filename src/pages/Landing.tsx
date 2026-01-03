@@ -16,7 +16,7 @@ import {
   Percent,
   UserX
 } from 'lucide-react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion } from 'framer-motion'
 import type { Variants } from 'framer-motion'
 import InstagramIcon from '../components/icons/InstagramIcon'
 import Logo from '../components/Logo'
@@ -160,25 +160,19 @@ function Landing() {
     }
   ]
 
-  // Scroll-based background color animation
-  const { scrollYProgress } = useScroll()
-  const backgroundColor = useTransform(
-    scrollYProgress,
-    [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1],
-    [
-      'var(--color-primary)', // Azul
-      '#ffffff',              // Blanco
-      'var(--color-primary)', // Azul
-      '#ffffff',              // Blanco
-      'var(--color-primary)', // Azul
-      '#ffffff',              // Blanco
-      'var(--color-primary)', // Azul
-      '#ffffff'               // Blanco
-    ]
-  )
-
   return (
-    <motion.div style={{ minHeight: '100vh', backgroundColor }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#fff',
+        backgroundImage: `
+          linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px)
+        `,
+        backgroundSize: '40px 40px',
+        backgroundAttachment: 'fixed',
+      }}
+    >
       {/* Header */}
       <div
         style={{
@@ -296,11 +290,6 @@ function Landing() {
           padding: 'clamp(40px, 10vw, 120px) clamp(16px, 4vw, var(--spacing-xl))',
           textAlign: 'center',
           position: 'relative',
-          backgroundImage: `
-            linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px)
-          `,
-          backgroundSize: 'clamp(20px, 5vw, 40px) clamp(20px, 5vw, 40px)',
         }}
       >
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
@@ -781,7 +770,6 @@ function Landing() {
         className="landing-section"
         style={{
           padding: 'clamp(40px, 8vw, 60px) clamp(16px, 4vw, var(--spacing-xl))',
-          background: 'var(--color-bg-secondary)',
         }}
       >
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
@@ -1491,7 +1479,7 @@ function Landing() {
           © 2025 setterapp.ai. All rights reserved.
         </div>
       </footer>
-    </motion.div>
+    </div>
   )
 }
 
