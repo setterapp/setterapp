@@ -32,12 +32,13 @@ export interface PlanLimits {
   agents: number
   messages: number
   knowledgeBases: number
+  teamMembers: number
 }
 
 export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
-  starter: { agents: 1, messages: 2000, knowledgeBases: 1 },
-  growth: { agents: 3, messages: 10000, knowledgeBases: 3 },
-  premium: { agents: 10, messages: Infinity, knowledgeBases: 10 },
+  starter: { agents: 1, messages: 2000, knowledgeBases: 1, teamMembers: 1 },
+  growth: { agents: 3, messages: 10000, knowledgeBases: 3, teamMembers: 3 },
+  premium: { agents: 10, messages: Infinity, knowledgeBases: 10, teamMembers: 10 },
 }
 
 export function useSubscription() {
@@ -47,6 +48,7 @@ export function useSubscription() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [activeAgentsCount, setActiveAgentsCount] = useState(0)
   const [knowledgeBasesCount, setKnowledgeBasesCount] = useState(0)
+  const [teamMembersCount, setTeamMembersCount] = useState(0)
   const [adminPlanOverride, setAdminPlanOverrideState] = useState<SubscriptionPlan | null>(() => {
     const stored = localStorage.getItem(ADMIN_PLAN_OVERRIDE_KEY)
     return stored as SubscriptionPlan | null
@@ -66,8 +68,8 @@ export function useSubscription() {
 
       setUserEmail(session.user.email || null)
 
-      // Fetch subscription, active agents count, and knowledge bases count in parallel
-      const [subResult, agentsResult, kbResult] = await Promise.all([
+      // Fetch subscription, active agents count, knowledge bases count, and team members count in parallel
+      const [subResult, agentsResult, kbResult, teamResult] = await Promise.all([
         supabase
           .from('subscriptions')
           .select('*')
@@ -81,7 +83,10 @@ export function useSubscription() {
         supabase
           .from('knowledge_bases')
           .select('*', { count: 'exact', head: true })
-          .eq('user_id', session.user.id)
+          .eq('user_id', session.user.id),
+        supabase
+          .from('team_members')
+          .select('*', { count: 'exact', head: true })
       ])
 
       if (subResult.error) {
@@ -91,6 +96,7 @@ export function useSubscription() {
       setSubscription(subResult.data || null)
       setActiveAgentsCount(agentsResult.count || 0)
       setKnowledgeBasesCount(kbResult.count || 0)
+      setTeamMembersCount(teamResult.count || 1) // Default to 1 (owner)
     } catch (err: any) {
       setError(err.message)
       setSubscription(null)
@@ -196,6 +202,7 @@ export function useSubscription() {
   const messagesLimit = limits?.messages || 0
   const agentsLimit = limits?.agents || 0
   const knowledgeBasesLimit = limits?.knowledgeBases || 0
+  const teamMembersLimit = limits?.teamMembers || 1
 
   return {
     subscription,
@@ -215,6 +222,8 @@ export function useSubscription() {
     agentsLimit,
     knowledgeBasesCount,
     knowledgeBasesLimit,
+    teamMembersCount,
+    teamMembersLimit,
     createCheckout,
     openPortal,
     refetch: fetchSubscription,

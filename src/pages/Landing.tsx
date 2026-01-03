@@ -1025,6 +1025,7 @@ function Landing() {
                   "1 AI Agent",
                   "2,000 messages/month",
                   "1 Knowledge Base",
+                  "1 team member",
                   "Instagram DM automation",
                   "Unlimited Comment-to-DM automations",
                   "Google Calendar sync",
