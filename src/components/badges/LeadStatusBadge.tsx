@@ -46,14 +46,14 @@ export default function LeadStatusBadge({ status, style, variant = 'badge' }: Le
         title={label}
         style={{
           position: 'absolute',
-          top: 0,
-          right: 0,
+          top: '-2px',
+          right: '-2px',
           width: 0,
           height: 0,
           borderStyle: 'solid',
-          borderWidth: '0 20px 20px 0',
+          borderWidth: '0 24px 24px 0',
           borderColor: `transparent ${bg} transparent transparent`,
-          filter: 'drop-shadow(-1px 1px 0 #000)',
+          filter: 'drop-shadow(-1.5px 1.5px 0 #000)',
           ...style,
         }}
       />
