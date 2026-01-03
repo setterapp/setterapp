@@ -1677,7 +1677,95 @@ function splitMessage(message: string, maxLength: number = 950): string[] {
 }
 
 /**
+ * Envía un mensaje a Instagram usando config ya cargada (más eficiente para múltiples mensajes)
+ */
+async function sendInstagramMessageWithConfig(userId: string, recipientId: string, message: string, config: any) {
+    try {
+        const accessToken = config?.access_token;
+        const rawId = config?.instagram_user_id;
+        const instagramUserId = rawId ? String(rawId) : null;
+
+        if (!accessToken || !instagramUserId) {
+            console.error('❌ Faltan credenciales de Instagram en config');
+            return null;
+        }
+
+        console.log('📤 Enviando mensaje a Instagram:', {
+            instagramUserId,
+            recipientId: String(recipientId),
+            messageLength: message.length,
+            messagePreview: message.substring(0, 50)
+        });
+
+        // Enviar mensaje usando Instagram Messaging API
+        const sendUrl = `https://graph.instagram.com/v24.0/${instagramUserId}/messages`;
+        const requestBody = {
+            recipient: { id: String(recipientId) },
+            message: { text: message }
+        };
+
+        const response = await fetch(sendUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        const responseText = await response.text();
+        let responseData: any = {};
+        try {
+            responseData = JSON.parse(responseText);
+        } catch {
+            responseData = { raw: responseText };
+        }
+
+        // Log para debugging
+        try {
+            await supabase.from('api_request_logs').insert({
+                user_id: userId,
+                platform: 'instagram',
+                endpoint: sendUrl,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ***' },
+                body: requestBody,
+                response_status: response.status,
+                response_body: responseData,
+                error: response.ok ? null : responseData?.error?.message || responseText
+            });
+        } catch (logErr) {
+            console.warn('⚠️ No se pudo guardar log de API:', logErr);
+        }
+
+        if (response.ok) {
+            console.log('✅ Mensaje enviado correctamente');
+            return responseData;
+        }
+
+        // Check for token expiry
+        if (responseData?.error?.code === 190 || responseData?.error?.code === '190') {
+            console.warn('⚠️ Token de Instagram expirado');
+            await supabase
+                .from('integrations')
+                .update({ status: 'disconnected' })
+                .eq('type', 'instagram')
+                .eq('user_id', userId);
+            return null;
+        }
+
+        console.error('❌ Error enviando mensaje:', responseData?.error?.message || responseText);
+        return null;
+
+    } catch (error) {
+        console.error('❌ Error sending Instagram message:', error);
+        return null;
+    }
+}
+
+/**
  * Envía un mensaje a Instagram (con soporte para mensajes largos y reintentos)
+ * @deprecated Use sendInstagramMessageWithConfig for multiple messages
  */
 async function sendInstagramMessage(userId: string, recipientId: string, message: string) {
     try {
@@ -2094,32 +2182,75 @@ async function generateAndSendAutoReply(
         if (finalResponse) {
             // Split response on . and ? to send as separate messages (Instagram style)
             // Keep the ? at the end of questions, remove periods
-            const messages = finalResponse
+            const messageParts = finalResponse
                 .split(/(?<=\?)\s*|(?<=\.)\s*/)  // Split after ? or .
                 .map((msg: string) => msg.trim().replace(/\.$/, ''))  // Remove trailing periods
                 .filter((msg: string) => msg.length > 0);
 
-            console.log(`📨 Sending ${messages.length} message(s)`);
+            console.log(`📨 Sending ${messageParts.length} message(s):`, messageParts.map(m => m.substring(0, 50)));
 
-            for (let i = 0; i < messages.length; i++) {
-                const msg = messages[i];
+            // Get integration config once to avoid repeated DB queries
+            const { data: integrationConfig } = await supabase
+                .from('integrations')
+                .select('config')
+                .eq('type', 'instagram')
+                .eq('user_id', userId)
+                .eq('status', 'connected')
+                .single();
 
-                // Small pause between messages to simulate human typing
-                if (i > 0) {
-                    const typingDelay = Math.min(Math.max(messages[i - 1].length * 25, 400), 1500);
-                    await new Promise(resolve => setTimeout(resolve, typingDelay));
+            if (!integrationConfig?.config?.access_token) {
+                console.error('❌ No Instagram integration found for sending messages');
+            } else {
+                let successCount = 0;
+                for (let i = 0; i < messageParts.length; i++) {
+                    const msg = messageParts[i];
+
+                    // Pause between messages to simulate human typing and avoid rate limits
+                    if (i > 0) {
+                        // Longer delay: 800ms base + variable based on message length
+                        const typingDelay = Math.min(Math.max(msg.length * 30, 800), 2000);
+                        console.log(`⏳ Waiting ${typingDelay}ms before sending message ${i + 1}...`);
+                        await new Promise(resolve => setTimeout(resolve, typingDelay));
+                    }
+
+                    // Retry logic for each message part
+                    let sendResult = null;
+                    let retryCount = 0;
+                    const maxRetries = 2;
+
+                    while (retryCount <= maxRetries) {
+                        sendResult = await sendInstagramMessageWithConfig(
+                            userId,
+                            recipientId,
+                            msg,
+                            integrationConfig.config
+                        );
+
+                        if (sendResult) {
+                            break;
+                        }
+
+                        retryCount++;
+                        if (retryCount <= maxRetries) {
+                            console.log(`🔄 Retry ${retryCount}/${maxRetries} for message ${i + 1}...`);
+                            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+                        }
+                    }
+
+                    if (!sendResult) {
+                        console.error(`❌ Failed to send message ${i + 1}/${messageParts.length} after ${maxRetries} retries`);
+                        // Continue trying to send remaining messages instead of breaking
+                        continue;
+                    }
+
+                    successCount++;
+                    // Save each message separately
+                    const platformMsgId = sendResult?.message_id;
+                    await saveOutboundMessage(conversationId, userId, msg, agent.id, platformMsgId);
+                    console.log(`✅ Message ${i + 1}/${messageParts.length} sent (id: ${platformMsgId})`);
                 }
 
-                const sendResult = await sendInstagramMessage(userId, recipientId, msg);
-                if (!sendResult) {
-                    console.error(`❌ Error sending message ${i + 1}/${messages.length}`);
-                    break;
-                }
-
-                // Save each message separately
-                const platformMsgId = sendResult?.message_id;
-                await saveOutboundMessage(conversationId, userId, msg, agent.id, platformMsgId);
-                console.log(`✅ Message ${i + 1}/${messages.length} sent (id: ${platformMsgId})`);
+                console.log(`📊 Sent ${successCount}/${messageParts.length} messages successfully`);
             }
         } else {
             console.warn('⚠️ No final response from agent (max iterations reached)');
@@ -2473,4 +2604,3 @@ Ejemplo incorrecto: "listo, quedó agendada te llegó el mail?"`;
 
 // Automatic lead status detection function removed - now manual by user
 // Lead classification is done manually from the UI via a dropdown selector
-
