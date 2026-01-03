@@ -181,7 +181,7 @@ function Landing() {
           position: 'sticky',
           top: 0,
           zIndex: 100,
-          background: 'var(--color-primary)',
+          background: '#fff',
           borderBottom: '2px solid #000',
           padding: 'var(--spacing-lg) var(--spacing-xl)',
           display: 'flex',
