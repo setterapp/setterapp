@@ -5,7 +5,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 const VERIFY_TOKEN = Deno.env.get('WHATSAPP_WEBHOOK_VERIFY_TOKEN');
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? '';
+const GOOGLE_AI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY') ?? '';
 
 if (!VERIFY_TOKEN) {
     console.error('❌ WHATSAPP_WEBHOOK_VERIFY_TOKEN must be configured');
@@ -645,7 +645,7 @@ async function executeCheckAvailability(userId: string, args: any) {
     }
 }
 
-async function executeScheduleMeeting(userId: string, conversationId: string, agentId: string, args: any) {
+async function executeScheduleMeeting(userId: string, conversationId: string, agentId: string, args: any, agentConfig?: any) {
     try {
         const { data, error } = await supabase.functions.invoke('schedule-meeting', {
             body: {
@@ -653,9 +653,11 @@ async function executeScheduleMeeting(userId: string, conversationId: string, ag
                 conversation_id: conversationId,
                 agent_id: agentId,
                 meeting_date: args.meeting_date,
-                duration_minutes: args.duration_minutes || 30,
+                duration_minutes: args.duration_minutes || agentConfig?.meetingDuration || 30,
                 lead_name: args.lead_name,
-                lead_email: args.lead_email
+                lead_email: args.lead_email,
+                meeting_title: agentConfig?.meetingTitle,
+                meeting_description: agentConfig?.meetingDescription
             }
         });
         if (error) return { error: 'No se pudo agendar la reunión', details: error };
@@ -681,35 +683,72 @@ async function executeUpdateContactEmail(userId: string, conversationId: string,
     }
 }
 
-async function generateAIResponse(messages: any[], tools?: any[]) {
-    if (!OPENAI_API_KEY) return null;
+async function generateAIResponse(systemPrompt: string, contents: any[], tools?: any[]) {
+    if (!GOOGLE_AI_API_KEY) return null;
 
     try {
         const requestBody: any = {
-            model: 'gpt-4o-mini',
-            messages: messages,
-            temperature: 0.7,
-            max_tokens: 500
+            contents,
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 500
+            }
         };
 
+        // Convert tools to Gemini format if provided
         if (tools && tools.length > 0) {
-            requestBody.tools = tools;
-            requestBody.tool_choice = 'auto';
+            const functionDeclarations = tools.map((tool: any) => ({
+                name: tool.function.name,
+                description: tool.function.description,
+                parameters: tool.function.parameters
+            }));
+            requestBody.tools = [{ functionDeclarations }];
+            requestBody.toolConfig = { functionCallingConfig: { mode: 'AUTO' } };
         }
 
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
-            },
-            body: JSON.stringify(requestBody)
-        });
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GOOGLE_AI_API_KEY}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            }
+        );
 
-        if (!response.ok) return null;
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('❌ Gemini API error:', errorData);
+            return null;
+        }
 
         const data = await response.json();
-        return data.choices[0].message;
+        const candidate = data.candidates?.[0];
+        if (!candidate?.content?.parts) return null;
+
+        // Check for function calls
+        const functionCall = candidate.content.parts.find((p: any) => p.functionCall);
+        if (functionCall) {
+            return {
+                role: 'assistant',
+                content: null,
+                tool_calls: [{
+                    id: `call_${Date.now()}`,
+                    type: 'function',
+                    function: {
+                        name: functionCall.functionCall.name,
+                        arguments: JSON.stringify(functionCall.functionCall.args || {})
+                    }
+                }]
+            };
+        }
+
+        // Return text response
+        const textContent = candidate.content.parts.map((p: any) => p.text || '').join('');
+        return {
+            role: 'assistant',
+            content: textContent
+        };
     } catch (error) {
         console.error('❌ Error generating AI response:', error);
         return null;
@@ -767,7 +806,7 @@ async function saveOutboundMessage(conversationId: string, userId: string, conte
         content: content,
         direction: 'outbound',
         message_type: 'text',
-        metadata: { generated_by: 'ai', agent_id: agentId, model: 'gpt-4o-mini' }
+        metadata: { generated_by: 'ai', agent_id: agentId, model: 'gemini-3-flash-preview' }
     });
 
     // Increment messages_used counter in subscription (only outbound/AI messages count)
@@ -808,7 +847,10 @@ async function generateAndSendAutoReply(
             console.log('📝 Contexto del contacto cargado:', contactContext.substring(0, 100) + '...');
         }
 
-        const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config, contactContext);
+        // Fetch knowledge bases for the agent
+        const knowledgeBases = await getAgentKnowledgeBases(agent.id);
+
+        const systemPrompt = buildSystemPrompt(agent.name, agent.description, agent.config, contactContext, knowledgeBases);
 
         // Tools base (siempre incluye update_context)
         let tools: any[] = getBaseTools();
@@ -818,11 +860,17 @@ async function generateAndSendAutoReply(
             tools = [...tools, ...getMeetingTools()];
         }
 
-        let messages = [
-            { role: 'system', content: systemPrompt },
-            ...conversationHistory,
-            { role: 'user', content: inboundMessage }
-        ];
+        // Convert conversation history to Gemini format
+        let contents: any[] = conversationHistory.map((msg: any) => ({
+            role: msg.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: msg.content }]
+        }));
+
+        // Add current inbound message
+        contents.push({
+            role: 'user',
+            parts: [{ text: inboundMessage }]
+        });
 
         // Tool execution loop (max 5 iterations)
         let iteration = 0;
@@ -831,9 +879,9 @@ async function generateAndSendAutoReply(
 
         while (iteration < maxIterations) {
             iteration++;
-            console.log(`🔄 Iteración ${iteration}: Llamando a OpenAI...`);
+            console.log(`🔄 Iteración ${iteration}: Llamando a Gemini...`);
 
-            const aiMessage = await generateAIResponse(messages, tools);
+            const aiMessage = await generateAIResponse(systemPrompt, contents, tools);
             if (!aiMessage) {
                 console.error('❌ No se pudo generar respuesta');
                 return;
@@ -847,7 +895,6 @@ async function generateAndSendAutoReply(
 
             // Execute tool calls
             console.log(`🔧 Ejecutando ${aiMessage.tool_calls.length} tool calls`);
-            messages.push(aiMessage);
 
             for (const toolCall of aiMessage.tool_calls) {
                 const functionName = toolCall.function.name;
@@ -860,7 +907,7 @@ async function generateAndSendAutoReply(
                 if (functionName === 'check_availability') {
                     toolResult = await executeCheckAvailability(userId, functionArgs);
                 } else if (functionName === 'schedule_meeting') {
-                    toolResult = await executeScheduleMeeting(userId, conversationId, agent.id, functionArgs);
+                    toolResult = await executeScheduleMeeting(userId, conversationId, agent.id, functionArgs, agent.config);
                 } else if (functionName === 'update_contact_email') {
                     toolResult = await executeUpdateContactEmail(userId, conversationId, functionArgs);
                 } else if (functionName === 'update_context') {
@@ -873,10 +920,16 @@ async function generateAndSendAutoReply(
                     toolResult = { error: 'Función desconocida' };
                 }
 
-                messages.push({
-                    role: 'tool',
-                    tool_call_id: toolCall.id,
-                    content: JSON.stringify(toolResult)
+                // Add model's function call to contents
+                contents.push({
+                    role: 'model',
+                    parts: [{ functionCall: { name: functionName, args: functionArgs } }]
+                });
+
+                // Add function response to contents
+                contents.push({
+                    role: 'user',
+                    parts: [{ functionResponse: { name: functionName, response: toolResult } }]
                 });
 
                 console.log(`✅ Resultado de ${functionName}:`, toolResult);

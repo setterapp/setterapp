@@ -248,9 +248,9 @@ Deno.serve(async (req: Request) => {
 
     console.log('[test-agent] Generating response for:', agent_name);
 
-    // Use Gemini 2.0 Flash (same as production)
+    // Use Gemini 3 Flash (same as production)
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_AI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GOOGLE_AI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -285,7 +285,7 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         content,
-        model: 'gemini-2.0-flash'
+        model: 'gemini-3-flash-preview'
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
