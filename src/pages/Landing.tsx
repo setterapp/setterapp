@@ -344,29 +344,6 @@ function Landing() {
               }
             `}
           </style>
-          {/* Meta Tech Provider Badge - PROMINENT */}
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '10px',
-              background: 'linear-gradient(135deg, #0081FB 0%, #00a3ff 100%)',
-              border: '3px solid #000',
-              borderRadius: '12px',
-              padding: '12px 20px',
-              margin: '0 0 var(--spacing-lg) 0',
-              boxShadow: '4px 4px 0px 0px #000',
-            }}
-          >
-            {/* Infinity Symbol */}
-            <svg width="24" height="24" viewBox="0 0 16 16" fill="#fff" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5.68 5.792 7.345 7.75 5.681 9.708a2.75 2.75 0 1 1 0-3.916ZM8 6.978 6.416 5.113l-.014-.015a3.75 3.75 0 1 0 0 5.304l.014-.015L8 8.522l1.584 1.865.014.015a3.75 3.75 0 1 0 0-5.304l-.014.015zm.656.772 1.663-1.958a2.75 2.75 0 1 1 0 3.916z"/>
-            </svg>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff', letterSpacing: '0.3px' }}>
-              Official Meta Tech Provider
-            </span>
-          </div>
-
           <h1
             className="landing-hero-title"
             style={{
@@ -397,7 +374,7 @@ function Landing() {
               fontSize: 'var(--font-size-lg)',
               fontWeight: 500,
               color: 'var(--color-text-secondary)',
-              margin: '0 0 var(--spacing-xl) 0',
+              margin: '0 0 var(--spacing-lg) 0',
               lineHeight: 1.6,
               maxWidth: '700px',
               marginLeft: 'auto',
@@ -406,6 +383,29 @@ function Landing() {
           >
             AI appointment setter that responds instantly, qualifies leads, and books meetings 24/7. Zero commissions, zero training, zero headaches.
           </h2>
+
+          {/* Meta Tech Provider Badge - PROMINENT */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              background: 'linear-gradient(135deg, #0081FB 0%, #00a3ff 100%)',
+              border: '3px solid #000',
+              borderRadius: '12px',
+              padding: '12px 20px',
+              margin: '0 0 var(--spacing-xl) 0',
+              boxShadow: '4px 4px 0px 0px #000',
+            }}
+          >
+            {/* Infinity Symbol */}
+            <svg width="24" height="24" viewBox="0 0 16 16" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5.68 5.792 7.345 7.75 5.681 9.708a2.75 2.75 0 1 1 0-3.916ZM8 6.978 6.416 5.113l-.014-.015a3.75 3.75 0 1 0 0 5.304l.014-.015L8 8.522l1.584 1.865.014.015a3.75 3.75 0 1 0 0-5.304l-.014.015zm.656.772 1.663-1.958a2.75 2.75 0 1 1 0 3.916z"/>
+            </svg>
+            <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff', letterSpacing: '0.3px' }}>
+              Official Meta Tech Provider
+            </span>
+          </div>
 
           <div className="landing-hero-buttons" style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link
