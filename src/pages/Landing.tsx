@@ -674,7 +674,22 @@ function Landing() {
           padding: 'clamp(40px, 8vw, 60px) clamp(16px, 4vw, var(--spacing-xl))',
         }}
       >
-        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+        <style>
+          {`
+            .features-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 24px;
+            }
+            @media (max-width: 700px) {
+              .features-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+              }
+            }
+          `}
+        </style>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <motion.h2
             initial="hidden"
             whileInView="visible"
@@ -685,7 +700,7 @@ function Landing() {
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: 700,
               textAlign: 'center',
-              margin: '0 0 clamp(var(--spacing-xl), 6vw, var(--spacing-2xl)) 0',
+              margin: '0 0 48px 0',
               color: '#000',
             }}
           >
@@ -697,46 +712,39 @@ function Landing() {
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={staggerContainer}
-            className="landing-features-grid"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
-              gap: 'clamp(var(--spacing-md), 4vw, var(--spacing-lg))',
-              alignItems: 'stretch',
-            }}
+            className="features-grid"
           >
             {[
-              { icon: InstagramIcon, title: "Instagram DM Automation", desc: "AI appointment setter for Instagram - handle DMs and schedule meetings automatically", color: "#f38ba8", isComponent: true },
-              { icon: Calendar, title: "Automated Appointment Booking", desc: "Integrates with Google Calendar to book appointments automatically in real-time", color: "#89b4fa" },
+              { icon: InstagramIcon, title: "Instagram DM Automation", desc: "Handle DMs and schedule meetings automatically 24/7", color: "#f38ba8", isComponent: true },
+              { icon: Calendar, title: "Automated Booking", desc: "Integrates with Google Calendar to book appointments in real-time", color: "#89b4fa" },
               { icon: Users, title: "AI Lead Qualification", desc: "Automatically qualify leads and track contacts with built-in CRM", color: "#cba6f7" },
-              { icon: BarChart3, title: "Conversion Analytics", desc: "Monitor AI setter performance, response times, and booking conversion rates", color: "#f9e2af" },
+              { icon: BarChart3, title: "Conversion Analytics", desc: "Monitor performance, response times, and booking rates", color: "#f9e2af" },
             ].map((feature, index) => (
               <motion.div
                 key={index}
                 variants={staggerItem}
                 whileHover={{
-                  scale: 1.03,
+                  scale: 1.02,
                   boxShadow: '6px 6px 0px 0px #000',
                   transition: { duration: 0.2 }
                 }}
                 style={{
                   background: '#fff',
-                  border: 'clamp(2px, 0.5vw, 3px) solid #000',
-                  borderRadius: 'clamp(12px, 3vw, 16px)',
-                  padding: 'clamp(var(--spacing-md), 4vw, var(--spacing-xl))',
+                  border: '3px solid #000',
+                  borderRadius: '16px',
+                  padding: '24px',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: 'clamp(var(--spacing-md), 3vw, var(--spacing-lg))',
+                  alignItems: 'flex-start',
+                  gap: '16px',
                   boxShadow: '4px 4px 0px 0px #000',
                   cursor: 'default',
-                  minHeight: 'clamp(100px, 20vw, 120px)',
                 }}
               >
                 <div
                   style={{
-                    width: 'clamp(44px, 12vw, 56px)',
-                    height: 'clamp(44px, 12vw, 56px)',
-                    borderRadius: 'clamp(8px, 2vw, 12px)',
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '12px',
                     background: feature.color,
                     border: '2px solid #000',
                     display: 'flex',
@@ -746,16 +754,16 @@ function Landing() {
                   }}
                 >
                   {feature.isComponent ? (
-                    <feature.icon size={24} color="#000" />
+                    <feature.icon size={26} color="#000" />
                   ) : (
-                    <feature.icon size={24} color="#000" strokeWidth={2} />
+                    <feature.icon size={26} color="#000" strokeWidth={2} />
                   )}
                 </div>
-                <div>
-                  <h4 style={{ fontSize: 'clamp(14px, 3.5vw, var(--font-size-lg))', fontWeight: 700, margin: '0 0 6px 0', color: '#000' }}>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
                     {feature.title}
                   </h4>
-                  <p style={{ color: '#555', margin: 0, lineHeight: 1.5, fontSize: 'clamp(12px, 3vw, var(--font-size-sm))' }}>
+                  <p style={{ color: '#555', margin: 0, lineHeight: 1.5, fontSize: '14px' }}>
                     {feature.desc}
                   </p>
                 </div>
