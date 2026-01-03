@@ -10,7 +10,11 @@ import {
   ChevronDown,
   Clock,
   DollarSign,
-  TrendingUp
+  TrendingUp,
+  Zap,
+  GraduationCap,
+  Percent,
+  UserX
 } from 'lucide-react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import type { Variants } from 'framer-motion'
@@ -563,16 +567,19 @@ function Landing() {
               </thead>
               <tbody>
                 {[
-                  { aspect: "Availability", human: "8-10 hours", ai: "24/7" },
-                  { aspect: "Monthly Cost", human: "$500-2000+", ai: "From $49" },
-                  { aspect: "Commissions", human: "10-30%", ai: "0%" },
-                  { aspect: "Response Time", human: "5-30 min", ai: "Instant" },
-                  { aspect: "Training Time", human: "Weeks", ai: "Minutes" },
-                  { aspect: "Turnover", human: "High", ai: "None" },
+                  { aspect: "Availability", icon: Clock, human: "8-10 hours", ai: "24/7" },
+                  { aspect: "Monthly Cost", icon: DollarSign, human: "$500-2000+", ai: "From $49" },
+                  { aspect: "Commissions", icon: Percent, human: "10-30%", ai: "0%" },
+                  { aspect: "Response Time", icon: Zap, human: "5-30 min", ai: "Instant" },
+                  { aspect: "Training Time", icon: GraduationCap, human: "Weeks", ai: "Minutes" },
+                  { aspect: "Turnover", icon: UserX, human: "High", ai: "None" },
                 ].map((row, index) => (
                   <tr key={index} style={{ borderBottom: index < 5 ? '1px solid #e0e0e0' : 'none' }}>
                     <td style={{ padding: 'var(--spacing-md)', fontWeight: 600 }}>
-                      {row.aspect}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                        <row.icon size={18} strokeWidth={2.5} />
+                        {row.aspect}
+                      </div>
                     </td>
                     <td style={{ padding: 'var(--spacing-md)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
                       {row.human}
