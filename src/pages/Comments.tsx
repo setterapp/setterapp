@@ -230,7 +230,6 @@ function Comments() {
                 <div
                   style={{
                     position: 'relative',
-                    aspectRatio: '1',
                     backgroundColor: 'var(--color-bg-secondary)',
                     overflow: 'hidden'
                   }}
@@ -242,14 +241,14 @@ function Comments() {
                       alt={post.caption || 'Instagram post'}
                       style={{
                         width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
+                        height: 'auto',
+                        display: 'block'
                       }}
                     />
                   ) : (
                     <div style={{
                       width: '100%',
-                      height: '100%',
+                      height: '200px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
