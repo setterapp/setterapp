@@ -1234,14 +1234,15 @@ async function processCommentEvent(value: any, pageId: string) {
         let dmConversationId: string | null = null;
 
         // 1. Reply to the comment if configured
-        if (matchedAutomation.comment_reply) {
-            const replies = [
-                matchedAutomation.comment_reply,
-                ...(matchedAutomation.comment_reply_variations || [])
-            ].filter(Boolean);
+        const replies = [
+            matchedAutomation.comment_reply,
+            ...(matchedAutomation.comment_reply_variations || [])
+        ].filter(Boolean);
 
+        if (replies.length > 0) {
             // Pick a random reply
             const replyText = replies[Math.floor(Math.random() * replies.length)];
+            console.log('📝 Selected reply variation:', replyText);
 
             try {
                 const replyResult = await replyToComment(commentId, replyText, accessToken);
@@ -1250,6 +1251,8 @@ async function processCommentEvent(value: any, pageId: string) {
             } catch (err) {
                 console.error('❌ Error replying to comment:', err);
             }
+        } else {
+            console.log('ℹ️ No comment reply configured');
         }
 
         // 2. Send DM
