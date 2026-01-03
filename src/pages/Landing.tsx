@@ -130,12 +130,24 @@ function Landing() {
       answer: "Absolutely! You have full control over your AI appointment setter's personality, tone, and responses. You can provide custom instructions, FAQs, and business information to make the automated booking assistant truly yours."
     },
     {
+      question: "How long does setup take?",
+      answer: "Setup takes about 5-10 minutes. Connect your Instagram account, link your Google Calendar, add your business information and FAQs, and you're ready to go. No technical knowledge required."
+    },
+    {
       question: "How does the AI setter integrate with my calendar?",
       answer: "Our AI appointment setter integrates directly with Google Calendar. The AI can check your availability in real-time and book appointments automatically, sending calendar invites with video call links. This automated scheduling works 24/7."
     },
     {
+      question: "Can I review messages before the AI sends them?",
+      answer: "Yes! You can enable 'hold for review' mode where the AI drafts responses but waits for your approval before sending. You can also set it to auto-respond and only escalate when it's unsure."
+    },
+    {
       question: "What happens if the AI doesn't know how to respond?",
       answer: "Our AI appointment setter is smart enough to recognize when it needs human help. It can escalate conversations to you, hold messages for review, or provide a polite response asking the customer to wait for a human response."
+    },
+    {
+      question: "Does it work in Spanish or other languages?",
+      answer: "Yes! The AI can understand and respond in multiple languages including Spanish, Portuguese, and English. It automatically detects the language your leads are using and responds accordingly."
     },
     {
       question: "How much does an AI appointment setter cost vs a human setter?",
@@ -332,6 +344,29 @@ function Landing() {
               }
             `}
           </style>
+          {/* Meta Tech Provider Badge - PROMINENT */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              background: 'linear-gradient(135deg, #0081FB 0%, #00a3ff 100%)',
+              border: '3px solid #000',
+              borderRadius: '12px',
+              padding: '12px 20px',
+              margin: '0 0 var(--spacing-lg) 0',
+              boxShadow: '4px 4px 0px 0px #000',
+            }}
+          >
+            {/* Infinity Symbol */}
+            <svg width="24" height="24" viewBox="0 0 16 16" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5.68 5.792 7.345 7.75 5.681 9.708a2.75 2.75 0 1 1 0-3.916ZM8 6.978 6.416 5.113l-.014-.015a3.75 3.75 0 1 0 0 5.304l.014-.015L8 8.522l1.584 1.865.014.015a3.75 3.75 0 1 0 0-5.304l-.014.015zm.656.772 1.663-1.958a2.75 2.75 0 1 1 0 3.916z"/>
+            </svg>
+            <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff', letterSpacing: '0.3px' }}>
+              Official Meta Tech Provider
+            </span>
+          </div>
+
           <h1
             className="landing-hero-title"
             style={{
@@ -342,7 +377,7 @@ function Landing() {
               lineHeight: 1.2,
             }}
           >
-            Instagram Sales on{' '}
+            Turn Instagram DMs Into{' '}
             <span
               style={{
                 background: 'linear-gradient(45deg, #3b82f6, #a855f7, #f38ba8, #3b82f6)',
@@ -353,7 +388,7 @@ function Landing() {
                 animation: 'gradientShift 4s ease infinite',
               }}
             >
-              Autopilot
+              Booked Calls
             </span>
           </h1>
 
@@ -362,38 +397,15 @@ function Landing() {
               fontSize: 'var(--font-size-lg)',
               fontWeight: 500,
               color: 'var(--color-text-secondary)',
-              margin: '0 0 var(--spacing-lg) 0',
+              margin: '0 0 var(--spacing-xl) 0',
               lineHeight: 1.6,
               maxWidth: '700px',
               marginLeft: 'auto',
               marginRight: 'auto',
             }}
           >
-            Deploy ultra-realistic AI agents that engage leads naturally and book appointments 24/7. Stop splitting your profits—get a top-tier setter with zero commissions.
+            AI appointment setter that responds instantly, qualifies leads, and books meetings 24/7. Zero commissions, zero training, zero headaches.
           </h2>
-
-          {/* Meta Tech Provider Badge */}
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: '#fff',
-              border: '2px solid #000',
-              borderRadius: '8px',
-              padding: '8px 16px',
-              margin: '0 0 var(--spacing-xl) 0',
-              boxShadow: '2px 2px 0px 0px #000',
-            }}
-          >
-            {/* Infinity Symbol */}
-            <svg width="20" height="20" viewBox="0 0 16 16" fill="#0081FB" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5.68 5.792 7.345 7.75 5.681 9.708a2.75 2.75 0 1 1 0-3.916ZM8 6.978 6.416 5.113l-.014-.015a3.75 3.75 0 1 0 0 5.304l.014-.015L8 8.522l1.584 1.865.014.015a3.75 3.75 0 1 0 0-5.304l-.014.015zm.656.772 1.663-1.958a2.75 2.75 0 1 1 0 3.916z"/>
-            </svg>
-            <span style={{ fontSize: '14px', fontWeight: 600, color: '#000' }}>
-              We are officially a Meta Tech Provider
-            </span>
-          </div>
 
           <div className="landing-hero-buttons" style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link
@@ -677,6 +689,106 @@ function Landing() {
                 </div>
               </motion.div>
             ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* SEE IT IN ACTION - Product Demo */}
+      <section
+        className="landing-section"
+        style={{
+          padding: '60px var(--spacing-xl)',
+          background: 'var(--color-bg-secondary)',
+        }}
+      >
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <motion.h2
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeInUp}
+            style={{
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+              fontWeight: 700,
+              textAlign: 'center',
+              margin: '0 0 var(--spacing-md) 0',
+              color: '#000',
+            }}
+          >
+            See It In Action
+          </motion.h2>
+
+          <motion.p
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeInUp}
+            style={{
+              textAlign: 'center',
+              color: '#333',
+              margin: '0 0 var(--spacing-2xl) 0',
+              fontSize: 'var(--font-size-lg)',
+            }}
+          >
+            Watch how our AI handles real Instagram conversations
+          </motion.p>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={scaleIn}
+            style={{
+              background: '#fff',
+              border: '3px solid #000',
+              borderRadius: '20px',
+              padding: 'var(--spacing-2xl)',
+              boxShadow: '6px 6px 0px 0px #000',
+              minHeight: '400px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 'var(--spacing-lg)',
+            }}
+          >
+            {/* Placeholder for screenshot */}
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '600px',
+                aspectRatio: '16/10',
+                background: 'linear-gradient(135deg, #f38ba8 0%, #cba6f7 100%)',
+                border: '2px solid #000',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ textAlign: 'center', padding: 'var(--spacing-xl)' }}>
+                <div
+                  style={{
+                    fontSize: '48px',
+                    marginBottom: 'var(--spacing-md)',
+                  }}
+                >
+                  💬
+                </div>
+                <p style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, color: '#000', margin: 0 }}>
+                  Product Screenshot Coming Soon
+                </p>
+                <p style={{ fontSize: 'var(--font-size-sm)', color: '#333', marginTop: 'var(--spacing-sm)' }}>
+                  AI conversation demo with real Instagram DMs
+                </p>
+              </div>
+            </div>
+
+            <p style={{ textAlign: 'center', color: '#666', fontSize: 'var(--font-size-sm)', maxWidth: '600px' }}>
+              Our AI responds in seconds, understands context, and books appointments automatically—just like a top-tier human setter.
+            </p>
           </motion.div>
         </div>
       </section>
