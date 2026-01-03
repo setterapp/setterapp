@@ -158,15 +158,15 @@ Deno.serve(async (req: Request) => {
     }
 
     // 4) Subscribe the Instagram Business Account to receive webhooks
-    // This is CRITICAL for external users (not app testers) to receive messages
+    // This is CRITICAL for external users (not app testers) to receive messages and comments
     // Using /me/subscribed_apps as per Meta documentation
     let webhookSubscribed = false;
     try {
       console.log('📡 Subscribing to webhooks using /me/subscribed_apps...');
 
-      // Subscribe to messages webhook - /me resolves to the user's IG professional account
+      // Subscribe to messages AND comments webhooks - /me resolves to the user's IG professional account
       const subscribeResponse = await fetch(
-        `https://graph.instagram.com/v24.0/me/subscribed_apps?subscribed_fields=messages&access_token=${encodeURIComponent(finalAccessToken)}`,
+        `https://graph.instagram.com/v24.0/me/subscribed_apps?subscribed_fields=messages,comments&access_token=${encodeURIComponent(finalAccessToken)}`,
         {
           method: 'POST',
         }
@@ -180,7 +180,7 @@ Deno.serve(async (req: Request) => {
           const subscribeData = JSON.parse(subscribeText);
           webhookSubscribed = subscribeData.success === true;
           if (webhookSubscribed) {
-            console.log('✅ Successfully subscribed to webhooks');
+            console.log('✅ Successfully subscribed to webhooks (messages + comments)');
           } else {
             console.warn('⚠️ Webhook subscription returned:', subscribeData);
           }

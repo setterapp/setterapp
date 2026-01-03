@@ -1068,11 +1068,404 @@ async function processEchoMessage(event: any, pageId: string) {
  */
 async function processInstagramChange(change: any, pageId: string) {
     try {
-        // Processing Instagram change
-        // Implementa la lógica para procesar cambios si es necesario
+        console.log('📝 Processing Instagram change:', { field: change.field, hasValue: !!change.value });
+
+        // Handle comment events
+        if (change.field === 'comments') {
+            await processCommentEvent(change.value, pageId);
+            return;
+        }
+
+        // Handle other change types if needed
+        console.log('ℹ️ Unhandled change field:', change.field);
     } catch (error) {
         console.error('Error processing Instagram change:', error);
     }
+}
+
+/**
+ * Procesa eventos de comentarios en Instagram
+ */
+async function processCommentEvent(value: any, pageId: string) {
+    try {
+        const commentId = value?.id;
+        const mediaId = value?.media?.id || value?.media_id;
+        const commentText = value?.text || '';
+        const commenterId = value?.from?.id;
+        const commenterUsername = value?.from?.username;
+
+        console.log('💬 Comment received:', {
+            commentId,
+            mediaId,
+            commenterUsername,
+            textPreview: commentText.substring(0, 50)
+        });
+
+        if (!commentId || !mediaId || !commenterId) {
+            console.warn('⚠️ Missing required comment data');
+            return;
+        }
+
+        // Get user_id from page
+        const userId = await getUserIdFromPageId(pageId);
+        if (!userId) {
+            console.error('❌ Could not find user_id for pageId:', pageId);
+            return;
+        }
+
+        // Check if we already processed this comment
+        const { data: existingLog } = await supabase
+            .from('comment_automation_logs')
+            .select('id')
+            .eq('comment_id', commentId)
+            .maybeSingle();
+
+        if (existingLog) {
+            console.log('ℹ️ Comment already processed:', commentId);
+            return;
+        }
+
+        // Find the post in our database
+        const { data: post } = await supabase
+            .from('instagram_posts')
+            .select('id, post_id')
+            .eq('user_id', userId)
+            .eq('post_id', mediaId)
+            .maybeSingle();
+
+        if (!post) {
+            console.log('ℹ️ Post not found in database, syncing not done yet:', mediaId);
+            return;
+        }
+
+        // Find active automations for this post
+        const { data: automations } = await supabase
+            .from('comment_automations')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('post_id', post.id)
+            .eq('is_active', true);
+
+        if (!automations || automations.length === 0) {
+            console.log('ℹ️ No active automations for this post');
+            return;
+        }
+
+        // Check which automation matches
+        let matchedAutomation = null;
+        const commentTextLower = commentText.toLowerCase().trim();
+
+        for (const automation of automations) {
+            const keywords = automation.trigger_keywords || [];
+
+            // If no keywords, match all comments
+            if (keywords.length === 0) {
+                matchedAutomation = automation;
+                break;
+            }
+
+            // Check keywords based on trigger type
+            const triggerType = automation.trigger_type || 'contains';
+
+            for (const keyword of keywords) {
+                const keywordLower = keyword.toLowerCase();
+
+                if (triggerType === 'exact' && commentTextLower === keywordLower) {
+                    matchedAutomation = automation;
+                    break;
+                } else if (triggerType === 'contains' && commentTextLower.includes(keywordLower)) {
+                    matchedAutomation = automation;
+                    break;
+                } else if (triggerType === 'any') {
+                    matchedAutomation = automation;
+                    break;
+                }
+            }
+
+            if (matchedAutomation) break;
+        }
+
+        if (!matchedAutomation) {
+            console.log('ℹ️ No automation matched the comment keywords');
+            return;
+        }
+
+        console.log('✅ Matched automation:', matchedAutomation.name);
+
+        // Create log entry
+        const { data: logEntry, error: logError } = await supabase
+            .from('comment_automation_logs')
+            .insert({
+                user_id: userId,
+                automation_id: matchedAutomation.id,
+                post_id: post.id,
+                comment_id: commentId,
+                commenter_id: commenterId,
+                commenter_username: commenterUsername,
+                comment_text: commentText,
+                status: 'processing'
+            })
+            .select('id')
+            .single();
+
+        if (logError) {
+            console.error('❌ Error creating log entry:', logError);
+            return;
+        }
+
+        // Get Instagram integration for access token
+        const { data: integration } = await supabase
+            .from('integrations')
+            .select('config')
+            .eq('type', 'instagram')
+            .eq('user_id', userId)
+            .eq('status', 'connected')
+            .single();
+
+        if (!integration?.config?.access_token) {
+            console.error('❌ No Instagram access token found');
+            await updateLogStatus(logEntry.id, 'failed', 'No access token');
+            return;
+        }
+
+        const accessToken = integration.config.access_token;
+        let commentReplySent = false;
+        let dmSent = false;
+        let dmConversationId: string | null = null;
+
+        // 1. Reply to the comment if configured
+        if (matchedAutomation.comment_reply) {
+            const replies = [
+                matchedAutomation.comment_reply,
+                ...(matchedAutomation.comment_reply_variations || [])
+            ].filter(Boolean);
+
+            // Pick a random reply
+            const replyText = replies[Math.floor(Math.random() * replies.length)];
+
+            try {
+                const replyResult = await replyToComment(commentId, replyText, accessToken);
+                commentReplySent = !!replyResult;
+                console.log('✅ Comment reply sent:', !!replyResult);
+            } catch (err) {
+                console.error('❌ Error replying to comment:', err);
+            }
+        }
+
+        // 2. Send DM
+        if (matchedAutomation.response_type === 'manual' && matchedAutomation.dm_message) {
+            // Wait for delay if configured
+            if (matchedAutomation.dm_delay_seconds > 0) {
+                await new Promise(resolve => setTimeout(resolve, matchedAutomation.dm_delay_seconds * 1000));
+            }
+
+            // Create or get conversation
+            const conversationResult = await getOrCreateConversationForComment(
+                userId,
+                commenterId,
+                commenterUsername,
+                pageId
+            );
+
+            if (conversationResult) {
+                dmConversationId = conversationResult.id;
+
+                // Send the DM
+                const dmResult = await sendInstagramMessage(userId, commenterId, matchedAutomation.dm_message);
+                if (dmResult) {
+                    dmSent = true;
+
+                    // Save the message
+                    await supabase.from('messages').insert({
+                        conversation_id: dmConversationId,
+                        user_id: userId,
+                        platform_message_id: dmResult?.message_id || `comment_dm_${Date.now()}`,
+                        content: matchedAutomation.dm_message,
+                        direction: 'outbound',
+                        message_type: 'text',
+                        metadata: {
+                            triggered_by: 'comment_automation',
+                            automation_id: matchedAutomation.id,
+                            comment_id: commentId
+                        }
+                    });
+
+                    console.log('✅ DM sent successfully');
+                }
+            }
+        } else if (matchedAutomation.response_type === 'ai' && matchedAutomation.agent_id) {
+            // AI response - create conversation and let AI handle it
+            const conversationResult = await getOrCreateConversationForComment(
+                userId,
+                commenterId,
+                commenterUsername,
+                pageId
+            );
+
+            if (conversationResult) {
+                dmConversationId = conversationResult.id;
+
+                // Create initial message context
+                const initialMessage = `[User commented on your post: "${commentText}"]`;
+
+                // Trigger AI response
+                generateAndSendAutoReply(userId, dmConversationId, commenterId, initialMessage)
+                    .then(() => {
+                        console.log('✅ AI response triggered for comment');
+                    })
+                    .catch(err => {
+                        console.error('❌ Error in AI response:', err);
+                    });
+
+                dmSent = true;
+            }
+        }
+
+        // Update log status
+        await supabase
+            .from('comment_automation_logs')
+            .update({
+                comment_reply_sent: commentReplySent,
+                dm_sent: dmSent,
+                dm_conversation_id: dmConversationId,
+                status: 'completed'
+            })
+            .eq('id', logEntry.id);
+
+        // Update automation stats
+        await supabase
+            .from('comment_automations')
+            .update({
+                triggers_count: (matchedAutomation.triggers_count || 0) + 1,
+                last_triggered_at: new Date().toISOString()
+            })
+            .eq('id', matchedAutomation.id);
+
+        console.log('✅ Comment automation completed');
+
+    } catch (error) {
+        console.error('❌ Error processing comment event:', error);
+    }
+}
+
+/**
+ * Reply to an Instagram comment
+ */
+async function replyToComment(commentId: string, message: string, accessToken: string): Promise<any> {
+    try {
+        const response = await fetch(
+            `https://graph.instagram.com/v24.0/${commentId}/replies`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message,
+                    access_token: accessToken
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error('❌ Error replying to comment:', data);
+            return null;
+        }
+
+        return data;
+    } catch (error) {
+        console.error('❌ Error in replyToComment:', error);
+        return null;
+    }
+}
+
+/**
+ * Get or create a conversation for a commenter
+ */
+async function getOrCreateConversationForComment(
+    userId: string,
+    commenterId: string,
+    commenterUsername: string | undefined,
+    pageId: string
+): Promise<{ id: string } | null> {
+    try {
+        // Check for existing conversation
+        const { data: existingConv } = await supabase
+            .from('conversations')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('platform', 'instagram')
+            .eq('platform_conversation_id', commenterId)
+            .maybeSingle();
+
+        if (existingConv) {
+            return existingConv;
+        }
+
+        // Create contact first
+        let contactId: string | null = null;
+        const contactName = commenterUsername || commenterId;
+
+        const { data: contact } = await supabase
+            .from('contacts')
+            .upsert({
+                user_id: userId,
+                platform: 'instagram',
+                external_id: commenterId,
+                display_name: contactName,
+                username: commenterUsername,
+                lead_status: 'cold',
+                updated_at: new Date().toISOString()
+            }, {
+                onConflict: 'user_id,platform,external_id'
+            })
+            .select('id')
+            .single();
+
+        contactId = contact?.id || null;
+
+        // Create conversation
+        const { data: newConv, error } = await supabase
+            .from('conversations')
+            .insert({
+                user_id: userId,
+                platform: 'instagram',
+                platform_conversation_id: commenterId,
+                platform_page_id: pageId,
+                contact_id: contactId,
+                contact: contactName,
+                last_message_at: new Date().toISOString(),
+                unread_count: 0,
+                lead_status: 'cold'
+            })
+            .select('id')
+            .single();
+
+        if (error) {
+            console.error('❌ Error creating conversation:', error);
+            return null;
+        }
+
+        return newConv;
+    } catch (error) {
+        console.error('❌ Error in getOrCreateConversationForComment:', error);
+        return null;
+    }
+}
+
+/**
+ * Update log status helper
+ */
+async function updateLogStatus(logId: string, status: string, errorMessage?: string) {
+    await supabase
+        .from('comment_automation_logs')
+        .update({
+            status,
+            error_message: errorMessage
+        })
+        .eq('id', logId);
 }
 
 /**

@@ -41,6 +41,8 @@ const INSTAGRAM_REDIRECT_URI = getRedirectUri()
 const INSTAGRAM_SCOPES = [
   'instagram_business_basic',
   'instagram_business_manage_messages',
+  'instagram_business_manage_comments',
+  'instagram_business_content_publish',
 ]
 
 export const instagramDirectService = {

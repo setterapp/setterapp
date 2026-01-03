@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Link, useLocation, Outlet } from 'react-router-dom'
-import { Plug, BarChart3, MessageSquare, Settings, Menu, X, Users, Calendar as CalendarIcon } from 'lucide-react'
+import { Plug, BarChart3, MessageSquare, MessageCircle, Settings, Menu, X, Users, Calendar as CalendarIcon } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
@@ -11,6 +11,7 @@ import Agents from './pages/Agents'
 import Integrations from './pages/Integrations'
 import Analytics from './pages/Analytics'
 import Conversations from './pages/Conversations'
+import Comments from './pages/Comments'
 import Contacts from './pages/Contacts'
 import Calendar from './pages/Calendar'
 import Meetings from './pages/Meetings'
@@ -40,6 +41,7 @@ function Layout() {
   const navItems = [
     { path: '/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/conversations', label: 'Conversations', icon: MessageSquare },
+    { path: '/comments', label: 'Comments', icon: MessageCircle },
     { path: '/contacts', label: 'Contacts', icon: Users },
     { path: '/agents', label: 'Setters', icon: Logo, isLogo: true },
     { path: '/meetings', label: 'Meetings', icon: CalendarIcon },
@@ -170,6 +172,7 @@ function App() {
         >
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/conversations" element={<Conversations />} />
+          <Route path="/comments" element={<Comments />} />
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/agents" element={<Agents />} />
           <Route path="/meetings" element={<Meetings />} />
