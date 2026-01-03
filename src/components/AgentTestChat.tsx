@@ -1,7 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send } from 'lucide-react'
 import type { Agent } from '../hooks/useAgents'
-import { generateAgentResponse, type ChatMessage } from '../services/openai'
+import { supabase } from '../lib/supabase'
+
+interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
 
 interface AgentTestChatProps {
   agent: Agent
@@ -48,17 +53,28 @@ export default function AgentTestChat({ agent }: AgentTestChatProps) {
     setError(null)
 
     try {
-      const response = await generateAgentResponse(
-        agent.name,
-        agent.description,
-        userMessage.content,
-        messages,
-        agent.config
-      )
+      // Call the test-agent edge function (no message credits counted, no DB saves)
+      const { data, error: invokeError } = await supabase.functions.invoke('test-agent', {
+        body: {
+          agent_name: agent.name,
+          description: agent.description,
+          user_message: userMessage.content,
+          conversation_history: messages,
+          config: agent.config
+        }
+      })
+
+      if (invokeError) {
+        throw new Error(invokeError.message || 'Error calling test-agent')
+      }
+
+      if (data?.error) {
+        throw new Error(data.error)
+      }
 
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: response.content
+        content: data.content || 'No response'
       }])
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error generating response'
@@ -66,7 +82,7 @@ export default function AgentTestChat({ agent }: AgentTestChatProps) {
       setError(message)
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Sorry, an error occurred: ${message}`
+        content: `Error: ${message}`
       }])
     } finally {
       setLoading(false)
