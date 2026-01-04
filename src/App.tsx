@@ -89,6 +89,19 @@ function Layout() {
 
   // Show pricing page if no access
   if (!hasAccess) {
+    // Check if user just completed payment successfully
+    const urlParams = new URLSearchParams(location.search)
+    const paymentSuccess = urlParams.get('success') === 'true'
+
+    if (paymentSuccess && subLoading) {
+      // Still loading subscription, show loading
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+          <div className="spinner" />
+        </div>
+      )
+    }
+
     return <Pricing />
   }
 

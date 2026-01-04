@@ -73,7 +73,7 @@ export default function Paywall({ onClose }: PaywallProps) {
               Starter
             </h3>
             <p style={{ margin: '0 0 var(--spacing-md) 0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-              <span style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1 }}>$49</span>
+              <span style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1 }}>$5</span>
               <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>/month</span>
             </p>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { User, LogOut, Globe, Bell, Shield, Trash2, Settings, CreditCard } from 'lucide-react'
+import { User, LogOut, Globe, Bell, Shield, Trash2, Settings, CreditCard, Users, UserPlus, Crown, UserCog, X, Mail } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { cacheService } from '../services/cache'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { Checkbox } from '../components/ui/checkbox'
 import SectionHeader from '../components/SectionHeader'
 import { useSubscription } from '../hooks/useSubscription'
+import { useTeam } from '../hooks/useTeam'
 import i18n from '../i18n'
 
 interface UserSettings {
@@ -266,6 +267,397 @@ function SubscriptionSection() {
         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
           No active subscription
         </p>
+      )}
+    </div>
+  )
+}
+
+function TeamSection() {
+  const { team, members, invitations, userRole, loading, error, canManageTeam, inviteMember, removeMember, changeMemberRole, cancelInvitation } = useTeam()
+  const { plan, teamMembersCount, teamMembersLimit } = useSubscription()
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<'admin' | 'member'>('member')
+  const [inviting, setInviting] = useState(false)
+  const [inviteError, setInviteError] = useState<string | null>(null)
+
+  const handleInvite = async () => {
+    if (!inviteEmail.trim() || !plan) return
+    setInviting(true)
+    setInviteError(null)
+    try {
+      await inviteMember(inviteEmail.trim(), inviteRole, plan)
+      setShowInviteModal(false)
+      setInviteEmail('')
+      setInviteRole('member')
+    } catch (err: any) {
+      setInviteError(err.message || 'Failed to send invitation')
+    } finally {
+      setInviting(false)
+    }
+  }
+
+  const handleRemove = async (memberId: string, memberName: string) => {
+    if (!confirm(`Are you sure you want to remove ${memberName} from the team?`)) return
+    try {
+      await removeMember(memberId)
+    } catch (err: any) {
+      alert(err.message || 'Failed to remove member')
+    }
+  }
+
+  const handleChangeRole = async (memberId: string, newRole: 'admin' | 'member') => {
+    try {
+      await changeMemberRole(memberId, newRole)
+    } catch (err: any) {
+      alert(err.message || 'Failed to change role')
+    }
+  }
+
+  const handleCancelInvite = async (invitationId: string) => {
+    try {
+      await cancelInvitation(invitationId)
+    } catch (err: any) {
+      alert(err.message || 'Failed to cancel invitation')
+    }
+  }
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'owner': return <Crown size={14} color="#f59e0b" />
+      case 'admin': return <UserCog size={14} color="#3b82f6" />
+      default: return <User size={14} color="#6b7280" />
+    }
+  }
+
+  const getRoleBadgeStyle = (role: string) => {
+    switch (role) {
+      case 'owner': return { background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }
+      case 'admin': return { background: '#dbeafe', color: '#1e40af', border: '1px solid #3b82f6' }
+      default: return { background: '#f3f4f6', color: '#374151', border: '1px solid #9ca3af' }
+    }
+  }
+
+  if (loading) {
+    return (
+      <div>
+        <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 var(--spacing-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+          <Users size={18} />
+          Team
+        </h3>
+        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>Loading...</p>
+      </div>
+    )
+  }
+
+  if (!team) {
+    return (
+      <div>
+        <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 var(--spacing-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+          <Users size={18} />
+          Team
+        </h3>
+        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+          Your team will be created when you subscribe.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 var(--spacing-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+        <Users size={18} />
+        Team
+      </h3>
+
+      {error && (
+        <p style={{ fontSize: 'var(--font-size-xs)', color: '#f38ba8', margin: '0 0 var(--spacing-sm) 0' }}>{error}</p>
+      )}
+
+      {/* Team Members Usage */}
+      <div style={{ marginBottom: 'var(--spacing-md)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600 }}>Team Members</span>
+          <span style={{
+            fontSize: 'var(--font-size-xs)',
+            fontWeight: 600,
+            color: teamMembersCount >= teamMembersLimit ? '#f38ba8' : 'var(--color-text-secondary)'
+          }}>
+            {teamMembersCount} / {teamMembersLimit}
+          </span>
+        </div>
+        <div style={{
+          width: '100%',
+          height: '6px',
+          background: '#e2e8f0',
+          borderRadius: '3px',
+          overflow: 'hidden',
+          border: '1px solid #000'
+        }}>
+          <div style={{
+            width: `${Math.min((teamMembersCount / teamMembersLimit) * 100, 100)}%`,
+            height: '100%',
+            background: teamMembersCount >= teamMembersLimit ? '#f38ba8' : '#a6e3a1',
+            transition: 'width 0.3s ease'
+          }} />
+        </div>
+      </div>
+
+      {/* Members List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-md)' }}>
+        {members.map((member) => (
+          <div
+            key={member.id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: 'var(--spacing-sm)',
+              background: 'var(--color-bg-secondary)',
+              borderRadius: 'var(--border-radius-sm)',
+              border: '1px solid var(--color-border)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+              <div style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: '#e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid #000'
+              }}>
+                {getRoleIcon(member.role)}
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
+                  {member.user?.raw_user_meta_data?.name || member.user?.email || 'Unknown'}
+                </p>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                  {member.user?.email}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+              {member.role === 'owner' ? (
+                <span style={{
+                  padding: '2px 8px',
+                  borderRadius: 'var(--border-radius-sm)',
+                  fontSize: 'var(--font-size-xs)',
+                  fontWeight: 600,
+                  ...getRoleBadgeStyle(member.role)
+                }}>
+                  Owner
+                </span>
+              ) : canManageTeam && userRole === 'owner' ? (
+                <select
+                  value={member.role}
+                  onChange={(e) => handleChangeRole(member.id, e.target.value as 'admin' | 'member')}
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: 'var(--border-radius-sm)',
+                    fontSize: 'var(--font-size-xs)',
+                    fontWeight: 600,
+                    border: '1px solid var(--color-border)',
+                    background: 'var(--color-bg)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="admin">Admin</option>
+                  <option value="member">Member</option>
+                </select>
+              ) : (
+                <span style={{
+                  padding: '2px 8px',
+                  borderRadius: 'var(--border-radius-sm)',
+                  fontSize: 'var(--font-size-xs)',
+                  fontWeight: 600,
+                  ...getRoleBadgeStyle(member.role)
+                }}>
+                  {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+                </span>
+              )}
+              {canManageTeam && member.role !== 'owner' && (
+                <button
+                  onClick={() => handleRemove(member.id, member.user?.email || 'this member')}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    color: '#f38ba8',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  title="Remove member"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Pending Invitations */}
+      {invitations.length > 0 && (
+        <div style={{ marginBottom: 'var(--spacing-md)' }}>
+          <p style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xs)' }}>
+            Pending Invitations
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)' }}>
+            {invitations.map((invitation) => (
+              <div
+                key={invitation.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: 'var(--spacing-sm)',
+                  background: '#fef3c7',
+                  borderRadius: 'var(--border-radius-sm)',
+                  border: '1px dashed #f59e0b'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                  <Mail size={16} color="#f59e0b" />
+                  <div>
+                    <p style={{ margin: 0, fontSize: 'var(--font-size-sm)' }}>{invitation.email}</p>
+                    <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                      Invited as {invitation.role}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleCancelInvite(invitation.id)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    color: '#f59e0b',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  title="Cancel invitation"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Invite Button */}
+      {canManageTeam && teamMembersCount < teamMembersLimit && (
+        <button
+          onClick={() => setShowInviteModal(true)}
+          className="btn btn--sm"
+          style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}
+        >
+          <UserPlus size={14} />
+          Invite Member
+        </button>
+      )}
+
+      {canManageTeam && teamMembersCount >= teamMembersLimit && (
+        <p style={{ fontSize: 'var(--font-size-xs)', color: '#f59e0b', margin: 0 }}>
+          Upgrade your plan to invite more team members.
+        </p>
+      )}
+
+      {/* Invite Modal */}
+      {showInviteModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: 'var(--spacing-md)'
+        }}>
+          <div style={{
+            background: 'var(--color-bg)',
+            borderRadius: 'var(--border-radius-lg)',
+            padding: 'var(--spacing-xl)',
+            maxWidth: '400px',
+            width: '100%',
+            border: '2px solid #000'
+          }}>
+            <h3 style={{ margin: 0, marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+              <UserPlus size={20} />
+              Invite Team Member
+            </h3>
+
+            {inviteError && (
+              <p style={{ fontSize: 'var(--font-size-xs)', color: '#f38ba8', margin: '0 0 var(--spacing-sm) 0' }}>
+                {inviteError}
+              </p>
+            )}
+
+            <div style={{ marginBottom: 'var(--spacing-md)' }}>
+              <label style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                Email Address
+              </label>
+              <input
+                type="email"
+                className="input"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="colleague@company.com"
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 'var(--spacing-md)' }}>
+              <label style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                Role
+              </label>
+              <select
+                className="input select"
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as 'admin' | 'member')}
+                style={{ width: '100%' }}
+              >
+                <option value="member">Member - Can manage conversations & contacts</option>
+                <option value="admin">Admin - Full access except billing</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+              <button
+                onClick={() => {
+                  setShowInviteModal(false)
+                  setInviteEmail('')
+                  setInviteRole('member')
+                  setInviteError(null)
+                }}
+                className="btn btn--sm"
+                style={{ flex: 1 }}
+                disabled={inviting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleInvite}
+                className="btn btn--primary btn--sm"
+                style={{ flex: 1 }}
+                disabled={!inviteEmail.trim() || inviting}
+              >
+                {inviting ? 'Sending...' : 'Send Invite'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -617,6 +1009,9 @@ function SettingsPage() {
 
             {/* Subscription */}
             <SubscriptionSection />
+
+            {/* Team */}
+            <TeamSection />
 
             {/* Danger Zone */}
             <div style={{ marginTop: 'auto', paddingTop: 'var(--spacing-md)', borderTop: '2px solid #f38ba8' }}>

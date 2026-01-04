@@ -1,14 +1,48 @@
+import { useState } from 'react'
 import { Check } from 'lucide-react'
 import Logo from '../components/Logo'
-
-// Direct Stripe payment links - instant redirect, no server call needed
-const PAYMENT_LINKS = {
-  starter: 'https://buy.stripe.com/8x27sF5re35D9x7g2OeEo00',
-  growth: 'https://buy.stripe.com/14A4gt2f2eOl7oZ3g2eEo01',
-  premium: 'https://buy.stripe.com/9B628l5re7lT9x7cQCeEo02',
-}
+import { supabase } from '../lib/supabase'
 
 export default function Pricing() {
+  const [loading, setLoading] = useState<string | null>(null)
+
+  const handleSelectPlan = async (plan: 'starter' | 'growth' | 'premium') => {
+    try {
+      setLoading(plan)
+
+      // Check if user is logged in
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        // Redirect to login if not authenticated
+        window.location.href = `/login?redirect_to=/pricing&plan=${plan}`
+        return
+      }
+
+      // Create checkout session
+      const response = await supabase.functions.invoke('stripe-checkout', {
+        body: {
+          plan,
+          success_url: `${window.location.origin}/dashboard?success=true`,
+          cancel_url: `${window.location.origin}/pricing?canceled=true`,
+        },
+      })
+
+      if (response.error) {
+        console.error('Checkout error:', response.error)
+        alert('Error creating checkout session. Please try again.')
+        return
+      }
+
+      if (response.data?.url) {
+        window.location.href = response.data.url
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('An error occurred. Please try again.')
+    } finally {
+      setLoading(null)
+    }
+  }
   return (
     <div
       style={{
@@ -103,10 +137,10 @@ export default function Pricing() {
                 <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, margin: '0 0 8px 0', color: '#000' }}>
                   Starter
                 </h3>
-                <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                  <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$49</span>
-                  <span style={{ color: '#666', fontSize: 'var(--font-size-sm)' }}>/month</span>
-                </p>
+            <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+              <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$5</span>
+              <span style={{ color: '#666', fontSize: 'var(--font-size-sm)' }}>/month</span>
+            </p>
                 <p style={{ margin: '8px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#666' }}>
                   Perfect for getting started
                 </p>
@@ -141,8 +175,9 @@ export default function Pricing() {
                 ))}
               </div>
 
-              <a
-                href={PAYMENT_LINKS.starter}
+              <button
+                onClick={() => handleSelectPlan('starter')}
+                disabled={loading === 'starter'}
                 className="btn"
                 style={{
                   width: '100%',
@@ -152,11 +187,10 @@ export default function Pricing() {
                   border: '2px solid #000',
                   fontWeight: 700,
                   padding: '14px 24px',
-                  textDecoration: 'none',
                 }}
               >
-                Get Started
-              </a>
+                {loading === 'starter' ? 'Creating...' : 'Get Started'}
+              </button>
             </div>
 
             {/* Growth Plan - HIGHLIGHTED */}
@@ -237,8 +271,9 @@ export default function Pricing() {
                 ))}
               </div>
 
-              <a
-                href={PAYMENT_LINKS.growth}
+              <button
+                onClick={() => handleSelectPlan('growth')}
+                disabled={loading === 'growth'}
                 className="btn"
                 style={{
                   width: '100%',
@@ -248,11 +283,10 @@ export default function Pricing() {
                   border: '2px solid #000',
                   fontWeight: 700,
                   padding: '14px 24px',
-                  textDecoration: 'none',
                 }}
               >
-                Get Started
-              </a>
+                {loading === 'growth' ? 'Creating...' : 'Get Started'}
+              </button>
             </div>
 
             {/* Premium Plan */}
@@ -332,8 +366,9 @@ export default function Pricing() {
                 ))}
               </div>
 
-              <a
-                href={PAYMENT_LINKS.premium}
+              <button
+                onClick={() => handleSelectPlan('premium')}
+                disabled={loading === 'premium'}
                 className="btn"
                 style={{
                   width: '100%',
@@ -343,11 +378,10 @@ export default function Pricing() {
                   border: '2px solid #000',
                   fontWeight: 700,
                   padding: '14px 24px',
-                  textDecoration: 'none',
                 }}
               >
-                Get Started
-              </a>
+                {loading === 'premium' ? 'Creating...' : 'Get Started'}
+              </button>
             </div>
           </div>
 

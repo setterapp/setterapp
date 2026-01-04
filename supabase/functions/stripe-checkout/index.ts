@@ -13,7 +13,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "
 
 // Price IDs for each tier
 const PRICE_IDS: Record<string, string> = {
-  starter: "price_1Sk5LV7KSlSkZ0BeNawpCKmu",
+  starter: "price_1SlfNo7KSlSkZ0BeVFonANH4", // TEMP: $5/month for testing
   growth: "price_1Sk5Mc7KSlSkZ0BevmgvLlNn",
   premium: "price_1Sk5NP7KSlSkZ0BeEZjHbiOf",
 };
