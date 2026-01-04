@@ -863,7 +863,11 @@ function SettingsPage() {
 
     return (
         <div>
-            <SectionHeader title="Settings" icon={<Settings size={24} />}>
+            <SectionHeader
+                title="Settings"
+                description="Manage your account, subscription, and preferences"
+                icon={<Settings size={24} />}
+            >
                 <button onClick={handleLogout} className="btn btn--sm" style={{ background: '#f38ba8', color: '#000' }}>
                     <LogOut size={16} />
                     {t('settings.logout')}
