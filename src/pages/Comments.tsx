@@ -178,7 +178,11 @@ function Comments() {
 
     return (
         <div>
-            <SectionHeader title="Comments" icon={<MessageCircle size={24} />} />
+            <SectionHeader
+                title="Comments"
+                description="Set up automated DM responses for Instagram comments"
+                icon={<MessageCircle size={24} />}
+            />
 
             {loading ? (
                 <div className="card" style={{ border: '2px solid #000' }}>
