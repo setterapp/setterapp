@@ -6,6 +6,77 @@ const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+
+// Send welcome email with magic link
+async function sendWelcomeEmail(email: string, magicLink: string, plan: string): Promise<boolean> {
+  if (!RESEND_API_KEY) {
+    console.error("❌ RESEND_API_KEY not configured");
+    return false;
+  }
+
+  try {
+    const planNames: Record<string, string> = {
+      starter: "Starter",
+      growth: "Growth",
+      premium: "Premium"
+    };
+
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from: "SetterApp.ai <noreply@setterapp.ai>",
+        to: email,
+        subject: `Welcome to SetterApp.ai! Your ${planNames[plan] || plan} plan is ready`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #000; margin-bottom: 20px;">Welcome to SetterApp.ai!</h1>
+
+            <p style="font-size: 16px; line-height: 1.6; color: #333;">
+              Thank you for subscribing to our <strong>${planNames[plan] || plan}</strong> plan!
+            </p>
+
+            <p style="font-size: 16px; line-height: 1.6; color: #333;">
+              Click the button below to access your account and start automating your appointment booking:
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${magicLink}" style="background: #000; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                Access My Account
+              </a>
+            </div>
+
+            <p style="font-size: 14px; color: #666;">
+              This link will expire in 24 hours. If you didn't make this purchase, please contact us.
+            </p>
+
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+
+            <p style="font-size: 12px; color: #999; text-align: center;">
+              SetterApp.ai - AI Appointment Setter for Instagram & WhatsApp
+            </p>
+          </div>
+        `
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("❌ Resend error:", errorData);
+      return false;
+    }
+
+    console.log(`✅ Welcome email sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error("❌ Error sending email:", error);
+    return false;
+  }
+}
 
 // Plan mapping from price IDs
 const PLAN_FROM_PRICE: Record<string, string> = {
@@ -53,32 +124,80 @@ Deno.serve(async (req) => {
           const priceId = subscription.items.data[0]?.price.id;
           const plan = session.metadata?.plan || PLAN_FROM_PRICE[priceId] || "starter";
 
-          // If no user ID in metadata (payment link case), find user by email
-          if (!userId) {
+          // Get customer email from Stripe
+          const customer = await stripe.customers.retrieve(session.customer as string);
+          const customerEmail = (customer as Stripe.Customer).email;
+          const customerName = (customer as Stripe.Customer).name || "";
+
+          // If no user ID in metadata (payment link case), find or create user by email
+          if (!userId && customerEmail) {
             console.log("🔍 No user ID in metadata, looking up by email...");
 
-            // Get customer email from Stripe
-            const customer = await stripe.customers.retrieve(session.customer as string);
-            const customerEmail = (customer as Stripe.Customer).email;
+            // Find user in Supabase by email
+            const { data: users, error: userError } = await supabase.auth.admin.listUsers();
 
-            if (customerEmail) {
-              // Find user in Supabase by email
-              const { data: users, error: userError } = await supabase.auth.admin.listUsers();
+            if (!userError && users?.users) {
+              const matchedUser = users.users.find(u => u.email?.toLowerCase() === customerEmail.toLowerCase());
+              if (matchedUser) {
+                userId = matchedUser.id;
+                console.log(`✅ Found user by email: ${customerEmail} -> ${userId}`);
 
-              if (!userError && users?.users) {
-                const matchedUser = users.users.find(u => u.email?.toLowerCase() === customerEmail.toLowerCase());
-                if (matchedUser) {
-                  userId = matchedUser.id;
-                  console.log(`✅ Found user by email: ${customerEmail} -> ${userId}`);
+                // If user exists but email not confirmed, confirm it (they paid, email is valid)
+                if (!matchedUser.email_confirmed_at) {
+                  console.log("📧 Auto-confirming email for paying user...");
+                  await supabase.auth.admin.updateUserById(matchedUser.id, {
+                    email_confirm: true
+                  });
+                }
+              }
+            }
+
+            // If user doesn't exist, create one
+            if (!userId) {
+              console.log("👤 Creating new user for paying customer...");
+
+              // Generate a random password (user will use magic link to access)
+              const tempPassword = crypto.randomUUID();
+
+              const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+                email: customerEmail,
+                password: tempPassword,
+                email_confirm: true, // Auto-confirm since they paid with this email
+                user_metadata: {
+                  name: customerName,
+                  created_via: "stripe_payment"
+                }
+              });
+
+              if (createError) {
+                console.error("❌ Error creating user:", createError);
+              } else if (newUser?.user) {
+                userId = newUser.user.id;
+                console.log(`✅ Created new user: ${customerEmail} -> ${userId}`);
+
+                // Generate magic link for the user to access their account
+                const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+                  type: "magiclink",
+                  email: customerEmail,
+                  options: {
+                    redirectTo: "https://setterapp.ai/analytics"
+                  }
+                });
+
+                if (linkError) {
+                  console.error("❌ Error generating magic link:", linkError);
+                } else if (linkData?.properties?.action_link) {
+                  // Send welcome email with magic link
+                  await sendWelcomeEmail(customerEmail, linkData.properties.action_link, plan);
                 }
               }
             }
           }
 
           if (!userId) {
-            console.error("❌ Could not find user for subscription");
+            console.error("❌ Could not find or create user for subscription");
             // Still return 200 to acknowledge webhook, but log the issue
-            return new Response(JSON.stringify({ received: true, warning: "No user found" }), { status: 200 });
+            return new Response(JSON.stringify({ received: true, warning: "No user found or created" }), { status: 200 });
           }
 
           // Upsert subscription record
