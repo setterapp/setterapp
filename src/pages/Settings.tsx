@@ -46,6 +46,7 @@ const defaultSettings: UserSettings = {
 
 function SubscriptionSection() {
     const { subscription, plan, isActive, isExpiring, openPortal, loading, messagesUsed, messagesLimit, activeAgentsCount, agentsLimit, knowledgeBasesCount, knowledgeBasesLimit, isAdmin, adminPlanOverride, setAdminPlanOverride } = useSubscription()
+    const [portalError, setPortalError] = useState<string | null>(null)
 
     const planNames: Record<string, string> = {
         starter: 'Starter',
@@ -60,6 +61,17 @@ function SubscriptionSection() {
             month: 'long',
             day: 'numeric',
         })
+    }
+
+    const handleManageSubscription = async () => {
+        setPortalError(null)
+        try {
+            await openPortal()
+        } catch (err: any) {
+            // Extract error message from response
+            const errorMsg = err?.message || 'Failed to open subscription portal'
+            setPortalError(errorMsg)
+        }
     }
 
     // Calculate usage percentage for progress bar
@@ -254,8 +266,27 @@ function SubscriptionSection() {
                         </div>
                     )}
 
+                    {portalError && (
+                        <div style={{
+                            marginTop: 'var(--spacing-xs)',
+                            padding: 'var(--spacing-sm)',
+                            background: '#fef3c7',
+                            border: '2px solid #f59e0b',
+                            borderRadius: 'var(--border-radius)',
+                            fontSize: 'var(--font-size-xs)',
+                            color: '#92400e'
+                        }}>
+                            <strong>⚠️ {portalError}</strong>
+                            {portalError.includes('manually') && (
+                                <p style={{ margin: '4px 0 0 0' }}>
+                                    Your subscription is managed manually. Please contact support at info@setterapp.ai to make changes.
+                                </p>
+                            )}
+                        </div>
+                    )}
+
                     <button
-                        onClick={() => openPortal()}
+                        onClick={handleManageSubscription}
                         className="btn btn--sm"
                         style={{ marginTop: 'var(--spacing-xs)', alignSelf: 'flex-start' }}
                     >
