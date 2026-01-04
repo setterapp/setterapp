@@ -80,8 +80,7 @@ async function sendWelcomeEmail(email: string, magicLink: string, plan: string):
 
 // Plan mapping from price IDs
 const PLAN_FROM_PRICE: Record<string, string> = {
-    "price_1SlfNo7KSlSkZ0BeVFonANH4": "starter", // TEMP: $5/month for testing
-    "price_1Sk5LV7KSlSkZ0BeNawpCKmu": "starter", // Keep old price for backwards compatibility
+    "price_1Sk5LV7KSlSkZ0BeNawpCKmu": "starter", // $49/month
     "price_1Sk5Mc7KSlSkZ0BevmgvLlNn": "growth",
     "price_1Sk5NP7KSlSkZ0BeEZjHbiOf": "premium",
 };

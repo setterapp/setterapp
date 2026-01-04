@@ -138,7 +138,7 @@ export default function Pricing() {
                                     Starter
                                 </h3>
                                 <p style={{ margin: '0', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                                    <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$5</span>
+                                    <span style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: '#000' }}>$49</span>
                                     <span style={{ color: '#666', fontSize: 'var(--font-size-sm)' }}>/month</span>
                                 </p>
                                 <p style={{ margin: '8px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#666' }}>
