@@ -160,7 +160,7 @@ export function useSubscription() {
       const response = await supabase.functions.invoke('stripe-checkout', {
         body: {
           plan,
-          success_url: `${window.location.origin}/dashboard?success=true`,
+          success_url: `${window.location.origin}/analytics?success=true`,
           cancel_url: `${window.location.origin}/pricing?canceled=true`,
         },
       })

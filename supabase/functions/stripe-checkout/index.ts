@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
           quantity: 1,
         },
       ],
-      success_url: success_url || `${req.headers.get("origin")}/dashboard?success=true`,
+      success_url: success_url || `${req.headers.get("origin")}/analytics?success=true`,
       cancel_url: cancel_url || `${req.headers.get("origin")}/pricing?canceled=true`,
       subscription_data: {
         metadata: {
