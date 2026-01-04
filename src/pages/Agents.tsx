@@ -1079,7 +1079,11 @@ Agent: Do you have your own business or work in sales?`}
     // Agent list view
     return (
         <div>
-            <SectionHeader title="Agents" icon={<Bot size={24} />}>
+            <SectionHeader
+                title="Agents"
+                description="Create and configure AI agents to automate your conversations"
+                icon={<Bot size={24} />}
+            >
                 <button className="btn btn--primary" onClick={() => setShowForm(true)}>
                     <Plus size={18} />
                     Create Agent
