@@ -183,7 +183,8 @@ export function useSubscription() {
 
       const response = await supabase.functions.invoke('stripe-portal', {
         body: {
-          return_url: `${window.location.origin}/dashboard`,
+          user_id: session.user.id,
+          return_url: `${window.location.origin}/analytics`,
         },
       })
 

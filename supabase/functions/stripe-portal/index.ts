@@ -18,26 +18,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get the authorization header
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "No authorization header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     // Create Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Get user from token
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // Parse request body to get user_id and return_url
+    const { user_id, return_url } = await req.json().catch(() => ({}));
 
-    if (userError || !user) {
+    if (!user_id) {
       return new Response(
-        JSON.stringify({ error: "Invalid token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "user_id is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -45,7 +35,7 @@ Deno.serve(async (req) => {
     const { data: subscription, error: subError } = await supabase
       .from("subscriptions")
       .select("stripe_customer_id")
-      .eq("user_id", user.id)
+      .eq("user_id", user_id)
       .single();
 
     if (subError || !subscription?.stripe_customer_id) {
@@ -60,13 +50,10 @@ Deno.serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    // Parse request body for return URL
-    const { return_url } = await req.json().catch(() => ({}));
-
     // Create portal session
     const session = await stripe.billingPortal.sessions.create({
       customer: subscription.stripe_customer_id,
-      return_url: return_url || `${req.headers.get("origin")}/dashboard`,
+      return_url: return_url || `${req.headers.get("origin")}/analytics`,
     });
 
     return new Response(
