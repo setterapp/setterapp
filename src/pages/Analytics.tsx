@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 import { MessageSquare, BarChart3 } from 'lucide-react'
 import SectionHeader from '../components/SectionHeader'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
@@ -17,11 +18,28 @@ type TimeRange = 'today' | 'week' | 'month' | 'all'
 
 function Analytics() {
   const { t } = useTranslation()
+  const location = useLocation()
   const { conversations, loading: conversationsLoading } = useConversations()
   const { agents } = useAgents()
   const { meetings, loading: meetingsLoading } = useMeetings()
 
   const [timeRange, setTimeRange] = useState<TimeRange>('week')
+  const [showSuccess, setShowSuccess] = useState(false)
+
+  // Check for success parameter in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search)
+    if (urlParams.get('success') === 'true') {
+      setShowSuccess(true)
+      // Remove success parameter from URL
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('success')
+      window.history.replaceState({}, '', newUrl.toString())
+
+      // Hide success message after 5 seconds
+      setTimeout(() => setShowSuccess(false), 5000)
+    }
+  }, [location])
 
   // Solo mostrar loading si no hay datos (primera carga)
   const loading = (conversationsLoading && conversations.length === 0) ||
@@ -142,6 +160,26 @@ function Analytics() {
 
   return (
     <div>
+      {/* Success Message */}
+      {showSuccess && (
+        <div
+          style={{
+            background: '#a6e3a1',
+            border: '2px solid #000',
+            borderRadius: 'var(--border-radius)',
+            padding: 'var(--spacing-md)',
+            marginBottom: 'var(--spacing-lg)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-sm)',
+            fontWeight: 600,
+            color: '#000'
+          }}
+        >
+          ✅ Welcome to SetterApp.ai! Your subscription is now active.
+        </div>
+      )}
+
       {/* Section Header with Time Filter */}
       <SectionHeader title="Analytics" icon={<BarChart3 size={24} />}>
         {(['today', 'week', 'month', 'all'] as TimeRange[]).map((range) => (
